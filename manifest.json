@@ -1,0 +1,19 @@
+{
+  "name": "HSIA (ATM) — Live Shift Tracker",
+  "short_name": "HSIA ATM",
+  "description": "Duty roster, shift tracker, and cross-device sync for HSIA (ATM)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14161B",
+  "theme_color": "#14161B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
