@@ -1794,7 +1794,7 @@ td.roster-exchange-cell .roster-name-input{
     </div>
   </div>
 
-  <div class="modal-overlay show" id="settingsModalOverlay">
+  <div class="modal-overlay" id="settingsModalOverlay">
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-title">⚙️ সেটিংস</div>
@@ -1844,26 +1844,6 @@ td.roster-exchange-cell .roster-name-input{
         <button type="button" id="syncEyeBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">👁️</button>
       </div>
       <div id="syncSectionContent" style="display:none;">
-        <div class="fr-dbsection-hint">
-          এটা সম্পূর্ণ ঐচ্ছিক। কিছু না করলে অ্যাপ আগের মতোই চলবে — প্রতিটা ডিভাইস/ব্রাউজারে আলাদাভাবে সেভ থাকবে, একটায় বদলালে অন্যটায় দেখাবে না। সংযুক্ত করলে যা যা সব ডিভাইসে সাথে সাথে সিঙ্ক হবে: <b>ডিউটি রোস্টার</b> (Aerodrome Assistant ও Controllers দুটোই), <b>ডিউটি এক্সচেঞ্জ</b>, <b>Aircraft/Flight ডেটাবেজ</b> (OCR/PDF/ম্যানুয়াল এন্ট্রি), এবং <b>Airports/Airlines প্যানেলে নতুন যোগ করা এন্ট্রি</b>। রং/থিম, ভাষা, কোন প্যানেল খোলা/বন্ধ, "আমার টিম" সিলেকশন — এগুলো ইচ্ছাকৃতভাবে সিঙ্ক হয় না, কারণ এগুলো প্রতিটা ডিভাইসের নিজস্ব পছন্দ (একজনের ফোনে প্যানেল বন্ধ করলে অন্যজনেরটাও বন্ধ হয়ে যাওয়াটা বরং বিরক্তিকর হতো)। একটা ফ্রি <b>Firebase Realtime Database</b> জুড়ে দিলেই এটা চালু হবে (Google-এর সার্ভিস, কার্ড লাগে না):<br><br>
-          ১) <a href="https://console.firebase.google.com" target="_blank" rel="noopener" style="color:var(--gold-soft);">console.firebase.google.com</a>-এ যান, লগইন করে একটা নতুন প্রজেক্ট বানান<br>
-          ২) বাম মেনু থেকে <b>Build → Realtime Database</b>-এ যান, "Create Database" চাপুন (যেকোনো লোকেশন, "test mode"-এ শুরু করুন)<br>
-          ৩) প্রজেক্ট Overview পেজে ⚙️ আইকনের পাশে <b>"&lt;/&gt;" (Web app)</b> বাটনে ক্লিক করে একটা ওয়েব অ্যাপ যোগ করুন — এতে একটা কোড দেখাবে যার ভেতরে <code>firebaseConfig = { ... }</code> অংশটা আছে<br>
-          ৪) পুরো <code>{ ... }</code> অংশটা (কার্লি ব্র্যাকেটসহ) কপি করে নিচের বক্সে পেস্ট করুন<br>
-          ৫) নিচে একটা <b>Room ID</b> দিন — এটা যেকোনো গোপন শব্দ/কোড (যেমন <code>hsia-atc-2026</code>) — যেসব ডিভাইসে এই একই Room ID দেবেন শুধু সেগুলোই একসাথে সিঙ্ক হবে। এটা কারো সাথে শেয়ার করবেন না<br><br>
-          ⚠️ <b>নিরাপত্তা নোট:</b> "test mode" ডিফল্টভাবে ৩০ দিন পর read/write বন্ধ করে দেয়। স্থায়ীভাবে চালু রাখতে Database → Rules ট্যাবে গিয়ে নিচের rules বসিয়ে "Publish" করুন:
-          <pre style="background:#000; padding:8px; border-radius:6px; overflow-x:auto; font-size:11px; color:#9fdb9f; white-space:pre-wrap;">{
-  "rules": {
-    "hsia_sync": {
-      "$roomId": {
-        ".read": true,
-        ".write": true
-      }
-    }
-  }
-}</pre>
-          এটা এখনও Room ID-টাকে "গোপন কোড" হিসেবে ব্যবহার করছে, সত্যিকারের authentication না — ডিউটি রোস্টারের মতো low-risk ডেটার জন্য এটা ঠিক আছে, কিন্তু কখনো পাসওয়ার্ড/আর্থিক তথ্যের মতো স্পর্শকাতর কিছুর জন্য এই পদ্ধতি ব্যবহার করবেন না।
-        </div>
         <div class="fr-manualform">
           <textarea id="firebaseConfigInput" class="fr-dbtextarea" style="min-height:90px;" placeholder="এখানে Firebase কনফিগ পেস্ট করুন, যেমন: { apiKey: &quot;...&quot;, authDomain: &quot;...&quot;, databaseURL: &quot;...&quot;, projectId: &quot;...&quot; }"></textarea>
         </div>
@@ -2664,6 +2644,30 @@ function initEyeToggle(btnId, contentId){
   });
 }
 
+/* Password-gated version of the eye toggle, used only for the
+   cross-device sync panel. Asks for a password every time it is
+   opened (does not remember it across sessions/devices). */
+function initPasswordGatedEyeToggle(btnId, contentId, password){
+  const btn = document.getElementById(btnId);
+  const content = document.getElementById(contentId);
+  if(!btn || !content) return;
+  content.style.display = 'none';
+  btn.textContent = '👁️';
+  btn.addEventListener('click', ()=>{
+    const hidden = content.style.display === 'none';
+    if(hidden){
+      const entered = window.prompt('এই অংশটি দেখতে পাসওয়ার্ড দিন:');
+      if(entered === null) return;
+      if(entered !== password){
+        alert('ভুল পাসওয়ার্ড।');
+        return;
+      }
+    }
+    content.style.display = hidden ? 'block' : 'none';
+    btn.textContent = hidden ? '🙈' : '👁️';
+  });
+}
+
 function initAuthPanel(){
   const openAuthModalBtn = document.getElementById('openAuthModalBtn');
   if(openAuthModalBtn) openAuthModalBtn.addEventListener('click', ()=>{ closeModal('settingsModalOverlay'); openModal('authModalOverlay'); });
@@ -2763,7 +2767,7 @@ function initAuthPanel(){
   if(settingsModalOverlay) settingsModalOverlay.addEventListener('click', (e)=>{ if(e.target === settingsModalOverlay) closeModal('settingsModalOverlay'); });
 
   initEyeToggle('backupEyeBtn', 'backupSectionContent');
-  initEyeToggle('syncEyeBtn', 'syncSectionContent');
+  initPasswordGatedEyeToggle('syncEyeBtn', 'syncSectionContent', 'tarif12345');
 
   applyAuthUI(loadAuthSession());
 }
