@@ -1871,7 +1871,7 @@ td.roster-exchange-cell .roster-name-input{
     </div>
   </div>
 
-  <div class="modal-overlay show" id="settingsModalOverlay">
+  <div class="modal-overlay" id="settingsModalOverlay">
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-title">⚙️ সেটিংস</div>
@@ -1921,11 +1921,14 @@ td.roster-exchange-cell .roster-name-input{
         <button type="button" id="syncEyeBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">👁️</button>
       </div>
       <div id="syncSectionContent" style="display:none;">
-        <div class="fr-manualform">
-          <textarea id="firebaseConfigInput" class="fr-dbtextarea" style="min-height:90px;" placeholder="এখানে Firebase কনফিগ পেস্ট করুন, যেমন: { apiKey: &quot;...&quot;, authDomain: &quot;...&quot;, databaseURL: &quot;...&quot;, projectId: &quot;...&quot; }"></textarea>
+        <div class="fr-dbsection-hint">
+          এই সিঙ্ক ডিফল্টভাবেই কনফিগার করা এবং সংযুক্ত থাকে — সাধারণ ব্যবহারকারীদের আর কিছু করতে হবে না।
         </div>
         <div class="fr-manualform">
-          <input type="text" id="firebaseRoomId" class="fr-mfinput" placeholder="Room ID (গোপন কোড, সব ডিভাইসে একই হতে হবে)" autocomplete="off">
+          <textarea id="firebaseConfigInput" class="fr-dbtextarea" style="min-height:90px;" placeholder="এখানে Firebase কনফিগ পেস্ট করুন, যেমন: { apiKey: &quot;...&quot;, authDomain: &quot;...&quot;, databaseURL: &quot;...&quot;, projectId: &quot;...&quot; }" readonly></textarea>
+        </div>
+        <div class="fr-manualform">
+          <input type="text" id="firebaseRoomId" class="fr-mfinput" placeholder="Room ID (গোপন কোড, সব ডিভাইসে একই হতে হবে)" autocomplete="off" readonly>
           <button id="firebaseSyncSaveBtn" type="button" class="fr-dbimport">💾 সংরক্ষণ ও সংযুক্ত করুন</button>
           <button id="firebaseSyncClearBtn" type="button" class="fr-dbclear">বিচ্ছিন্ন করুন</button>
         </div>
@@ -2732,24 +2735,27 @@ function initEyeToggle(btnId, contentId){
   });
 }
 
-/* Password-gated version of the eye toggle, used only for the
-   cross-device sync panel. Asks for a password every time it is
-   opened (does not remember it across sessions/devices). */
-function initPasswordGatedEyeToggle(btnId, contentId, password){
+/* Reveals the cross-device sync panel AND unlocks its fields for editing
+   in one step, gated by the real admin password (same one used for
+   roster edits / backups everywhere else in the app) — no separate
+   hardcoded password for this panel anymore. */
+function initAdminGatedSyncToggle(btnId, contentId, cfgInputId, idInputId){
   const btn = document.getElementById(btnId);
   const content = document.getElementById(contentId);
+  const cfgInput = document.getElementById(cfgInputId);
+  const idInput = document.getElementById(idInputId);
   if(!btn || !content) return;
   content.style.display = 'none';
   btn.textContent = '👁️';
   btn.addEventListener('click', ()=>{
     const hidden = content.style.display === 'none';
     if(hidden){
-      const entered = window.prompt('এই অংশটি দেখতে পাসওয়ার্ড দিন:');
-      if(entered === null) return;
-      if(entered !== password){
-        alert('ভুল পাসওয়ার্ড।');
-        return;
-      }
+      if(!requireRosterAuth()) return;
+      if(cfgInput) cfgInput.readOnly = false;
+      if(idInput) idInput.readOnly = false;
+    } else {
+      if(cfgInput) cfgInput.readOnly = true;
+      if(idInput) idInput.readOnly = true;
     }
     content.style.display = hidden ? 'block' : 'none';
     btn.textContent = hidden ? '🙈' : '👁️';
@@ -2855,7 +2861,7 @@ function initAuthPanel(){
   if(settingsModalOverlay) settingsModalOverlay.addEventListener('click', (e)=>{ if(e.target === settingsModalOverlay) closeModal('settingsModalOverlay'); });
 
   initEyeToggle('backupEyeBtn', 'backupSectionContent');
-  initPasswordGatedEyeToggle('syncEyeBtn', 'syncSectionContent', 'tarif12345');
+  initAdminGatedSyncToggle('syncEyeBtn', 'syncSectionContent', 'firebaseConfigInput', 'firebaseRoomId');
 
   applyAuthUI(loadAuthSession());
 }
@@ -2915,6 +2921,21 @@ function renderRosterCtrl(){
    ============================================================ */
 const FIREBASE_SYNC_KEY = 'HSIA_FIREBASE_SYNC_V1';
 let _fbDb = null;
+
+/* Baked-in default so every device connects to the same shared room out of
+   the box — no manual paste needed. Only the admin password unlocks the
+   fields below to change these (see initAdminGatedSyncToggle / requireRosterAuth). */
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984",
+  authDomain: "hsia-atm.firebaseapp.com",
+  databaseURL: "https://hsia-atm-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hsia-atm",
+  storageBucket: "hsia-atm.firebasestorage.app",
+  messagingSenderId: "597453842469",
+  appId: "1:597453842469:web:77c2496d51b7fa69c5b7cc",
+  measurementId: "G-93XTC07B19"
+};
+const DEFAULT_FIREBASE_ROOM_ID = "tarif12345";
 
 function loadFirebaseSyncConfig(){
   try{
@@ -3094,17 +3115,27 @@ const pushExchangesToFirebaseDebounced = debounce(pushExchangesToFirebase, 500);
 const pushAdminNotepadToFirebaseDebounced = debounce(pushAdminNotepadToFirebase, 500);
 
 function initFirebaseSync(){
-  const saved = loadFirebaseSyncConfig();
+  let saved = loadFirebaseSyncConfig();
   const idInput = document.getElementById('firebaseRoomId');
   const cfgInput = document.getElementById('firebaseConfigInput');
   if(!idInput || !cfgInput) return;
 
-  if(saved){
-    idInput.value = saved.roomId;
-    cfgInput.value = JSON.stringify(saved.config, null, 2);
-    setFirebaseSyncStatus('🔄 সংযুক্ত হচ্ছে...');
-    connectFirebaseSync(saved.config, saved.roomId);
+  /* No config saved yet on this device — bake in the default so it
+     connects automatically without anyone having to paste anything. */
+  if(!saved){
+    saveFirebaseSyncConfig(DEFAULT_FIREBASE_CONFIG, DEFAULT_FIREBASE_ROOM_ID);
+    saved = { config: DEFAULT_FIREBASE_CONFIG, roomId: DEFAULT_FIREBASE_ROOM_ID };
   }
+
+  idInput.value = saved.roomId;
+  cfgInput.value = JSON.stringify(saved.config, null, 2);
+  setFirebaseSyncStatus('🔄 সংযুক্ত হচ্ছে...');
+  connectFirebaseSync(saved.config, saved.roomId);
+
+  // Fields stay read-only until the admin password unlocks the panel
+  // via the eye icon (see initAdminGatedSyncToggle).
+  idInput.readOnly = true;
+  cfgInput.readOnly = true;
 
   const saveBtn = document.getElementById('firebaseSyncSaveBtn');
   const clearBtn = document.getElementById('firebaseSyncClearBtn');
