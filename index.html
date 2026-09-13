@@ -1294,11 +1294,11 @@ td.roster-exchange-cell .roster-name-input{
       <div class="collapse-toggle" id="rosterToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="rosterBody">
-      <div class="roster-nowon" id="rosterNowOn">এখন ডিউটিতে — টিম B (Night)</div>
+      <div class="roster-nowon" id="rosterNowOn"></div>
 
       <div class="roster-subtitle">Controllers</div>
       <div class="roster-tablewrap">
-        <table class="roster-table hl-B" id="rosterTableCtrl">
+        <table class="roster-table" id="rosterTableCtrl">
           <colgroup>
             <col style="width:150px">
             <col style="width:122px"><col style="width:122px"><col style="width:122px"><col style="width:122px"><col style="width:122px">
@@ -1319,7 +1319,7 @@ td.roster-exchange-cell .roster-name-input{
 
       <div class="roster-subtitle" style="margin-top:22px;">Aerodrome Assistant</div>
       <div class="roster-tablewrap">
-        <table class="roster-table hl-B" id="rosterTable">
+        <table class="roster-table" id="rosterTable">
           <colgroup>
             <col style="width:150px">
             <col style="width:122px"><col style="width:122px"><col style="width:122px"><col style="width:122px"><col style="width:122px">
@@ -2476,6 +2476,14 @@ function saveRosterGeneric(key, r){ try{ localStorage.setItem(key, JSON.stringif
 
 let ROSTER = loadRosterGeneric(ROSTER_KEY, DEFAULT_ROSTER);
 let ROSTER_CTRL = loadRosterGeneric(ROSTER_CTRL_KEY, DEFAULT_ROSTER_CTRL);
+
+/* Correct the "এখন ডিউটিতে" banner and roster highlight as early as
+   possible in page load — this HTML file's static markup can contain
+   a leftover value from whenever it was last saved/exported, so
+   without this it would briefly flash that stale team/shift before
+   the rest of the script (Firebase sync, other panels, etc.) finishes
+   initializing and the regular tick() loop corrects it. */
+try{ if(typeof updateRosterHighlight === 'function') updateRosterHighlight(); }catch(e){}
 
 function saveRoster(r){ saveRosterGeneric(ROSTER_KEY, r); pushRosterToFirebaseDebounced(); }
 function saveRosterCtrl(r){ saveRosterGeneric(ROSTER_CTRL_KEY, r); pushRosterCtrlToFirebaseDebounced(); }
