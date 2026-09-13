@@ -1146,15 +1146,15 @@ td.roster-exchange-cell .roster-name-input{
       <div class="clock-dual">
         <div class="clock-col">
           <div class="clock-tz">GMT+6 · Dhaka</div>
-          <div class="clock" id="clock">7:18<span>:09</span> <span>AM</span></div>
+          <div class="clock" id="clock"></div>
         </div>
         <div class="clock-divider"></div>
         <div class="clock-col">
           <div class="clock-tz">UTC</div>
-          <div class="clock" id="clockUtc">01:18<span>:09</span></div>
+          <div class="clock" id="clockUtc"></div>
         </div>
       </div>
-      <div class="datestr" id="datestr">Sat, September 12, 2026</div>
+      <div class="datestr" id="datestr"></div>
     </div>
   </header>
 
@@ -1172,9 +1172,9 @@ td.roster-exchange-cell .roster-name-input{
       <div class="lamp-shift" id="lampshift-0"></div>
     </div><div class="lamp">
       
-      <div class="bulb on" id="bulb-1" style="background: rgb(245, 66, 73); color: rgb(242, 240, 247);">B</div>
+      <div class="bulb" id="bulb-1" style="background: var(--off); color: rgb(90, 101, 119);">B</div>
       <div class="lamp-label">Team B</div>
-      <div class="lamp-shift" id="lampshift-1" style="color: rgb(245, 66, 73);">Night</div>
+      <div class="lamp-shift" id="lampshift-1"></div>
     </div><div class="lamp">
       
       <div class="bulb" id="bulb-2" style="background: var(--off); color: rgb(90, 101, 119);">C</div>
@@ -1195,11 +1195,11 @@ td.roster-exchange-cell .roster-name-input{
 
   <div class="hero" id="hero" style="--accent: var(--off);">
     <div class="hero-inner">
-      <div class="hero-eyebrow" id="heroEyebrow">Your team (A)</div>
-      <div class="hero-status" id="heroStatus">Off duty</div>
-      <div class="hero-time" id="heroTime">Next duty: Afternoon (2:00pm – 8:30pm)</div>
-      <div class="countdown-label" id="cdLabel">Time until next duty</div>
-      <div class="countdown" id="cd" style="color: var(--text);">30h 41m 50s</div>
+      <div class="hero-eyebrow" id="heroEyebrow"></div>
+      <div class="hero-status" id="heroStatus"></div>
+      <div class="hero-time" id="heroTime"></div>
+      <div class="countdown-label" id="cdLabel"></div>
+      <div class="countdown" id="cd" style="color: var(--text);"></div>
     </div>
   </div>
 
@@ -2477,13 +2477,15 @@ function saveRosterGeneric(key, r){ try{ localStorage.setItem(key, JSON.stringif
 let ROSTER = loadRosterGeneric(ROSTER_KEY, DEFAULT_ROSTER);
 let ROSTER_CTRL = loadRosterGeneric(ROSTER_CTRL_KEY, DEFAULT_ROSTER_CTRL);
 
-/* Correct the "এখন ডিউটিতে" banner and roster highlight as early as
-   possible in page load — this HTML file's static markup can contain
-   a leftover value from whenever it was last saved/exported, so
-   without this it would briefly flash that stale team/shift before
-   the rest of the script (Firebase sync, other panels, etc.) finishes
-   initializing and the regular tick() loop corrects it. */
-try{ if(typeof updateRosterHighlight === 'function') updateRosterHighlight(); }catch(e){}
+/* Correct the live clock, "who's on duty" lamps, hero card, and
+   roster highlight as early as possible in page load — this HTML
+   file's static markup can contain leftover values from whenever it
+   was last saved/exported (a frozen past date/time and duty state),
+   so without this the page would briefly flash that stale info
+   before the rest of the script (Firebase sync, other panels, etc.)
+   finishes initializing and the regular tick() loop corrects it. */
+try{ if(typeof applyColors === 'function') applyColors(); }catch(e){}
+try{ if(typeof tick === 'function') tick(); }catch(e){}
 
 function saveRoster(r){ saveRosterGeneric(ROSTER_KEY, r); pushRosterToFirebaseDebounced(); }
 function saveRosterCtrl(r){ saveRosterGeneric(ROSTER_CTRL_KEY, r); pushRosterCtrlToFirebaseDebounced(); }
