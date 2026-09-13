@@ -890,6 +890,19 @@ body.desktop-mode .fr-iframewrap iframe{ height:520px; }
   font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600;
 }
 .tc-label-sub{ color:var(--gold-soft); font-size:9px; margin-left:4px; }
+.tc-fmt-row{ display:flex; gap:8px; margin:-6px 0 16px; }
+.tc-fmttoggle, .tc-ampmtoggle{
+  display:flex; gap:4px; background:var(--panel-2); border:1px solid var(--border);
+  border-radius:10px; padding:3px;
+}
+.tc-fmt-btn, .tc-ampm-btn{
+  padding:6px 10px; border-radius:7px; border:none; background:transparent;
+  color:var(--muted); font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:11px;
+  cursor:pointer; transition:all .18s ease;
+}
+.tc-fmt-btn.active, .tc-ampm-btn.active{
+  background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130;
+}
 .tc-date-input, .tc-time-input{
   background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
   color:var(--text); padding:9px 12px; font-size:13px;
@@ -1583,7 +1596,7 @@ td.roster-exchange-cell .roster-name-input{
           <input type="date" id="tcDate" class="tc-date-input">
         </div>
         <div class="tc-field tc-field-time">
-          <label class="tc-label">Time <span class="tc-label-sub">24H</span></label>
+          <label class="tc-label">Time <span class="tc-label-sub" id="tcLabelSub">24H</span></label>
           <div class="tc-time-row">
             <input type="number" id="tcHour" class="tc-time-input" min="0" max="23" placeholder="HH" inputmode="numeric">
             <span class="tc-colon">:</span>
@@ -1591,6 +1604,19 @@ td.roster-exchange-cell .roster-name-input{
           </div>
         </div>
       </div>
+
+      <div class="tc-fmt-row" id="tcFmtRow" style="display:none;">
+        <div class="tc-fmttoggle" id="tcFmtToggle">
+          <button type="button" class="tc-fmt-btn active" data-fmt="24">24H</button>
+          <button type="button" class="tc-fmt-btn" data-fmt="12">12H</button>
+        </div>
+        <div class="tc-ampmtoggle" id="tcAmpmToggle" style="display:none;">
+          <button type="button" class="tc-ampm-btn active" data-ampm="AM">AM</button>
+          <button type="button" class="tc-ampm-btn" data-ampm="PM">PM</button>
+        </div>
+      </div>
+      <input type="hidden" id="tcTimeFmt" value="24">
+      <input type="hidden" id="tcAmPm" value="AM">
 
       <button id="tcConvertBtn" type="button" class="tc-convert-btn">Convert</button>
 
@@ -3059,12 +3085,67 @@ function initAuthPanel(){
   if(timeConvertModalOverlay) timeConvertModalOverlay.addEventListener('click', (e)=>{ if(e.target === timeConvertModalOverlay) closeModal('timeConvertModalOverlay'); });
   const tcConvertBtn = document.getElementById('tcConvertBtn');
   if(tcConvertBtn) tcConvertBtn.addEventListener('click', runTimeConvert);
+
+  function tcTo12(h24){
+    let period = h24 >= 12 ? 'PM' : 'AM';
+    let h12 = h24 % 12; if(h12 === 0) h12 = 12;
+    return {h12, period};
+  }
+  function tcTo24(h12, period){
+    let h = h12 % 12;
+    if(period === 'PM') h += 12;
+    return h;
+  }
+  function tcSetFmt(fmt){
+    const tcHour = document.getElementById('tcHour');
+    document.getElementById('tcTimeFmt').value = fmt;
+    document.querySelectorAll('.tc-fmt-btn').forEach(b=> b.classList.toggle('active', b.getAttribute('data-fmt')===fmt));
+    document.getElementById('tcLabelSub').textContent = fmt+'H';
+    const ampmToggle = document.getElementById('tcAmpmToggle');
+    if(fmt === '12'){
+      const cur = parseInt(tcHour.value,10);
+      if(!isNaN(cur)){
+        const c = tcTo12(Math.min(23,Math.max(0,cur)));
+        tcHour.value = String(c.h12).padStart(2,'0');
+        document.getElementById('tcAmPm').value = c.period;
+        document.querySelectorAll('.tc-ampm-btn').forEach(b=> b.classList.toggle('active', b.getAttribute('data-ampm')===c.period));
+      }
+      tcHour.min = 1; tcHour.max = 12;
+      ampmToggle.style.display = 'flex';
+    } else {
+      const cur = parseInt(tcHour.value,10);
+      if(!isNaN(cur)){
+        const period = document.getElementById('tcAmPm').value;
+        tcHour.value = String(tcTo24(Math.min(12,Math.max(1,cur)), period)).padStart(2,'0');
+      }
+      tcHour.min = 0; tcHour.max = 23;
+      ampmToggle.style.display = 'none';
+    }
+  }
+  document.querySelectorAll('.tc-fmt-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> tcSetFmt(btn.getAttribute('data-fmt')));
+  });
+  document.querySelectorAll('.tc-ampm-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tc-ampm-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tcAmPm').value = btn.getAttribute('data-ampm');
+    });
+  });
   document.querySelectorAll('.tc-dir-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.tc-dir-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('tcDirection').value = btn.getAttribute('data-dir');
+      const dir = btn.getAttribute('data-dir');
+      document.getElementById('tcDirection').value = dir;
       document.getElementById('tcResult').style.display = 'none';
+      const fmtRow = document.getElementById('tcFmtRow');
+      if(dir === 'local2utc'){
+        fmtRow.style.display = 'flex';
+      } else {
+        fmtRow.style.display = 'none';
+        tcSetFmt('24');
+      }
     });
   });
 
@@ -3759,7 +3840,16 @@ function runTimeConvert(){
   let min = parseInt(document.getElementById('tcMin').value, 10);
   if(isNaN(h)) h = 0;
   if(isNaN(min)) min = 0;
-  h = Math.min(23, Math.max(0, h));
+
+  const timeFmt = document.getElementById('tcTimeFmt').value;
+  if(dir === 'local2utc' && timeFmt === '12'){
+    h = Math.min(12, Math.max(1, h));
+    const period = document.getElementById('tcAmPm').value;
+    h = h % 12;
+    if(period === 'PM') h += 12;
+  } else {
+    h = Math.min(23, Math.max(0, h));
+  }
   min = Math.min(59, Math.max(0, min));
 
   if(!y || !m || !day){
