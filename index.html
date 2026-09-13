@@ -2508,7 +2508,20 @@ function loadExchanges(){
   return {};
 }
 function saveExchangesData(obj){ try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); }
+/* Removes any date-keys strictly before today (Dhaka-local) from an
+   EXCHANGES object, in place. Returns true if anything was removed,
+   so callers can decide whether to persist/re-render/push. */
+function pruneExpiredExchanges(obj){
+  if(!obj || typeof obj !== 'object') return false;
+  const today = todayDateKey();
+  let changed = false;
+  Object.keys(obj).forEach(dateKey=>{
+    if(dateKey < today){ delete obj[dateKey]; changed = true; }
+  });
+  return changed;
+}
 let EXCHANGES = loadExchanges();
+if(pruneExpiredExchanges(EXCHANGES)) saveExchangesData(EXCHANGES);
 function todayExchangesFor(tableKey){
   const list = EXCHANGES[todayDateKey()] || [];
   return list.filter(x => x.table === tableKey);
@@ -3059,7 +3072,9 @@ function connectFirebaseSync(config, roomId){
       const val = snap.val();
       if(val && typeof val === 'object' && JSON.stringify(val) !== JSON.stringify(EXCHANGES)){
         EXCHANGES = val;
+        const wasPruned = pruneExpiredExchanges(EXCHANGES);
         try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(EXCHANGES)); }catch(e){}
+        if(wasPruned) pushExchangesToFirebaseDebounced();
         if(typeof renderExchangeList === 'function') renderExchangeList();
         renderRoster();
         renderRosterCtrl();
@@ -3317,6 +3332,19 @@ function renderExchangeList(){
     });
   });
 }
+
+/* Auto-expire check: catches dates that pass while the app/tab
+   stays open (e.g. left running overnight), not just on page reload
+   or on the next Firebase update. */
+setInterval(()=>{
+  if(pruneExpiredExchanges(EXCHANGES)){
+    saveExchangesData(EXCHANGES);
+    if(typeof renderExchangeList === 'function') renderExchangeList();
+    if(typeof renderRoster === 'function') renderRoster();
+    if(typeof renderRosterCtrl === 'function') renderRosterCtrl();
+    if(typeof checkMyExchangeNotifications === 'function') checkMyExchangeNotifications();
+  }
+}, 30*60*1000);
 
 function initExchangePanel(){
   const dateInput = document.getElementById('exchangeDate');
