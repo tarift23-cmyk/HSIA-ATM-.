@@ -2713,6 +2713,33 @@ function todayExchangesFor(tableKey){
   const list = EXCHANGES[todayDateKey()] || [];
   return list.filter(x => x.table === tableKey);
 }
+/* Given an exchange entry's date-key and team, returns the Dhaka-local
+   {start,end} instant window of that team's actual shift on that date
+   (or null if that team is Off that day) — reusing the same rotation
+   rules as the live "who's on duty" board. */
+function exchangeShiftWindow(dateKey, team){
+  const [y,m,day] = (dateKey||'').split('-').map(Number);
+  if(!y || !m || !day) return null;
+  const st = shiftFor(team, y, m-1, day);
+  if(st === 'Off') return null;
+  return windowFor(st, y, m-1, day);
+}
+/* Exchanges that should currently be shown on a roster table: only
+   those whose target team is actually mid-shift right now (so a swap
+   appears exactly while that duty is running, and reverts to the base
+   roster the moment it ends) — not just "same calendar date". */
+function activeExchangesFor(tableKey){
+  const now = Date.now();
+  const out = [];
+  Object.keys(EXCHANGES).forEach(dateKey=>{
+    (EXCHANGES[dateKey] || []).forEach(ex=>{
+      if(ex.table !== tableKey) return;
+      const win = exchangeShiftWindow(dateKey, +ex.team);
+      if(win && now >= win.start && now < win.end) out.push(ex);
+    });
+  });
+  return out;
+}
 
 /* ============================================================
    Lightweight login (custom, not Firebase Auth) + in-app duty
@@ -3168,11 +3195,11 @@ function initAuthPanel(){
 function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const tbody = document.getElementById(tbodyId);
   if(!tbody) return;
-  const todaysEx = tableKey ? todayExchangesFor(tableKey) : [];
+  const activeEx = tableKey ? activeExchangesFor(tableKey) : [];
   tbody.innerHTML = data.map((row, ri)=>{
     const cells = TEAMS.map((t, ci)=>{
       const val = (row.names[ci] || '').replace(/"/g,'&quot;');
-      const ex = todaysEx.find(x => x.pos === row.pos && +x.team === ci);
+      const ex = activeEx.find(x => x.pos === row.pos && +x.team === ci);
       const cellClass = ex ? ' class="roster-exchange-cell"' : '';
       const badge = ex ? `<div class="roster-exchange-badge" title="মূল: ${(row.names[ci]||'—').replace(/"/g,'&quot;')}">🔄 ${(ex.subName||'').replace(/</g,'&lt;')}</div>` : '';
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
@@ -4203,6 +4230,15 @@ function tick(){
   document.getElementById('datestr').textContent = `${wd}, ${MONTHS[f.m]} ${f.day}, ${f.y}`;
 
   updateRosterHighlight();
+
+  /* Re-check duty-exchange visibility once a minute — cheap enough at
+     that cadence, and minute granularity is all a shift boundary needs.
+     This is what makes a swap badge disappear the instant that team's
+     shift ends, instead of lingering until the calendar date rolls over. */
+  if(f.sec === 0){
+    if(typeof renderRoster === 'function') renderRoster();
+    if(typeof renderRosterCtrl === 'function') renderRosterCtrl();
+  }
 
   TEAMS.forEach((t,i)=>{
     const s = getStatus(i, nowMs, f);
