@@ -865,6 +865,19 @@ body.desktop-mode .fr-iframewrap iframe{ height:520px; }
 }
 .fr-mfinput-sm{ flex:0 1 80px; }
 .fr-mfinput:focus{ outline:none; border-color:var(--gold); }
+.fr-vacant-row{
+  flex-basis:100%; display:flex; align-items:center; gap:8px;
+  font-size:12px; color:var(--muted); padding:2px 2px 0;
+}
+.fr-vacant-row input[type="checkbox"]{ width:16px; height:16px; accent-color:#F54249; flex:0 0 auto; }
+#exchangeSubName:disabled{ opacity:0.45; }
+.quick-half-btn{
+  flex:1 1 auto; padding:10px 8px; border-radius:8px; border:1.5px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.05); color:var(--muted); font-weight:600; font-size:12.5px;
+  cursor:pointer; transition:all .15s ease;
+}
+.quick-half-btn-1.active{ background:linear-gradient(135deg,#7cc0ff,#409cff); border-color:#409cff; color:#0b1830; }
+.quick-half-btn-2.active{ background:linear-gradient(135deg,#d3a3ff,#b066ff); border-color:#b066ff; color:#fff; }
 
 /* ---- Time Converter (modern, English) ---- */
 .tc-subtitle{
@@ -1082,6 +1095,101 @@ td.roster-exchange-cell .roster-name-input{
 @keyframes rosterExchangePulse{
   0%, 100% { box-shadow: inset 0 0 0 1.5px #ffb020, 0 0 6px rgba(255,176,32,0.45); }
   50% { box-shadow: inset 0 0 0 1.5px #ffcf5c, 0 0 16px rgba(255,176,32,0.9); }
+}
+/* Night shift split into two halves (before/after 3 AM), each with its own
+   substitute — distinct colors so both are readable on the same roster
+   without opening the exchange list: 1st night = blue, 2nd night = purple. */
+td.roster-exchange-cell-night1{
+  position:relative;
+  background:rgba(64,156,255,0.14);
+  box-shadow: inset 0 0 0 1.5px #409cff, 0 0 10px rgba(64,156,255,0.55);
+  border-radius:6px;
+  animation: rosterNight1Pulse 1.8s ease-in-out infinite;
+}
+td.roster-exchange-cell-night1 .roster-name-input{
+  opacity:0.55;
+  text-decoration: line-through;
+  text-decoration-color: rgba(64,156,255,0.85);
+}
+.roster-exchange-badge-night1{
+  display:block;
+  margin-top:2px;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px;
+  color:#0b1830;
+  background:linear-gradient(135deg, #7cc0ff, #409cff);
+  border-radius:999px;
+  padding:3px 8px;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow: 0 0 8px rgba(64,156,255,0.7);
+}
+@keyframes rosterNight1Pulse{
+  0%, 100% { box-shadow: inset 0 0 0 1.5px #409cff, 0 0 6px rgba(64,156,255,0.45); }
+  50% { box-shadow: inset 0 0 0 1.5px #7cc0ff, 0 0 16px rgba(64,156,255,0.9); }
+}
+td.roster-exchange-cell-night2{
+  position:relative;
+  background:rgba(176,102,255,0.14);
+  box-shadow: inset 0 0 0 1.5px #b066ff, 0 0 10px rgba(176,102,255,0.55);
+  border-radius:6px;
+  animation: rosterNight2Pulse 1.8s ease-in-out infinite;
+}
+td.roster-exchange-cell-night2 .roster-name-input{
+  opacity:0.55;
+  text-decoration: line-through;
+  text-decoration-color: rgba(176,102,255,0.85);
+}
+.roster-exchange-badge-night2{
+  display:block;
+  margin-top:2px;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px;
+  color:#fff;
+  background:linear-gradient(135deg, #d3a3ff, #b066ff);
+  border-radius:999px;
+  padding:3px 8px;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow: 0 0 8px rgba(176,102,255,0.7);
+}
+@keyframes rosterNight2Pulse{
+  0%, 100% { box-shadow: inset 0 0 0 1.5px #b066ff, 0 0 6px rgba(176,102,255,0.45); }
+  50% { box-shadow: inset 0 0 0 1.5px #d3a3ff, 0 0 16px rgba(176,102,255,0.9); }
+}
+/* Vacant position (exchange added with no substitute): red instead of amber,
+   so it reads at a glance as "unstaffed" rather than "swapped to someone". */
+td.roster-vacant-cell{
+  position:relative;
+  background:rgba(245,66,73,0.14);
+  box-shadow: inset 0 0 0 1.5px #F54249, 0 0 10px rgba(245,66,73,0.5);
+  border-radius:6px;
+  animation: rosterVacantPulse 1.8s ease-in-out infinite;
+}
+td.roster-vacant-cell .roster-name-input{
+  opacity:0.55;
+  text-decoration: line-through;
+  text-decoration-color: rgba(245,66,73,0.85);
+}
+.roster-vacant-badge{
+  display:block;
+  margin-top:2px;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px;
+  color:#fff;
+  background:linear-gradient(135deg, #ff6b70, #F54249);
+  border-radius:999px;
+  padding:3px 8px;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow: 0 0 8px rgba(245,66,73,0.65);
+}
+@keyframes rosterVacantPulse{
+  0%, 100% { box-shadow: inset 0 0 0 1.5px #F54249, 0 0 6px rgba(245,66,73,0.4); }
+  50% { box-shadow: inset 0 0 0 1.5px #ff6b70, 0 0 16px rgba(245,66,73,0.85); }
 }
 .exchange-row-today{
   box-shadow: inset 0 0 0 1px #ffb020;
@@ -1473,6 +1581,12 @@ td.roster-exchange-cell .roster-name-input{
       </div>
       <div class="roster-savebar">
         <button id="exchangeModalOpenBtn" type="button" class="roster-save-btn">🔄 Duty Exchange</button>
+        <button type="button" class="tc-icon-btn" id="dutyReminderBellBtn" title="১২ ঘণ্টা আগে Google Calendar রিমাইন্ডার">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .9-.3 1.7-.9 2.4L4.6 16h14.8l-1.5-2c-.6-.7-.9-1.5-.9-2.4V9a5 5 0 0 0-5-5z" stroke="var(--gold-soft)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M10 18.5a2 2 0 0 0 4 0" stroke="var(--gold-soft)" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
       <div class="roster-savedchip" id="rosterSavedChip"></div>
     </div>
@@ -1547,7 +1661,7 @@ td.roster-exchange-cell .roster-name-input{
         <button type="button" class="modal-close" id="exchangeModalClose">✕</button>
       </div>
       <div class="fr-dbsection-hint">
-        নির্দিষ্ট একটা তারিখে, নির্দিষ্ট একটা পজিশনে/টিমে সাময়িকভাবে অন্য কাউকে বসাতে এখানে যোগ করুন — মূল রোস্টার একদম অপরিবর্তিত থাকবে, শুধু ওই তারিখে ওই ঘরে <b>substitute-এর নাম হাইলাইট করে</b> দেখাবে। তারিখ পার হয়ে গেলে এক্সচেঞ্জটা এমনিতেই নিষ্ক্রিয় হয়ে যাবে। সংরক্ষণ/মোছার জন্য রোস্টার এডিটের পাসওয়ার্ড লাগবে।
+        নির্দিষ্ট একটা তারিখে, নির্দিষ্ট একটা পজিশনে/টিমে সাময়িকভাবে অন্য কাউকে বসাতে এখানে যোগ করুন — মূল রোস্টার একদম অপরিবর্তিত থাকবে, শুধু ওই শিফট চলাকালীন ওই ঘরে <b>substitute-এর নাম হাইলাইট করে</b> দেখাবে, শিফট শেষ হলেই আগের অবস্থায় ফিরে যাবে। কেউ ছুটিতে থাকলে বা শেষ মুহূর্তে না আসতে পারলে, নাম না দিয়ে নিচের <b>"পজিশন ফাঁকা থাকবে"</b> টিক দিলে ওই ঘর লাল করে "ফাঁকা" দেখাবে। সংরক্ষণ/মোছার জন্য রোস্টার এডিটের পাসওয়ার্ড লাগবে।
       </div>
       <div class="fr-manualform">
         <input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-09-12">
@@ -1563,7 +1677,13 @@ td.roster-exchange-cell .roster-name-input{
           <option value="3">Team D</option>
           <option value="4">Team E</option>
         </select>
+        <select id="exchangeNightHalf" class="fr-mfinput fr-mfinput-sm" style="display:none;">
+          <option value="">সম্পূর্ণ রাত (৮:৩০ PM–৭:৩০ AM)</option>
+          <option value="1">১ম নাইট (৮:৩০ PM–৩:০০ AM)</option>
+          <option value="2">২য় নাইট (৩:০০ AM–৭:৩০ AM)</option>
+        </select>
         <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="যিনি ডিউটি করবেন (substitute name)">
+        <label class="fr-vacant-row"><input type="checkbox" id="exchangeVacant"> কেউ ডিউটি করবেন না — এই পজিশন ফাঁকা থাকবে (ছুটি/অসুস্থতা ইত্যাদি)</label>
         <button id="exchangeAddBtn" type="button" class="fr-dbimport">+ এক্সচেঞ্জ যোগ করুন</button>
       </div>
       <div class="fr-dbstatus" id="exchangeCurrentHint">বর্তমানে এই ঘরে (রোস্টার অনুযায়ী) আছে: Moinul-2</div>
@@ -1572,6 +1692,28 @@ td.roster-exchange-cell .roster-name-input{
           <thead><tr><th>তারিখ</th><th>টেবিল</th><th>পজিশন</th><th>টিম</th><th>Substitute</th><th></th></tr></thead>
           <tbody id="exchangeListTbody"><tr class=""><td>2026-09-10</td><td>Aerodrome Assistant</td><td>RCC</td><td>Team B</td><td>tarif</td><td><button type="button" class="exchange-del-btn" data-date="2026-09-10" data-idx="0">✕</button></td></tr></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="quickExchangeModalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" id="quickExchangeTitle">🔄 এক্সচেঞ্জ</div>
+        <button type="button" class="modal-close" id="quickExchangeClose">✕</button>
+      </div>
+      <div class="fr-dbstatus" id="quickExchangeSub"></div>
+      <div class="fr-manualform" id="quickExchangeHalfRow" style="display:none;">
+        <button type="button" class="quick-half-btn quick-half-btn-1" data-half="1" id="quickHalf1Btn">১ম নাইট (৮:৩০ PM–৩:০০ AM)</button>
+        <button type="button" class="quick-half-btn quick-half-btn-2" data-half="2" id="quickHalf2Btn">২য় নাইট (৩:০০ AM–৭:৩০ AM)</button>
+      </div>
+      <div class="fr-manualform">
+        <input type="text" id="quickExchangeSubName" class="fr-mfinput" placeholder="যিনি ডিউটি করবেন (substitute name)">
+        <label class="fr-vacant-row"><input type="checkbox" id="quickExchangeVacant"> কেউ ডিউটি করবেন না — ফাঁকা থাকবে</label>
+      </div>
+      <div class="fr-manualform">
+        <button id="quickExchangeSaveBtn" type="button" class="fr-dbimport">✓ সেভ করুন</button>
+        <button id="quickExchangeRemoveBtn" type="button" class="fr-dbimport" style="background:rgba(245,66,73,0.18);color:#F54249;">🗑 মুছুন</button>
       </div>
     </div>
   </div>
@@ -2611,6 +2753,13 @@ function initCollapsePanels(){
 
 /* ---- Duty roster: editable position ↔ name grids, persisted to localStorage + exportable ---- */
 const ROSTER_PASSWORD = "tarif12345^";
+/* Paired with a real Firebase Authentication (Email/Password) account —
+   see requireRosterAuth() below. The email itself isn't secret (same
+   spirit as a Firebase apiKey); what matters is that only someone who
+   knows ROSTER_PASSWORD can actually complete this sign-in, and Firebase
+   verifies that server-side — unlike the plain client-side compare this
+   function also does, which is visible to anyone who views page source. */
+const ROSTER_ADMIN_EMAIL = "admin@hsia-atm-tarif.app";
 let rosterUnlocked = false;
 
 function requireRosterAuth(){
@@ -2620,6 +2769,18 @@ function requireRosterAuth(){
   if(p === ROSTER_PASSWORD){
     rosterUnlocked = true;
     unlockAllRosterInputs();
+    // Fire-and-forget: establishes a real, server-verified Firebase Auth
+    // session so the Realtime Database Rules can require
+    // auth.token.firebase.sign_in_provider === 'password' for writes —
+    // a check that can't be bypassed just by reading this file's source,
+    // unlike a pure client-side password compare. Not awaited so the UI
+    // doesn't wait on a network round-trip; if it fails (e.g. the admin
+    // account isn't set up in Firebase yet), the write itself will just
+    // get rejected by the Rules and show up in the sync status.
+    if(typeof firebase !== 'undefined' && firebase.auth){
+      firebase.auth().signInWithEmailAndPassword(ROSTER_ADMIN_EMAIL, ROSTER_PASSWORD)
+        .catch(err=>{ console.warn('Firebase admin sign-in failed (writes may be rejected by Rules):', err && err.message); });
+    }
     return true;
   }
   alert('পাসওয়ার্ড ভুল হয়েছে।');
@@ -2695,15 +2856,31 @@ function loadExchanges(){
   return {};
 }
 function saveExchangesData(obj){ try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); }
-/* Removes any date-keys strictly before today (Dhaka-local) from an
-   EXCHANGES object, in place. Returns true if anything was removed,
-   so callers can decide whether to persist/re-render/push. */
+/* Removes exchange entries whose underlying shift has actually ended —
+   not just "date-key isn't today anymore". This matters for Night shifts:
+   an exchange dated "yesterday" can still be running until 7:30 AM today
+   (or until 3:00 AM / from 3:00 AM for a split night-half), so a plain
+   date comparison would wipe it out right at midnight while it's still
+   live — exactly the bug where 1st/2nd-night swaps vanished at 12 AM
+   even though the night shift itself runs until 7:30 AM. */
 function pruneExpiredExchanges(obj){
   if(!obj || typeof obj !== 'object') return false;
+  const now = Date.now();
   const today = todayDateKey();
   let changed = false;
   Object.keys(obj).forEach(dateKey=>{
-    if(dateKey < today){ delete obj[dateKey]; changed = true; }
+    const list = obj[dateKey];
+    if(!Array.isArray(list)){ delete obj[dateKey]; changed = true; return; }
+    const kept = list.filter(ex=>{
+      const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
+      // No computable window (e.g. bad/legacy data, or that team is Off
+      // that date) — fall back to plain date comparison so it still
+      // eventually clears instead of lingering forever.
+      if(!win) return dateKey >= today;
+      return win.end > now;
+    });
+    if(kept.length !== list.length) changed = true;
+    if(kept.length) obj[dateKey] = kept; else { delete obj[dateKey]; changed = true; }
   });
   return changed;
 }
@@ -2716,12 +2893,22 @@ function todayExchangesFor(tableKey){
 /* Given an exchange entry's date-key and team, returns the Dhaka-local
    {start,end} instant window of that team's actual shift on that date
    (or null if that team is Off that day) — reusing the same rotation
-   rules as the live "who's on duty" board. */
-function exchangeShiftWindow(dateKey, team){
+   rules as the live "who's on duty" board. If the underlying shift is
+   Night and a half ('1' or '2') is given, returns just that half's
+   window (split at 3:00 AM) instead of the full 8:30 PM–7:30 AM span. */
+function exchangeShiftWindow(dateKey, team, half){
   const [y,m,day] = (dateKey||'').split('-').map(Number);
   if(!y || !m || !day) return null;
   const st = shiftFor(team, y, m-1, day);
   if(st === 'Off') return null;
+  if(st === 'Night' && (half === '1' || half === 1)){
+    const nd = addDays(y, m-1, day, 1);
+    return { start: dhakaInstant(y, m-1, day, 20, 30), end: dhakaInstant(nd.y, nd.m, nd.day, 3, 0) };
+  }
+  if(st === 'Night' && (half === '2' || half === 2)){
+    const nd = addDays(y, m-1, day, 1);
+    return { start: dhakaInstant(nd.y, nd.m, nd.day, 3, 0), end: dhakaInstant(nd.y, nd.m, nd.day, 7, 30) };
+  }
   return windowFor(st, y, m-1, day);
 }
 /* Exchanges that should currently be shown on a roster table: only
@@ -2734,11 +2921,269 @@ function activeExchangesFor(tableKey){
   Object.keys(EXCHANGES).forEach(dateKey=>{
     (EXCHANGES[dateKey] || []).forEach(ex=>{
       if(ex.table !== tableKey) return;
-      const win = exchangeShiftWindow(dateKey, +ex.team);
+      const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
       if(win && now >= win.start && now < win.end) out.push(ex);
     });
   });
   return out;
+}
+
+/* ---------- "My Duty Reminders" — shared event list ----------
+   Used both by the .ics export (works everywhere, needs a manual
+   import) and by the direct Google Calendar sync (one click, no
+   import step, but only works for Google Calendar — see syncToGoogleCalendar). */
+function buildMyDutyEvents(daysAhead){
+  const now = Date.now();
+  const f = nowDhakaFields();
+  const events = [];
+
+  // 1) my own team's upcoming shifts (based on the "আমার টিম" picker) — no login needed
+  for(let d=-1; d<=daysAhead; d++){
+    const cd = addDays(f.y, f.m, f.day, d);
+    const st = shiftFor(YOU_INDEX, cd.y, cd.m, cd.day);
+    if(st === 'Off') continue;
+    const win = windowFor(st, cd.y, cd.m, cd.day);
+    if(!win || win.end <= now) continue;
+    const dk = `${cd.y}${String(cd.m+1).padStart(2,'0')}${String(cd.day).padStart(2,'0')}`;
+    events.push({
+      uid: `duty-${TEAMS[YOU_INDEX]}-${dk}@hsia-atm-shift-tracker`,
+      start: win.start, end: win.end,
+      summary: `🛫 ডিউটি — Team ${TEAMS[YOU_INDEX]} (${st})`,
+      desc: 'HSIA ATM Live Shift Tracker থেকে অটো-জেনারেটেড রিমাইন্ডার।'
+    });
+  }
+
+  // 2) exchanges assigned to me by name (must be logged in)
+  const session = (typeof loadAuthSession === 'function') ? loadAuthSession() : null;
+  if(session && session.displayName){
+    const myName = session.displayName.trim().toLowerCase();
+    Object.keys(EXCHANGES).forEach(dateKey=>{
+      (EXCHANGES[dateKey] || []).forEach(ex=>{
+        if(ex.vacant) return;
+        if((ex.subName||'').trim().toLowerCase() !== myName) return;
+        const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
+        if(!win || win.end <= now) return;
+        const halfTag = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+        events.push({
+          uid: `exchange-${dateKey}-${ex.table}-${(ex.pos||'').replace(/[^a-zA-Z0-9]/g,'')}-${ex.team}-${ex.nightHalf||'full'}@hsia-atm-shift-tracker`,
+          start: win.start, end: win.end,
+          summary: `🔄 এক্সচেঞ্জ ডিউটি — ${ex.pos} (Team ${TEAMS[+ex.team]})${halfTag}`,
+          desc: 'আপনি অন্য কারো জায়গায় এই ডিউটিতে আছেন।'
+        });
+      });
+    });
+  }
+
+  events.sort((a,b)=>a.start-b.start);
+  return events;
+}
+/* A webpage can't reach into the phone's native Alarm app — there's no
+   browser API for that. The reliable, cross-platform bridge is an
+   .ics (iCalendar) file: every phone's Calendar app already knows how
+   to import one and fire its own notifications/alarms for each event,
+   completely offline, without this page needing to stay open. */
+function toICSDateUTC(ms){
+  return new Date(ms).toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+}
+function icsEscape(s){
+  return String(s==null ? '' : s)
+    .replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+function buildMyDutyICS(daysAhead, leadMinutes){
+  const events = buildMyDutyEvents(daysAhead);
+  if(!events.length) return null;
+
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HSIA ATM Live Shift Tracker//BN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  events.forEach(e=>{
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:' + e.uid);
+    lines.push('DTSTAMP:' + toICSDateUTC(Date.now()));
+    lines.push('DTSTART:' + toICSDateUTC(e.start));
+    lines.push('DTEND:' + toICSDateUTC(e.end));
+    lines.push('SUMMARY:' + icsEscape(e.summary));
+    lines.push('DESCRIPTION:' + icsEscape(e.desc));
+    lines.push('BEGIN:VALARM');
+    lines.push('ACTION:DISPLAY');
+    lines.push('DESCRIPTION:Reminder');
+    lines.push('TRIGGER:-PT' + leadMinutes + 'M');
+    lines.push('END:VALARM');
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+function downloadMyDutyICS(){
+  // Own-team shifts never need login — only exchange-matching does (it
+  // needs a display name to match against). Default reminder: 12 hours
+  // ahead, since that's advance-notice enough to prepare for a shift,
+  // not just a last-minute nudge.
+  const hoursStr = prompt('শিফট শুরুর কত ঘণ্টা আগে রিমাইন্ডার চান? (লগইন লাগবে না)', '12');
+  if(hoursStr === null) return;
+  const hours = Math.max(0, parseFloat(hoursStr) || 12);
+  const lead = Math.round(hours * 60);
+  const ics = buildMyDutyICS(60, lead);
+  if(!ics){
+    alert('আগামী দিনগুলোতে আপনার কোনো ডিউটি বা আপনার নামে এক্সচেঞ্জ পাওয়া যায়নি। (এক্সচেঞ্জ ধরতে হলে উপরে লগইন করা থাকতে হবে, এবং নামটা এক্সচেঞ্জে দেওয়া সাবস্টিটিউট নামের সাথে মিলতে হবে।)');
+    return;
+  }
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'amar-duty-reminders.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+/* ---------- Direct Google Calendar sync (one click, no download/import) ----------
+   This is the ONLY way a webpage can push events straight into a real
+   calendar app with no manual import step — and it only works for
+   Google Calendar (there's no equivalent public write API for Apple's
+   or Outlook's personal calendars from a plain webpage). It needs:
+     1) This page served over https (not opened as a local file — Google
+        Sign-In refuses file:// origins).
+     2) A Google Cloud OAuth Client ID that the admin creates once (see
+        the "⚙️ সেটআপ" link next to the sync button) and whose Authorized
+        JavaScript origin matches exactly where this page is hosted.
+   Each person who clicks "সিঙ্ক করুন" signs in with THEIR OWN Google
+   account and grants calendar access just for themselves — nobody
+   else's events touch anybody else's calendar. */
+const GCAL_CLIENT_ID_KEY = 'HSIA_GCAL_CLIENT_ID_V1';
+const GCAL_TOKEN_CACHE_KEY = 'HSIA_GCAL_TOKEN_CACHE_V1';
+function loadGCalClientId(){ try{ return localStorage.getItem(GCAL_CLIENT_ID_KEY) || ''; }catch(e){ return ''; } }
+function saveGCalClientId(id){ try{ localStorage.setItem(GCAL_CLIENT_ID_KEY, id); }catch(e){} }
+
+function ensureGoogleIdentityLoaded(){
+  return new Promise((resolve, reject)=>{
+    if(window.google && window.google.accounts && window.google.accounts.oauth2){ resolve(); return; }
+    const existing = document.getElementById('gsiScript');
+    if(existing){
+      existing.addEventListener('load', ()=>resolve());
+      existing.addEventListener('error', ()=>reject(new Error('Google script load failed')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.id = 'gsiScript';
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('Google script load failed'));
+    document.head.appendChild(s);
+  });
+}
+
+function getGCalAccessToken(clientId){
+  // Reuse a still-valid cached token first — this is what actually makes
+  // repeat syncs feel like "auto login": no popup at all until the token
+  // expires (~1 hour), and even then Google's own account chooser will
+  // already show this device's signed-in Gmail account(s) to tap, not a
+  // password form — so it's effectively "Continue with Gmail" already.
+  try{
+    const cached = JSON.parse(localStorage.getItem(GCAL_TOKEN_CACHE_KEY) || 'null');
+    if(cached && cached.access_token && cached.expires_at > Date.now() + 60000){
+      return Promise.resolve(cached.access_token);
+    }
+  }catch(e){}
+  return new Promise((resolve, reject)=>{
+    try{
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        // .owned (not the broader .events) — this app never needs to see or
+        // touch calendars someone has shared with you, only your own.
+        scope: 'https://www.googleapis.com/auth/calendar.events.owned',
+        callback: (resp)=>{
+          if(resp && resp.access_token){
+            try{
+              localStorage.setItem(GCAL_TOKEN_CACHE_KEY, JSON.stringify({
+                access_token: resp.access_token,
+                expires_at: Date.now() + ((resp.expires_in || 3500) * 1000)
+              }));
+            }catch(e){}
+            resolve(resp.access_token);
+          } else {
+            reject(new Error(resp && resp.error ? resp.error : 'no access token'));
+          }
+        }
+      });
+      // prompt:'' lets Google skip the account-chooser UI entirely when
+      // this browser already has one authorized Google session for this
+      // app — the closest thing to a true "auto continue with Gmail".
+      tokenClient.requestAccessToken({ prompt: '' });
+    }catch(e){ reject(e); }
+  });
+}
+
+async function syncToGoogleCalendar(fixedHours){
+  const clientId = loadGCalClientId();
+  if(!clientId){
+    alert('আগে Google Calendar sync সেটআপ করতে হবে (শুধু অ্যাডমিন একবার করবেন)।');
+    return;
+  }
+  if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
+    alert('Google Calendar সিঙ্ক শুধু https দিয়ে হোস্ট করা পেজে কাজ করে (লোকাল ফাইল হিসেবে খোলা .html-এ কাজ করবে না)। GitHub Pages বা এমন কোনো https হোস্টিং-এ এই অ্যাপটা রাখতে হবে।');
+    return;
+  }
+  let hours;
+  if(typeof fixedHours === 'number'){
+    hours = Math.max(0, fixedHours);
+  } else {
+    const hoursStr = prompt('শিফট শুরুর কত ঘণ্টা আগে রিমাইন্ডার চান?', '12');
+    if(hoursStr === null) return;
+    hours = Math.max(0, parseFloat(hoursStr) || 12);
+  }
+  const leadMinutes = Math.round(hours * 60);
+
+  const events = buildMyDutyEvents(60);
+  if(!events.length){
+    alert('আগামী দিনগুলোতে আপনার কোনো ডিউটি বা আপনার নামে এক্সচেঞ্জ পাওয়া যায়নি।');
+    return;
+  }
+
+  const btn = document.getElementById('gcalSyncBtn');
+  const bellBtn = document.getElementById('dutyReminderBellBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ সিঙ্ক হচ্ছে...'; }
+  if(bellBtn){ bellBtn.disabled = true; bellBtn.style.opacity = '.5'; }
+  try{
+    await ensureGoogleIdentityLoaded();
+    const token = await getGCalAccessToken(clientId);
+    let ok = 0, failed = 0;
+    for(const e of events){
+      try{
+        const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/import', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iCalUID: e.uid,
+            summary: e.summary,
+            description: e.desc,
+            start: { dateTime: new Date(e.start).toISOString(), timeZone: 'Asia/Dhaka' },
+            end: { dateTime: new Date(e.end).toISOString(), timeZone: 'Asia/Dhaka' },
+            reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: leadMinutes }] }
+          })
+        });
+        if(res.ok) ok++; else failed++;
+      }catch(e2){ failed++; }
+    }
+    // Re-running this later (same uids) updates the same events instead of
+    // duplicating them — events/import upserts by iCalUID.
+    alert(`✅ Google Calendar-এ ${ok}টা ইভেন্ট সিঙ্ক হয়েছে।` + (failed ? ` (${failed}টা ব্যর্থ হয়েছে)` : '') + '\nপরে আবার সিঙ্ক করলে ডুপ্লিকেট হবে না, শুধু আপডেট হবে।');
+  }catch(err){
+    alert('Google Calendar সিঙ্ক করা যায়নি: ' + (err && err.message ? err.message : err) + '\nClient ID এবং এই পেজের হোস্টিং ঠিকানা (Authorized JavaScript origin) মিলছে কিনা দেখুন।');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '🗓️ Continue with Gmail — Calendar-এ সিঙ্ক করুন'; }
+    if(bellBtn){ bellBtn.disabled = false; bellBtn.style.opacity = ''; }
+  }
+}
+
+function setupGCalClientId(){
+  if(!requireRosterAuth()) return;
+  const current = loadGCalClientId();
+  const id = prompt('Google Cloud Console থেকে বানানো OAuth Client ID পেস্ট করুন (একবারই, সব ইউজারের জন্য):', current);
+  if(id === null) return;
+  saveGCalClientId(id.trim());
+  alert(id.trim() ? 'সেভ হয়েছে। এখন "🗓️ Continue with Gmail" বাটনে ক্লিক করলে কাজ করবে।' : 'Client ID খালি রাখা হয়েছে — সিঙ্ক বাটন কাজ করবে না যতক্ষণ না আবার সেট করা হয়।');
 }
 
 /* ============================================================
@@ -3080,6 +3525,9 @@ function initAuthPanel(){
   const exchangeModalOverlay = document.getElementById('exchangeModalOverlay');
   if(exchangeModalOverlay) exchangeModalOverlay.addEventListener('click', (e)=>{ if(e.target === exchangeModalOverlay) closeModal('exchangeModalOverlay'); });
 
+  const dutyReminderBellBtn = document.getElementById('dutyReminderBellBtn');
+  if(dutyReminderBellBtn) dutyReminderBellBtn.addEventListener('click', ()=> syncToGoogleCalendar(12));
+
   function tcPrefillNow(){
     const tcDate = document.getElementById('tcDate');
     const tcHour = document.getElementById('tcHour');
@@ -3200,8 +3648,20 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
     const cells = TEAMS.map((t, ci)=>{
       const val = (row.names[ci] || '').replace(/"/g,'&quot;');
       const ex = activeEx.find(x => x.pos === row.pos && +x.team === ci);
-      const cellClass = ex ? ' class="roster-exchange-cell"' : '';
-      const badge = ex ? `<div class="roster-exchange-badge" title="মূল: ${(row.names[ci]||'—').replace(/"/g,'&quot;')}">🔄 ${(ex.subName||'').replace(/</g,'&lt;')}</div>` : '';
+      const origTitle = (row.names[ci]||'—').replace(/"/g,'&quot;');
+      const cellClassName = !ex ? '' : ex.vacant ? 'roster-vacant-cell'
+        : ex.nightHalf === '1' ? 'roster-exchange-cell-night1'
+        : ex.nightHalf === '2' ? 'roster-exchange-cell-night2'
+        : 'roster-exchange-cell';
+      const cellClass = cellClassName ? ` class="${cellClassName}"` : '';
+      const halfTag = ex && ex.nightHalf === '1' ? ' (১ম নাইট)' : ex && ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+      const badgeClassName = !ex ? '' : ex.vacant ? 'roster-vacant-badge'
+        : ex.nightHalf === '1' ? 'roster-exchange-badge-night1'
+        : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
+        : 'roster-exchange-badge';
+      const badge = !ex ? '' : (ex.vacant
+        ? `<div class="${badgeClassName}" title="মূল: ${origTitle}">🚫 ফাঁকা</div>`
+        : `<div class="${badgeClassName}" title="মূল: ${origTitle}${halfTag}">🔄 ${(ex.subName||'').replace(/</g,'&lt;')}${halfTag}</div>`);
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
@@ -3222,6 +3682,178 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       onChange(data);
     });
   });
+}
+
+/* ---------- Long-press on a roster name → quick exchange popup ----------
+   Faster path than the full "🔄 Duty Exchange" modal for the common case:
+   swapping someone on TODAY's board. Bound once per tbody via delegation
+   (pointerdown/up with a hold timer) so it keeps working across re-renders,
+   since renderRosterTable only replaces tbody.innerHTML, never the tbody
+   element itself. Skipped while that cell is unlocked for base-roster
+   editing (readOnly === false), so it doesn't fight text selection there.
+   The full modal (with its own date picker) still covers planning a swap
+   for a future date — this is only ever "today". */
+let quickExchangeCtx = null;
+function attachLongPressForRoster(tbodyId, tableKey){
+  const tbody = document.getElementById(tbodyId);
+  if(!tbody || tbody.dataset.longPressBound) return;
+  tbody.dataset.longPressBound = '1';
+  const LONG_PRESS_MS = 650;
+  let timer = null, pressedInput = null, moved = false;
+
+  function cancelPress(){ if(timer){ clearTimeout(timer); timer = null; } pressedInput = null; }
+
+  tbody.addEventListener('pointerdown', (e)=>{
+    const inp = e.target.closest && e.target.closest('.roster-name-input');
+    if(!inp || inp.readOnly === false) return;
+    pressedInput = inp; moved = false;
+    timer = setTimeout(()=>{
+      if(pressedInput === inp && !moved){
+        if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
+        openQuickExchange(tableKey, +inp.dataset.ri, +inp.dataset.ci);
+      }
+      cancelPress();
+    }, LONG_PRESS_MS);
+  });
+  tbody.addEventListener('pointermove', ()=>{ moved = true; }, {passive:true});
+  ['pointerup','pointerleave','pointercancel'].forEach(evt=>{
+    tbody.addEventListener(evt, cancelPress, {passive:true});
+  });
+  tbody.addEventListener('contextmenu', (e)=>{
+    if(e.target.closest('.roster-name-input')) e.preventDefault();
+  });
+}
+
+function setQuickHalf(half){
+  quickExchangeCtx.half = half;
+  const half1Btn = document.getElementById('quickHalf1Btn');
+  const half2Btn = document.getElementById('quickHalf2Btn');
+  if(half1Btn) half1Btn.classList.toggle('active', half === '1');
+  if(half2Btn) half2Btn.classList.toggle('active', half === '2');
+}
+
+function openQuickExchange(tableKey, ri, ci){
+  const data = tableKey === 'rosterCtrl' ? ROSTER_CTRL : ROSTER;
+  const row = data[ri];
+  if(!row) return;
+  const dateKey = todayDateKey();
+  const [y,m,day] = dateKey.split('-').map(Number);
+  const st = shiftFor(ci, y, m-1, day);
+  if(st === 'Off'){
+    alert('আজ Team ' + TEAMS[ci] + '-এর কোনো ডিউটি নেই, তাই এক্সচেঞ্জ যোগ করা যাবে না।');
+    return;
+  }
+  const isNight = st === 'Night';
+  const existingList = (EXCHANGES[dateKey] || []).filter(x => x.table===tableKey && x.pos===row.pos && +x.team===ci);
+
+  // Default to whichever night-half is current/next, so opening it during
+  // the evening lines up with 1st night, and after 3 AM with 2nd night.
+  let half = '';
+  if(isNight){
+    const win1 = exchangeShiftWindow(dateKey, ci, '1');
+    half = (win1 && Date.now() < win1.end) ? '1' : '2';
+  }
+
+  quickExchangeCtx = { table: tableKey, pos: row.pos, team: ci, date: dateKey, isNight };
+
+  const titleEl = document.getElementById('quickExchangeTitle');
+  const subEl = document.getElementById('quickExchangeSub');
+  const halfRow = document.getElementById('quickExchangeHalfRow');
+  const half1Btn = document.getElementById('quickHalf1Btn');
+  const half2Btn = document.getElementById('quickHalf2Btn');
+  const nameInput = document.getElementById('quickExchangeSubName');
+  const vacantCheck = document.getElementById('quickExchangeVacant');
+  const removeBtn = document.getElementById('quickExchangeRemoveBtn');
+  if(!titleEl || !subEl || !nameInput || !vacantCheck || !removeBtn) return;
+
+  titleEl.textContent = '🔄 ' + row.pos + ' — Team ' + TEAMS[ci];
+  subEl.textContent = 'আজ (' + dateKey + ') — বর্তমান রোস্টার নাম: ' + (row.names[ci] || '—');
+
+  function fillFromEntry(ex){
+    nameInput.value = ex ? (ex.subName||'') : '';
+    vacantCheck.checked = !!(ex && ex.vacant);
+    nameInput.disabled = vacantCheck.checked;
+    removeBtn.style.display = ex ? '' : 'none';
+  }
+
+  if(isNight){
+    halfRow.style.display = '';
+    setQuickHalf(half);
+    if(half1Btn) half1Btn.onclick = ()=>{ setQuickHalf('1'); fillFromEntry(existingList.find(x=>(x.nightHalf||'')==='1')); };
+    if(half2Btn) half2Btn.onclick = ()=>{ setQuickHalf('2'); fillFromEntry(existingList.find(x=>(x.nightHalf||'')==='2')); };
+    fillFromEntry(existingList.find(x => (x.nightHalf||'') === half));
+  } else {
+    halfRow.style.display = 'none';
+    quickExchangeCtx.half = '';
+    fillFromEntry(existingList.find(x => !x.nightHalf));
+  }
+
+  openModal('quickExchangeModalOverlay');
+}
+
+function commitExchangeEntry(dateKey, entry){
+  if(!EXCHANGES[dateKey]) EXCHANGES[dateKey] = [];
+  EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===entry.table && x.pos===entry.pos && x.team===entry.team && (x.nightHalf||'')===(entry.nightHalf||'')));
+  EXCHANGES[dateKey].push(entry);
+  saveExchangesData(EXCHANGES);
+  renderExchangeList();
+  renderRoster();
+  renderRosterCtrl();
+  checkMyExchangeNotifications();
+}
+function removeExchangeEntry(dateKey, table, pos, team, nightHalf){
+  if(!EXCHANGES[dateKey]) return;
+  EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===table && x.pos===pos && +x.team===team && (x.nightHalf||'')===(nightHalf||'')));
+  if(!EXCHANGES[dateKey].length) delete EXCHANGES[dateKey];
+  saveExchangesData(EXCHANGES);
+  renderExchangeList();
+  renderRoster();
+  renderRosterCtrl();
+  checkMyExchangeNotifications();
+}
+
+function initQuickExchangeModal(){
+  const closeBtn = document.getElementById('quickExchangeClose');
+  const overlay = document.getElementById('quickExchangeModalOverlay');
+  const saveBtn = document.getElementById('quickExchangeSaveBtn');
+  const removeBtn = document.getElementById('quickExchangeRemoveBtn');
+  const vacantCheck = document.getElementById('quickExchangeVacant');
+  const nameInput = document.getElementById('quickExchangeSubName');
+  if(!overlay) return;
+
+  if(closeBtn) closeBtn.addEventListener('click', ()=> closeModal('quickExchangeModalOverlay'));
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal('quickExchangeModalOverlay'); });
+
+  if(vacantCheck && nameInput){
+    vacantCheck.addEventListener('change', ()=>{
+      nameInput.disabled = vacantCheck.checked;
+      if(vacantCheck.checked) nameInput.value = '';
+    });
+  }
+
+  if(saveBtn){
+    saveBtn.addEventListener('click', ()=>{
+      if(!quickExchangeCtx) return;
+      if(!requireRosterAuth()) return;
+      const vacant = !!(vacantCheck && vacantCheck.checked);
+      const subName = vacant ? '' : (nameInput.value || '').trim();
+      if(!vacant && !subName){ alert('Substitute-এর নাম দিন, অথবা "ফাঁকা" টিক দিন।'); return; }
+      const entry = {
+        table: quickExchangeCtx.table, pos: quickExchangeCtx.pos, team: quickExchangeCtx.team,
+        subName, vacant, nightHalf: quickExchangeCtx.isNight ? (quickExchangeCtx.half || '') : ''
+      };
+      commitExchangeEntry(quickExchangeCtx.date, entry);
+      closeModal('quickExchangeModalOverlay');
+    });
+  }
+  if(removeBtn){
+    removeBtn.addEventListener('click', ()=>{
+      if(!quickExchangeCtx) return;
+      if(!requireRosterAuth()) return;
+      removeExchangeEntry(quickExchangeCtx.date, quickExchangeCtx.table, quickExchangeCtx.pos, quickExchangeCtx.team, quickExchangeCtx.isNight ? (quickExchangeCtx.half||'') : '');
+      closeModal('quickExchangeModalOverlay');
+    });
+  }
 }
 
 function renderRoster(){
@@ -3540,6 +4172,8 @@ function initAddRow(addBtnId, addInputId, data, onChange, onRender){
 function initRoster(){
   renderRoster();
   renderRosterCtrl();
+  attachLongPressForRoster('rosterBodyRows', 'roster');
+  attachLongPressForRoster('rosterBodyRowsCtrl', 'rosterCtrl');
   initAddRow('rosterAddBtn', 'rosterNewPos', ROSTER, saveRoster, renderRoster);
   initAddRow('rosterAddBtnCtrl', 'rosterNewPosCtrl', ROSTER_CTRL, saveRosterCtrl, renderRosterCtrl);
 
@@ -3599,13 +4233,29 @@ function updateExchangeCurrentHint(){
   const tableSel = document.getElementById('exchangeTable');
   const posSel = document.getElementById('exchangePos');
   const teamSel = document.getElementById('exchangeTeam');
+  const dateInput = document.getElementById('exchangeDate');
   const hint = document.getElementById('exchangeCurrentHint');
+  const halfSel = document.getElementById('exchangeNightHalf');
   if(!tableSel || !posSel || !teamSel || !hint) return;
   const data = tableSel.value === 'rosterCtrl' ? ROSTER_CTRL : ROSTER;
   const row = data.find(r => r.pos === posSel.value);
   const ci = +teamSel.value;
   const current = row ? (row.names[ci] || '—') : '—';
   hint.textContent = 'বর্তমানে এই ঘরে (রোস্টার অনুযায়ী) আছে: ' + current;
+
+  /* The 1st/2nd-night split only makes sense when this team is actually
+     on a Night shift on the selected date — hide the picker otherwise
+     (and reset it to "full" so a stray leftover value can't sneak in). */
+  if(halfSel && dateInput && dateInput.value){
+    const [y,m,day] = dateInput.value.split('-').map(Number);
+    const st = (y && m && day) ? shiftFor(ci, y, m-1, day) : null;
+    if(st === 'Night'){
+      halfSel.style.display = '';
+    } else {
+      halfSel.style.display = 'none';
+      halfSel.value = '';
+    }
+  }
 }
 
 function renderExchangeList(){
@@ -3617,10 +4267,12 @@ function renderExchangeList(){
   dates.forEach(dateKey=>{
     (EXCHANGES[dateKey] || []).forEach((ex, idx)=>{
       const tableLabel = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
-      const teamLabel = 'Team ' + (TEAMS[ex.team] || '?');
+      const halfLabel = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+      const teamLabel = 'Team ' + (TEAMS[ex.team] || '?') + halfLabel;
       const isToday = dateKey === today;
+      const subCell = ex.vacant ? '<span style="color:#F54249;font-weight:600;">🚫 ফাঁকা (Vacant)</span>' : (ex.subName||'').replace(/</g,'&lt;');
       rows.push(
-        `<tr class="${isToday ? 'exchange-row-today' : ''}"><td>${dateKey}${isToday ? ' (আজ)' : ''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>${teamLabel}</td><td>${(ex.subName||'').replace(/</g,'&lt;')}</td><td><button type="button" class="exchange-del-btn" data-date="${dateKey}" data-idx="${idx}">✕</button></td></tr>`
+        `<tr class="${isToday ? 'exchange-row-today' : ''}"><td>${dateKey}${isToday ? ' (আজ)' : ''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>${teamLabel}</td><td>${subCell}</td><td><button type="button" class="exchange-del-btn" data-date="${dateKey}" data-idx="${idx}">✕</button></td></tr>`
       );
     });
   });
@@ -3661,7 +4313,9 @@ function initExchangePanel(){
   const tableSel = document.getElementById('exchangeTable');
   const posSel = document.getElementById('exchangePos');
   const teamSel = document.getElementById('exchangeTeam');
+  const halfSel = document.getElementById('exchangeNightHalf');
   const subInput = document.getElementById('exchangeSubName');
+  const vacantCheck = document.getElementById('exchangeVacant');
   const addBtn = document.getElementById('exchangeAddBtn');
   if(!dateInput) return;
 
@@ -3673,6 +4327,25 @@ function initExchangePanel(){
   tableSel.addEventListener('change', populateExchangePositions);
   posSel.addEventListener('change', updateExchangeCurrentHint);
   teamSel.addEventListener('change', updateExchangeCurrentHint);
+  dateInput.addEventListener('change', updateExchangeCurrentHint);
+
+  /* "Position stays vacant" toggle: when checked, the substitute-name
+     field isn't needed (and is cleared/disabled) — this covers leave,
+     sudden sickness, or anyone else simply not showing up, where the
+     admin wants the roster to show that seat as unstaffed rather than
+     picking a stand-in name. */
+  if(vacantCheck && subInput){
+    vacantCheck.addEventListener('change', ()=>{
+      if(vacantCheck.checked){
+        subInput.value = '';
+        subInput.disabled = true;
+        subInput.placeholder = 'ফাঁকা থাকবে — নাম লাগবে না';
+      } else {
+        subInput.disabled = false;
+        subInput.placeholder = 'যিনি ডিউটি করবেন (substitute name)';
+      }
+    });
+  }
 
   if(addBtn){
     addBtn.addEventListener('click', ()=>{
@@ -3680,14 +4353,22 @@ function initExchangePanel(){
       const dateKey = dateInput.value;
       if(!dateKey){ alert('একটা তারিখ দিন।'); return; }
       if(dateKey < today){ alert('আজকের আগের তারিখে এক্সচেঞ্জ দেওয়া যাবে না।'); return; }
-      const subName = (subInput.value || '').trim();
-      if(!subName){ alert('Substitute-এর নাম দিন।'); return; }
-      const entry = { table: tableSel.value, pos: posSel.value, team: +teamSel.value, subName };
+      const vacant = !!(vacantCheck && vacantCheck.checked);
+      const subName = vacant ? '' : (subInput.value || '').trim();
+      if(!vacant && !subName){ alert('Substitute-এর নাম দিন, অথবা "পজিশন ফাঁকা থাকবে" টিক দিন।'); return; }
+      const nightHalf = (halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
+      const entry = { table: tableSel.value, pos: posSel.value, team: +teamSel.value, subName, vacant, nightHalf };
       if(!EXCHANGES[dateKey]) EXCHANGES[dateKey] = [];
-      EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===entry.table && x.pos===entry.pos && x.team===entry.team));
+      // Same table+pos+team+half combo replaces any earlier entry for it,
+      // but a 1st-night and 2nd-night entry for the same position/team/date
+      // are different halves and must both be able to exist at once.
+      EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===entry.table && x.pos===entry.pos && x.team===entry.team && (x.nightHalf||'')===(entry.nightHalf||'')));
       EXCHANGES[dateKey].push(entry);
       saveExchangesData(EXCHANGES);
       subInput.value = '';
+      subInput.disabled = false;
+      subInput.placeholder = 'যিনি ডিউটি করবেন (substitute name)';
+      if(vacantCheck) vacantCheck.checked = false;
       renderExchangeList();
       renderRoster();
       renderRosterCtrl();
@@ -5644,6 +6325,7 @@ initFirebaseSync();
 initRoster();
 initAuthPanel();
 initExchangePanel();
+initQuickExchangeModal();
 refreshAll();
 setInterval(tick, 1000);
 </script>
