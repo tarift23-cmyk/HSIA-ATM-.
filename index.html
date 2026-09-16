@@ -1581,12 +1581,6 @@ td.roster-vacant-cell .roster-name-input{
       </div>
       <div class="roster-savebar">
         <button id="exchangeModalOpenBtn" type="button" class="roster-save-btn">🔄 Duty Exchange</button>
-        <button type="button" class="tc-icon-btn" id="dutyReminderBellBtn" title="১২ ঘণ্টা আগে Google Calendar রিমাইন্ডার">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
-            <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .9-.3 1.7-.9 2.4L4.6 16h14.8l-1.5-2c-.6-.7-.9-1.5-.9-2.4V9a5 5 0 0 0-5-5z" stroke="var(--gold-soft)" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
-            <path d="M10 18.5a2 2 0 0 0 4 0" stroke="var(--gold-soft)" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
-        </button>
       </div>
       <div class="roster-savedchip" id="rosterSavedChip"></div>
     </div>
@@ -1603,6 +1597,14 @@ td.roster-vacant-cell .roster-name-input{
         ⚠️ <b>নিরাপত্তা নোট:</b> এটা একটা হালকা, নিজস্ব-তৈরি লগইন ব্যবস্থা (পাসওয়ার্ড হ্যাশ করে রাখা হয়, কিন্তু bank-grade security না) — Room ID জানা থাকলে ডাটাবেজের বাকি সবকিছুর মতোই এটাও কারিগরিভাবে অ্যাক্সেসযোগ্য থেকে যায়। তাই এখানে অন্য কোথাও ব্যবহার করা পাসওয়ার্ড দেবেন না।
       </div>
       <div id="authLoggedOutView" style="display: block;">
+        <div class="fr-manualform" style="margin-bottom:10px;">
+          <button type="button" id="googleLoginBtn" class="fr-dbimport" style="background:#fff;color:#3c4043;border:1px solid #dadce0;flex:1 1 auto;">🔵 Continue with Google</button>
+          <span id="googleSetupLink" style="font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;white-space:nowrap;align-self:center;">⚙️ সেটআপ</span>
+        </div>
+        <div class="fr-dbsection-hint" style="margin-bottom:10px;">
+          এক ক্লিকে Google অ্যাকাউন্ট দিয়ে লগইন হবে, আর একই সাথে ক্যালেন্ডারে ডিউটি রিমাইন্ডার সিঙ্ক করারও অনুমতি মিলে যাবে — নিচের ম্যানুয়াল ফর্ম আর লাগবে না।
+        </div>
+        <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:8px;">— অথবা ম্যানুয়ালি —</div>
         <div class="fr-manualform" style="margin-bottom:6px;">
           <button type="button" id="authTabLogin" class="fr-dbimport">লগইন</button>
           <button type="button" id="authTabRegister" class="fr-dbclear">রেজিস্টার</button>
@@ -1635,6 +1637,7 @@ td.roster-vacant-cell .roster-name-input{
         <div class="fr-dbsection-hint" id="authWelcome"></div>
         <div class="fr-manualform">
           <button type="button" id="authNotifPermBtn" class="fr-dbimport">🔔 নোটিফিকেশন চালু করুন</button>
+          <button type="button" id="calendarSyncBtn" class="fr-dbimport">🗓️ ক্যালেন্ডারে সিঙ্ক করুন</button>
           <button type="button" id="authChangePassBtn" class="fr-dbclear">পাসওয়ার্ড বদলান</button>
           <button type="button" id="authLogoutBtn" class="fr-dbclear">লগআউট</button>
         </div>
@@ -2928,264 +2931,6 @@ function activeExchangesFor(tableKey){
   return out;
 }
 
-/* ---------- "My Duty Reminders" — shared event list ----------
-   Used both by the .ics export (works everywhere, needs a manual
-   import) and by the direct Google Calendar sync (one click, no
-   import step, but only works for Google Calendar — see syncToGoogleCalendar). */
-function buildMyDutyEvents(daysAhead){
-  const now = Date.now();
-  const f = nowDhakaFields();
-  const events = [];
-
-  // 1) my own team's upcoming shifts (based on the "আমার টিম" picker) — no login needed
-  for(let d=-1; d<=daysAhead; d++){
-    const cd = addDays(f.y, f.m, f.day, d);
-    const st = shiftFor(YOU_INDEX, cd.y, cd.m, cd.day);
-    if(st === 'Off') continue;
-    const win = windowFor(st, cd.y, cd.m, cd.day);
-    if(!win || win.end <= now) continue;
-    const dk = `${cd.y}${String(cd.m+1).padStart(2,'0')}${String(cd.day).padStart(2,'0')}`;
-    events.push({
-      uid: `duty-${TEAMS[YOU_INDEX]}-${dk}@hsia-atm-shift-tracker`,
-      start: win.start, end: win.end,
-      summary: `🛫 ডিউটি — Team ${TEAMS[YOU_INDEX]} (${st})`,
-      desc: 'HSIA ATM Live Shift Tracker থেকে অটো-জেনারেটেড রিমাইন্ডার।'
-    });
-  }
-
-  // 2) exchanges assigned to me by name (must be logged in)
-  const session = (typeof loadAuthSession === 'function') ? loadAuthSession() : null;
-  if(session && session.displayName){
-    const myName = session.displayName.trim().toLowerCase();
-    Object.keys(EXCHANGES).forEach(dateKey=>{
-      (EXCHANGES[dateKey] || []).forEach(ex=>{
-        if(ex.vacant) return;
-        if((ex.subName||'').trim().toLowerCase() !== myName) return;
-        const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
-        if(!win || win.end <= now) return;
-        const halfTag = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
-        events.push({
-          uid: `exchange-${dateKey}-${ex.table}-${(ex.pos||'').replace(/[^a-zA-Z0-9]/g,'')}-${ex.team}-${ex.nightHalf||'full'}@hsia-atm-shift-tracker`,
-          start: win.start, end: win.end,
-          summary: `🔄 এক্সচেঞ্জ ডিউটি — ${ex.pos} (Team ${TEAMS[+ex.team]})${halfTag}`,
-          desc: 'আপনি অন্য কারো জায়গায় এই ডিউটিতে আছেন।'
-        });
-      });
-    });
-  }
-
-  events.sort((a,b)=>a.start-b.start);
-  return events;
-}
-/* A webpage can't reach into the phone's native Alarm app — there's no
-   browser API for that. The reliable, cross-platform bridge is an
-   .ics (iCalendar) file: every phone's Calendar app already knows how
-   to import one and fire its own notifications/alarms for each event,
-   completely offline, without this page needing to stay open. */
-function toICSDateUTC(ms){
-  return new Date(ms).toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
-}
-function icsEscape(s){
-  return String(s==null ? '' : s)
-    .replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
-}
-function buildMyDutyICS(daysAhead, leadMinutes){
-  const events = buildMyDutyEvents(daysAhead);
-  if(!events.length) return null;
-
-  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HSIA ATM Live Shift Tracker//BN','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
-  events.forEach(e=>{
-    lines.push('BEGIN:VEVENT');
-    lines.push('UID:' + e.uid);
-    lines.push('DTSTAMP:' + toICSDateUTC(Date.now()));
-    lines.push('DTSTART:' + toICSDateUTC(e.start));
-    lines.push('DTEND:' + toICSDateUTC(e.end));
-    lines.push('SUMMARY:' + icsEscape(e.summary));
-    lines.push('DESCRIPTION:' + icsEscape(e.desc));
-    lines.push('BEGIN:VALARM');
-    lines.push('ACTION:DISPLAY');
-    lines.push('DESCRIPTION:Reminder');
-    lines.push('TRIGGER:-PT' + leadMinutes + 'M');
-    lines.push('END:VALARM');
-    lines.push('END:VEVENT');
-  });
-  lines.push('END:VCALENDAR');
-  return lines.join('\r\n');
-}
-function downloadMyDutyICS(){
-  // Own-team shifts never need login — only exchange-matching does (it
-  // needs a display name to match against). Default reminder: 12 hours
-  // ahead, since that's advance-notice enough to prepare for a shift,
-  // not just a last-minute nudge.
-  const hoursStr = prompt('শিফট শুরুর কত ঘণ্টা আগে রিমাইন্ডার চান? (লগইন লাগবে না)', '12');
-  if(hoursStr === null) return;
-  const hours = Math.max(0, parseFloat(hoursStr) || 12);
-  const lead = Math.round(hours * 60);
-  const ics = buildMyDutyICS(60, lead);
-  if(!ics){
-    alert('আগামী দিনগুলোতে আপনার কোনো ডিউটি বা আপনার নামে এক্সচেঞ্জ পাওয়া যায়নি। (এক্সচেঞ্জ ধরতে হলে উপরে লগইন করা থাকতে হবে, এবং নামটা এক্সচেঞ্জে দেওয়া সাবস্টিটিউট নামের সাথে মিলতে হবে।)');
-    return;
-  }
-  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'amar-duty-reminders.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url), 4000);
-}
-
-/* ---------- Direct Google Calendar sync (one click, no download/import) ----------
-   This is the ONLY way a webpage can push events straight into a real
-   calendar app with no manual import step — and it only works for
-   Google Calendar (there's no equivalent public write API for Apple's
-   or Outlook's personal calendars from a plain webpage). It needs:
-     1) This page served over https (not opened as a local file — Google
-        Sign-In refuses file:// origins).
-     2) A Google Cloud OAuth Client ID that the admin creates once (see
-        the "⚙️ সেটআপ" link next to the sync button) and whose Authorized
-        JavaScript origin matches exactly where this page is hosted.
-   Each person who clicks "সিঙ্ক করুন" signs in with THEIR OWN Google
-   account and grants calendar access just for themselves — nobody
-   else's events touch anybody else's calendar. */
-const GCAL_CLIENT_ID_KEY = 'HSIA_GCAL_CLIENT_ID_V1';
-const GCAL_TOKEN_CACHE_KEY = 'HSIA_GCAL_TOKEN_CACHE_V1';
-function loadGCalClientId(){ try{ return localStorage.getItem(GCAL_CLIENT_ID_KEY) || ''; }catch(e){ return ''; } }
-function saveGCalClientId(id){ try{ localStorage.setItem(GCAL_CLIENT_ID_KEY, id); }catch(e){} }
-
-function ensureGoogleIdentityLoaded(){
-  return new Promise((resolve, reject)=>{
-    if(window.google && window.google.accounts && window.google.accounts.oauth2){ resolve(); return; }
-    const existing = document.getElementById('gsiScript');
-    if(existing){
-      existing.addEventListener('load', ()=>resolve());
-      existing.addEventListener('error', ()=>reject(new Error('Google script load failed')));
-      return;
-    }
-    const s = document.createElement('script');
-    s.id = 'gsiScript';
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.onload = ()=>resolve();
-    s.onerror = ()=>reject(new Error('Google script load failed'));
-    document.head.appendChild(s);
-  });
-}
-
-function getGCalAccessToken(clientId){
-  // Reuse a still-valid cached token first — this is what actually makes
-  // repeat syncs feel like "auto login": no popup at all until the token
-  // expires (~1 hour), and even then Google's own account chooser will
-  // already show this device's signed-in Gmail account(s) to tap, not a
-  // password form — so it's effectively "Continue with Gmail" already.
-  try{
-    const cached = JSON.parse(localStorage.getItem(GCAL_TOKEN_CACHE_KEY) || 'null');
-    if(cached && cached.access_token && cached.expires_at > Date.now() + 60000){
-      return Promise.resolve(cached.access_token);
-    }
-  }catch(e){}
-  return new Promise((resolve, reject)=>{
-    try{
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        // .owned (not the broader .events) — this app never needs to see or
-        // touch calendars someone has shared with you, only your own.
-        scope: 'https://www.googleapis.com/auth/calendar.events.owned',
-        callback: (resp)=>{
-          if(resp && resp.access_token){
-            try{
-              localStorage.setItem(GCAL_TOKEN_CACHE_KEY, JSON.stringify({
-                access_token: resp.access_token,
-                expires_at: Date.now() + ((resp.expires_in || 3500) * 1000)
-              }));
-            }catch(e){}
-            resolve(resp.access_token);
-          } else {
-            reject(new Error(resp && resp.error ? resp.error : 'no access token'));
-          }
-        }
-      });
-      // prompt:'' lets Google skip the account-chooser UI entirely when
-      // this browser already has one authorized Google session for this
-      // app — the closest thing to a true "auto continue with Gmail".
-      tokenClient.requestAccessToken({ prompt: '' });
-    }catch(e){ reject(e); }
-  });
-}
-
-async function syncToGoogleCalendar(fixedHours){
-  const clientId = loadGCalClientId();
-  if(!clientId){
-    alert('আগে Google Calendar sync সেটআপ করতে হবে (শুধু অ্যাডমিন একবার করবেন)।');
-    return;
-  }
-  if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
-    alert('Google Calendar সিঙ্ক শুধু https দিয়ে হোস্ট করা পেজে কাজ করে (লোকাল ফাইল হিসেবে খোলা .html-এ কাজ করবে না)। GitHub Pages বা এমন কোনো https হোস্টিং-এ এই অ্যাপটা রাখতে হবে।');
-    return;
-  }
-  let hours;
-  if(typeof fixedHours === 'number'){
-    hours = Math.max(0, fixedHours);
-  } else {
-    const hoursStr = prompt('শিফট শুরুর কত ঘণ্টা আগে রিমাইন্ডার চান?', '12');
-    if(hoursStr === null) return;
-    hours = Math.max(0, parseFloat(hoursStr) || 12);
-  }
-  const leadMinutes = Math.round(hours * 60);
-
-  const events = buildMyDutyEvents(60);
-  if(!events.length){
-    alert('আগামী দিনগুলোতে আপনার কোনো ডিউটি বা আপনার নামে এক্সচেঞ্জ পাওয়া যায়নি।');
-    return;
-  }
-
-  const btn = document.getElementById('gcalSyncBtn');
-  const bellBtn = document.getElementById('dutyReminderBellBtn');
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ সিঙ্ক হচ্ছে...'; }
-  if(bellBtn){ bellBtn.disabled = true; bellBtn.style.opacity = '.5'; }
-  try{
-    await ensureGoogleIdentityLoaded();
-    const token = await getGCalAccessToken(clientId);
-    let ok = 0, failed = 0;
-    for(const e of events){
-      try{
-        const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/import', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            iCalUID: e.uid,
-            summary: e.summary,
-            description: e.desc,
-            start: { dateTime: new Date(e.start).toISOString(), timeZone: 'Asia/Dhaka' },
-            end: { dateTime: new Date(e.end).toISOString(), timeZone: 'Asia/Dhaka' },
-            reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: leadMinutes }] }
-          })
-        });
-        if(res.ok) ok++; else failed++;
-      }catch(e2){ failed++; }
-    }
-    // Re-running this later (same uids) updates the same events instead of
-    // duplicating them — events/import upserts by iCalUID.
-    alert(`✅ Google Calendar-এ ${ok}টা ইভেন্ট সিঙ্ক হয়েছে।` + (failed ? ` (${failed}টা ব্যর্থ হয়েছে)` : '') + '\nপরে আবার সিঙ্ক করলে ডুপ্লিকেট হবে না, শুধু আপডেট হবে।');
-  }catch(err){
-    alert('Google Calendar সিঙ্ক করা যায়নি: ' + (err && err.message ? err.message : err) + '\nClient ID এবং এই পেজের হোস্টিং ঠিকানা (Authorized JavaScript origin) মিলছে কিনা দেখুন।');
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '🗓️ Continue with Gmail — Calendar-এ সিঙ্ক করুন'; }
-    if(bellBtn){ bellBtn.disabled = false; bellBtn.style.opacity = ''; }
-  }
-}
-
-function setupGCalClientId(){
-  if(!requireRosterAuth()) return;
-  const current = loadGCalClientId();
-  const id = prompt('Google Cloud Console থেকে বানানো OAuth Client ID পেস্ট করুন (একবারই, সব ইউজারের জন্য):', current);
-  if(id === null) return;
-  saveGCalClientId(id.trim());
-  alert(id.trim() ? 'সেভ হয়েছে। এখন "🗓️ Continue with Gmail" বাটনে ক্লিক করলে কাজ করবে।' : 'Client ID খালি রাখা হয়েছে — সিঙ্ক বাটন কাজ করবে না যতক্ষণ না আবার সেট করা হয়।');
-}
-
 /* ============================================================
    Lightweight login (custom, not Firebase Auth) + in-app duty
    exchange notifications. Requires Firebase sync to be configured
@@ -3224,6 +2969,216 @@ function loadNotifiedSet(){
 function saveNotifiedSet(set){ try{ localStorage.setItem(AUTH_NOTIFIED_KEY, JSON.stringify(Array.from(set))); }catch(e){} }
 
 function setAuthStatus(msg){ const el = document.getElementById('authStatus'); if(el) el.textContent = msg || ''; }
+
+/* ---------- Continue with Google (one-click login + calendar access) ----------
+   A single Google consent screen grants BOTH: (1) identity — email/name,
+   used exactly like the manual register/login above, so exchange-name
+   matching and notifications work the same way — and (2) calendar write
+   access, cached for "🗓️ ক্যালেন্ডারে সিঙ্ক করুন" to use with no extra
+   sign-in step. Requires two one-time things from the admin: this page
+   served over https (Google refuses file:// origins), and a Google Cloud
+   OAuth Client ID pasted via the "⚙️ সেটআপ" link. */
+const GOOGLE_CLIENT_ID_KEY = 'HSIA_GOOGLE_CLIENT_ID_V1';
+const GOOGLE_TOKEN_CACHE_KEY = 'HSIA_GOOGLE_TOKEN_CACHE_V1';
+const GOOGLE_SCOPE = 'openid email profile https://www.googleapis.com/auth/calendar.events';
+function loadGoogleClientId(){ try{ return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || ''; }catch(e){ return ''; } }
+function saveGoogleClientId(id){ try{ localStorage.setItem(GOOGLE_CLIENT_ID_KEY, id); }catch(e){} }
+
+function ensureGoogleIdentityLoaded(){
+  return new Promise((resolve, reject)=>{
+    if(window.google && window.google.accounts && window.google.accounts.oauth2){ resolve(); return; }
+    const existing = document.getElementById('gsiScript');
+    if(existing){
+      existing.addEventListener('load', ()=>resolve());
+      existing.addEventListener('error', ()=>reject(new Error('Google script load failed')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.id = 'gsiScript';
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('Google script load failed'));
+    document.head.appendChild(s);
+  });
+}
+function getGoogleAccessToken(clientId){
+  try{
+    const cached = JSON.parse(localStorage.getItem(GOOGLE_TOKEN_CACHE_KEY) || 'null');
+    if(cached && cached.access_token && cached.expires_at > Date.now() + 60000){
+      return Promise.resolve(cached.access_token);
+    }
+  }catch(e){}
+  return new Promise((resolve, reject)=>{
+    try{
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: GOOGLE_SCOPE,
+        callback: (resp)=>{
+          if(resp && resp.access_token){
+            try{
+              localStorage.setItem(GOOGLE_TOKEN_CACHE_KEY, JSON.stringify({
+                access_token: resp.access_token,
+                expires_at: Date.now() + ((resp.expires_in || 3500) * 1000)
+              }));
+            }catch(e){}
+            resolve(resp.access_token);
+          } else {
+            reject(new Error(resp && resp.error ? resp.error : 'no access token'));
+          }
+        }
+      });
+      // prompt:'' skips the account-chooser UI entirely once this browser
+      // already has one authorized session for this app.
+      tokenClient.requestAccessToken({ prompt: '' });
+    }catch(e){ reject(e); }
+  });
+}
+function setupGoogleClientId(){
+  if(!requireRosterAuth()) return;
+  const current = loadGoogleClientId();
+  const id = prompt('Google Cloud Console থেকে বানানো OAuth Client ID পেস্ট করুন (একবারই, সব ইউজারের জন্য):', current);
+  if(id === null) return;
+  saveGoogleClientId(id.trim());
+  alert(id.trim() ? 'সেভ হয়েছে। এখন "🔵 Continue with Google" কাজ করবে।' : 'Client ID খালি রাখা হয়েছে — Google লগইন কাজ করবে না যতক্ষণ না আবার সেট করা হয়।');
+}
+async function continueWithGoogle(){
+  const clientId = loadGoogleClientId();
+  if(!clientId){
+    alert('আগে Google sign-in সেটআপ করতে হবে — পাশের "⚙️ সেটআপ" লিংকে ক্লিক করুন (শুধু অ্যাডমিন একবার করবেন)।');
+    return;
+  }
+  if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
+    alert('Google sign-in শুধু https দিয়ে হোস্ট করা পেজে কাজ করে (লোকাল ফাইল হিসেবে খুললে হবে না)।');
+    return;
+  }
+  const saved = loadFirebaseSyncConfig();
+  if(!_fbDb || !saved){ setAuthStatus('⚠️ প্রথমে "ক্রস-ডিভাইস সিঙ্ক (Firebase)" সেটআপ করুন — লগইন এটার উপর নির্ভর করে।'); return; }
+  const btn = document.getElementById('googleLoginBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳...'; }
+  try{
+    await ensureGoogleIdentityLoaded();
+    const token = await getGoogleAccessToken(clientId);
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers:{ Authorization: 'Bearer ' + token } });
+    if(!res.ok) throw new Error('প্রোফাইল তথ্য আনা যায়নি');
+    const profile = await res.json();
+    const identifier = (profile.email || '').trim();
+    const displayName = (profile.name || identifier).trim();
+    if(!identifier){ throw new Error('Google থেকে ইমেইল পাওয়া যায়নি'); }
+    const key = sanitizeUserKey(identifier);
+    const ref = _fbDb.ref('hsia_sync/' + saved.roomId + '/users/' + key);
+    const snap = await ref.once('value');
+    if(snap.exists()){
+      await ref.update({ displayName, viaGoogle: true });
+    } else {
+      await ref.set({ identifier, displayName, phone: '', viaGoogle: true, createdAt: Date.now() });
+    }
+    const session = { identifier, displayName, key, viaGoogle: true };
+    saveAuthSession(session);
+    setAuthStatus('');
+    applyAuthUI(session);
+    alert('✅ স্বাগতম, ' + displayName + '! Google দিয়ে লগইন হয়েছে, এবং ক্যালেন্ডার সিঙ্কের অনুমতিও পাওয়া গেছে।');
+  }catch(err){
+    alert('Google দিয়ে লগইন করা যায়নি: ' + (err && err.message ? err.message : err));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '🔵 Continue with Google'; }
+  }
+}
+
+/* ---------- "My Duty Reminders" → Google Calendar sync ----------
+   Reuses the token from continueWithGoogle() above — no separate
+   sign-in step. Only works for someone who logged in via Google
+   (a manual identifier+password login never gets a calendar-scoped
+   token, since Google never granted one). */
+function buildMyDutyEvents(daysAhead){
+  const now = Date.now();
+  const f = nowDhakaFields();
+  const events = [];
+
+  // 1) my own team's upcoming shifts (based on the "আমার টিম" picker)
+  for(let d=-1; d<=daysAhead; d++){
+    const cd = addDays(f.y, f.m, f.day, d);
+    const st = shiftFor(YOU_INDEX, cd.y, cd.m, cd.day);
+    if(st === 'Off') continue;
+    const win = windowFor(st, cd.y, cd.m, cd.day);
+    if(!win || win.end <= now) continue;
+    const dk = `${cd.y}${String(cd.m+1).padStart(2,'0')}${String(cd.day).padStart(2,'0')}`;
+    events.push({
+      uid: `duty-${TEAMS[YOU_INDEX]}-${dk}@hsia-atm-shift-tracker`,
+      start: win.start, end: win.end,
+      summary: `🛫 ডিউটি — Team ${TEAMS[YOU_INDEX]} (${st})`,
+      desc: 'HSIA ATM Live Shift Tracker থেকে অটো-জেনারেটেড রিমাইন্ডার।'
+    });
+  }
+
+  // 2) exchanges assigned to me by name (must be logged in)
+  const session = loadAuthSession();
+  if(session && session.displayName){
+    const myName = session.displayName.trim().toLowerCase();
+    Object.keys(EXCHANGES).forEach(dateKey=>{
+      (EXCHANGES[dateKey] || []).forEach(ex=>{
+        if(ex.vacant) return;
+        if((ex.subName||'').trim().toLowerCase() !== myName) return;
+        const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
+        if(!win || win.end <= now) return;
+        const halfTag = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+        events.push({
+          uid: `exchange-${dateKey}-${ex.table}-${(ex.pos||'').replace(/[^a-zA-Z0-9]/g,'')}-${ex.team}-${ex.nightHalf||'full'}@hsia-atm-shift-tracker`,
+          start: win.start, end: win.end,
+          summary: `🔄 এক্সচেঞ্জ ডিউটি — ${ex.pos} (Team ${TEAMS[+ex.team]})${halfTag}`,
+          desc: 'আপনি অন্য কারো জায়গায় এই ডিউটিতে আছেন।'
+        });
+      });
+    });
+  }
+  events.sort((a,b)=>a.start-b.start);
+  return events;
+}
+async function syncDutyToGoogleCalendar(){
+  const session = loadAuthSession();
+  if(!session){ alert('আগে লগইন করুন।'); return; }
+  const clientId = loadGoogleClientId();
+  if(!session.viaGoogle || !clientId){
+    alert('ক্যালেন্ডার সিঙ্ক করতে "🔵 Continue with Google" দিয়ে লগইন করতে হবে (ম্যানুয়াল লগইনে ক্যালেন্ডার-অনুমতি পাওয়া যায় না)।');
+    return;
+  }
+  const hoursStr = prompt('শিফট শুরুর কত ঘণ্টা আগে রিমাইন্ডার চান?', '12');
+  if(hoursStr === null) return;
+  const leadMinutes = Math.round(Math.max(0, parseFloat(hoursStr) || 12) * 60);
+
+  const events = buildMyDutyEvents(60);
+  if(!events.length){ alert('আগামী দিনগুলোতে আপনার কোনো ডিউটি বা এক্সচেঞ্জ পাওয়া যায়নি।'); return; }
+
+  const btn = document.getElementById('calendarSyncBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ সিঙ্ক হচ্ছে...'; }
+  try{
+    await ensureGoogleIdentityLoaded();
+    const token = await getGoogleAccessToken(clientId);
+    let ok = 0, failed = 0;
+    for(const e of events){
+      try{
+        const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/import', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            iCalUID: e.uid,
+            summary: e.summary,
+            description: e.desc,
+            start: { dateTime: new Date(e.start).toISOString(), timeZone: 'Asia/Dhaka' },
+            end: { dateTime: new Date(e.end).toISOString(), timeZone: 'Asia/Dhaka' },
+            reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: leadMinutes }] }
+          })
+        });
+        if(res.ok) ok++; else failed++;
+      }catch(e2){ failed++; }
+    }
+    alert(`✅ Google Calendar-এ ${ok}টা ইভেন্ট সিঙ্ক হয়েছে।` + (failed ? ` (${failed}টা ব্যর্থ)` : '') + '\nআবার সিঙ্ক করলে ডুপ্লিকেট হবে না, শুধু আপডেট হবে।');
+  }catch(err){
+    alert('সিঙ্ক করা যায়নি: ' + (err && err.message ? err.message : err));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '🗓️ ক্যালেন্ডারে সিঙ্ক করুন'; }
+  }
+}
 
 async function registerUser(identifier, displayName, phone, password){
   const saved = loadFirebaseSyncConfig();
@@ -3369,10 +3324,16 @@ function applyAuthUI(session){
   const loggedOut = document.getElementById('authLoggedOutView');
   const loggedIn = document.getElementById('authLoggedInView');
   const welcome = document.getElementById('authWelcome');
+  const changePassBtn = document.getElementById('authChangePassBtn');
+  const calSyncBtn = document.getElementById('calendarSyncBtn');
   if(session){
     if(loggedOut) loggedOut.style.display = 'none';
     if(loggedIn) loggedIn.style.display = 'block';
-    if(welcome) welcome.innerHTML = '👋 স্বাগতম, <b>' + session.displayName.replace(/</g,'&lt;') + '</b> — এখন থেকে আপনার নামে এক্সচেঞ্জ হলে এখানে ও নোটিফিকেশনে দেখাবে।';
+    if(welcome) welcome.innerHTML = '👋 স্বাগতম, <b>' + session.displayName.replace(/</g,'&lt;') + '</b> — এখন থেকে আপনার নামে এক্সচেঞ্জ হলে এখানে ও নোটিফিকেশনে দেখাবে।' + (session.viaGoogle ? ' (Google দিয়ে লগইন)' : '');
+    // Google sessions have no password to change; manual sessions can't
+    // get a calendar-scoped token, so hide whichever doesn't apply.
+    if(changePassBtn) changePassBtn.style.display = session.viaGoogle ? 'none' : '';
+    if(calSyncBtn) calSyncBtn.style.display = session.viaGoogle ? '' : 'none';
     checkMyExchangeNotifications();
   }else{
     if(loggedOut) loggedOut.style.display = 'block';
@@ -3441,6 +3402,13 @@ function initAuthPanel(){
   if(authModalClose) authModalClose.addEventListener('click', ()=> closeModal('authModalOverlay'));
   const authModalOverlay = document.getElementById('authModalOverlay');
   if(authModalOverlay) authModalOverlay.addEventListener('click', (e)=>{ if(e.target === authModalOverlay) closeModal('authModalOverlay'); });
+
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+  if(googleLoginBtn) googleLoginBtn.addEventListener('click', continueWithGoogle);
+  const googleSetupLink = document.getElementById('googleSetupLink');
+  if(googleSetupLink) googleSetupLink.addEventListener('click', setupGoogleClientId);
+  const calendarSyncBtn = document.getElementById('calendarSyncBtn');
+  if(calendarSyncBtn) calendarSyncBtn.addEventListener('click', syncDutyToGoogleCalendar);
 
   const tabLogin = document.getElementById('authTabLogin');
   const tabRegister = document.getElementById('authTabRegister');
@@ -3524,9 +3492,6 @@ function initAuthPanel(){
   if(exchangeModalClose) exchangeModalClose.addEventListener('click', ()=> closeModal('exchangeModalOverlay'));
   const exchangeModalOverlay = document.getElementById('exchangeModalOverlay');
   if(exchangeModalOverlay) exchangeModalOverlay.addEventListener('click', (e)=>{ if(e.target === exchangeModalOverlay) closeModal('exchangeModalOverlay'); });
-
-  const dutyReminderBellBtn = document.getElementById('dutyReminderBellBtn');
-  if(dutyReminderBellBtn) dutyReminderBellBtn.addEventListener('click', ()=> syncToGoogleCalendar(12));
 
   function tcPrefillNow(){
     const tcDate = document.getElementById('tcDate');
@@ -3943,7 +3908,13 @@ function connectFirebaseSync(config, roomId){
   try{
     const app = (firebase.apps && firebase.apps.length) ? firebase.app() : firebase.initializeApp(config);
     _fbDb = firebase.database(app);
-    firebase.auth().signInAnonymously().catch(()=>{ /* rules may not require auth — proceed anyway */ });
+    firebase.auth().signInAnonymously().catch(err=>{
+      // If this fails, every ".read": "auth != null" rule will reject —
+      // exactly the permission_denied / sync-not-working symptom. Surface
+      // it instead of swallowing it, since the fix is almost always just
+      // enabling the "Anonymous" sign-in provider in Firebase Console.
+      setFirebaseSyncStatus('⚠️ Anonymous sign-in ব্যর্থ (' + (err && err.code ? err.code : err) + ') — Firebase Console → Authentication → Sign-in method → Anonymous চালু করুন, এটা ছাড়া সিঙ্ক কাজ করবে না।');
+    });
 
     const rosterRef = _fbDb.ref('hsia_sync/' + roomId + '/roster');
     const rosterCtrlRef = _fbDb.ref('hsia_sync/' + roomId + '/rosterCtrl');
