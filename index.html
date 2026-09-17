@@ -1040,6 +1040,12 @@ table.roster-table tbody tr:nth-child(even){
   background:transparent; border:none; outline:none;
   color:var(--text); font-family:'Inter',sans-serif; font-size:12.5px;
   text-align:center; padding:10px 8px;
+  /* Prevent the OS's native long-press text-selection/magnifier gesture
+     from racing our own long-press-to-open-exchange handler — on some
+     Android/Chrome versions the native gesture wins and silently cancels
+     ours (pointercancel) before our timer ever fires. */
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  touch-action:manipulation;
 }
 .roster-name-input:focus{
   background:rgba(214,216,220,0.08);
@@ -2981,7 +2987,15 @@ function setAuthStatus(msg){ const el = document.getElementById('authStatus'); i
 const GOOGLE_CLIENT_ID_KEY = 'HSIA_GOOGLE_CLIENT_ID_V1';
 const GOOGLE_TOKEN_CACHE_KEY = 'HSIA_GOOGLE_TOKEN_CACHE_V1';
 const GOOGLE_SCOPE = 'openid email profile https://www.googleapis.com/auth/calendar.events';
-function loadGoogleClientId(){ try{ return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || ''; }catch(e){ return ''; } }
+/* Baked in so "Continue with Google" works for everyone out of the box —
+   no per-admin setup needed. This Client ID is not secret (Google's OAuth
+   design assumes it's public, same spirit as a Firebase apiKey); what
+   actually gates access is the Google-side OAuth consent screen's test-user
+   list and the Authorized JavaScript origins on this exact Client ID. The
+   "⚙️ সেটআপ" link still lets an admin override it with their own, if this
+   app ever gets deployed under a different domain/Client ID. */
+const DEFAULT_GOOGLE_CLIENT_ID = '484860185889-j0dr5hjhq1dh90sj91e6c0tltp9bd0e2.apps.googleusercontent.com';
+function loadGoogleClientId(){ try{ return localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || DEFAULT_GOOGLE_CLIENT_ID; }catch(e){ return DEFAULT_GOOGLE_CLIENT_ID; } }
 function saveGoogleClientId(id){ try{ localStorage.setItem(GOOGLE_CLIENT_ID_KEY, id); }catch(e){} }
 
 function ensureGoogleIdentityLoaded(){
@@ -3664,7 +3678,8 @@ function attachLongPressForRoster(tbodyId, tableKey){
   if(!tbody || tbody.dataset.longPressBound) return;
   tbody.dataset.longPressBound = '1';
   const LONG_PRESS_MS = 650;
-  let timer = null, pressedInput = null, moved = false;
+  const MOVE_TOLERANCE_PX = 12; // real fingers jitter a few px even "holding still"
+  let timer = null, pressedInput = null, moved = false, startX = 0, startY = 0;
 
   function cancelPress(){ if(timer){ clearTimeout(timer); timer = null; } pressedInput = null; }
 
@@ -3672,6 +3687,7 @@ function attachLongPressForRoster(tbodyId, tableKey){
     const inp = e.target.closest && e.target.closest('.roster-name-input');
     if(!inp || inp.readOnly === false) return;
     pressedInput = inp; moved = false;
+    startX = e.clientX; startY = e.clientY;
     timer = setTimeout(()=>{
       if(pressedInput === inp && !moved){
         if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
@@ -3680,7 +3696,14 @@ function attachLongPressForRoster(tbodyId, tableKey){
       cancelPress();
     }, LONG_PRESS_MS);
   });
-  tbody.addEventListener('pointermove', ()=>{ moved = true; }, {passive:true});
+  tbody.addEventListener('pointermove', (e)=>{
+    if(!pressedInput) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    // Only a real drag/scroll (past the tolerance) counts as "moved" —
+    // treating every sub-pixel jitter as movement was cancelling almost
+    // every long-press before the timer could ever fire.
+    if((dx*dx + dy*dy) > (MOVE_TOLERANCE_PX*MOVE_TOLERANCE_PX)) moved = true;
+  }, {passive:true});
   ['pointerup','pointerleave','pointercancel'].forEach(evt=>{
     tbody.addEventListener(evt, cancelPress, {passive:true});
   });
