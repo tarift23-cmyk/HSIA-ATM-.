@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — HSIA ATM Shift Tracker</title>
+<style>
+  :root{
+    --bg:#f7f7f8; --card:#ffffff; --text:#1c1c1e; --muted:#5b5b5f; --line:#e6e6e8; --accent:#2563eb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1115; --card:#171a21; --text:#eaeaea; --muted:#a3a3ab; --line:#2a2d36; --accent:#5b9dff;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1115; --card:#171a21; --text:#eaeaea; --muted:#a3a3ab; --line:#2a2d36; --accent:#5b9dff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Bengali",Arial,sans-serif;
+    line-height:1.65;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:32px 20px 60px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:28px 24px;}
+  h1{font-size:26px; margin:0 0 6px;}
+  .updated{color:var(--muted); font-size:13px; margin-bottom:26px;}
+  h2{font-size:18px; margin:28px 0 8px; border-top:1px solid var(--line); padding-top:20px;}
+  h2:first-of-type{border-top:none; padding-top:0; margin-top:0;}
+  p, li{color:var(--text); font-size:15px;}
+  ul{padding-left:20px;}
+  li{margin-bottom:6px;}
+  a{color:var(--accent);}
+  .muted{color:var(--muted); font-size:14px;}
+  code{background:var(--line); padding:1px 6px; border-radius:4px; font-size:13px;}
+  footer{margin-top:30px; color:var(--muted); font-size:13px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Privacy Policy — HSIA ATM Shift Tracker</h1>
+    <div class="updated">Last updated: September 2026</div>
+
+    <p>HSIA ATM Shift Tracker ("the App") is an internal duty-roster and shift-exchange tool built for a small aerodrome ATM (Air Traffic Management) team. This page explains what data the App collects, why, and how it is stored. It is written in plain language, not legal boilerplate.</p>
+
+    <h2>Who runs this App</h2>
+    <p>The App is operated by <strong>Tarif</strong> (contact: <a href="mailto:tarift23@gmail.com">tarift23@gmail.com</a>) for the internal use of one ATM duty team. It is not a public product and is not offered for sale or general public sign-up.</p>
+
+    <h2>What information is collected</h2>
+    <ul>
+      <li><strong>Account info:</strong> a name and an identifier (email, phone number, or any ID you choose) if you register manually — or your Google account's <strong>name and email address</strong> if you use "Continue with Google".</li>
+      <li><strong>Password:</strong> only for manual (non-Google) accounts. It is hashed (SHA-256) in your browser before being stored — the App never stores or sees your plain-text password. Google accounts have no password stored by the App at all.</li>
+      <li><strong>Duty roster &amp; exchange data:</strong> staff names, team assignments, shift positions, and duty-swap records entered by the team's admin. This is operational scheduling data, not sensitive personal data.</li>
+      <li><strong>Google Calendar access (optional):</strong> if you choose to sync your duty reminders, the App requests permission to <em>create and update calendar events</em> on your Google Calendar (scope: <code>calendar.events</code>). The App only ever creates/updates events it made itself (your shift times); it does not read, browse, or use any of your other existing calendar events or data.</li>
+    </ul>
+
+    <h2>How the information is used</h2>
+    <ul>
+      <li>To show the duty roster and shift-exchange board to the team.</li>
+      <li>To notify a logged-in user when someone assigns them a duty exchange.</li>
+      <li>To create reminder events in a user's own Google Calendar for their upcoming shifts, only when that user explicitly signs in and syncs.</li>
+    </ul>
+    <p>Data is <strong>never</strong> sold, shared with advertisers, or used to build advertising profiles. There is no advertising in this App.</p>
+
+    <h2>Where the information is stored</h2>
+    <p>All data is stored in a <strong>Firebase Realtime Database</strong> (a Google Cloud service) associated with this project. Access is restricted by Firebase Security Rules: general data requires an authenticated session, and administrative changes (editing the roster) require a separate admin password known only to the team's roster administrator.</p>
+
+    <h2>Data retention &amp; deletion</h2>
+    <p>Data is kept for as long as the App is in active use by the team. Any team member can ask the administrator (contact above) to have their account and associated data deleted at any time, and it will be removed within a reasonable time.</p>
+
+    <h2>Third parties</h2>
+    <p>The only third-party services used are:</p>
+    <ul>
+      <li><strong>Google Firebase</strong> — for data storage and (optional) sign-in.</li>
+      <li><strong>Google Identity Services / Google Calendar API</strong> — only when a user explicitly chooses "Continue with Google" or "Sync to Calendar".</li>
+    </ul>
+    <p>No other third party receives any data from this App.</p>
+
+    <h2>Your choices</h2>
+    <ul>
+      <li>Using the App at all is optional and limited to the internal team it was built for.</li>
+      <li>Google sign-in and Calendar sync are both entirely optional — the manual login option never requests Calendar access.</li>
+      <li>You can revoke the App's Google Calendar access at any time from <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a>.</li>
+      <li>You can log out, delete your account, or ask the administrator to remove your data at any time.</li>
+    </ul>
+
+    <h2>Changes to this policy</h2>
+    <p>If this policy changes, the "Last updated" date above will be revised. Continued use of the App after a change means you accept the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy or your data: <a href="mailto:tarift23@gmail.com">tarift23@gmail.com</a>.</p>
+  </div>
+  <footer>HSIA ATM Shift Tracker — internal team tool</footer>
+</div>
+</body>
+</html>
