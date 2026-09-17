@@ -3673,36 +3673,57 @@ function attachLongPressForRoster(tbodyId, tableKey){
   const tbody = document.getElementById(tbodyId);
   if(!tbody || tbody.dataset.longPressBound) return;
   tbody.dataset.longPressBound = '1';
-  const LONG_PRESS_MS = 650;
-  const MOVE_TOLERANCE_PX = 12; // real fingers jitter a few px even "holding still"
-  let timer = null, pressedInput = null, moved = false, startX = 0, startY = 0;
+  const LONG_PRESS_MS = 600;
+  const MOVE_TOLERANCE_PX = 14; // real fingers jitter a few px even "holding still"
+  let timer = null, target = null, startX = 0, startY = 0, moved = false;
 
-  function cancelPress(){ if(timer){ clearTimeout(timer); timer = null; } pressedInput = null; }
+  function clear(){ if(timer){ clearTimeout(timer); timer = null; } target = null; }
+  function start(inp, x, y){
+    target = inp; moved = false; startX = x; startY = y;
+    timer = setTimeout(()=>{
+      if(target === inp && !moved){
+        if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
+        try{
+          openQuickExchange(tableKey, +inp.dataset.ri, +inp.dataset.ci);
+        }catch(err){
+          alert('Quick exchange খুলতে সমস্যা: ' + (err && err.message ? err.message : err));
+        }
+      }
+      clear();
+    }, LONG_PRESS_MS);
+  }
+  function move(x, y){
+    if(!target) return;
+    const dx = x - startX, dy = y - startY;
+    if((dx*dx + dy*dy) > MOVE_TOLERANCE_PX*MOVE_TOLERANCE_PX) moved = true;
+  }
 
-  tbody.addEventListener('pointerdown', (e)=>{
+  // Real Touch Events, not Pointer Events — more consistently supported
+  // for this kind of press-and-hold gesture across Android/Chrome/WebView
+  // versions than the unified pointer API turned out to be in practice.
+  tbody.addEventListener('touchstart', (e)=>{
     const inp = e.target.closest && e.target.closest('.roster-name-input');
     if(!inp || inp.readOnly === false) return;
-    pressedInput = inp; moved = false;
-    startX = e.clientX; startY = e.clientY;
-    timer = setTimeout(()=>{
-      if(pressedInput === inp && !moved){
-        if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
-        openQuickExchange(tableKey, +inp.dataset.ri, +inp.dataset.ci);
-      }
-      cancelPress();
-    }, LONG_PRESS_MS);
-  });
-  tbody.addEventListener('pointermove', (e)=>{
-    if(!pressedInput) return;
-    const dx = e.clientX - startX, dy = e.clientY - startY;
-    // Only a real drag/scroll (past the tolerance) counts as "moved" —
-    // treating every sub-pixel jitter as movement was cancelling almost
-    // every long-press before the timer could ever fire.
-    if((dx*dx + dy*dy) > (MOVE_TOLERANCE_PX*MOVE_TOLERANCE_PX)) moved = true;
+    const t = e.touches[0];
+    if(t) start(inp, t.clientX, t.clientY);
   }, {passive:true});
-  ['pointerup','pointerleave','pointercancel'].forEach(evt=>{
-    tbody.addEventListener(evt, cancelPress, {passive:true});
+  tbody.addEventListener('touchmove', (e)=>{
+    const t = e.touches[0];
+    if(t) move(t.clientX, t.clientY);
+  }, {passive:true});
+  tbody.addEventListener('touchend', clear, {passive:true});
+  tbody.addEventListener('touchcancel', clear, {passive:true});
+
+  // Mouse fallback, for desktop browsers/testing.
+  tbody.addEventListener('mousedown', (e)=>{
+    const inp = e.target.closest && e.target.closest('.roster-name-input');
+    if(!inp || inp.readOnly === false) return;
+    start(inp, e.clientX, e.clientY);
   });
+  tbody.addEventListener('mousemove', (e)=>{ move(e.clientX, e.clientY); });
+  tbody.addEventListener('mouseup', clear);
+  tbody.addEventListener('mouseleave', clear);
+
   tbody.addEventListener('contextmenu', (e)=>{
     if(e.target.closest('.roster-name-input')) e.preventDefault();
   });
