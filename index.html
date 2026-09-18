@@ -272,6 +272,80 @@
   }
   .week-title{font-size:11px; color:var(--muted); margin-bottom:12px; letter-spacing:.05em; text-transform:uppercase;}
   .week-row{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;}
+
+  /* Compact "who's on duty, who was, who's next" strip — mirrors the
+     roster's overall rotation (every team, not just yours), centered
+     on whichever team is on duty right now. Scrolls sideways through
+     many past/future shifts; round pearl-style badges on a connecting
+     track, like a stepper. */
+  .duty-ticker{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:14px 0 12px; margin-bottom:16px;
+    position:relative; overflow:hidden;
+  }
+  .duty-ticker-title{
+    font-size:10px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase;
+    font-weight:600; text-align:center; margin-bottom:10px;
+  }
+  .duty-ticker-row{
+    display:flex; align-items:flex-start; gap:0;
+    overflow-x:auto; max-width:100%; padding:4px 22px 6px;
+    scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; -ms-overflow-style:none;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+  }
+  .duty-ticker-row::-webkit-scrollbar{ display:none; }
+  .duty-ticker-item{
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center;
+    scroll-snap-align:center; padding:0 4px;
+  }
+  .duty-ticker-track{
+    flex:0 0 16px; height:2px; align-self:center; margin-top:21px;
+    background:var(--border); border-radius:2px; transition:background .25s ease;
+  }
+  .duty-ticker-track.passed{ background:linear-gradient(90deg, var(--gold), var(--gold-soft)); opacity:.65; }
+  .duty-ticker-box{
+    flex:0 0 auto;
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    border:2px solid var(--dt-color, var(--border));
+    color:var(--dt-color, var(--text));
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px;
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(4px);
+    box-shadow:0 2px 6px rgba(0,0,0,.28);
+    transition:transform .2s ease;
+  }
+  .duty-ticker-box.current{
+    width:48px; height:48px; font-size:18px;
+    background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.35), transparent 55%), var(--dt-color, var(--gold));
+    color:#120F0D;
+    box-shadow:0 0 0 4px rgba(255,255,255,0.07), 0 0 16px var(--dt-color, var(--gold));
+    animation: dutyPulseRing 2.2s ease-in-out infinite;
+  }
+  @keyframes dutyPulseRing{
+    0%,100%{ box-shadow:0 0 0 4px rgba(255,255,255,.06), 0 0 12px var(--dt-color, var(--gold)); }
+    50%{ box-shadow:0 0 0 7px rgba(255,255,255,.10), 0 0 24px var(--dt-color, var(--gold)); }
+  }
+  .duty-ticker-date{
+    margin-top:6px; font-size:9px; color:var(--muted); letter-spacing:.02em; white-space:nowrap;
+  }
+  .duty-ticker-item:has(.duty-ticker-box.current) .duty-ticker-date{
+    color:var(--gold-soft); font-weight:700;
+  }
+  .duty-ticker-recenter{
+    position:absolute; right:10px; bottom:8px; z-index:2;
+    display:none; align-items:center; gap:5px;
+    padding:5px 12px; border-radius:999px; border:none;
+    background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130;
+    font-family:'Space Grotesk',sans-serif; font-size:10.5px; font-weight:700;
+    box-shadow:0 4px 12px rgba(0,0,0,.4); cursor:pointer;
+  }
+  .duty-ticker-recenter.show{ display:inline-flex; }
+  .duty-ticker-recenter .rdot{ width:6px; height:6px; border-radius:50%; background:#1B2130; }
+  .duty-ticker-empty{ color:var(--muted); font-size:12px; padding:0 22px; }
   .day{
     flex:0 0 auto; width:56px; text-align:center;
     border-radius:10px; padding:10px 4px;
@@ -1509,6 +1583,12 @@ td.roster-vacant-cell .roster-name-input{
       <div class="dnum">26</div>
       <div class="dshift" style="color:#33373F">Off</div>
     </div></div>
+  </div>
+
+  <div class="duty-ticker" id="dutyTicker">
+    <div class="duty-ticker-title">TEAM ROTATION</div>
+    <div class="duty-ticker-row" id="dutyTickerRow"></div>
+    <button class="duty-ticker-recenter" id="dutyTickerRecenter" type="button"><span class="rdot"></span>এখন</button>
   </div>
 
   <div class="cal">
@@ -4535,6 +4615,104 @@ function dutyAtInstant(utcMs){
   return {team:null, shiftType:null, start:null, end:null, localFields:f};
 }
 
+/* Walks the live shift schedule backward/forward from "now", one real
+   duty slot (Morning/Afternoon/Night — Off is never a slot) at a time,
+   using dutyAtInstant at each slot's exact start/end boundary. Shifts
+   are back-to-back with no gaps, so end-of-one-slot === start-of-next,
+   which is what makes this chaining work cleanly. */
+function buildDutySequence(pastCount, futureCount){
+  const current = dutyAtInstant(Date.now());
+  if(current.team === null) return [];
+  const past = [];
+  let cursor = current;
+  for(let i=0; i<pastCount; i++){
+    const prev = dutyAtInstant(cursor.start - 1);
+    if(prev.team === null) break;
+    past.unshift(prev);
+    cursor = prev;
+  }
+  const future = [];
+  cursor = current;
+  for(let i=0; i<futureCount; i++){
+    const next = dutyAtInstant(cursor.end);
+    if(next.team === null) break;
+    future.push(next);
+    cursor = next;
+  }
+  return past.concat([current], future);
+}
+function shiftColorVar(shiftType){
+  if(shiftType === 'Morning') return 'var(--morning)';
+  if(shiftType === 'Afternoon') return 'var(--afternoon)';
+  if(shiftType === 'Night') return 'var(--night)';
+  return 'var(--border)';
+}
+/* Auto-recentering: keep the current-duty pearl scrolled into view
+   until the person deliberately scrolls the strip themselves (to
+   browse other days), at which point we stop fighting them and show
+   a small "এখন" button to jump back. */
+let dutyTickerAutoCenter = true;
+let dutyTickerProgScroll = false;
+let dutyTickerFirstRender = true;
+
+function renderDutyTicker(){
+  const row = document.getElementById('dutyTickerRow');
+  if(!row) return;
+  const seq = buildDutySequence(40, 40);
+  if(!seq.length){ row.innerHTML = '<span class="duty-ticker-empty">—</span>'; return; }
+  const nowMs = Date.now();
+  const currentIdx = seq.findIndex(s => s.start <= nowMs && nowMs < s.end);
+  const parts = [];
+  seq.forEach((s, i)=>{
+    const isCurrent = i === currentIdx;
+    const isPassed = currentIdx >= 0 && i <= currentIdx;
+    const color = shiftColorVar(s.shiftType);
+    const title = `Team ${TEAMS[s.team]} — ${s.shiftType}`;
+    const ld = new Date(s.start + DHAKA_OFFSET);
+    const dateLabel = `${ld.getUTCDate()} ${MONTHS[ld.getUTCMonth()].slice(0,3)}`;
+    if(i > 0){
+      parts.push(`<div class="duty-ticker-track${isPassed ? ' passed' : ''}"></div>`);
+    }
+    parts.push(
+      `<div class="duty-ticker-item">` +
+        `<div class="duty-ticker-box${isCurrent ? ' current' : ''}" style="--dt-color:${color}" title="${title}">${TEAMS[s.team]}</div>` +
+        `<div class="duty-ticker-date">${dateLabel}</div>` +
+      `</div>`
+    );
+  });
+  row.innerHTML = parts.join('');
+
+  if(dutyTickerAutoCenter){
+    const curItem = row.querySelector('.duty-ticker-box.current')?.closest('.duty-ticker-item');
+    if(curItem){
+      dutyTickerProgScroll = true;
+      curItem.scrollIntoView({inline:'center', block:'nearest', behavior: dutyTickerFirstRender ? 'auto' : 'smooth'});
+      dutyTickerFirstRender = false;
+      setTimeout(()=>{ dutyTickerProgScroll = false; }, 500);
+    }
+  }
+}
+
+(function initDutyTickerScroll(){
+  const row = document.getElementById('dutyTickerRow');
+  const btn = document.getElementById('dutyTickerRecenter');
+  if(!row) return;
+  row.addEventListener('scroll', ()=>{
+    if(dutyTickerProgScroll) return;
+    if(dutyTickerAutoCenter){
+      dutyTickerAutoCenter = false;
+      if(btn) btn.classList.add('show');
+    }
+  }, {passive:true});
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      dutyTickerAutoCenter = true;
+      btn.classList.remove('show');
+      renderDutyTicker();
+    });
+  }
+})();
+
 /* Sub-label for Night duty, per team spec: 10pm–3am = "1st Night",
    3am–7:30am = "2nd Night", and the 8:30pm–10pm lead-in counts as
    both (still settling in, not clearly either half). */
@@ -4922,6 +5100,7 @@ function tick(){
   document.getElementById('datestr').textContent = `${wd}, ${MONTHS[f.m]} ${f.day}, ${f.y}`;
 
   updateRosterHighlight();
+  if(f.sec === 0) renderDutyTicker();
 
   /* Re-check duty-exchange visibility once a minute — cheap enough at
      that cadence, and minute granularity is all a shift boundary needs.
@@ -6338,6 +6517,7 @@ initAuthPanel();
 initExchangePanel();
 initQuickExchangeModal();
 refreshAll();
+renderDutyTicker();
 setInterval(tick, 1000);
 </script>
 <script>
