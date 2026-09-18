@@ -283,6 +283,12 @@
     padding:14px 0 12px; margin-bottom:16px;
     position:relative; overflow:hidden;
   }
+  .duty-ticker.nested{
+    background:transparent; border:none; border-radius:0;
+    margin-bottom:0; padding:16px 0 2px;
+    border-top:1px solid var(--border); margin-top:18px;
+    overflow:visible;
+  }
   .duty-ticker-title{
     font-size:10px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase;
     font-weight:600; text-align:center; margin-bottom:10px;
@@ -335,8 +341,12 @@
   .duty-ticker-item:has(.duty-ticker-box.current) .duty-ticker-date{
     color:var(--gold-soft); font-weight:700;
   }
+  .duty-ticker-left{
+    margin-top:2px; font-size:9px; color:var(--muted); font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
   .duty-ticker-recenter{
-    position:absolute; right:10px; bottom:8px; z-index:2;
+    position:absolute; right:0px; bottom:2px; z-index:2;
     display:none; align-items:center; gap:5px;
     padding:5px 12px; border-radius:999px; border:none;
     background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130;
@@ -1508,15 +1518,11 @@ td.roster-vacant-cell .roster-name-input{
       <div class="lamp-label">Team E</div>
       <div class="lamp-shift" id="lampshift-4"></div>
     </div></div>
-  </div>
 
-  <div class="hero" id="hero" style="--accent: var(--off);">
-    <div class="hero-inner">
-      <div class="hero-eyebrow" id="heroEyebrow"></div>
-      <div class="hero-status" id="heroStatus"></div>
-      <div class="hero-time" id="heroTime"></div>
-      <div class="countdown-label" id="cdLabel"></div>
-      <div class="countdown" id="cd" style="color: var(--text);"></div>
+    <div class="duty-ticker nested" id="dutyTicker">
+      <div class="duty-ticker-title">TEAM ROTATION</div>
+      <div class="duty-ticker-row" id="dutyTickerRow"></div>
+      <button class="duty-ticker-recenter" id="dutyTickerRecenter" type="button"><span class="rdot"></span>Now</button>
     </div>
   </div>
 
@@ -1583,12 +1589,6 @@ td.roster-vacant-cell .roster-name-input{
       <div class="dnum">26</div>
       <div class="dshift" style="color:#33373F">Off</div>
     </div></div>
-  </div>
-
-  <div class="duty-ticker" id="dutyTicker">
-    <div class="duty-ticker-title">TEAM ROTATION</div>
-    <div class="duty-ticker-row" id="dutyTickerRow"></div>
-    <button class="duty-ticker-recenter" id="dutyTickerRecenter" type="button"><span class="rdot"></span>এখন</button>
   </div>
 
   <div class="cal">
@@ -4654,6 +4654,7 @@ function shiftColorVar(shiftType){
 let dutyTickerAutoCenter = true;
 let dutyTickerProgScroll = false;
 let dutyTickerFirstRender = true;
+let dutyTickerCurrentEnd = null;
 
 function renderDutyTicker(){
   const row = document.getElementById('dutyTickerRow');
@@ -4662,6 +4663,7 @@ function renderDutyTicker(){
   if(!seq.length){ row.innerHTML = '<span class="duty-ticker-empty">—</span>'; return; }
   const nowMs = Date.now();
   const currentIdx = seq.findIndex(s => s.start <= nowMs && nowMs < s.end);
+  dutyTickerCurrentEnd = currentIdx >= 0 ? seq[currentIdx].end : null;
   const parts = [];
   seq.forEach((s, i)=>{
     const isCurrent = i === currentIdx;
@@ -4677,6 +4679,7 @@ function renderDutyTicker(){
       `<div class="duty-ticker-item">` +
         `<div class="duty-ticker-box${isCurrent ? ' current' : ''}" style="--dt-color:${color}" title="${title}">${TEAMS[s.team]}</div>` +
         `<div class="duty-ticker-date">${dateLabel}</div>` +
+        (isCurrent ? `<div class="duty-ticker-left" id="dutyTickerLeft"></div>` : '') +
       `</div>`
     );
   });
@@ -5130,35 +5133,14 @@ function tick(){
     }
   });
 
-  document.getElementById('heroEyebrow').textContent = `Your team (${TEAMS[YOU_INDEX]})`;
-
-  const my = getStatus(YOU_INDEX, nowMs, f);
-  const hero = document.getElementById('hero');
-  const heroStatus = document.getElementById('heroStatus');
-  const heroTime = document.getElementById('heroTime');
-  const cdLabel = document.getElementById('cdLabel');
-  const cd = document.getElementById('cd');
-
-  if(my.onDuty){
-    const hex = getShiftColor(my.shiftType);
-    hero.style.setProperty('--accent', hex);
-    heroStatus.textContent = `On ${my.shiftType} duty`;
-    heroTime.textContent = fmtTimeRange(my.shiftType);
-    cdLabel.textContent = 'Time left on duty';
-    cd.textContent = fmtHMS(my.end - nowMs);
-    cd.style.color = hex;
-  } else if(my.shiftType){
-    hero.style.setProperty('--accent', 'var(--off)');
-    heroStatus.textContent = 'Off duty';
-    heroTime.textContent = `Next duty: ${my.shiftType} (${fmtTimeRange(my.shiftType)})`;
-    cdLabel.textContent = 'Time until next duty';
-    cd.textContent = fmtHMS(my.start - nowMs);
-    cd.style.color = 'var(--text)';
-  } else {
-    heroStatus.textContent = 'No data';
-    heroTime.textContent = '';
-    cdLabel.textContent = '';
-    cd.textContent = '';
+  /* Live "time left" readout for whichever shift is currently active,
+     shown small under its date in the Team Rotation strip. The strip
+     itself only redraws once a minute (renderDutyTicker), but this
+     span is updated every second here so the countdown still ticks
+     smoothly. */
+  const dtLeftEl = document.getElementById('dutyTickerLeft');
+  if(dtLeftEl && dutyTickerCurrentEnd){
+    dtLeftEl.textContent = fmtHMS(dutyTickerCurrentEnd - nowMs) + ' remaining';
   }
 }
 
