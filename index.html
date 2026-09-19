@@ -1087,6 +1087,43 @@ body.desktop-mode .fr-iframewrap iframe{ height:520px; }
 }
 .tc-duty b{ color:var(--gold-soft); }
 .tc-error{ color:#E8A0A8; font-size:12px; text-align:center; }
+.ac-section{ margin-top:22px; padding-top:16px; border-top:1px solid var(--border); }
+.ac-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
+.ac-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--gold-soft); }
+.ac-reset{ background:transparent; border:1px solid var(--border); color:var(--muted); font-size:11px; font-weight:600; padding:4px 10px; border-radius:8px; cursor:pointer; }
+.ac-reset:active{ color:var(--text); }
+.ac-hint{ font-size:11.5px; color:var(--muted); margin-bottom:12px; line-height:1.5; }
+.ac-fields{ display:flex; gap:8px; align-items:flex-end; }
+.ac-fields .tc-field{ flex:1; min-width:0; }
+.ac-fields .tc-field.ac-f-mon{ flex:1.5; }
+.ac-sel{ width:100%; text-align:center; text-align-last:center; font-size:15px; padding:11px 6px; cursor:pointer; }
+.ac-sel:focus{ outline:none; border-color:var(--gold); }
+.ac-msg{ margin-top:10px; font-size:12px; text-align:center; color:var(--muted); min-height:0; }
+.ac-msg.err{ color:#E8A0A8; }
+.ac-result{ margin-top:14px; animation:acPop .3s ease; }
+@keyframes acPop{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.ac-hero{ text-align:center; padding:16px 12px 14px; border-radius:16px; background:linear-gradient(180deg, var(--panel-2), var(--panel)); border:1px solid var(--border); border-top:2px solid var(--gold); }
+.ac-cap{ font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.05em; }
+.ac-big{ font-family:'Space Grotesk',sans-serif; font-size:48px; font-weight:700; line-height:1.05; color:var(--gold-soft); font-variant-numeric:tabular-nums; margin-top:2px; }
+.ac-big small{ font-size:16px; font-weight:600; color:var(--muted); margin-left:6px; }
+.ac-detail{ font-size:14px; color:var(--text); font-weight:600; margin-top:2px; }
+.ac-born{ font-size:11.5px; color:var(--muted); margin-top:4px; }
+.ac-next{ display:inline-block; margin-top:10px; padding:5px 12px; border-radius:999px; font-size:12px; font-weight:600; background:rgba(255,255,255,.07); color:var(--text); }
+.ac-cards{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+.ac-card{ display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:14px; background:var(--panel-2); border:1px solid var(--border); }
+.ac-ic{ font-size:22px; line-height:1; flex:0 0 auto; margin-top:2px; }
+.ac-cbody{ min-width:0; flex:1; }
+.ac-k{ font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.03em; margin-right:6px; }
+.ac-v{ font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:600; color:var(--text); font-variant-numeric:tabular-nums; }
+.ac-ret .ac-v{ color:var(--gold-soft); }
+.ac-chip{ display:inline-block; margin-top:6px; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:600; }
+.ac-chip.done{ background:rgba(63,165,116,.20); color:#3FA574; }
+.ac-chip.soon{ background:rgba(240,200,110,.16); color:var(--gold-soft); }
+.ac-chip.today{ background:rgba(217,85,143,.20); color:#D9558F; }
+.ac-bar{ height:8px; border-radius:99px; background:rgba(255,255,255,.09); margin-top:10px; overflow:hidden; }
+.ac-bar i{ display:block; height:100%; width:var(--w); border-radius:99px; background:linear-gradient(90deg, var(--gold), var(--gold-soft)); animation:acFill .9s ease; }
+@keyframes acFill{ from{ width:0; } to{ width:var(--w); } }
+.ac-barlbl{ font-size:11px; color:var(--muted); margin-top:4px; }
 .fr-ocrsection{
   margin:4px 0 14px; padding:12px; border:1px dashed var(--border); border-radius:10px;
   background:rgba(255,255,255,.015);
@@ -1856,8 +1893,6 @@ td.roster-vacant-cell .roster-name-input{
         <div class="modal-title">Time Converter</div>
         <button type="button" class="modal-close" id="timeConvertModalClose">✕</button>
       </div>
-      <div class="tc-subtitle">Convert between UTC and Dhaka local time (GMT+6), and see which team was or will be on duty at that moment.</div>
-
       <div class="tc-dirtoggle" id="tcDirToggle">
         <button type="button" class="tc-dir-btn active" data-dir="utc2local">UTC <span class="tc-dir-arrow">→</span> Local</button>
         <button type="button" class="tc-dir-btn" data-dir="local2utc">Local <span class="tc-dir-arrow">→</span> UTC</button>
@@ -1895,6 +1930,29 @@ td.roster-vacant-cell .roster-name-input{
       <button id="tcConvertBtn" type="button" class="tc-convert-btn">Convert</button>
 
       <div class="tc-result" id="tcResult" style="display:none;"></div>
+
+      <div class="ac-section" id="acSection">
+        <div class="ac-head">
+          <div class="ac-title">🎂 Age Calculator</div>
+          <button type="button" class="ac-reset" id="acReset">↺ Clear</button>
+        </div>
+        <div class="ac-fields">
+          <div class="tc-field">
+            <label class="tc-label" for="acDay">Day</label>
+            <select id="acDay" class="tc-date-input ac-sel"><option value="">Day</option></select>
+          </div>
+          <div class="tc-field ac-f-mon">
+            <label class="tc-label" for="acMonth">Month</label>
+            <select id="acMonth" class="tc-date-input ac-sel"><option value="">Month</option><option value="0">January</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6">July</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option></select>
+          </div>
+          <div class="tc-field">
+            <label class="tc-label" for="acYear">Year</label>
+            <select id="acYear" class="tc-date-input ac-sel"><option value="">Year</option></select>
+          </div>
+        </div>
+        <div class="ac-msg" id="acMsg"></div>
+        <div class="ac-result" id="acResult" style="display:none;"></div>
+      </div>
     </div>
   </div>
 
@@ -3751,6 +3809,170 @@ function initAuthPanel(){
   if(timeConvertModalClose) timeConvertModalClose.addEventListener('click', ()=> closeModal('timeConvertModalOverlay'));
   const timeConvertModalOverlay = document.getElementById('timeConvertModalOverlay');
   if(timeConvertModalOverlay) timeConvertModalOverlay.addEventListener('click', (e)=>{ if(e.target === timeConvertModalOverlay) closeModal('timeConvertModalOverlay'); });
+
+  // ---- Age Calculator (inside the Time Converter modal) ----
+  (function(){
+    const daySel = document.getElementById('acDay');
+    const monSel = document.getElementById('acMonth');
+    const yearSel = document.getElementById('acYear');
+    const msg = document.getElementById('acMsg');
+    const out = document.getElementById('acResult');
+    const resetBtn = document.getElementById('acReset');
+    if(!daySel || !monSel || !yearSel || !msg || !out) return;
+    let month = null; // 0-11
+    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    const dim = (y,m)=> new Date(y, m+1, 0).getDate();
+    const dnum = (y,m,d)=> Math.round(Date.UTC(y,m,d)/86400000); // whole-day number, no timezone drift
+    function diff(by,bm,bd,ty,tm,td){ // calendar difference (from <= to)
+      let months = (ty-by)*12 + (tm-bm);
+      const anchor = n=>{
+        const t = bm + n, yy = by + Math.floor(t/12), mm = ((t%12)+12)%12;
+        return [yy, mm, Math.min(bd, dim(yy,mm))];
+      };
+      let a = anchor(months);
+      if(dnum(a[0],a[1],a[2]) > dnum(ty,tm,td)){ months--; a = anchor(months); }
+      return { y: Math.floor(months/12), m: months%12, d: dnum(ty,tm,td) - dnum(a[0],a[1],a[2]) };
+    }
+    const plural = (n,w)=> n + ' ' + w + (n===1 ? '' : 's');
+    function fmtDiff(x){
+      const parts = [];
+      if(x.y) parts.push(plural(x.y,'year'));
+      if(x.m) parts.push(plural(x.m,'month'));
+      if(x.d) parts.push(plural(x.d,'day'));
+      return parts.length ? parts.join(' ') : '0 days';
+    }
+    const fmtDate = (y,m,d)=> String(d).padStart(2,'0') + ' ' + MON[m] + ' ' + y + ' (' + DAY[new Date(y,m,d).getDay()] + ')';
+
+
+    // Year list: this year back to 1930 (each box scrolls)
+    (function(){
+      const cy = new Date().getFullYear();
+      let h = '<option value="">Year</option>';
+      for(let y = cy; y >= 1930; y--) h += '<option value="' + y + '">' + y + '</option>';
+      yearSel.innerHTML = h;
+    })();
+    function buildDays(max, keep){
+      let h = '<option value="">Day</option>';
+      for(let i = 1; i <= max; i++) h += '<option value="' + i + '">' + i + '</option>';
+      daySel.innerHTML = h;
+      daySel.value = (keep && keep <= max) ? String(keep) : '';
+    }
+    buildDays(31, 0);
+    // Only offer the days that exist in the chosen month/year (Feb shows 29 until a real year is chosen)
+    function syncDays(){
+      const m = monSel.value === '' ? null : Number(monSel.value);
+      const y = yearSel.value === '' ? 2000 : Number(yearSel.value);
+      const max = m === null ? 31 : dim(y, m);
+      const cur = Number(daySel.value) || 0;
+      if(daySel.options.length - 1 === max) return 0;
+      buildDays(max, cur);
+      return cur > max ? cur : 0; // the day that had to be dropped, if any
+    }
+
+    function showErr(t){ out.style.display = 'none'; msg.className = 'ac-msg err'; msg.textContent = t; }
+    function countUp(el, to){
+      if(!el) return;
+      if(to <= 0 || typeof requestAnimationFrame !== 'function'){ el.textContent = to; return; }
+      const t0 = Date.now(), dur = 650;
+      (function tick(){
+        const k = Math.min(1, (Date.now() - t0) / dur);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+        if(k < 1) requestAnimationFrame(tick);
+      })();
+    }
+
+    function update(){
+      const dStr = daySel.value, yStr = yearSel.value;
+      month = monSel.value === '' ? null : Number(monSel.value);
+      msg.className = 'ac-msg'; msg.textContent = '';
+      if(!dStr || month === null || !yStr){
+        out.style.display = 'none';
+        if(dStr || month !== null || yStr){
+          const need = [];
+          if(!dStr) need.push('day');
+          if(month === null) need.push('month');
+          if(!yStr) need.push('year');
+          msg.textContent = 'Still needed: ' + need.join(', ');
+        }
+        return;
+      }
+      const now = new Date();
+      const ty = now.getFullYear(), tm = now.getMonth(), td = now.getDate();
+      const by = Number(yStr), bd = Number(dStr);
+      if(by < 1900 || by > ty){ showErr('Please enter a valid year (1900 – ' + ty + ').'); return; }
+      if(bd < 1 || bd > dim(by, month)){ showErr(MONF[month] + ' ' + by + ' has only ' + dim(by, month) + ' days.'); return; }
+      if(dnum(by,month,bd) > dnum(ty,tm,td)){ showErr('Date of birth can\u2019t be in the future.'); return; }
+      const bm = month;
+      const age = diff(by,bm,bd,ty,tm,td);
+      // the day someone turns N (Feb 29 birthdays fall on Feb 28 in non-leap years)
+      const milestone = n=>{ const yy = by+n; return [yy, bm, Math.min(bd, dim(yy,bm))]; };
+      const gapTo = t=> dnum(t[0],t[1],t[2]) - dnum(ty,tm,td);
+      const chip = t=>{
+        const g = gapTo(t);
+        if(g === 0) return '<span class="ac-chip today">\uD83C\uDF89 today</span>';
+        if(g > 0) return '<span class="ac-chip soon">\u23F3 in ' + fmtDiff(diff(ty,tm,td,t[0],t[1],t[2])) + '</span>';
+        return '<span class="ac-chip done">\u2713 completed ' + fmtDiff(diff(t[0],t[1],t[2],ty,tm,td)) + ' ago</span>';
+      };
+      const card = (cls, ic, k, t, extra)=>
+        '<div class="ac-card ' + cls + '"><div class="ac-ic">' + ic + '</div><div class="ac-cbody">' +
+        '<div><span class="ac-k">' + k + '</span><span class="ac-v">' + fmtDate(t[0],t[1],t[2]) + '</span></div>' +
+        chip(t) + (extra || '') + '</div></div>';
+
+      const t32 = milestone(32), t59 = milestone(59);
+      // next birthday
+      let nb = [ty, bm, Math.min(bd, dim(ty,bm))];
+      if(gapTo(nb) < 0) nb = [ty+1, bm, Math.min(bd, dim(ty+1,bm))];
+      const gnb = gapTo(nb);
+      const nextTxt = gnb === 0 ? '\uD83C\uDF89 Happy Birthday!' :
+        '\uD83C\uDF81 Next birthday: ' + fmtDate(nb[0],nb[1],nb[2]) + ' \u00B7 in ' + plural(gnb,'day');
+      // progress towards 59
+      const total = dnum(t59[0],t59[1],t59[2]) - dnum(by,bm,bd);
+      const done = dnum(ty,tm,td) - dnum(by,bm,bd);
+      const pct = Math.max(0, Math.min(100, done / total * 100));
+      const bar = '<div class="ac-bar"><i style="--w:' + pct.toFixed(1) + '%"></i></div>' +
+        '<div class="ac-barlbl">' + (pct >= 100 ? '\uD83C\uDF89 Retirement age reached' : pct.toFixed(1) + '% of the way to retirement') + '</div>';
+
+      const detailParts = [];
+      if(age.m) detailParts.push(plural(age.m,'month'));
+      if(age.d) detailParts.push(plural(age.d,'day'));
+      out.style.display = 'block';
+      // restart the entrance animation on every update
+      out.style.animation = 'none'; void out.offsetWidth; out.style.animation = '';
+      out.innerHTML =
+        '<div class="ac-hero"><div class="ac-cap">age today=</div>' +
+        '<div class="ac-big"><span id="acBigNum">' + age.y + '</span><small>' + (age.y === 1 ? 'year' : 'years') + '</small></div>' +
+        (detailParts.length ? '<div class="ac-detail">' + detailParts.join(' ') + '</div>' : '') +
+        '<div class="ac-born">Born ' + fmtDate(by,bm,bd) + '</div>' +
+        '<div class="ac-next">' + nextTxt + '</div></div>' +
+        '<div class="ac-cards">' +
+          card('', '\uD83C\uDFAF', '32 years=', t32) +
+          card('ac-ret', '\uD83C\uDFD6\uFE0F', 'retirement=', t59, bar) +
+        '</div>';
+      countUp(document.getElementById('acBigNum'), age.y);
+    }
+
+    daySel.addEventListener('change', update);
+    const onMonYear = ()=>{
+      const dropped = syncDays();
+      update();
+      if(dropped){
+        msg.className = 'ac-msg err';
+        msg.textContent = 'Day ' + dropped + ' isn\u2019t in ' + MONF[Number(monSel.value)] + ' \u2014 please pick the day again.';
+      }
+    };
+    monSel.addEventListener('change', onMonYear);
+    yearSel.addEventListener('change', onMonYear);
+    if(resetBtn){
+      resetBtn.addEventListener('click', ()=>{
+        monSel.value = ''; yearSel.value = ''; buildDays(31, 0); daySel.value = '';
+        month = null; msg.textContent = ''; msg.className = 'ac-msg';
+        out.style.display = 'none'; out.innerHTML = '';
+      });
+    }
+  })();
   const tcConvertBtn = document.getElementById('tcConvertBtn');
   if(tcConvertBtn) tcConvertBtn.addEventListener('click', runTimeConvert);
 
