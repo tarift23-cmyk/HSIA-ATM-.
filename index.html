@@ -1127,6 +1127,25 @@ body.desktop-mode .fr-iframewrap iframe{ height:520px; }
 .ac-bar i{ display:block; height:100%; width:var(--w); border-radius:99px; background:linear-gradient(90deg, var(--gold), var(--gold-soft)); animation:acFill .9s ease; }
 @keyframes acFill{ from{ width:0; } to{ width:var(--w); } }
 .ac-barlbl{ font-size:11px; color:var(--muted); margin-top:4px; }
+
+/* Central search */
+.cs-box{ max-width:560px; display:flex; flex-direction:column; max-height:calc(100vh - 72px); max-height:calc(100dvh - 72px); padding:14px; }
+.cs-inputrow{ position:relative; flex:0 0 auto; }
+.cs-input{ width:100%; box-sizing:border-box; padding:12px 40px 12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); font-size:16px; font-family:inherit; }
+.cs-input:focus{ outline:none; border-color:var(--gold); }
+.cs-clear{ position:absolute; right:6px; top:50%; transform:translateY(-50%); background:transparent; border:none; color:var(--muted); font-size:16px; padding:8px 10px; cursor:pointer; }
+.cs-count{ flex:0 0 auto; font-size:11.5px; color:var(--muted); margin:10px 2px 6px; min-height:14px; }
+.cs-list{ flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.cs-item{ display:block; width:100%; text-align:left; padding:10px 12px; margin-bottom:8px; border-radius:12px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); font-family:inherit; cursor:pointer; }
+.cs-item:active{ border-color:var(--gold); }
+.cs-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.cs-badge{ font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+.cs-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--gold-soft); word-break:break-word; }
+.cs-body{ font-size:12.5px; color:var(--text); opacity:.88; margin-top:5px; line-height:1.5; word-break:break-word; }
+.cs-item mark{ background:rgba(246,200,76,.32); color:inherit; border-radius:3px; padding:0 1px; }
+.cs-empty{ text-align:center; color:var(--muted); font-size:13px; padding:20px 0; }
+.cs-flash{ animation:csFlash 2.6s ease; }
+@keyframes csFlash{ 0%,70%{ background-color:rgba(246,200,76,.42); box-shadow:inset 0 0 0 2px #F6C84C; } }
 .fr-ocrsection{
   margin:4px 0 14px; padding:12px; border:1px dashed var(--border); border-radius:10px;
   background:rgba(255,255,255,.015);
@@ -1534,6 +1553,7 @@ td.roster-vacant-cell .roster-name-input{
   <button type="button" class="vt-btn active" id="modeMobileBtn">📱 Mobile</button>
   <button type="button" class="vt-btn" id="modeDesktopBtn">🖥️ Desktop</button>
   <button type="button" class="vt-btn vt-icon-btn" id="settingsIconBtn" title="সেটিংস">⚙️<span class="vt-notif-dot" id="authNotifDot"></span></button>
+  <button type="button" class="vt-btn vt-icon-btn" id="centralSearchBtn" title="সার্চ">🔍</button>
 </div>
 <div class="wrap">
 
@@ -1889,7 +1909,22 @@ td.roster-vacant-cell .roster-name-input{
     </div>
   </div>
 
-  <div class="modal-overlay" id="timeConvertModalOverlay">
+  <div class="modal-overlay" id="centralSearchOverlay">
+  <div class="modal-box cs-box">
+    <div class="modal-header">
+      <div class="modal-title">🔍 Search</div>
+      <button type="button" class="modal-close" id="csClose">✕</button>
+    </div>
+    <div class="cs-inputrow">
+      <input type="text" id="csInput" class="cs-input" placeholder="সার্চ করুন (নাম, নাম্বার, কোড, নোট…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+      <button type="button" class="cs-clear" id="csClear" style="display:none;">✕</button>
+    </div>
+    <div class="cs-count" id="csCount"></div>
+    <div class="cs-list" id="csList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="timeConvertModalOverlay">
     <div class="modal-box tc-modal">
       <div class="modal-header">
         <div class="modal-title">Time Converter</div>
@@ -3974,6 +4009,319 @@ function initAuthPanel(){
         out.style.display = 'none'; out.innerHTML = '';
       });
     }
+  })();
+
+  // ---- Central Search (🔍 next to ⚙️): one box that searches every table, list and note ----
+  (function(){
+    const btn = document.getElementById('centralSearchBtn');
+    const overlay = document.getElementById('centralSearchOverlay');
+    const input = document.getElementById('csInput');
+    const list = document.getElementById('csList');
+    const countEl = document.getElementById('csCount');
+    const clearBtn = document.getElementById('csClear');
+    const closeBtn = document.getElementById('csClose');
+    if(!btn || !overlay || !input || !list) return;
+
+    // badge label + colour per source (also the order results are listed in)
+    const SRC = {
+      rosterCtrl:{ label:'Roster · Controllers', c:[246,200,76] },
+      roster:    { label:'Roster · Assistant',   c:[246,200,76] },
+      exchange:  { label:'Duty Exchange',        c:[240,150,80] },
+      vccs:      { label:'VCCS numbers',         c:[110,200,120] },
+      adj:       { label:'Adjacent',             c:[230,120,170] },
+      flowc:     { label:'Flow Chart · Contact', c:[170,130,240] },
+      flow:      { label:'Flow Chart',           c:[170,130,240] },
+      others:    { label:'Others',               c:[130,170,220] },
+      notepad:   { label:'Notepad',              c:[200,170,120] },
+      freq:      { label:'Frequency',            c:[80,190,150] },
+      airport:   { label:'Airport',              c:[90,170,240] },
+      airline:   { label:'Airline',              c:[80,200,230] },
+      flightdb:  { label:'Flight DB',            c:[60,190,190] },
+      map:       { label:'Map point',            c:[150,160,180] }
+    };
+    const ORDER = Object.keys(SRC);
+
+    const $ = id=> document.getElementById(id);
+    const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function cellText(el){
+      if(!el) return '';
+      const d = document.createElement('div');
+      d.innerHTML = el.innerHTML.replace(/<br\s*\/?>/gi,' ').replace(/<\/(div|p|li|h\d|tr|td|th)>/gi,' ');
+      return d.textContent.replace(/\s+/g,' ').trim();
+    }
+
+    // ---- navigation helpers ----
+    function openPanel(cardId, key){
+      const c = $(cardId);
+      if(c && c.classList.contains('collapsed')){
+        if(typeof PANEL_STATE === 'object' && PANEL_STATE) PANEL_STATE[key] = false;
+        c.classList.remove('collapsed');
+      }
+    }
+    function clickTab(groupId, tabId){
+      const b = document.querySelector('#' + groupId + ' [data-tab="' + tabId + '"]');
+      if(b && !b.classList.contains('active')) b.click();
+    }
+    function flash(el){
+      const t = el.tagName === 'TR' ? Array.from(el.children) : [el];
+      t.forEach(n=>{ n.classList.remove('cs-flash'); void n.offsetWidth; n.classList.add('cs-flash'); });
+      setTimeout(()=> t.forEach(n=> n.classList.remove('cs-flash')), 2800);
+    }
+    // a "go" function opens whatever is needed and returns a getter for the element to scroll to
+    const goInfoflow = (tabId, el)=> ()=>{ openPanel('infoflowCardOuter','infoflow'); clickTab('iflowTabs', tabId); return ()=> el; };
+
+    // ---- index ----
+    let recs = [];
+    function add(src, title, body, go){
+      title = String(title == null ? '' : title).trim();
+      body = String(body == null ? '' : body).trim();
+      if(!title && !body) return;
+      const hay = (title + ' ' + body).toLowerCase();
+      recs.push({ src:src, title:title, body:body, hay:hay, dig:hay.replace(/\D/g,''), go:go });
+    }
+    function build(){
+      recs = [];
+      const safe = fn=>{ try{ fn(); }catch(e){ console.warn('search index:', e); } };
+
+      // Duty roster (Controllers, then Aerodrome Assistant)
+      safe(()=>{
+        [['rosterCtrl', typeof ROSTER_CTRL !== 'undefined' ? ROSTER_CTRL : [], 'rosterBodyRowsCtrl'],
+         ['roster', typeof ROSTER !== 'undefined' ? ROSTER : [], 'rosterBodyRows']].forEach(set=>{
+          (set[1] || []).forEach((row, ri)=>{
+            const names = (row.names || []).map((n,ci)=> n ? (TEAMS[ci] || '?') + ': ' + n : '').filter(Boolean).join('   ·   ');
+            add(set[0], row.pos, names, ()=>{
+              openPanel('rosterCardOuter','roster');
+              return ()=>{ const x = document.querySelector('#' + set[2] + ' [data-ri="' + ri + '"]'); return x ? x.closest('tr') : null; };
+            });
+          });
+        });
+      });
+
+      // Duty exchanges
+      safe(()=>{
+        if(typeof EXCHANGES !== 'object' || !EXCHANGES) return;
+        Object.keys(EXCHANGES).sort().forEach(dateKey=>{
+          (EXCHANGES[dateKey] || []).forEach(ex=>{
+            const tbl = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
+            const half = ex.nightHalf === '1' ? ' (1st night)' : ex.nightHalf === '2' ? ' (2nd night)' : '';
+            const who = ex.vacant ? 'Vacant' : (ex.subName || '');
+            add('exchange', ex.pos || '', dateKey + ' · ' + tbl + ' · Team ' + (TEAMS[ex.team] || '?') + half + (who ? ' · ' + who : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
+          });
+        });
+      });
+
+      // VCCS numbers
+      safe(()=>{
+        document.querySelectorAll('#iflowVccTable tbody tr').forEach(tr=>{
+          const c = Array.from(tr.children).map(cellText);
+          const body = [c[1] ? 'Assistant ' + c[1] : '', c[2] ? 'Controller ' + c[2] : ''].filter(Boolean).join('   ·   ');
+          add('vccs', c[0], body, goInfoflow('iflowVccColumn', tr));
+        });
+      });
+
+      // Adjacent Twr / PIFU / APP (city cell is merged over several rows)
+      safe(()=>{
+        let city = '';
+        document.querySelectorAll('#iflowAdjTable tbody tr').forEach(tr=>{
+          const c = Array.from(tr.children).map(cellText);
+          let pos, tel;
+          if(c.length >= 3){ city = c[0]; pos = c[1]; tel = c[2]; }
+          else if(c.length === 2){ pos = c[0]; tel = c[1]; }
+          else return;
+          if(!pos && !tel) return;
+          add('adj', [city, pos].filter(Boolean).join(' · '), tel, goInfoflow('iflowAdjColumn', tr));
+        });
+      });
+
+      // Flow chart rows + contact list
+      safe(()=>{
+        document.querySelectorAll('#iflowChartColumn .iflow-table tbody tr').forEach(tr=>{
+          const c = Array.from(tr.children).filter(td=> !td.classList.contains('iflow-contact-cell')).map(cellText);
+          if(!c.some(Boolean)) return;
+          add('flow', ((c[0] || '') + ' ' + (c[1] || '')).trim(), c.slice(2).join(' · '), goInfoflow('iflowChartColumn', tr));
+        });
+        document.querySelectorAll('#iflowChartColumn .iflow-contact-grid strong').forEach(st=>{
+          const line = st.parentElement;
+          if(!line) return;
+          const label = cellText(st);
+          const rest = cellText(line).slice(label.length).replace(/^[\s\-:]+/, '').trim();
+          add('flowc', label.replace(/[\s\-:]+$/, ''), rest, goInfoflow('iflowChartColumn', line));
+        });
+      });
+
+      // Others (alphabetical notes)
+      safe(()=>{
+        const on = $('iflowOthersNotes');
+        if(!on) return;
+        let heading = '';
+        Array.from(on.children).forEach(ch=>{
+          const t = cellText(ch);
+          if(!t) return;
+          if(/^H\d$/.test(ch.tagName)){ heading = t; return; }
+          add('others', heading, t, goInfoflow('iflowOthersColumn', ch));
+        });
+      });
+
+      // Notepad
+      safe(()=>{
+        const np = $('adminNotepad');
+        if(!np || !np.value) return;
+        np.value.split(/\r?\n/).forEach(line=>{
+          if(!line.trim()) return;
+          add('notepad', '', line.trim(), ()=>{ openPanel('airportsCardOuter','airports'); clickTab('airTabs','notepadColumn'); return ()=> np; });
+        });
+      });
+
+      // Frequency transfer table
+      safe(()=>{
+        document.querySelectorAll('#freqBody .loa-table tbody tr').forEach(tr=>{
+          const c = Array.from(tr.children).map(cellText);
+          if(!c.some(Boolean)) return;
+          let title, body;
+          if(c.length >= 4){ title = c[0] + ' · ' + c[1]; body = 'DHAKA ' + c[2] + '   ·   KOLKATA ' + c[3]; }
+          else { title = c[0]; body = c.slice(1).join('   ·   '); }
+          add('freq', title, body, ()=>{ openPanel('freqCardOuter','freq'); return ()=> tr; });
+        });
+      });
+
+      // Airports
+      safe(()=>{
+        getAllAirports().forEach(r=>{
+          const code = r[0] + (r[2] && r[2] !== '-' ? ' / ' + r[2] : '');
+          add('airport', code, r[1] + ', ' + r[3], ()=>{
+            openPanel('airportsCardOuter','airports'); clickTab('airTabs','airportColumn');
+            const i = $('airSearchInput');
+            if(i){ i.value = r[0]; i.dispatchEvent(new Event('input', { bubbles:true })); }
+            return ()=> document.querySelector('#airportsTbody tr');
+          });
+        });
+      });
+
+      // Airlines
+      safe(()=>{
+        getAllAirlines().forEach(r=>{
+          add('airline', r[0] + ' — ' + r[1], r[2], ()=>{
+            openPanel('airportsCardOuter','airports'); clickTab('airTabs','airlineColumn');
+            const i = $('airlineSearchInput');
+            if(i){ i.value = r[0]; i.dispatchEvent(new Event('input', { bubbles:true })); }
+            return ()=> document.querySelector('#airlinesTbody tr');
+          });
+        });
+      });
+
+      // Flight database
+      safe(()=>{
+        loadFlightDb().forEach(r=>{
+          const bits = [r.type, r.registration, [r.departure, r.destination].filter(Boolean).join(' → '), r.route, r.time].filter(Boolean);
+          add('flightdb', r.callsign, bits.join('   ·   '), ()=>{
+            openPanel('flightrCardOuter','flightr');
+            const i = $('frCallsignInput');
+            if(i) i.value = r.callsign || '';
+            return ()=> $('frCallsignInput');
+          });
+        });
+      });
+
+      // Map waypoints
+      safe(()=>{
+        if(typeof POINTS === 'undefined') return;
+        POINTS.forEach(p=>{
+          add('map', p[0], 'FIR waypoint', ()=>{
+            openPanel('mapCardOuter','map');
+            try{ if(typeof focusPoint === 'function') focusPoint(p[0]); }catch(e){}
+            return ()=> $('mapCard');
+          });
+        });
+      });
+    }
+
+    // ---- search ----
+    const MAX = 150;
+    let terms = [], re = null, shown = [];
+    const isNum = t=> /^[\d+\-().]+$/.test(t) && t.replace(/\D/g,'').length >= 3;
+    function matches(r){
+      return terms.every(t=> r.hay.indexOf(t) !== -1 || (isNum(t) && r.dig.indexOf(t.replace(/\D/g,'')) !== -1));
+    }
+    function hl(text){
+      if(!re) return esc(text);
+      let out = '', last = 0;
+      text.replace(re, (m, off)=>{ out += esc(text.slice(last, off)) + '<mark>' + esc(m) + '</mark>'; last = off + m.length; return m; });
+      return out + esc(text.slice(last));
+    }
+    function snippet(t){
+      if(t.length <= 170) return t;
+      const low = t.toLowerCase();
+      let idx = -1;
+      terms.forEach(w=>{ const k = low.indexOf(w); if(k !== -1 && (idx === -1 || k < idx)) idx = k; });
+      const st = idx > 40 ? idx - 40 : 0;
+      return (st ? '…' : '') + t.slice(st, st + 170) + (st + 170 < t.length ? '…' : '');
+    }
+    function run(){
+      const q = input.value.trim();
+      clearBtn.style.display = q ? '' : 'none';
+      shown = [];
+      if(q.length < 2){ list.innerHTML = ''; countEl.textContent = ''; return; }
+      terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+      re = new RegExp(terms.map(t=> t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi');
+      const hits = [];
+      recs.forEach(r=>{
+        if(!matches(r)) return;
+        const titleHit = terms.every(t=> r.title.toLowerCase().indexOf(t) !== -1);
+        hits.push({ r:r, k: ORDER.indexOf(r.src) * 2 + (titleHit ? 0 : 1) });
+      });
+      hits.sort((a,b)=> a.k - b.k); // stable: keeps source order, best title matches first
+      shown = hits.slice(0, MAX).map(h=> h.r);
+      if(!hits.length){
+        countEl.textContent = '';
+        list.innerHTML = '<div class="cs-empty">কিছু পাওয়া যায়নি</div>';
+        return;
+      }
+      countEl.textContent = hits.length + ' টি ফলাফল' + (hits.length > MAX ? ' — প্রথম ' + MAX + ' টি দেখানো হচ্ছে' : '');
+      list.innerHTML = shown.map((r,i)=>{
+        const s = SRC[r.src];
+        return '<button type="button" class="cs-item" data-i="' + i + '">' +
+          '<div class="cs-top"><span class="cs-badge" style="background:rgba(' + s.c.join(',') + ',.18);color:rgb(' + s.c.join(',') + ')">' + esc(s.label) + '</span>' +
+          (r.title ? '<span class="cs-title">' + hl(r.title) + '</span>' : '') + '</div>' +
+          (r.body ? '<div class="cs-body">' + hl(snippet(r.body)) + '</div>' : '') +
+          '</button>';
+      }).join('');
+      list.scrollTop = 0;
+    }
+
+    function go(rec){
+      closeModal('centralSearchOverlay');
+      let getter = null;
+      try{ getter = rec.go(); }catch(e){ console.warn('search go:', e); }
+      setTimeout(()=>{
+        let el = null;
+        try{ el = typeof getter === 'function' ? getter() : getter; }catch(e){}
+        if(!el) return;
+        try{ el.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){ el.scrollIntoView(); }
+        flash(el);
+      }, 380);
+    }
+
+    let timer = null;
+    input.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(run, 140); });
+    input.addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){ clearTimeout(timer); run(); if(shown.length) go(shown[0]); }
+      else if(e.key === 'Escape'){ closeModal('centralSearchOverlay'); }
+    });
+    clearBtn.addEventListener('click', ()=>{ input.value = ''; run(); input.focus(); });
+    list.addEventListener('click', e=>{
+      const b = e.target.closest ? e.target.closest('.cs-item') : null;
+      if(!b) return;
+      const r = shown[Number(b.getAttribute('data-i'))];
+      if(r) go(r);
+    });
+    if(closeBtn) closeBtn.addEventListener('click', ()=> closeModal('centralSearchOverlay'));
+    overlay.addEventListener('click', e=>{ if(e.target === overlay) closeModal('centralSearchOverlay'); });
+    btn.addEventListener('click', ()=>{
+      build();          // always search the live data
+      openModal('centralSearchOverlay');
+      run();
+      setTimeout(()=>{ input.focus(); input.select(); }, 80);
+    });
   })();
   const tcConvertBtn = document.getElementById('tcConvertBtn');
   if(tcConvertBtn) tcConvertBtn.addEventListener('click', runTimeConvert);
