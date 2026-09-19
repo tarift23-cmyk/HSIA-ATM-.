@@ -1905,7 +1905,7 @@ td.roster-vacant-cell .roster-name-input{
       <div class="iflow-tabs" id="iflowTabs">
         <button type="button" class="iflow-tab-btn active" data-tab="iflowChartColumn">📋 Flow Chart</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowAdjColumn">📡 Adjacent Twr/PIFU/APP</button>
-        <button type="button" class="iflow-tab-btn" data-tab="iflowVccColumn">🎛️ VCC Panel</button>
+        <button type="button" class="iflow-tab-btn" data-tab="iflowVccColumn">🎛️ VCCS numbers</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowOthersColumn">📚 Others</button>
       </div>
       <div class="iflow-columns">
@@ -2108,10 +2108,19 @@ td.roster-vacant-cell .roster-name-input{
       </div>
 
       <div class="iflow-col" id="iflowVccColumn">
-        <div class="iflow-edit-hint">✏️ এডিটেবল — VCC প্যানেলের শর্টকাট/কি-কম্বিনেশন এখানে লিখে রাখুন।</div>
-        <div class="iflow-freetext" id="iflowVccNotes" contenteditable="true" data-placeholder="VCC প্যানেল শর্টকাট এখানে লিখুন..."></div>
+        <div class="iflow-edit-hint">✏️ এডিটেবল — VCCS Number (Aerodrome)। এডিট করতে "🔒 এডিট করুন (Admin)" চেপে ঘরে ক্লিক করে লিখুন, এডমিনের সেভ করা নাম্বার সব ডিভাইসে সিঙ্ক হয়।</div>
+        <div class="iflow-tablewrap">
+        <table class="iflow-edit-table" id="iflowVccTable">
+          <thead>
+            <tr><th rowspan="2" style="width:38%">Position</th><th colspan="2" style="text-align:center;">VCCS Number — Aerodrome</th></tr>
+            <tr><th>Assistant</th><th>Controller</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        </div>
         <div class="iflow-save-row">
           <button type="button" class="fr-dbimport" id="iflowVccEditBtn">🔒 এডিট করুন (Admin)</button>
+          <button type="button" class="fr-dbimport" id="iflowVccAddRow" disabled style="opacity:.5;">+ নতুন সারি</button>
           <button type="button" class="fr-dbimport" id="iflowVccSaveBtn">💾 সেভ করুন</button>
           <span class="iflow-saved-chip" id="iflowVccSavedChip"></span>
         </div>
@@ -4208,6 +4217,7 @@ function connectFirebaseSync(config, roomId){
     const customAirlinesRef = _fbDb.ref('hsia_sync/' + roomId + '/customAirlines');
     const adminNotepadRef = _fbDb.ref('hsia_sync/' + roomId + '/adminNotepad');
     const exchangesRef = _fbDb.ref('hsia_sync/' + roomId + '/exchanges');
+    const vccsRef = _fbDb.ref('hsia_sync/' + roomId + '/vccs');
 
     rosterRef.on('value', snap=>{
       const val = snap.val();
@@ -4279,6 +4289,10 @@ function connectFirebaseSync(config, roomId){
         if(typeof checkMyExchangeNotifications === 'function') checkMyExchangeNotifications();
       }
     });
+    listen(vccsRef, snap=>{
+      const val = snap.val();
+      if(val && typeof window.vccsApplyRemote === 'function') window.vccsApplyRemote(val);
+    });
     }; // end attachSyncListeners
 
     auth.onAuthStateChanged(u=>{
@@ -4334,6 +4348,12 @@ const pushCustomAirportsToFirebaseDebounced = debounce(pushCustomAirportsToFireb
 const pushCustomAirlinesToFirebaseDebounced = debounce(pushCustomAirlinesToFirebase, 500);
 const pushExchangesToFirebaseDebounced = debounce(pushExchangesToFirebase, 500);
 const pushAdminNotepadToFirebaseDebounced = debounce(pushAdminNotepadToFirebase, 500);
+function pushVccsToFirebase(){
+  const saved = loadFirebaseSyncConfig();
+  if(!_fbDb || !saved || typeof window.vccsGetData !== 'function') return;
+  fbSet(saved.roomId, 'vccs', window.vccsGetData());
+}
+const pushVccsToFirebaseDebounced = debounce(pushVccsToFirebase, 500);
 
 function initFirebaseSync(){
   let saved = loadFirebaseSyncConfig();
@@ -6761,20 +6781,92 @@ initAdminNotepad();
     }
   }
 
-  // VCC Panel shortcuts — plain editable notes
-  const vccBox = document.getElementById('iflowVccNotes');
-  if(vccBox){
-    const VCC_KEY = 'hsia_iflowVccNotesHtml';
-    try{ const saved = localStorage.getItem(VCC_KEY); if(saved) vccBox.innerHTML = saved; }catch(e){}
+  // VCCS numbers — editable table (Position / Assistant / Controller), synced via Firebase node "vccs"
+  const vccTable = document.getElementById('iflowVccTable');
+  if(vccTable){
+    const VCCS_KEY = 'hsia_vccsTableV1';
+    const VCCS_DEFAULT = [
+      { pos:'Lower (ACC Procedural 2)', asst:'601122', ctrl:'' },
+      { pos:'Upper (N2)',               asst:'601114', ctrl:'' },
+      { pos:'APP (APP_1B)',             asst:'601139', ctrl:'' },
+      { pos:'Tower (TWR_CTRL_2)',       asst:'601103', ctrl:'' },
+      { pos:'SMC (SMC_1)',              asst:'601107', ctrl:'' },
+      { pos:'AMHS',                     asst:'008177', ctrl:'' },
+      { pos:'Briefing',                 asst:'008176', ctrl:'' },
+      { pos:'ECR',                      asst:'601152', ctrl:'' }
+    ];
+    const normRows = (val)=>{
+      const arr = Array.isArray(val) ? val : Object.values(val || {});
+      return arr.filter(r=> r && typeof r === 'object').map(r=>({
+        pos: String(r.pos || ''), asst: String(r.asst || ''), ctrl: String(r.ctrl || '')
+      }));
+    };
+    let vccsData = VCCS_DEFAULT.map(r=>({...r}));
+    try{
+      const raw = JSON.parse(localStorage.getItem(VCCS_KEY));
+      if(Array.isArray(raw) && raw.length) vccsData = normRows(raw);
+    }catch(e){}
+
+    let vccCtl = null;
+    const isEditing = ()=> !!(vccCtl && vccCtl.isUnlocked());
+    const renderVccs = ()=>{
+      const tbody = vccTable.querySelector('tbody');
+      tbody.innerHTML = '';
+      vccsData.forEach(r=>{
+        const tr = document.createElement('tr');
+        [r.pos, r.asst, r.ctrl].forEach(v=>{
+          const td = document.createElement('td');
+          td.contentEditable = isEditing() ? 'true' : 'false';
+          td.textContent = v;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    };
+    const readVccs = ()=>{
+      return Array.from(vccTable.querySelectorAll('tbody tr')).map(tr=>{
+        const c = tr.querySelectorAll('td');
+        const g = i=> (c[i] ? c[i].innerText.replace(/\u00a0/g,' ').trim() : '');
+        return { pos:g(0), asst:g(1), ctrl:g(2) };
+      });
+    };
+    window.vccsGetData = ()=> vccsData;
+    window.vccsApplyRemote = (val)=>{
+      const rows = normRows(val);
+      if(!rows.length) return;
+      if(JSON.stringify(rows) === JSON.stringify(vccsData)) return;
+      // don't yank the cell out from under the admin while typing
+      if(vccTable.contains(document.activeElement)) return;
+      vccsData = rows;
+      try{ localStorage.setItem(VCCS_KEY, JSON.stringify(vccsData)); }catch(e){}
+      renderVccs();
+    };
+    renderVccs();
+
     const saveVcc = ()=>{
-      try{ localStorage.setItem(VCC_KEY, vccBox.innerHTML); }catch(e){}
+      vccsData = readVccs();
+      try{ localStorage.setItem(VCCS_KEY, JSON.stringify(vccsData)); }catch(e){}
+      if(typeof pushVccsToFirebaseDebounced === 'function') pushVccsToFirebaseDebounced();
       flashChip('iflowVccSavedChip');
     };
-    const vccCtl = wireAdminEdit({
-      editBtnId: 'iflowVccEditBtn', saveBtnId: 'iflowVccSaveBtn', addRowBtnId: null,
-      getEditableEls: ()=> [vccBox], save: saveVcc, focusEl: 'iflowVccNotes'
+    vccCtl = wireAdminEdit({
+      editBtnId: 'iflowVccEditBtn', saveBtnId: 'iflowVccSaveBtn', addRowBtnId: 'iflowVccAddRow',
+      getEditableEls: ()=> Array.from(vccTable.querySelectorAll('td')),
+      save: saveVcc
     });
-    vccBox.addEventListener('blur', ()=>{ if(vccCtl.isUnlocked()) saveVcc(); });
+    vccTable.addEventListener('blur', (e)=>{
+      if(vccCtl.isUnlocked() && e.target && e.target.matches && e.target.matches('td')) saveVcc();
+    }, true);
+    const vccAddBtn = document.getElementById('iflowVccAddRow');
+    if(vccAddBtn){
+      vccAddBtn.addEventListener('click', ()=>{
+        if(!vccCtl.isUnlocked()) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>';
+        vccTable.querySelector('tbody').appendChild(tr);
+        saveVcc();
+      });
+    }
   }
 
   // Others — alphabetical notes compiled from the notebook pages
