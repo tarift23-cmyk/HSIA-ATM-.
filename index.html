@@ -1859,7 +1859,7 @@ td.roster-vacant-cell .roster-name-input{
         <button type="button" class="modal-close" id="exchangeModalClose">✕</button>
       </div>
       <div class="fr-dbsection-hint">
-        নির্দিষ্ট একটা তারিখে, নির্দিষ্ট একটা পজিশনে/টিমে সাময়িকভাবে অন্য কাউকে বসাতে এখানে যোগ করুন — মূল রোস্টার একদম অপরিবর্তিত থাকবে, শুধু ওই শিফট চলাকালীন ওই ঘরে <b>substitute-এর নাম হাইলাইট করে</b> দেখাবে, শিফট শেষ হলেই আগের অবস্থায় ফিরে যাবে। কেউ ছুটিতে থাকলে বা শেষ মুহূর্তে না আসতে পারলে, নাম না দিয়ে নিচের <b>"পজিশন ফাঁকা থাকবে"</b> টিক দিলে ওই ঘর লাল করে "ফাঁকা" দেখাবে। সংরক্ষণ/মোছার জন্য রোস্টার এডিটের পাসওয়ার্ড লাগবে।
+        নির্দিষ্ট একটা তারিখে, নির্দিষ্ট একটা পজিশনে/টিমে সাময়িকভাবে অন্য কাউকে বসাতে এখানে যোগ করুন — মূল রোস্টার একদম অপরিবর্তিত থাকবে, শুধু ওই শিফট চলাকালীন ওই ঘরে <b>substitute-এর নাম হাইলাইট করে</b> দেখাবে, শিফট শেষ হলেই আগের অবস্থায় ফিরে যাবে। সংরক্ষণ/মোছার জন্য রোস্টার এডিটের পাসওয়ার্ড লাগবে।
       </div>
       <div class="fr-manualform">
         <input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-09-19">
@@ -1881,7 +1881,6 @@ td.roster-vacant-cell .roster-name-input{
           <option value="2">২য় নাইট (৩:০০ AM–৭:৩০ AM)</option>
         </select>
         <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="যিনি ডিউটি করবেন (substitute name)">
-        <label class="fr-vacant-row"><input type="checkbox" id="exchangeVacant"> কেউ ডিউটি করবেন না — এই পজিশন ফাঁকা থাকবে (ছুটি/অসুস্থতা ইত্যাদি)</label>
         <button id="exchangeAddBtn" type="button" class="fr-dbimport">+ এক্সচেঞ্জ যোগ করুন</button>
       </div>
       <div class="fr-dbstatus" id="exchangeCurrentHint">বর্তমানে এই ঘরে (রোস্টার অনুযায়ী) আছে: Moinul-2</div>
@@ -1904,10 +1903,6 @@ td.roster-vacant-cell .roster-name-input{
       <div class="fr-manualform" id="quickExchangeHalfRow" style="display:none;">
         <button type="button" class="quick-half-btn quick-half-btn-1" data-half="1" id="quickHalf1Btn">১ম নাইট (৮:৩০ PM–৩:০০ AM)</button>
         <button type="button" class="quick-half-btn quick-half-btn-2" data-half="2" id="quickHalf2Btn">২য় নাইট (৩:০০ AM–৭:৩০ AM)</button>
-      </div>
-      <div class="fr-manualform">
-        <input type="text" id="quickExchangeSubName" class="fr-mfinput" placeholder="যিনি ডিউটি করবেন (substitute name)">
-        <label class="fr-vacant-row"><input type="checkbox" id="quickExchangeVacant"> কেউ ডিউটি করবেন না — ফাঁকা থাকবে</label>
       </div>
       <div class="fr-manualform">
         <button id="quickExchangeSaveBtn" type="button" class="fr-dbimport">✓ সেভ করুন</button>
@@ -3192,10 +3187,21 @@ function todayDateKey(){
   const f = nowDhakaFields();
   return f.y + '-' + String(f.m+1).padStart(2,'0') + '-' + String(f.day).padStart(2,'0');
 }
+/* "Position stays vacant" no longer exists: nobody is left off a duty, people only rest for half a night
+   while someone covers. Old entries of that kind (already saved / synced) are dropped here. */
+function stripVacantExchanges(o){
+  if(!o || typeof o !== 'object') return o;
+  Object.keys(o).forEach(k=>{
+    const list = Array.isArray(o[k]) ? o[k] : Object.values(o[k] || {});
+    const kept = list.filter(x=> x && !x.vacant);
+    if(kept.length) o[k] = kept; else delete o[k];
+  });
+  return o;
+}
 function loadExchanges(){
   try{
     const o = JSON.parse(localStorage.getItem(EXCHANGES_KEY));
-    if(o && typeof o === 'object' && !Array.isArray(o)) return o;
+    if(o && typeof o === 'object' && !Array.isArray(o)) return stripVacantExchanges(o);
   }catch(e){}
   return {};
 }
@@ -3643,7 +3649,7 @@ function checkMyExchangeNotifications(){
   Object.keys(EXCHANGES).sort().forEach(dateKey=>{
     if(dateKey < today) return; // ignore past dates
     (EXCHANGES[dateKey] || []).forEach(ex=>{
-      if((ex.subName||'').trim().toLowerCase() === session.displayName.trim().toLowerCase()){
+      if((ex.subName||'').trim() && (ex.subName||'').trim().toLowerCase() === session.displayName.trim().toLowerCase()){
         mine.push({dateKey, ex});
         const uniqueKey = dateKey + '|' + ex.table + '|' + ex.pos + '|' + ex.team;
         if(!notified.has(uniqueKey)){
@@ -4132,7 +4138,7 @@ function initAuthPanel(){
           (EXCHANGES[dateKey] || []).forEach(ex=>{
             const tbl = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
             const half = ex.nightHalf === '1' ? ' (1st night)' : ex.nightHalf === '2' ? ' (2nd night)' : '';
-            const who = ex.vacant ? 'Vacant' : (ex.subName || '');
+            const who = ex.subName || '';
             add('exchange', ex.pos || '', dateKey + ' · ' + tbl + ' · Team ' + (TEAMS[ex.team] || '?') + half + (who ? ' · ' + who : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
           });
         });
@@ -4452,9 +4458,9 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : ex.nightHalf === '1' ? 'roster-exchange-badge-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
         : 'roster-exchange-badge';
-      const badge = !ex ? '' : (ex.vacant
-        ? `<div class="${badgeClassName}" title="মূল: ${origTitle}">🚫 ফাঁকা</div>`
-        : `<div class="${badgeClassName}" title="মূল: ${origTitle}${halfTag}">🔄 ${(ex.subName||'').replace(/</g,'&lt;')}${halfTag}</div>`);
+      const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
+      const badgeText = subEsc ? '🔄 ' + subEsc + halfTag : '🌙 ' + (ex && ex.nightHalf === '1' ? '১ম নাইট' : ex && ex.nightHalf === '2' ? '২য় নাইট' : '');
+      const badge = !ex ? '' : `<div class="${badgeClassName}" title="মূল: ${origTitle}${halfTag}">${badgeText}</div>`;
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
@@ -4550,7 +4556,7 @@ function attachLongPressForRoster(tbodyId, tableKey){
   tbody.addEventListener('mouseup', clear);
   tbody.addEventListener('mouseleave', clear);
 
-  // 5 quick taps in a row on a name → open the quick exchange popup (1st / 2nd night, sub name, vacant)
+  // 5 quick taps in a row on a name → open the quick exchange popup (1st / 2nd night)
   const TAP_COUNT = 5, TAP_GAP_MS = 700;
   let tapKey = '', tapN = 0, tapLast = 0, hintTimer = null, hintCell = null;
   tbody.addEventListener('click', (e)=>{
@@ -4606,7 +4612,12 @@ function openQuickExchange(tableKey, ri, ci){
     alert('আজ Team ' + TEAMS[ci] + '-এর কোনো ডিউটি নেই, তাই এক্সচেঞ্জ যোগ করা যাবে না।');
     return;
   }
-  const isNight = st === 'Night';
+  // This popup is only for the 1st / 2nd night split (someone rests for half the night, another covers).
+  if(st !== 'Night'){
+    alert('আজ এই ঘরে নাইট ডিউটি নেই — ১ম/২য় নাইট এসাইন শুধু নাইট ডিউটিতে করা যায়।');
+    return;
+  }
+  const isNight = true;
   const existingList = (EXCHANGES[dateKey] || []).filter(x => x.table===tableKey && x.pos===row.pos && +x.team===ci);
 
   // Default to whichever night-half is current/next, so opening it during
@@ -4624,18 +4635,13 @@ function openQuickExchange(tableKey, ri, ci){
   const halfRow = document.getElementById('quickExchangeHalfRow');
   const half1Btn = document.getElementById('quickHalf1Btn');
   const half2Btn = document.getElementById('quickHalf2Btn');
-  const nameInput = document.getElementById('quickExchangeSubName');
-  const vacantCheck = document.getElementById('quickExchangeVacant');
   const removeBtn = document.getElementById('quickExchangeRemoveBtn');
-  if(!titleEl || !subEl || !nameInput || !vacantCheck || !removeBtn) return;
+  if(!titleEl || !subEl || !removeBtn) return;
 
   titleEl.textContent = '🔄 ' + row.pos + ' — Team ' + TEAMS[ci];
   subEl.textContent = 'আজ (' + dateKey + ') — বর্তমান রোস্টার নাম: ' + (row.names[ci] || '—');
 
   function fillFromEntry(ex){
-    nameInput.value = ex ? (ex.subName||'') : '';
-    vacantCheck.checked = !!(ex && ex.vacant);
-    nameInput.disabled = vacantCheck.checked;
     removeBtn.style.display = ex ? '' : 'none';
   }
 
@@ -4680,30 +4686,20 @@ function initQuickExchangeModal(){
   const overlay = document.getElementById('quickExchangeModalOverlay');
   const saveBtn = document.getElementById('quickExchangeSaveBtn');
   const removeBtn = document.getElementById('quickExchangeRemoveBtn');
-  const vacantCheck = document.getElementById('quickExchangeVacant');
-  const nameInput = document.getElementById('quickExchangeSubName');
   if(!overlay) return;
 
   if(closeBtn) closeBtn.addEventListener('click', ()=> closeModal('quickExchangeModalOverlay'));
   overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal('quickExchangeModalOverlay'); });
 
-  if(vacantCheck && nameInput){
-    vacantCheck.addEventListener('change', ()=>{
-      nameInput.disabled = vacantCheck.checked;
-      if(vacantCheck.checked) nameInput.value = '';
-    });
-  }
-
   if(saveBtn){
     saveBtn.addEventListener('click', ()=>{
       if(!quickExchangeCtx) return;
       if(!requireQuickAuth()) return;
-      const vacant = !!(vacantCheck && vacantCheck.checked);
-      const subName = vacant ? '' : (nameInput.value || '').trim();
-      if(!vacant && !subName){ alert('Substitute-এর নাম দিন, অথবা "ফাঁকা" টিক দিন।'); return; }
+      // Only the half is assigned — no substitute name. (Save is only reachable for night shifts.)
+      if(!quickExchangeCtx.half){ alert('১ম নাইট না ২য় নাইট, একটা বেছে নিন।'); return; }
       const entry = {
         table: quickExchangeCtx.table, pos: quickExchangeCtx.pos, team: quickExchangeCtx.team,
-        subName, vacant, nightHalf: quickExchangeCtx.isNight ? (quickExchangeCtx.half || '') : ''
+        subName: '', nightHalf: quickExchangeCtx.isNight ? (quickExchangeCtx.half || '') : ''
       };
       commitExchangeEntry(quickExchangeCtx.date, entry);
       closeModal('quickExchangeModalOverlay');
@@ -4921,10 +4917,12 @@ function connectFirebaseSync(config, roomId){
     listen(exchangesRef, snap=>{
       const val = snap.val();
       if(val && typeof val === 'object' && JSON.stringify(val) !== JSON.stringify(EXCHANGES)){
-        EXCHANGES = val;
+        const before = JSON.stringify(val);
+        EXCHANGES = stripVacantExchanges(val);
+        const stripped = JSON.stringify(EXCHANGES) !== before;
         const wasPruned = pruneExpiredExchanges(EXCHANGES);
         try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(EXCHANGES)); }catch(e){}
-        if(wasPruned) pushExchangesToFirebaseDebounced();
+        if(wasPruned || (stripped && rosterUnlocked)) pushExchangesToFirebaseDebounced();
         if(typeof renderExchangeList === 'function') renderExchangeList();
         renderRoster();
         renderRosterCtrl();
@@ -5203,7 +5201,7 @@ function renderExchangeList(){
       const halfLabel = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
       const teamLabel = 'Team ' + (TEAMS[ex.team] || '?') + halfLabel;
       const isToday = dateKey === today;
-      const subCell = ex.vacant ? '<span style="color:#F54249;font-weight:600;">🚫 ফাঁকা (Vacant)</span>' : (ex.subName||'').replace(/</g,'&lt;');
+      const subCell = (ex.subName||'').replace(/</g,'&lt;') || '—';
       rows.push(
         `<tr class="${isToday ? 'exchange-row-today' : ''}"><td>${dateKey}${isToday ? ' (আজ)' : ''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>${teamLabel}</td><td>${subCell}</td><td><button type="button" class="exchange-del-btn" data-date="${dateKey}" data-idx="${idx}">✕</button></td></tr>`
       );
@@ -5248,7 +5246,6 @@ function initExchangePanel(){
   const teamSel = document.getElementById('exchangeTeam');
   const halfSel = document.getElementById('exchangeNightHalf');
   const subInput = document.getElementById('exchangeSubName');
-  const vacantCheck = document.getElementById('exchangeVacant');
   const addBtn = document.getElementById('exchangeAddBtn');
   if(!dateInput) return;
 
@@ -5262,35 +5259,16 @@ function initExchangePanel(){
   teamSel.addEventListener('change', updateExchangeCurrentHint);
   dateInput.addEventListener('change', updateExchangeCurrentHint);
 
-  /* "Position stays vacant" toggle: when checked, the substitute-name
-     field isn't needed (and is cleared/disabled) — this covers leave,
-     sudden sickness, or anyone else simply not showing up, where the
-     admin wants the roster to show that seat as unstaffed rather than
-     picking a stand-in name. */
-  if(vacantCheck && subInput){
-    vacantCheck.addEventListener('change', ()=>{
-      if(vacantCheck.checked){
-        subInput.value = '';
-        subInput.disabled = true;
-        subInput.placeholder = 'ফাঁকা থাকবে — নাম লাগবে না';
-      } else {
-        subInput.disabled = false;
-        subInput.placeholder = 'যিনি ডিউটি করবেন (substitute name)';
-      }
-    });
-  }
-
   if(addBtn){
     addBtn.addEventListener('click', ()=>{
       if(!requireRosterAuth()) return;
       const dateKey = dateInput.value;
       if(!dateKey){ alert('একটা তারিখ দিন।'); return; }
       if(dateKey < today){ alert('আজকের আগের তারিখে এক্সচেঞ্জ দেওয়া যাবে না।'); return; }
-      const vacant = !!(vacantCheck && vacantCheck.checked);
-      const subName = vacant ? '' : (subInput.value || '').trim();
-      if(!vacant && !subName){ alert('Substitute-এর নাম দিন, অথবা "পজিশন ফাঁকা থাকবে" টিক দিন।'); return; }
+      const subName = (subInput.value || '').trim();
+      if(!subName){ alert('Substitute-এর নাম দিন।'); return; }
       const nightHalf = (halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
-      const entry = { table: tableSel.value, pos: posSel.value, team: +teamSel.value, subName, vacant, nightHalf };
+      const entry = { table: tableSel.value, pos: posSel.value, team: +teamSel.value, subName, nightHalf };
       if(!EXCHANGES[dateKey]) EXCHANGES[dateKey] = [];
       // Same table+pos+team+half combo replaces any earlier entry for it,
       // but a 1st-night and 2nd-night entry for the same position/team/date
@@ -5299,9 +5277,6 @@ function initExchangePanel(){
       EXCHANGES[dateKey].push(entry);
       saveExchangesData(EXCHANGES);
       subInput.value = '';
-      subInput.disabled = false;
-      subInput.placeholder = 'যিনি ডিউটি করবেন (substitute name)';
-      if(vacantCheck) vacantCheck.checked = false;
       renderExchangeList();
       renderRoster();
       renderRosterCtrl();
