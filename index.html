@@ -1344,6 +1344,7 @@ td.roster-exchange-cell-night2 .roster-name-input{
   text-decoration: line-through;
   text-decoration-color: rgba(176,102,255,0.85);
 }
+td.roster-nosub .roster-name-input{ opacity:1; text-decoration:none; }
 .roster-exchange-badge-night2{
   display:block;
   margin-top:2px;
@@ -1876,9 +1877,9 @@ td.roster-vacant-cell .roster-name-input{
           <option value="4">Team E</option>
         </select>
         <select id="exchangeNightHalf" class="fr-mfinput fr-mfinput-sm" style="display:none;">
-          <option value="">সম্পূর্ণ রাত (৮:৩০ PM–৭:৩০ AM)</option>
-          <option value="1">১ম নাইট (৮:৩০ PM–৩:০০ AM)</option>
-          <option value="2">২য় নাইট (৩:০০ AM–৭:৩০ AM)</option>
+          <option value="">সম্পূর্ণ রাত (8:30 PM–7:30 AM)</option>
+          <option value="1">1st Night (8:30 PM–3:00 AM)</option>
+          <option value="2">2nd Night (3:00 AM–7:30 AM)</option>
         </select>
         <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="যিনি ডিউটি করবেন (substitute name)">
         <button id="exchangeAddBtn" type="button" class="fr-dbimport">+ এক্সচেঞ্জ যোগ করুন</button>
@@ -1901,8 +1902,8 @@ td.roster-vacant-cell .roster-name-input{
       </div>
       <div class="fr-dbstatus" id="quickExchangeSub"></div>
       <div class="fr-manualform" id="quickExchangeHalfRow" style="display:none;">
-        <button type="button" class="quick-half-btn quick-half-btn-1" data-half="1" id="quickHalf1Btn">১ম নাইট (৮:৩০ PM–৩:০০ AM)</button>
-        <button type="button" class="quick-half-btn quick-half-btn-2" data-half="2" id="quickHalf2Btn">২য় নাইট (৩:০০ AM–৭:৩০ AM)</button>
+        <button type="button" class="quick-half-btn quick-half-btn-1" data-half="1" id="quickHalf1Btn">1st Night (8:30 PM–3:00 AM)</button>
+        <button type="button" class="quick-half-btn quick-half-btn-2" data-half="2" id="quickHalf2Btn">2nd Night (3:00 AM–7:30 AM)</button>
       </div>
       <div class="fr-manualform">
         <button id="quickExchangeSaveBtn" type="button" class="fr-dbimport">✓ সেভ করুন</button>
@@ -3476,7 +3477,7 @@ function buildMyDutyEvents(daysAhead){
         if((ex.subName||'').trim().toLowerCase() !== myName) return;
         const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
         if(!win || win.end <= now) return;
-        const halfTag = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+        const halfTag = ex.nightHalf === '1' ? ' (1st Night)' : ex.nightHalf === '2' ? ' (2nd Night)' : '';
         events.push({
           uid: `exchange-${dateKey}-${ex.table}-${(ex.pos||'').replace(/[^a-zA-Z0-9]/g,'')}-${ex.team}-${ex.nightHalf||'full'}@hsia-atm-shift-tracker`,
           start: win.start, end: win.end,
@@ -4452,14 +4453,16 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : ex.nightHalf === '1' ? 'roster-exchange-cell-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-cell-night2'
         : 'roster-exchange-cell';
-      const cellClass = cellClassName ? ` class="${cellClassName}"` : '';
-      const halfTag = ex && ex.nightHalf === '1' ? ' (১ম নাইট)' : ex && ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+      // No substitute name (1st/2nd Night marker only): the person is still on duty, so the name stays as normal text.
+      const noSub = ex && !(ex.subName || '').trim();
+      const cellClass = cellClassName ? ` class="${cellClassName}${noSub ? ' roster-nosub' : ''}"` : '';
+      const halfTag = ex && ex.nightHalf === '1' ? ' (1st Night)' : ex && ex.nightHalf === '2' ? ' (2nd Night)' : '';
       const badgeClassName = !ex ? '' : ex.vacant ? 'roster-vacant-badge'
         : ex.nightHalf === '1' ? 'roster-exchange-badge-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
         : 'roster-exchange-badge';
       const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
-      const badgeText = subEsc ? '🔄 ' + subEsc + halfTag : '🌙 ' + (ex && ex.nightHalf === '1' ? '১ম নাইট' : ex && ex.nightHalf === '2' ? '২য় নাইট' : '');
+      const badgeText = subEsc ? '🔄 ' + subEsc + halfTag : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
       const badge = !ex ? '' : `<div class="${badgeClassName}" title="মূল: ${origTitle}${halfTag}">${badgeText}</div>`;
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
     }).join('');
@@ -4614,7 +4617,7 @@ function openQuickExchange(tableKey, ri, ci){
   }
   // This popup is only for the 1st / 2nd night split (someone rests for half the night, another covers).
   if(st !== 'Night'){
-    alert('আজ এই ঘরে নাইট ডিউটি নেই — ১ম/২য় নাইট এসাইন শুধু নাইট ডিউটিতে করা যায়।');
+    alert('আজ এই ঘরে নাইট ডিউটি নেই — 1st/2nd Night এসাইন শুধু নাইট ডিউটিতে করা যায়।');
     return;
   }
   const isNight = true;
@@ -4696,7 +4699,7 @@ function initQuickExchangeModal(){
       if(!quickExchangeCtx) return;
       if(!requireQuickAuth()) return;
       // Only the half is assigned — no substitute name. (Save is only reachable for night shifts.)
-      if(!quickExchangeCtx.half){ alert('১ম নাইট না ২য় নাইট, একটা বেছে নিন।'); return; }
+      if(!quickExchangeCtx.half){ alert('1st Night না 2nd Night, একটা বেছে নিন।'); return; }
       const entry = {
         table: quickExchangeCtx.table, pos: quickExchangeCtx.pos, team: quickExchangeCtx.team,
         subName: '', nightHalf: quickExchangeCtx.isNight ? (quickExchangeCtx.half || '') : ''
@@ -5198,7 +5201,7 @@ function renderExchangeList(){
   dates.forEach(dateKey=>{
     (EXCHANGES[dateKey] || []).forEach((ex, idx)=>{
       const tableLabel = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
-      const halfLabel = ex.nightHalf === '1' ? ' (১ম নাইট)' : ex.nightHalf === '2' ? ' (২য় নাইট)' : '';
+      const halfLabel = ex.nightHalf === '1' ? ' (1st Night)' : ex.nightHalf === '2' ? ' (2nd Night)' : '';
       const teamLabel = 'Team ' + (TEAMS[ex.team] || '?') + halfLabel;
       const isToday = dateKey === today;
       const subCell = (ex.subName||'').replace(/</g,'&lt;') || '—';
