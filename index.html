@@ -3074,43 +3074,62 @@ const ROSTER_PASSWORD = "tarif12345^";
    verifies that server-side — unlike the plain client-side compare this
    function also does, which is visible to anyone who views page source. */
 const ROSTER_ADMIN_EMAIL = "admin@hsia-atm-tarif.app";
-let rosterUnlocked = false;
+/* Remember the admin on THIS device, so the password isn't asked again and again (before, every
+   page reload asked again). Kept only in this browser's localStorage; every admin action pushes the
+   expiry forward, so it only asks again after a full week without any admin action. */
+const ADMIN_REMEMBER_KEY = 'hsia_admin_remember_until';
+const ADMIN_REMEMBER_MS = 7 * 24 * 60 * 60 * 1000;
+function isAdminRemembered(){
+  try{ const t = Number(localStorage.getItem(ADMIN_REMEMBER_KEY)); return !!t && Date.now() < t; }catch(e){ return false; }
+}
+function rememberAdmin(){
+  try{ localStorage.setItem(ADMIN_REMEMBER_KEY, String(Date.now() + ADMIN_REMEMBER_MS)); }catch(e){}
+}
+let rosterUnlocked = isAdminRemembered();
 
-function requireRosterAuth(){
-  if(rosterUnlocked) return true;
+/* Establishes a real, server-verified Firebase Auth session so the Realtime Database Rules can
+   require auth.token.firebase.sign_in_provider === 'password' for writes — a check that can't be
+   bypassed just by reading this file's source. Not awaited by the UI; writes wait for it (see fbSet). */
+function adminFirebaseSignIn(){
+  if(typeof firebase !== 'undefined' && firebase.auth){
+    window._adminAuthFailed = null;
+    window._adminAuthPromise = firebase.auth().signInWithEmailAndPassword(ROSTER_ADMIN_EMAIL, ROSTER_PASSWORD)
+      .catch(err=>{
+        const code = (err && err.code) ? err.code : ((err && err.message) || 'unknown');
+        window._adminAuthFailed = code;
+        console.warn('Firebase admin sign-in failed (writes will be rejected by Rules):', err);
+        let hint = 'Firebase Console → Authentication → Users-এ ' + ROSTER_ADMIN_EMAIL + ' নামে ইউজার আছে কিনা এবং তার পাসওয়ার্ড এই অ্যাডমিন পাসওয়ার্ডের সাথে মেলে কিনা দেখুন।';
+        if(code === 'auth/operation-not-allowed') hint = 'Firebase Console → Authentication → Sign-in method-এ "Email/Password" চালু করুন।';
+        else if(code === 'auth/network-request-failed') hint = 'ইন্টারনেট সংযোগ চেক করুন।';
+        else if(code === 'auth/too-many-requests') hint = 'অনেকবার চেষ্টা হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।';
+        try{ setFirebaseSyncStatus('❌ অ্যাডমিন সাইন-ইন ব্যর্থ (' + code + ') — ' + hint); }catch(e){}
+        alert('⚠️ অ্যাডমিন সাইন-ইন ব্যর্থ হয়েছে (' + code + ').\nতাই এখন রোস্টার এডিট Firebase-এ সেভ হবে না, অন্য ডিভাইসে দেখাবে না।\n\n' + hint);
+      });
+  }
+}
+
+function adminGate(unlockInputs){
+  if(rosterUnlocked){
+    rememberAdmin();
+    if(unlockInputs) unlockAllRosterInputs();
+    return true;
+  }
   const p = window.prompt('এডিট বা সেভ করতে পাসওয়ার্ড দিন:');
   if(p === null) return false;
   if(p === ROSTER_PASSWORD){
     rosterUnlocked = true;
-    unlockAllRosterInputs();
-    // Fire-and-forget: establishes a real, server-verified Firebase Auth
-    // session so the Realtime Database Rules can require
-    // auth.token.firebase.sign_in_provider === 'password' for writes —
-    // a check that can't be bypassed just by reading this file's source,
-    // unlike a pure client-side password compare. Not awaited so the UI
-    // doesn't wait on a network round-trip; if it fails (e.g. the admin
-    // account isn't set up in Firebase yet), the write itself will just
-    // get rejected by the Rules and show up in the sync status.
-    if(typeof firebase !== 'undefined' && firebase.auth){
-      window._adminAuthFailed = null;
-      window._adminAuthPromise = firebase.auth().signInWithEmailAndPassword(ROSTER_ADMIN_EMAIL, ROSTER_PASSWORD)
-        .catch(err=>{
-          const code = (err && err.code) ? err.code : ((err && err.message) || 'unknown');
-          window._adminAuthFailed = code;
-          console.warn('Firebase admin sign-in failed (writes will be rejected by Rules):', err);
-          let hint = 'Firebase Console → Authentication → Users-এ ' + ROSTER_ADMIN_EMAIL + ' নামে ইউজার আছে কিনা এবং তার পাসওয়ার্ড এই অ্যাডমিন পাসওয়ার্ডের সাথে মেলে কিনা দেখুন।';
-          if(code === 'auth/operation-not-allowed') hint = 'Firebase Console → Authentication → Sign-in method-এ "Email/Password" চালু করুন।';
-          else if(code === 'auth/network-request-failed') hint = 'ইন্টারনেট সংযোগ চেক করুন।';
-          else if(code === 'auth/too-many-requests') hint = 'অনেকবার চেষ্টা হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।';
-          try{ setFirebaseSyncStatus('❌ অ্যাডমিন সাইন-ইন ব্যর্থ (' + code + ') — ' + hint); }catch(e){}
-          alert('⚠️ অ্যাডমিন সাইন-ইন ব্যর্থ হয়েছে (' + code + ').\nতাই এখন রোস্টার এডিট Firebase-এ সেভ হবে না, অন্য ডিভাইসে দেখাবে না।\n\n' + hint);
-        });
-    }
+    rememberAdmin();
+    if(unlockInputs) unlockAllRosterInputs();
+    adminFirebaseSignIn();
     return true;
   }
   alert('পাসওয়ার্ড ভুল হয়েছে।');
   return false;
 }
+// roster editing: also switches the roster cells to editable
+function requireRosterAuth(){ return adminGate(true); }
+// quick 1st/2nd-night exchange: same admin check, but leaves the roster cells locked
+function requireQuickAuth(){ return adminGate(false); }
 /* Backup download is always gated by the admin password, every single
    time — regardless of whether roster editing is already unlocked in
    this session (rosterUnlocked). This is intentionally separate from
@@ -4678,7 +4697,7 @@ function initQuickExchangeModal(){
   if(saveBtn){
     saveBtn.addEventListener('click', ()=>{
       if(!quickExchangeCtx) return;
-      if(!requireRosterAuth()) return;
+      if(!requireQuickAuth()) return;
       const vacant = !!(vacantCheck && vacantCheck.checked);
       const subName = vacant ? '' : (nameInput.value || '').trim();
       if(!vacant && !subName){ alert('Substitute-এর নাম দিন, অথবা "ফাঁকা" টিক দিন।'); return; }
@@ -4693,7 +4712,7 @@ function initQuickExchangeModal(){
   if(removeBtn){
     removeBtn.addEventListener('click', ()=>{
       if(!quickExchangeCtx) return;
-      if(!requireRosterAuth()) return;
+      if(!requireQuickAuth()) return;
       removeExchangeEntry(quickExchangeCtx.date, quickExchangeCtx.table, quickExchangeCtx.pos, quickExchangeCtx.team, quickExchangeCtx.isNight ? (quickExchangeCtx.half||'') : '');
       closeModal('quickExchangeModalOverlay');
     });
@@ -4919,7 +4938,12 @@ function connectFirebaseSync(config, roomId){
     }; // end attachSyncListeners
 
     auth.onAuthStateChanged(u=>{
-      if(u){ attachSyncListeners(); return; }
+      if(u){
+        attachSyncListeners();
+        // Remembered admin, but this browser session is only anonymous → sign in as admin again (silently).
+        if(u.isAnonymous && typeof rosterUnlocked !== 'undefined' && rosterUnlocked && !window._adminAuthPromise && typeof adminFirebaseSignIn === 'function') adminFirebaseSignIn();
+        return;
+      }
       auth.signInAnonymously().catch(err=>{
         setFirebaseSyncStatus('⚠️ Anonymous sign-in ব্যর্থ (' + (err && err.code ? err.code : err) + ') — Firebase Console → Authentication → Sign-in method → Anonymous চালু করুন, এটা ছাড়া সিঙ্ক কাজ করবে না।');
       });
