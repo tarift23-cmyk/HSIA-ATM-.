@@ -1,6 +1,37 @@
 <!DOCTYPE html>
 <html lang="en" style="--morning: #F6C84C; --afternoon: #00EB55; --night: #F54249; --bg: #120F0D; --text: #F0F1F3; --muted: #8B909B; --panel: #252220; --panel-2: #33312f; --border: #504d4c; --bg-glow: #2e2c2a; --cal-night-text: #F0F1F3;"><head>
 <meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var FLAG = 'hsia_auto_refresh_v1';
+    if(sessionStorage.getItem(FLAG)) return; // already did this once in this tab — don't loop
+    sessionStorage.setItem(FLAG, '1');
+    var pending = 0, started = false;
+    function reloadFresh(){
+      var url = location.href.split('#')[0];
+      url += (url.indexOf('?') === -1 ? '?' : '&') + '_r=' + Date.now();
+      location.replace(url);
+    }
+    function done(){ if(--pending <= 0) reloadFresh(); }
+    if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
+      pending++; started = true;
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        if(!regs.length) return done();
+        var left = regs.length;
+        regs.forEach(function(r){
+          r.unregister().then(function(){ if(--left <= 0) done(); }).catch(function(){ if(--left <= 0) done(); });
+        });
+      }).catch(done);
+    }
+    if(window.caches && caches.keys){
+      pending++; started = true;
+      caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }).then(done).catch(done);
+    }
+    if(!started) reloadFresh(); // neither API exists on this browser — just force the one reload
+  }catch(e){}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HSIA (ATM) — Live Shift Tracker</title>
 <link rel="manifest" href="manifest.json">
@@ -749,11 +780,16 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .air-searchbox{ margin-top:0; }
 
 /* ---- Airports/Airlines/Notepad tabs ---- */
+/* Horizontal scroll strip (same idea as the "who's on duty" ticker) instead of every tab squeezed
+   side by side: only 2-3 tabs fit a phone width comfortably, more than that need to scroll. */
 .air-tabs{
   display:flex; gap:8px; margin-bottom:14px;
+  overflow-x:auto; flex-wrap:nowrap; padding:2px 2px 8px;
+  scrollbar-width:none; -ms-overflow-style:none; -webkit-overflow-scrolling:touch;
 }
+.air-tabs::-webkit-scrollbar{ display:none; }
 .air-tab-btn{
-  flex:1; padding:10px 6px; text-align:center; border-radius:10px;
+  flex:0 0 auto; padding:10px 16px; text-align:center; border-radius:10px;
   border:1px solid var(--border); background:var(--panel-2);
   color:var(--muted); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px;
   cursor:pointer; transition:all .2s ease; white-space:nowrap;
@@ -767,10 +803,13 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 
 /* ---- HSIA Info Flow Chart tabs (Flow Chart / Adjacent Twr,PIFU,APP / VCC Panel / Others) ---- */
 .iflow-tabs{
-  display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;
+  display:flex; gap:6px; margin-bottom:14px;
+  overflow-x:auto; flex-wrap:nowrap; padding:2px 2px 8px;
+  scrollbar-width:none; -ms-overflow-style:none; -webkit-overflow-scrolling:touch;
 }
+.iflow-tabs::-webkit-scrollbar{ display:none; }
 .iflow-tab-btn{
-  flex:1 1 auto; min-width:70px; padding:9px 5px; text-align:center; border-radius:10px;
+  flex:0 0 auto; min-width:0; padding:9px 14px; text-align:center; border-radius:10px;
   border:1px solid var(--border); background:var(--panel-2);
   color:var(--muted); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11.5px;
   cursor:pointer; transition:all .2s ease; white-space:nowrap;
@@ -840,9 +879,21 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
   box-sizing:border-box;
 }
 .air-notepad-textarea:read-only{ color:var(--muted); cursor:not-allowed; }
+#airTabs, #airTabs *{}
 .air-notepad-actions{
   display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;
 }
+.np-tabs-scroll{
+  display:flex; gap:8px; margin-bottom:12px; overflow-x:auto; padding:2px 2px 8px;
+  scrollbar-width:none; -ms-overflow-style:none; -webkit-overflow-scrolling:touch;
+}
+.np-tabs-scroll::-webkit-scrollbar{ display:none; }
+.np-chip{
+  flex:0 0 auto; padding:8px 15px; border-radius:999px; border:1px solid var(--border);
+  background:var(--panel-2); color:var(--muted); font-family:'Space Grotesk',sans-serif;
+  font-weight:700; font-size:12.5px; white-space:nowrap; cursor:pointer; transition:all .2s ease;
+}
+.np-chip.active{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130; border-color:var(--gold); }
 @media (max-width:480px){
   .air-col{ min-width:200px; }
   .air-notepad-col{ min-width:170px; }
@@ -2006,6 +2057,7 @@ td.roster-vacant-cell .roster-name-input{
         <button type="button" class="iflow-tab-btn active" data-tab="iflowChartColumn">📋 Flow Chart</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowAdjColumn">📡 Adjacent Twr/PIFU/APP</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowVccColumn">🎛️ VCCS numbers</button>
+        <button type="button" class="iflow-tab-btn" data-tab="iflowNotepadColumn">📝 Notepad</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowOthersColumn">📚 Others</button>
       </div>
       <div class="iflow-columns">
@@ -2226,6 +2278,20 @@ td.roster-vacant-cell .roster-name-input{
         </div>
       </div>
 
+      <div class="iflow-col air-notepad-col" id="iflowNotepadColumn">
+        <div class="iflow-edit-hint">✏️ প্রতিটা সেকশন/সাবজেক্টের নোট আলাদাভাবে সেভ থাকে — নিচে থেকে সেকশন বেছে নিন, নতুন সেকশন যোগ করুন, অথবা নাম বদলান।</div>
+        <div class="np-tabs-scroll" id="npSectionTabs"></div>
+        <div class="air-notepad-actions">
+          <button id="notepadEditBtn" type="button" class="fr-dbimport">🔓 এডিট করুন (Admin)</button>
+          <button id="npAddBtn" type="button" class="fr-dbimport">+ নতুন সেকশন</button>
+          <button id="npRenameBtn" type="button" class="fr-dbimport">✏️ সেকশনের নাম বদলান</button>
+          <span id="notepadStatus" class="fr-dbstatus" style="display:none;"></span>
+        </div>
+        <div class="air-notepad-wrap">
+          <textarea id="adminNotepad" class="air-notepad-textarea" placeholder="এই সেকশনের নোট লিখুন (শুধু পাসওয়ার্ড দিয়ে এডিট করা যাবে)..." readonly></textarea>
+        </div>
+      </div>
+
       <div class="iflow-col" id="iflowOthersColumn">
         <div class="iflow-edit-hint">✏️ এডিটেবল — খাতার বাকি পাতাগুলো থেকে আলফাবেটিক্যালি সাজানো তথ্য (cross-check করে দরকার হলে সংশোধন/অন্য ট্যাবে সরিয়ে নিন)।</div>
         <div class="iflow-freetext" id="iflowOthersNotes" contenteditable="false"><h4>INDEX / TWR BUILDING</h4><div>Sato — 8100 | Dy Sato — 8110 | NOTAM — 8179 | Briefing — 8176, 8377 | Sato Admin — 8189 | PA to Sato — 8188 | ECR — 3092 | TWR — 8193</div><div>DSO — 3053, 01894908826 | Met — 8393 | Communication: 008177</div><h4>A</h4><div>Agartala — 0091 381 234 2821 (OK)</div><div>AASIIC-BD — Head: Gp Capt (Retd) Md Harunur Rashid, 01617785671 / 041091759 (Tel); Member (Engineering): Wg Cdr (Retd) MM Asaduzzaman, 01713125955 / 028901132 (Tel); Member (ATC): Md. Ayub Khan, 01718152577 / 041091756 (Tel)</div><div>Airport police station → 8901853, OC (Phn no): 01320041873</div><div>ABDULLAH AL MAMUN — AD (ATM Sup/OJTI) 01922545227</div><div>AVSEC — 42161, 4094, 01894-908853</div><div>Air Astra — 01324730880 (OPS AWA), 01713255990 (Sales)</div><div>A/C problem — (Nsr) 01712-088952</div><div>AC maintenance — Night: 01602949854 (Ataur); Day: 01662083029 (Asgar)</div><div>ATI time — 01764834772 (Rayhan)</div><div>AK-Traders in charge — 01817-145203</div><div>ADNC — 5837 (BAF D.T. Phone), 01769993467 (Whatsapp)</div><div class="iflow-src">(পাতা: P-1, P-27)</div><h4>B</h4><div>Bibam (Lost &amp; Found) → 8901500 + 5402/5404</div><div>BRAC Net — A212 — 01678-084871</div><div>Biman Ticket — 5526, 2571</div><div>Traffic Manager — 01777155333</div><div>OPS — 8901530, 8901260</div><div>Ramp control — 01716489835</div><div>Biman Engr → 01677715537, 630 / 01777715760</div><div>TNT — 8901500, 36</div><div class="iflow-src">(পাতা: P-28, P-2)</div><h4>C</h4><div>Custom &amp; Immigration — Custom: (i) 8901758 (ii) 01317-249273; Immigration: (i) 8901599 (ii) 01713-373072</div><div>VIP gate — 3232 | Media gate — 8858</div><div>One stop service — 01777715558</div><div>Cleaner — 01817145203 (AK.T. Supervisor), 01958575705</div><div>Chennai — 600027; Telephone: 91-44-22560700 (RCC), 91-44-22561803 (FIC), 91-44-22560893 (WSO); Fax: 91-44-22560700 (RCC), 91-44-22560894 (WSO); AFS: VOMMYCYX</div><div class="iflow-src">(পাতা: P-29, P-3)</div><h4>D</h4><div>Delhi RCC (110017 postal); Telephone: 91-11-25654061 (RCC), 91-11-25653457 (FIC), 91-11-25653283 (WSO); Fax: 91-11-25654061 (RCC), 91-11-25653284 (WSO); AFS: VIDPYCYXIMOV</div><div>DSO — 0028014653, Phn: 01890608826, 9226</div><div class="iflow-src">(পাতা: P-4)</div><h4>E</h4><div>Immigration — 8901599 (Duty officer)</div><div>Add SP (Immigration) — 01320005376</div><div>ECR = 601152 | ECR (IP) = 3092 | ECR (Airport JTA) = 01890315904 | ECR (Cargo Airport ART) = 01641074969</div><div>Exchange — 009999; (Airport TIS) 01710828698 (T/S); (TIA) 01531712341 (T/A)</div><div class="iflow-src">(পাতা: P-31, P-5)</div><h4>F</h4><div>Fine — 8901077, 3583</div><div>01812145828</div><div class="iflow-src">(পাতা: P-32)</div><h4>G</h4><div>Guwahati — 0091 0361 2840085</div><div class="iflow-src">(পাতা: P-7)</div><h4>H</h4><div>Health — 8901844, 01799430033 (Dro)</div><div>First Aid → 3219, 01305-489824</div><div class="iflow-src">(পাতা: P-34)</div><h4>K</h4><div>Kolkata (ACC) — 0091 3325110517, 9831479366</div><div>Kolkata (WSO) — 0091 3325119520</div><div>Kolkata (RCC) — 00913325130218</div><div>AFS — VECCYCYX</div><div>Kolkata (EAST) — 00913325110517; VTTIS</div><div>Kolkata whatsapp number — 91 8314 79366</div><div>Kolkata MED/MCD — 0091291332511305 0; MLU — 0091033251119521</div><div class="iflow-src">(পাতা: P-11)</div><h4>M</h4><div>MTD (মধ্যম বাযার) = 01753-290382; Mumbai RCC</div><div>Telephone: 91-22-26819421 (RCC), 91-22-26828088 (WSO)</div><div>(OCC/FIC): 91-22-26828002/8022</div><div>Fax: 91-22-26828121 (RCC), 91-22-26819341 (OCC/FIC)</div><div>AFS: 91-22-26828066 (WSO), VABBYCYX</div><div class="iflow-src">(পাতা: P-13)</div><h4>N</h4><div>Novo-Air — SPS: 01755856645; Eng: 01833-090053</div><div>Ground Handling — 01730-785015</div><div>NAV — 3284; Freq — 127.4</div><div>Net Broc (A212) — 01678-084871</div><div class="iflow-src">(পাতা: P-40)</div><h4>O</h4><div>OMA Air — 01711-409213</div><div class="iflow-src">(পাতা: P-41)</div><h4>R</h4><div>Radar control — Tech: 3203, Head: 3228</div><div>NAV AID — 3284; Principal CAA — 3386; Equipment — 3054; Civil Devision — 3250; RDP center — 60115</div><div class="iflow-src">(পাতা: P-44)</div><h4>S</h4><div>SSF C/Rm — 9144865</div><div>SSF commander airport — 01755510486, 01766299576</div><div class="iflow-src">(পাতা: P-45)</div><h4>T</h4><div>Telephone Complain — 6797</div><div class="iflow-src">(পাতা: P-20)</div><h4>U</h4><div>US-Bangla — 3643, 01777-77779/878 (সংখ্যা অস্পষ্ট, মূল পাতায় যাচাই করুন)</div><div class="iflow-src">(পাতা: P-47)</div><h4>Y</h4><div>Yangon Control (ACC) — 009515-33268, 009515-33040, 009517-533040</div><div class="iflow-src">(পাতা: P-15)</div></div>
@@ -2278,7 +2344,6 @@ td.roster-vacant-cell .roster-name-input{
       <div class="air-tabs" id="airTabs">
         <button type="button" class="air-tab-btn active" data-tab="airportColumn">✈️ Airport</button>
         <button type="button" class="air-tab-btn" data-tab="airlineColumn">🛫 Airlines</button>
-        <button type="button" class="air-tab-btn" data-tab="notepadColumn">📝 Notepad</button>
       </div>
       <div class="air-columns">
       <div class="air-col air-tab-active" id="airportColumn">
@@ -2328,15 +2393,7 @@ td.roster-vacant-cell .roster-name-input{
       </div>
       </div>
 
-      <div class="air-col air-notepad-col" id="notepadColumn">
-        <div class="air-col-title">📝 Notepad</div>
-        <div class="air-notepad-wrap">
-          <textarea id="adminNotepad" class="air-notepad-textarea" placeholder="এডমিন নোট (শুধু পাসওয়ার্ড দিয়ে এডিট করা যাবে)..." readonly=""></textarea>
-        </div>
-        <div class="air-notepad-actions">
-          <button id="notepadEditBtn" type="button" class="fr-dbimport">🔓 এডিট করুন (Admin)</button>
-          <span id="notepadStatus" class="fr-dbstatus" style="display:none;"></span>
-        </div>
+      </div>
       </div>
       </div>
     </div>
@@ -4197,13 +4254,21 @@ function initAuthPanel(){
         });
       });
 
-      // Notepad
+      // Notepad (one entry per line, tagged with its section/subject so results say e.g. "Approach")
       safe(()=>{
-        const np = $('adminNotepad');
-        if(!np || !np.value) return;
-        np.value.split(/\r?\n/).forEach(line=>{
-          if(!line.trim()) return;
-          add('notepad', '', line.trim(), ()=>{ openPanel('airportsCardOuter','airports'); clickTab('airTabs','notepadColumn'); return ()=> np; });
+        if(typeof loadNotepadState !== 'function') return;
+        const state = loadNotepadState();
+        state.sections.forEach(sec=>{
+          (sec.text || '').split(/\r?\n/).forEach(line=>{
+            if(!line.trim()) return;
+            add('notepad', sec.name, line.trim(), ()=>{
+              openPanel('infoflowCardOuter','infoflow');
+              clickTab('iflowTabs','iflowNotepadColumn');
+              if(typeof setActiveNotepadSection === 'function') setActiveNotepadSection(sec.id);
+              if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
+              return ()=> document.getElementById('adminNotepad');
+            });
+          });
         });
       });
 
@@ -4910,11 +4975,13 @@ function connectFirebaseSync(config, roomId){
 
     listen(adminNotepadRef, snap=>{
       const val = snap.val();
-      if(typeof val === 'string' && val !== loadAdminNotepad()){
-        try{ localStorage.setItem(ADMIN_NOTEPAD_KEY, val); }catch(e){}
-        const ta = document.getElementById('adminNotepad');
-        if(ta && !notepadUnlocked) ta.value = val;
-      }
+      const incoming = (typeof val === 'string') ? (val ? [{ id:'general', name:'General', text: val }] : null) : normalizeNotepadSections(val);
+      if(!incoming) return;
+      const state = loadNotepadState();
+      if(JSON.stringify(incoming) === JSON.stringify(state.sections)) return;
+      if(notepadUnlocked) return; // an admin is actively typing on this device — don't yank the textarea from under them
+      try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify({ sections: incoming, activeId: state.activeId })); }catch(e){}
+      if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
     });
 
     listen(exchangesRef, snap=>{
@@ -4987,7 +5054,7 @@ function pushExchangesToFirebase(){
 function pushAdminNotepadToFirebase(){
   const saved = loadFirebaseSyncConfig();
   if(!_fbDb || !saved) return;
-  fbSet(saved.roomId, 'adminNotepad', loadAdminNotepad());
+  fbSet(saved.roomId, 'adminNotepad', loadNotepadState().sections);
 }
 const pushRosterToFirebaseDebounced = debounce(pushRosterToFirebase, 500);
 const pushRosterCtrlToFirebaseDebounced = debounce(pushRosterCtrlToFirebase, 500);
@@ -6394,17 +6461,76 @@ function getAllAirlines(){ return AIRLINES_DATA.concat(CUSTOM_AIRLINES); }
 
 /* ---- Notepad panel (Airports & Airlines window): admin-only text note,
    synced across devices via Firebase like the custom airport/airline lists. ---- */
-const ADMIN_NOTEPAD_KEY = 'HSIA_ADMIN_NOTEPAD_V1';
+const ADMIN_NOTEPAD_KEY = 'HSIA_ADMIN_NOTEPAD_V1'; // legacy single-note format, migrated on first read below
+const NOTEPAD_KEY = 'HSIA_NOTEPAD_SECTIONS_V1';
 let notepadUnlocked = false;
-function loadAdminNotepad(){ try{ return localStorage.getItem(ADMIN_NOTEPAD_KEY) || ''; }catch(e){ return ''; } }
-function saveAdminNotepad(text){ try{ localStorage.setItem(ADMIN_NOTEPAD_KEY, text); }catch(e){} pushAdminNotepadToFirebaseDebounced(); }
+
+function normalizeNotepadSections(list){
+  if(!Array.isArray(list)) return null;
+  const out = list.filter(x=> x && typeof x === 'object').map(x=>({
+    id: String(x.id || '').trim() || ('s' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
+    name: String(x.name || '').trim() || 'Untitled',
+    text: typeof x.text === 'string' ? x.text : ''
+  }));
+  return out.length ? out : null;
+}
+// The note used to be one page of free text; each subject/section is now saved separately so
+// admins can keep, say, Approach notes and FDO notes apart instead of one long scroll.
+function loadNotepadState(){
+  try{
+    const raw = localStorage.getItem(NOTEPAD_KEY);
+    if(raw){
+      const o = JSON.parse(raw);
+      const sections = o && normalizeNotepadSections(o.sections);
+      if(sections) return { sections, activeId: (o.activeId && sections.some(s=> s.id === o.activeId)) ? o.activeId : sections[0].id };
+    }
+  }catch(e){}
+  let legacy = '';
+  try{ legacy = localStorage.getItem(ADMIN_NOTEPAD_KEY) || ''; }catch(e){}
+  const sections = [{ id:'general', name:'General', text: legacy }];
+  return { sections, activeId:'general' };
+}
+// activeId (which section is showing) is a per-device view setting — it is saved locally but
+// never pushed to Firebase, so opening the notepad on one phone doesn't jump to another phone's tab.
+function saveNotepadSections(sections, activeId){
+  const state = { sections, activeId: (activeId && sections.some(s=> s.id === activeId)) ? activeId : (sections[0] && sections[0].id) };
+  try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify(state)); }catch(e){}
+  pushAdminNotepadToFirebaseDebounced();
+}
+function setActiveNotepadSection(id){
+  const state = loadNotepadState();
+  if(!state.sections.some(s=> s.id === id)) return;
+  try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify({ sections: state.sections, activeId:id })); }catch(e){}
+}
 
 function initAdminNotepad(){
   const ta = document.getElementById('adminNotepad');
+  const tabsWrap = document.getElementById('npSectionTabs');
   const editBtn = document.getElementById('notepadEditBtn');
+  const addBtn = document.getElementById('npAddBtn');
+  const renameBtn = document.getElementById('npRenameBtn');
   const statusEl = document.getElementById('notepadStatus');
-  if(!ta) return;
-  ta.value = loadAdminNotepad();
+  if(!ta || !tabsWrap) return;
+  const escHtml = t=> String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  function render(){
+    const state = loadNotepadState();
+    tabsWrap.innerHTML = state.sections.map(sec=>
+      '<button type="button" class="np-chip' + (sec.id === state.activeId ? ' active' : '') + '" data-id="' + sec.id + '">' + escHtml(sec.name) + '</button>'
+    ).join('');
+    const active = state.sections.find(sec=> sec.id === state.activeId);
+    ta.value = active ? active.text : '';
+  }
+  // Re-render when a remote update arrives (Firebase listener) or central search jumps to a section.
+  window._renderNotepadUI = render;
+  render();
+
+  tabsWrap.addEventListener('click', (e)=>{
+    const b = e.target.closest('.np-chip');
+    if(!b) return;
+    setActiveNotepadSection(b.getAttribute('data-id'));
+    render();
+  });
 
   if(editBtn){
     editBtn.addEventListener('click', ()=>{
@@ -6414,7 +6540,7 @@ function initAdminNotepad(){
         editBtn.textContent = '🔓 এডিট করুন (Admin)';
         return;
       }
-      if(!requireRosterAuth()) return;
+      if(!requireQuickAuth()) return;
       ta.readOnly = false;
       ta.focus();
       notepadUnlocked = true;
@@ -6422,8 +6548,43 @@ function initAdminNotepad(){
     });
   }
 
+  if(addBtn){
+    addBtn.addEventListener('click', ()=>{
+      if(!requireQuickAuth()) return;
+      const name = window.prompt('নতুন সেকশন/সাবজেক্টের নাম দিন (যেমন: Approach, FDO):');
+      if(name === null) return;
+      const trimmed = name.trim();
+      if(!trimmed) return;
+      const state = loadNotepadState();
+      const id = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+      state.sections.push({ id, name: trimmed, text:'' });
+      saveNotepadSections(state.sections, id);
+      render();
+    });
+  }
+
+  if(renameBtn){
+    renameBtn.addEventListener('click', ()=>{
+      if(!requireQuickAuth()) return;
+      const state = loadNotepadState();
+      const active = state.sections.find(sec=> sec.id === state.activeId);
+      if(!active) return;
+      const name = window.prompt('সেকশনের নতুন নাম দিন:', active.name);
+      if(name === null) return;
+      const trimmed = name.trim();
+      if(!trimmed) return;
+      active.name = trimmed;
+      saveNotepadSections(state.sections, state.activeId);
+      render();
+    });
+  }
+
   ta.addEventListener('input', ()=>{
-    saveAdminNotepad(ta.value);
+    const state = loadNotepadState();
+    const active = state.sections.find(sec=> sec.id === state.activeId);
+    if(!active) return;
+    active.text = ta.value;
+    saveNotepadSections(state.sections, state.activeId);
     if(statusEl){
       statusEl.style.display = 'inline';
       statusEl.textContent = '✓ সেভ হয়েছে';
@@ -7796,13 +7957,6 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 });
 
 })();
-</script>
-<script>
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js').catch(function(e){ console.log('SW registration failed', e); });
-    });
-  }
 </script>
 
 
