@@ -5,30 +5,57 @@
 (function(){
   try{
     var FLAG = 'hsia_auto_refresh_v1';
-    if(sessionStorage.getItem(FLAG)) return; // already did this once in this tab — don't loop
-    sessionStorage.setItem(FLAG, '1');
-    var pending = 0, started = false;
+    if(sessionStorage.getItem(FLAG)) return; // already decided this once in this tab — don't loop
+
+    function markDone(){ try{ sessionStorage.setItem(FLAG, '1'); }catch(e){} }
+
     function reloadFresh(){
       var url = location.href.split('#')[0];
       url += (url.indexOf('?') === -1 ? '?' : '&') + '_r=' + Date.now();
       location.replace(url);
     }
-    function done(){ if(--pending <= 0) reloadFresh(); }
-    if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
-      pending++; started = true;
-      navigator.serviceWorker.getRegistrations().then(function(regs){
-        if(!regs.length) return done();
-        var left = regs.length;
-        regs.forEach(function(r){
-          r.unregister().then(function(){ if(--left <= 0) done(); }).catch(function(){ if(--left <= 0) done(); });
-        });
-      }).catch(done);
+
+    // Clears out any service worker / cache storage left over from a previous version of the
+    // page, then does the actual reload. Only ever called once real connectivity is confirmed
+    // below — this is skipped completely while offline, so the already-loaded page (with its
+    // own, locally-computed "current shift" from the phone's clock) is left exactly as is.
+    function cleanupAndReload(){
+      var pending = 0, started = false;
+      function done(){ if(--pending <= 0) reloadFresh(); }
+      if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
+        pending++; started = true;
+        navigator.serviceWorker.getRegistrations().then(function(regs){
+          if(!regs.length) return done();
+          var left = regs.length;
+          regs.forEach(function(r){
+            r.unregister().then(function(){ if(--left <= 0) done(); }).catch(function(){ if(--left <= 0) done(); });
+          });
+        }).catch(done);
+      }
+      if(window.caches && caches.keys){
+        pending++; started = true;
+        caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }).then(done).catch(done);
+      }
+      if(!started) reloadFresh();
     }
-    if(window.caches && caches.keys){
-      pending++; started = true;
-      caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }).then(done).catch(done);
+
+    // No network interface at all (airplane mode, no SIM/Wi-Fi) — don't even try.
+    if('onLine' in navigator && !navigator.onLine){ markDone(); return; }
+
+    // navigator.onLine can say "true" with no real internet behind it (e.g. Wi-Fi with no
+    // upstream), so confirm with one quick, short-timeout network request before doing
+    // anything that depends on the network actually working. If this fails or times out,
+    // we simply leave the page as it already loaded — no forced reload, no broken access.
+    if(!('fetch' in window)){
+      if('onLine' in navigator && navigator.onLine){ markDone(); cleanupAndReload(); } else { markDone(); }
+      return;
     }
-    if(!started) reloadFresh(); // neither API exists on this browser — just force the one reload
+    var probeUrl = location.href.split('#')[0].split('?')[0] + '?_probe=' + Date.now();
+    var controller = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function(){ if(controller) controller.abort(); }, 1500);
+    fetch(probeUrl, { method:'HEAD', cache:'no-store', signal: controller ? controller.signal : undefined })
+      .then(function(){ clearTimeout(timer); markDone(); cleanupAndReload(); })
+      .catch(function(){ clearTimeout(timer); markDone(); }); // offline (or too slow) — stay on the page as-is
   }catch(e){}
 })();
 </script>
@@ -884,16 +911,17 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
   display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;
 }
 .np-tabs-scroll{
-  display:flex; gap:8px; margin-bottom:12px; overflow-x:auto; padding:2px 2px 8px;
-  scrollbar-width:none; -ms-overflow-style:none; -webkit-overflow-scrolling:touch;
+  display:flex; flex-direction:column; gap:8px; margin-bottom:12px;
+  max-height:200px; overflow-y:auto; padding:2px 4px 2px 2px;
+  -webkit-overflow-scrolling:touch;
 }
-.np-tabs-scroll::-webkit-scrollbar{ display:none; }
 .np-chip{
-  flex:0 0 auto; padding:8px 15px; border-radius:999px; border:1px solid var(--border);
-  background:var(--panel-2); color:var(--muted); font-family:'Space Grotesk',sans-serif;
-  font-weight:700; font-size:12.5px; white-space:nowrap; cursor:pointer; transition:all .2s ease;
+  flex:0 0 auto; width:100%; box-sizing:border-box; text-align:left; padding:10px 14px;
+  border-radius:10px; border:1px solid var(--border); background:var(--panel-2); color:var(--muted);
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; cursor:pointer; transition:all .2s ease;
 }
 .np-chip.active{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130; border-color:var(--gold); }
+.np-rename-btn{ padding:9px 14px; font-size:15px; line-height:1; }
 @media (max-width:480px){
   .air-col{ min-width:200px; }
   .air-notepad-col{ min-width:170px; }
@@ -2279,12 +2307,11 @@ td.roster-vacant-cell .roster-name-input{
       </div>
 
       <div class="iflow-col air-notepad-col" id="iflowNotepadColumn">
-        <div class="iflow-edit-hint">✏️ প্রতিটা সেকশন/সাবজেক্টের নোট আলাদাভাবে সেভ থাকে — নিচে থেকে সেকশন বেছে নিন, নতুন সেকশন যোগ করুন, অথবা নাম বদলান।</div>
         <div class="np-tabs-scroll" id="npSectionTabs"></div>
         <div class="air-notepad-actions">
           <button id="notepadEditBtn" type="button" class="fr-dbimport">🔓 এডিট করুন (Admin)</button>
           <button id="npAddBtn" type="button" class="fr-dbimport">+ নতুন সেকশন</button>
-          <button id="npRenameBtn" type="button" class="fr-dbimport">✏️ সেকশনের নাম বদলান</button>
+          <button id="npRenameBtn" type="button" class="fr-dbimport np-rename-btn" title="সেকশনের নাম বদলান" aria-label="সেকশনের নাম বদলান">✏️</button>
           <span id="notepadStatus" class="fr-dbstatus" style="display:none;"></span>
         </div>
         <div class="air-notepad-wrap">
