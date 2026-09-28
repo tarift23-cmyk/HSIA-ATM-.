@@ -807,6 +807,52 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .air-searchbox{ margin-top:0; }
 
 
+
+/* ---- Duty Roster "Now" button + popup ---- */
+.rost-titlewrap{ display:flex; align-items:center; gap:10px; min-width:0; }
+.rost-now-btn{
+  border:0; border-radius:999px; padding:4px 12px; font-family:'Space Grotesk',sans-serif;
+  font-size:11px; font-weight:800; letter-spacing:.04em; cursor:pointer;
+  background:var(--gold); color:#1B2130;
+}
+.rost-now-btn:active{ filter:brightness(.92); }
+#rosterNowView{ display:none; }
+#rosterBody.rost-now-on > #rosterNowView{ display:block; }
+#rosterBody.rost-now-on > #rosterTabs,
+#rosterBody.rost-now-on > .rost-col,
+#rosterBody.rost-now-on > #rosterSharedBars{ display:none !important; }
+.rost-now-btn.on{ box-shadow:0 0 0 2px var(--panel), 0 0 0 4px currentColor; }
+.now-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 14px; margin-bottom:12px; border-radius:10px;
+  background:var(--panel-2); border:1px solid var(--border); border-left:4px solid var(--acc, var(--gold));
+}
+.now-head-l{ display:flex; flex-direction:column; gap:2px; }
+.now-head-k{ font-size:10.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.now-head-v{ font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:800; color:var(--text); }
+.now-head-v span{ color:var(--acc, var(--gold)); }
+.now-close{ border:1px solid var(--border); background:transparent; color:var(--muted); border-radius:8px; padding:5px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+.now-tablewrap{ border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+table.now-table{ width:100%; border-collapse:collapse; font-size:13px; color:var(--text); background:var(--panel-2); }
+table.now-table thead th{
+  text-align:left; padding:10px 12px; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); background:var(--panel); border-bottom:1px solid var(--border);
+}
+table.now-table td{ padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+table.now-table tbody tr:last-child td{ border-bottom:0; }
+table.now-table tr.now-group td{
+  padding:8px 12px; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--gold-soft); background:rgba(166,171,180,0.10); border-left:3px solid var(--acc, var(--gold));
+}
+table.now-table td.now-pos{ width:42%; font-weight:600; color:var(--muted); }
+table.now-table td.now-name{ font-weight:700; color:var(--text); }
+table.now-table td.now-name small{ display:block; margin-top:2px; font-weight:500; font-size:11px; color:var(--muted); }
+table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255,255,255,0.02); }
+.now-empty{ color:var(--muted); font-size:13px; padding:14px 12px; }
+/* ---- Duty Roster tabs + Communication roster ---- */
+.rost-col{ display:none; }
+.rost-col.rost-active{ display:block; }
+
 /* ---- Equivalent Aircraft Type tab ---- */
 table.eq-table{ table-layout:auto; min-width:100%; }
 table.eq-table th, table.eq-table td{ white-space:nowrap; }
@@ -1657,6 +1703,25 @@ td.roster-vacant-cell .roster-name-input{
   font-size:12px;
 }
 
+.ico{width:18px;height:18px;display:block;flex:none}
+.icon-only{display:inline-flex !important;align-items:center;justify-content:center;gap:0}
+.roster-edit-btn.icon-only,.roster-save-btn.icon-only{padding:12px 0}
+.roster-edit-btn.icon-only .ico,.roster-save-btn.icon-only .ico{width:22px;height:22px}
+.fr-dbimport.icon-only{padding:9px 16px;min-width:46px}
+/* bare icon buttons (like the Time Converter icon) */
+.icon-only,.roster-edit-btn.icon-only,.roster-save-btn.icon-only,.fr-dbimport.icon-only,.fr-adminbtn.icon-only{
+background:none !important;border:none !important;box-shadow:none !important;
+color:var(--gold-soft) !important;padding:6px !important;min-width:0 !important;width:auto !important;
+flex:0 0 auto !important;cursor:pointer;line-height:0;transition:opacity .2s ease, transform .15s ease;
+}
+.icon-only .ico,.roster-edit-btn.icon-only .ico,.roster-save-btn.icon-only .ico{width:28px;height:28px;stroke-width:1.5}
+.icon-only:active{opacity:.6;transform:scale(.92)}
+.icon-only.is-on{color:var(--gold) !important}
+.xch-btn{display:flex !important;align-items:center;justify-content:center;gap:8px;flex:1 1 auto !important;min-width:0}
+.xch-btn .xch-ico{width:22px;height:22px;flex:none;background:#fff;border-radius:7px;padding:2px;box-sizing:content-box}
+.xch-btn span{white-space:nowrap}
+#rosterSharedBars .roster-savebar{justify-content:stretch;gap:12px;align-items:center}
+#flightDbAdminBtn.icon-only{display:flex !important;margin:0 auto}
 </style>
 <script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs" async=""></script><script src="https://apis.google.com/js/api.js?onload=__iframefcb63634" type="text/javascript" charset="UTF-8" gapi_processed="true"></script></head>
 <body>
@@ -1830,12 +1895,19 @@ td.roster-vacant-cell .roster-name-input{
 
   <div class="cardpanel" id="rosterCardOuter">
     <div class="collapse-head" id="rosterHead">
-      <div class="cardpanel-title">Duty Roster</div>
+      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn">Now</button></div>
       <div class="collapse-toggle" id="rosterToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="rosterBody">
-      <div class="roster-nowon" id="rosterNowOn">এখন ডিউটিতে — টিম A (Afternoon)</div>
+      <div id="rosterNowView"></div>
 
+      <div class="iflow-tabs" id="rosterTabs">
+        <button type="button" class="iflow-tab-btn active" data-tab="rosterCtrlCol">Controllers</button>
+        <button type="button" class="iflow-tab-btn" data-tab="rosterAsstCol">Aerodrome Assistant (Area)</button>
+        <button type="button" class="iflow-tab-btn" data-tab="rosterCommCol">Communication</button>
+      </div>
+
+      <div class="rost-col rost-active" id="rosterCtrlCol">
       <div class="roster-subtitle">Controllers</div>
       <div class="roster-tablewrap">
         <table class="roster-table hl-A" id="rosterTableCtrl">
@@ -1857,7 +1929,10 @@ td.roster-vacant-cell .roster-name-input{
         <button id="rosterAddBtnCtrl">+ যোগ করুন</button>
       </div>
 
-      <div class="roster-subtitle" style="margin-top:22px;">Aerodrome Assistant</div>
+      </div>
+
+      <div class="rost-col" id="rosterAsstCol">
+      <div class="roster-subtitle">Aerodrome Assistant</div>
       <div class="roster-tablewrap">
         <table class="roster-table hl-A" id="rosterTable">
           <colgroup>
@@ -1878,14 +1953,39 @@ td.roster-vacant-cell .roster-name-input{
         <button id="rosterAddBtn">+ যোগ করুন</button>
       </div>
 
-      <div class="roster-savebar">
-        <button id="rosterEditBtn" class="roster-edit-btn">✏️ Edit করুন</button>
-        <button id="rosterSaveBtn" class="roster-save-btn">💾 সেভ করুন</button>
       </div>
+
+      <div class="rost-col" id="rosterCommCol">
+      <div class="roster-subtitle">Communication</div>
+      <div class="roster-tablewrap">
+        <table class="roster-table hl-A" id="rosterTableComm">
+          <colgroup>
+            <col style="width:150px">
+            <col style="width:122px"><col style="width:122px"><col style="width:122px"><col style="width:122px"><col style="width:122px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="text-align:left; padding-left:10px;">DUTY PLACE</th>
+              <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th>
+            </tr>
+          </thead>
+          <tbody id="rosterBodyRowsComm"></tbody>
+        </table>
+      </div>
+      <div class="roster-addrow">
+        <input id="rosterNewPosComm" type="text" placeholder="নতুন পজিশনের নাম লিখুন (e.g. NOTAM)">
+        <button id="rosterAddBtnComm">+ যোগ করুন</button>
+      </div>
+      </div>
+
+      <div id="rosterSharedBars">
       <div class="roster-savebar">
-        <button id="exchangeModalOpenBtn" type="button" class="roster-save-btn">🔄 Duty Exchange</button>
+        <button id="rosterEditBtn" class="icon-only roster-edit-btn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        <button id="rosterSaveBtn" class="icon-only roster-save-btn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
+<button id="exchangeModalOpenBtn" type="button" class="roster-save-btn xch-btn" aria-label="Duty Exchange"><svg class="xch-ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="#0E9F6E"><path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/></g><g stroke="#E5484D"><path d="m17 20 4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/></g></svg><span>Duty Exchange</span></button>
       </div>
       <div class="roster-savedchip" id="rosterSavedChip"></div>
+      </div>
     </div>
   </div>
 
@@ -1899,9 +1999,6 @@ td.roster-vacant-cell .roster-name-input{
         <div class="fr-manualform" style="margin-bottom:10px;">
           <button type="button" id="googleLoginBtn" class="fr-dbimport" style="background:#fff;color:#3c4043;border:1px solid #dadce0;flex:1 1 auto;">🔵 Continue with Google</button>
           <span id="googleSetupLink" style="font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;white-space:nowrap;align-self:center;">⚙️ সেটআপ</span>
-        </div>
-        <div class="fr-dbsection-hint" style="margin-bottom:10px;">
-          এক ক্লিকে Google অ্যাকাউন্ট দিয়ে লগইন হবে, আর একই সাথে ক্যালেন্ডারে ডিউটি রিমাইন্ডার সিঙ্ক করারও অনুমতি মিলে যাবে — নিচের ম্যানুয়াল ফর্ম আর লাগবে না।
         </div>
         <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:8px;">— অথবা ম্যানুয়ালি —</div>
         <div class="fr-manualform" style="margin-bottom:6px;">
@@ -1922,9 +2019,6 @@ td.roster-vacant-cell .roster-name-input{
           <button type="button" id="authRegBtn" class="fr-dbimport">রেজিস্টার করুন</button>
         </div>
         <div id="authForgotForm" class="fr-manualform" style="display:none;">
-          <div class="fr-dbsection-hint" style="margin-bottom:6px;">
-            ⚠️ সত্যিকারের SMS পাঠানো (Firebase Phone Auth) এখন গুগলের পেইড Blaze প্ল্যান ছাড়া কাজ করে না — একটা কার্ড যোগ করা লাগতো, যেটা আপনি "সম্পূর্ণ ফ্রি" অপশন বেছে নিয়ে এড়াতে চেয়েছিলেন। তাই বদলে এই ফ্রি পদ্ধতি: রেজিস্ট্রেশনের সময় দেওয়া ফোন নম্বর (দেওয়া থাকলে) অথবা আপনার নাম মিলিয়ে যাচাই করে নতুন পাসওয়ার্ড সেট করতে দেওয়া হবে। SMS OTP-এর মতো শক্তিশালী না — পরে চাইলে Blaze প্ল্যানে গিয়ে সত্যিকারের SMS যোগ করা যাবে।
-          </div>
           <input type="text" id="authForgotId" class="fr-mfinput" placeholder="আপনার ইমেইল / ফোন / ইউজার আইডি" autocomplete="off">
           <input type="text" id="authForgotVerify" class="fr-mfinput" placeholder="যাচাই: রেজিস্টার্ড ফোন নম্বর অথবা আপনার নাম" autocomplete="off">
           <input type="password" id="authForgotNewPass" class="fr-mfinput" placeholder="নতুন পাসওয়ার্ড" autocomplete="off">
@@ -1943,7 +2037,7 @@ td.roster-vacant-cell .roster-name-input{
         <div id="authChangePassForm" class="fr-manualform" style="display:none;">
           <input type="password" id="authChangeOldPass" class="fr-mfinput" placeholder="বর্তমান পাসওয়ার্ড" autocomplete="off">
           <input type="password" id="authChangeNewPass" class="fr-mfinput" placeholder="নতুন পাসওয়ার্ড" autocomplete="off">
-          <button type="button" id="authChangePassSaveBtn" class="fr-dbimport">সংরক্ষণ করুন</button>
+          <button type="button" id="authChangePassSaveBtn" class="icon-only fr-dbimport" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
         </div>
         <div class="fr-dbstatus" id="authNotifStatus"></div>
         <div class="fr-dbtablewrap" id="authMyExchangesWrap">
@@ -1962,14 +2056,12 @@ td.roster-vacant-cell .roster-name-input{
         <div class="modal-title">🔄 ডিউটি এক্সচেঞ্জ (Exchange)</div>
         <button type="button" class="modal-close" id="exchangeModalClose">✕</button>
       </div>
-      <div class="fr-dbsection-hint">
-        নির্দিষ্ট একটা তারিখে, নির্দিষ্ট একটা পজিশনে/টিমে সাময়িকভাবে অন্য কাউকে বসাতে এখানে যোগ করুন — মূল রোস্টার একদম অপরিবর্তিত থাকবে, শুধু ওই শিফট চলাকালীন ওই ঘরে <b>substitute-এর নাম হাইলাইট করে</b> দেখাবে, শিফট শেষ হলেই আগের অবস্থায় ফিরে যাবে। সংরক্ষণ/মোছার জন্য রোস্টার এডিটের পাসওয়ার্ড লাগবে।
-      </div>
       <div class="fr-manualform">
         <input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-09-28">
         <select id="exchangeTable" class="fr-mfinput">
           <option value="roster">Aerodrome Assistant</option>
           <option value="rosterCtrl">Controllers</option>
+          <option value="rosterComm">Communication</option>
         </select>
         <select id="exchangePos" class="fr-mfinput"><option value="TWR-1">TWR-1</option><option value="TWR-2">TWR-2</option><option value="SMC-1">SMC-1</option><option value="SMC-2">SMC-2</option><option value="EOC">EOC</option><option value="ACC LOWER-1">ACC LOWER-1</option><option value="ACC LOWER-2">ACC LOWER-2</option><option value="ACC LOWER-3">ACC LOWER-3</option><option value="ACC UPPER-1">ACC UPPER-1</option><option value="ACC UPPER-2">ACC UPPER-2</option><option value="ACC UPPER-3">ACC UPPER-3</option><option value="PFIU">PFIU</option><option value="RCC">RCC</option><option value="FDO">FDO</option><option value="APP">APP</option><option value="BILLING">BILLING</option><option value="FIC-1">FIC-1</option><option value="FIC-2">FIC-2</option><option value="Old FIC/CC">Old FIC/CC</option></select>
         <select id="exchangeTeam" class="fr-mfinput fr-mfinput-sm">
@@ -2009,7 +2101,7 @@ td.roster-vacant-cell .roster-name-input{
         <button type="button" class="quick-half-btn quick-half-btn-2" data-half="2" id="quickHalf2Btn">2nd Night (3:00 AM–7:30 AM)</button>
       </div>
       <div class="fr-manualform">
-        <button id="quickExchangeSaveBtn" type="button" class="fr-dbimport">✓ সেভ করুন</button>
+        <button id="quickExchangeSaveBtn" type="button" class="icon-only fr-dbimport" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
         <button id="quickExchangeRemoveBtn" type="button" class="fr-dbimport" style="background:rgba(245,66,73,0.18);color:#F54249;">🗑 মুছুন</button>
       </div>
     </div>
@@ -2271,7 +2363,6 @@ td.roster-vacant-cell .roster-name-input{
       </div>
 
       <div class="iflow-col" id="iflowAdjColumn">
-        <div class="iflow-edit-hint">✏️ এডিটেবল — মূল ছবির প্রতিটা সেকশন জুম করে মিলিয়ে ঠিক করা হয়েছে। এরপরও কোনো নাম্বার ভুল মনে হলে ঘরে ক্লিক করে সংশোধন করুন।</div>
         <div class="iflow-tablewrap">
         <table class="iflow-edit-table" id="iflowAdjTable">
           <thead><tr><th style="width:22%">City / Unit</th><th style="width:18%">Position</th><th>Telephone No.</th></tr></thead>
@@ -2304,15 +2395,14 @@ td.roster-vacant-cell .roster-name-input{
         </table>
         </div>
         <div class="iflow-save-row">
-          <button type="button" class="fr-dbimport" id="iflowAdjEditBtn">🔒 এডিট করুন (Admin)</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowAdjEditBtn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button type="button" class="fr-dbimport" id="iflowAdjAddRow" disabled="" style="opacity:.5;">+ নতুন সারি</button>
-          <button type="button" class="fr-dbimport" id="iflowAdjSaveBtn">💾 সেভ করুন</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowAdjSaveBtn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
           <span class="iflow-saved-chip" id="iflowAdjSavedChip"></span>
         </div>
       </div>
 
       <div class="iflow-col" id="iflowVccColumn">
-        <div class="iflow-edit-hint">✏️ এডিটেবল — VCCS Number (Aerodrome)। এডিট করতে "🔒 এডিট করুন (Admin)" চেপে ঘরে ক্লিক করে লিখুন, এডমিনের সেভ করা নাম্বার সব ডিভাইসে সিঙ্ক হয়।</div>
         <div class="iflow-tablewrap">
         <table class="iflow-edit-table" id="iflowVccTable">
           <thead>
@@ -2326,9 +2416,9 @@ Emergency →↓
         </table>
         </div>
         <div class="iflow-save-row">
-          <button type="button" class="fr-dbimport" id="iflowVccEditBtn">🔒 এডিট করুন (Admin)</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowVccEditBtn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button type="button" class="fr-dbimport" id="iflowVccAddRow" disabled="" style="opacity:.5;">+ নতুন সারি</button>
-          <button type="button" class="fr-dbimport" id="iflowVccSaveBtn">💾 সেভ করুন</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowVccSaveBtn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
           <span class="iflow-saved-chip" id="iflowVccSavedChip"></span>
         </div>
       </div>
@@ -2336,7 +2426,7 @@ Emergency →↓
       <div class="iflow-col air-notepad-col" id="iflowNotepadColumn">
         <div class="np-tabs-scroll" id="npSectionTabs"><div class="np-row"><button type="button" class="np-chip active" data-id="general">approch</button><button type="button" class="np-chip-rename" data-id="general" title="নাম বদলান" aria-label="নাম বদলান">✏️</button></div></div>
         <div class="air-notepad-actions">
-          <button id="notepadEditBtn" type="button" class="fr-dbimport">🔓 এডিট করুন (Admin)</button>
+          <button id="notepadEditBtn" type="button" class="icon-only fr-dbimport" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button id="npAddBtn" type="button" class="fr-dbimport">+ নতুন সেকশন</button>
           <span id="notepadStatus" class="fr-dbstatus" style="display:none;"></span>
         </div>
@@ -2346,11 +2436,10 @@ Emergency →↓
       </div>
 
       <div class="iflow-col" id="iflowOthersColumn">
-        <div class="iflow-edit-hint">✏️ এডিটেবল — খাতার বাকি পাতাগুলো থেকে আলফাবেটিক্যালি সাজানো তথ্য (cross-check করে দরকার হলে সংশোধন/অন্য ট্যাবে সরিয়ে নিন)।</div>
         <div class="iflow-freetext" id="iflowOthersNotes" contenteditable="false"><h4>INDEX / TWR BUILDING</h4><div>Sato — 8100 | Dy Sato — 8110 | NOTAM — 8179 | Briefing — 8176, 8377 | Sato Admin — 8189 | PA to Sato — 8188 | ECR — 3092 | TWR — 8193</div><div>DSO — 3053, 01894908826 | Met — 8393 | Communication: 008177</div><h4>A</h4><div>Agartala — 0091 381 234 2821 (OK)</div><div>AASIIC-BD — Head: Gp Capt (Retd) Md Harunur Rashid, 01617785671 / 041091759 (Tel); Member (Engineering): Wg Cdr (Retd) MM Asaduzzaman, 01713125955 / 028901132 (Tel); Member (ATC): Md. Ayub Khan, 01718152577 / 041091756 (Tel)</div><div>Airport police station → 8901853, OC (Phn no): 01320041873</div><div>ABDULLAH AL MAMUN — AD (ATM Sup/OJTI) 01922545227</div><div>AVSEC — 42161, 4094, 01894-908853</div><div>Air Astra — 01324730880 (OPS AWA), 01713255990 (Sales)</div><div>A/C problem — (Nsr) 01712-088952</div><div>AC maintenance — Night: 01602949854 (Ataur); Day: 01662083029 (Asgar)</div><div>ATI time — 01764834772 (Rayhan)</div><div>AK-Traders in charge — 01817-145203</div><div>ADNC — 5837 (BAF D.T. Phone), 01769993467 (Whatsapp)</div><div class="iflow-src">(পাতা: P-1, P-27)</div><h4>B</h4><div>Bibam (Lost &amp; Found) → 8901500 + 5402/5404</div><div>BRAC Net — A212 — 01678-084871</div><div>Biman Ticket — 5526, 2571</div><div>Traffic Manager — 01777155333</div><div>OPS — 8901530, 8901260</div><div>Ramp control — 01716489835</div><div>Biman Engr → 01677715537, 630 / 01777715760</div><div>TNT — 8901500, 36</div><div class="iflow-src">(পাতা: P-28, P-2)</div><h4>C</h4><div>Custom &amp; Immigration — Custom: (i) 8901758 (ii) 01317-249273; Immigration: (i) 8901599 (ii) 01713-373072</div><div>VIP gate — 3232 | Media gate — 8858</div><div>One stop service — 01777715558</div><div>Cleaner — 01817145203 (AK.T. Supervisor), 01958575705</div><div>Chennai — 600027; Telephone: 91-44-22560700 (RCC), 91-44-22561803 (FIC), 91-44-22560893 (WSO); Fax: 91-44-22560700 (RCC), 91-44-22560894 (WSO); AFS: VOMMYCYX</div><div class="iflow-src">(পাতা: P-29, P-3)</div><h4>D</h4><div>Delhi RCC (110017 postal); Telephone: 91-11-25654061 (RCC), 91-11-25653457 (FIC), 91-11-25653283 (WSO); Fax: 91-11-25654061 (RCC), 91-11-25653284 (WSO); AFS: VIDPYCYXIMOV</div><div>DSO — 0028014653, Phn: 01890608826, 9226</div><div class="iflow-src">(পাতা: P-4)</div><h4>E</h4><div>Immigration — 8901599 (Duty officer)</div><div>Add SP (Immigration) — 01320005376</div><div>ECR = 601152 | ECR (IP) = 3092 | ECR (Airport JTA) = 01890315904 | ECR (Cargo Airport ART) = 01641074969</div><div>Exchange — 009999; (Airport TIS) 01710828698 (T/S); (TIA) 01531712341 (T/A)</div><div class="iflow-src">(পাতা: P-31, P-5)</div><h4>F</h4><div>Fine — 8901077, 3583</div><div>01812145828</div><div class="iflow-src">(পাতা: P-32)</div><h4>G</h4><div>Guwahati — 0091 0361 2840085</div><div class="iflow-src">(পাতা: P-7)</div><h4>H</h4><div>Health — 8901844, 01799430033 (Dro)</div><div>First Aid → 3219, 01305-489824</div><div class="iflow-src">(পাতা: P-34)</div><h4>K</h4><div>Kolkata (ACC) — 0091 3325110517, 9831479366</div><div>Kolkata (WSO) — 0091 3325119520</div><div>Kolkata (RCC) — 00913325130218</div><div>AFS — VECCYCYX</div><div>Kolkata (EAST) — 00913325110517; VTTIS</div><div>Kolkata whatsapp number — 91 8314 79366</div><div>Kolkata MED/MCD — 0091291332511305 0; MLU — 0091033251119521</div><div class="iflow-src">(পাতা: P-11)</div><h4>M</h4><div>MTD (মধ্যম বাযার) = 01753-290382; Mumbai RCC</div><div>Telephone: 91-22-26819421 (RCC), 91-22-26828088 (WSO)</div><div>(OCC/FIC): 91-22-26828002/8022</div><div>Fax: 91-22-26828121 (RCC), 91-22-26819341 (OCC/FIC)</div><div>AFS: 91-22-26828066 (WSO), VABBYCYX</div><div class="iflow-src">(পাতা: P-13)</div><h4>N</h4><div>Novo-Air — SPS: 01755856645; Eng: 01833-090053</div><div>Ground Handling — 01730-785015</div><div>NAV — 3284; Freq — 127.4</div><div>Net Broc (A212) — 01678-084871</div><div class="iflow-src">(পাতা: P-40)</div><h4>O</h4><div>OMA Air — 01711-409213</div><div class="iflow-src">(পাতা: P-41)</div><h4>R</h4><div>Radar control — Tech: 3203, Head: 3228</div><div>NAV AID — 3284; Principal CAA — 3386; Equipment — 3054; Civil Devision — 3250; RDP center — 60115</div><div class="iflow-src">(পাতা: P-44)</div><h4>S</h4><div>SSF C/Rm — 9144865</div><div>SSF commander airport — 01755510486, 01766299576</div><div class="iflow-src">(পাতা: P-45)</div><h4>T</h4><div>PABX- Telephone Complain — 6797</div><div class="iflow-src">(পাতা: P-20)</div><h4>U</h4><div>US-Bangla — 3643, 01777-77779/878 (সংখ্যা অস্পষ্ট, মূল পাতায় যাচাই করুন)</div><div class="iflow-src">(পাতা: P-47)</div><h4>Y</h4><div>Yangon Control (ACC) — 009515-33268, 009515-33040, 009517-533040</div><div class="iflow-src">(পাতা: P-15)</div></div>
         <div class="iflow-save-row">
-          <button type="button" class="fr-dbimport" id="iflowOthersEditBtn">🔒 এডিট করুন (Admin)</button>
-          <button type="button" class="fr-dbimport" id="iflowOthersSaveBtn">💾 সেভ করুন</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowOthersEditBtn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowOthersSaveBtn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
           <span class="iflow-saved-chip" id="iflowOthersSavedChip"></span>
         </div>
       </div>
@@ -2455,7 +2544,7 @@ Emergency →↓
       </div>
       <div class="air-count" id="eqCount"></div>
       <div class="fr-manualform" style="margin-bottom:10px;">
-        <button id="eqEditBtn" type="button" class="fr-dbimport">🔒 Edit (Admin)</button>
+        <button id="eqEditBtn" type="button" class="icon-only fr-dbimport" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
         <input type="text" id="eqNewColName" class="fr-mfinput" placeholder="New column name" style="display:none;">
         <button id="eqAddColBtn" type="button" class="fr-dbimport" style="display:none;">+ Column</button>
       </div>
@@ -2558,20 +2647,13 @@ Emergency →↓
       </div>
 
       <div class="fr-adminbar">
-        <button id="flightDbAdminBtn" type="button" class="fr-adminbtn">🔒 Admin Input</button>
+        <button id="flightDbAdminBtn" type="button" class="fr-adminbtn icon-only" title="Admin" aria-label="Admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
       </div>
 
       <div class="fr-dbsection" id="flightDbAdminSection" style="display:none;">
         <div class="fr-dbsection-head" id="flightDbHead">
           <span>লোকাল ফ্লাইট ডেটাবেজ (অফলাইন)</span>
           <span class="fr-dbchip" id="flightDbCountChip">2 রেকর্ড</span>
-        </div>
-        <div class="fr-dbsection-hint">
-          একটার পর একটা ফ্লাইট নিচের ফর্মে টাইপ করুন, অথবা একসাথে অনেকগুলো টেক্সট বক্সে পেস্ট করুন (প্রতি লাইনে একটা ফ্লাইট, স্পেস দিয়ে ভাগ করা):<br>
-          <code>callsign type registration departure-destination route time</code><br>
-          উদাহরণ: <code>AXB1514 B38M VTBWG CCU-GAU R472 1445</code><br>
-          (route ও time ঐচ্ছিক। হেডারসহ CSV/ট্যাব অথবা Label: Value ব্লক ফরম্যাটও চলবে।) departure/destination-এ ৩ অক্ষরের কোড দিলে টেবিলে সেটাই দেখাবে, কিন্তু সার্চের ফলাফলে পরিচিত এয়ারপোর্টগুলোর ৪ অক্ষরের ICAO কোড দেখানো হবে।<br>
-          📄 এখন <b>.txt / .csv / .pdf</b> — এই তিন ধরনের ফাইলই আপলোড করা যাবে। PDF-এ সরাসরি লেখা (text) থাকলে তা নিজে থেকেই বের হয়ে আসবে; আর যদি PDF-টা স্ক্যান করা ছবির (picture PDF) হয়, প্রতিটা পৃষ্ঠা নিজে থেকেই অফলাইন OCR দিয়ে স্ক্যান হয়ে যাবে — আলাদা করে ছবি বানিয়ে আপলোড করতে হবে না।
         </div>
 
         <div class="fr-manualform">
@@ -2596,13 +2678,10 @@ Emergency →↓
 
         <div class="fr-ocrsection" id="openskyCredsSection">
           <div class="fr-ocrsection-head">🛰️ OpenSky লাইভ ট্র্যাকিং (ঐচ্ছিক, বেশি quota-র জন্য)</div>
-          <div class="fr-ocrsection-hint">
-            লাইভ পজিশন/গতি/উচ্চতা এখন সরাসরি <b>OpenSky Network</b>-এর পাবলিক API থেকে আসে (FlightRadar24 স্ক্র্যাপ করা হয় না), এবং শুধু <b>বাংলাদেশ FIR (Dhaka FIR)</b>-এর মধ্যে থাকা ফ্লাইট দেখানো হয় — বাংলাদেশের বাইরে থাকা কোনো ফ্লাইটের তথ্য এখানে আসবে না। কোনো সেটআপ ছাড়াই anonymous মোডে দৈনিক ~100 বার লোড করা যায়। বেশি ব্যবহারের জন্য <a href="https://opensky-network.org" target="_blank" rel="noopener" style="color:var(--gold-soft);">opensky-network.org</a>-এ ফ্রি অ্যাকাউন্ট খুলুন, লগইন করে <b>Account</b> পেজে যান, নিচের দিকে <b>"API Client"</b> সেকশন খুঁজুন এবং সেখান থেকে নতুন client তৈরি করুন — এতে একটা <code>credentials.json</code> ফাইল ডাউনলোড হবে যাতে client id ও secret দুটোই থাকবে (এই secret পরে ওয়েবসাইটে আর দেখা যায় না, তাই ফাইলটা রেখে দিন)। সেই ফাইল থেকে id ও secret কপি করে নিচে বসান (দৈনিক ~4000 বার)। এই তথ্য শুধু আপনার ব্রাউজারে (localStorage) সংরক্ষিত হয়, বাইরে কোথাও পাঠানো হয় না।
-          </div>
           <div class="fr-manualform">
             <input type="text" id="openskyClientId" class="fr-mfinput" placeholder="OpenSky Client ID (ঐচ্ছিক)" autocomplete="off">
             <input type="password" id="openskyClientSecret" class="fr-mfinput" placeholder="OpenSky Client Secret (ঐচ্ছিক)" autocomplete="off">
-            <button id="openskyCredsSaveBtn" type="button" class="fr-dbimport">💾 সংরক্ষণ করুন</button>
+            <button id="openskyCredsSaveBtn" type="button" class="icon-only fr-dbimport" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
             <button id="openskyCredsClearBtn" type="button" class="fr-dbclear">মুছে ফেলুন</button>
           </div>
           <div class="fr-dbstatus" id="openskyCredsStatus"></div>
@@ -2610,7 +2689,6 @@ Emergency →↓
 
         <div class="fr-ocrsection">
           <div class="fr-ocrsection-head">📷 ছবি থেকে স্ক্যান (অফলাইন OCR, কোনো key লাগবে না)</div>
-          <div class="fr-ocrsection-hint">ডিউটি শিট বা ফ্লাইট লিস্টের ছবি আপলোড করুন — স্বয়ংক্রিয়ভাবে টেক্সট বের করে ওপরের বক্সে বসিয়ে দেবে। এরপর যাচাই/সংশোধন করে ইমপোর্ট করুন বাটনে চাপুন। (প্রথমবার OCR চালু করতে একবার ইন্টারনেট লাগবে, তারপর থেকে অফলাইনেও চলবে।)</div>
           <div class="fr-dbcontrols">
             <label class="fr-filelabel" for="ocrImageFile">🖼️ ছবি বাছাই করুন</label>
             <input type="file" id="ocrImageFile" accept="image/*" style="display:none;">
@@ -2643,9 +2721,6 @@ Emergency →↓
         <button type="button" id="backupEyeBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">🙈</button>
       </div>
       <div id="backupSectionContent" style="display: block;">
-        <div class="fr-dbsection-hint">
-          এটা একটা সম্পূর্ণ নতুন <code>.html</code> ফাইল ডাউনলোড করে — এই পুরো অ্যাপটার একটা কপি, তাতে এই মুহূর্তের রোস্টার (Aerodrome Assistant + Controllers) বেক করে বসানো থাকে। মূলত Firebase Sync চালু করার আগে ম্যানুয়ালি ব্যাকআপ রাখার বা GitHub-এ পুনরায় আপলোড করার জন্য বানানো হয়েছিল। Firebase Sync চালু থাকলে এটা আর সাধারণত লাগে না — তবু চাইলে মাঝেমধ্যে অফলাইন ব্যাকআপ হিসেবে রাখতে পারেন।
-        </div>
         <div class="fr-manualform">
           <button id="rosterDownloadBtn" type="button" class="fr-dbimport">⬇️ ব্যাকআপ ফাইল ডাউনলোড করুন</button>
         </div>
@@ -2681,15 +2756,12 @@ Emergency →↓
         <button type="button" id="syncEyeBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">👁️</button>
       </div>
       <div id="syncSectionContent" style="display:none;">
-        <div class="fr-dbsection-hint">
-          এই সিঙ্ক ডিফল্টভাবেই কনফিগার করা এবং সংযুক্ত থাকে — সাধারণ ব্যবহারকারীদের আর কিছু করতে হবে না।
-        </div>
         <div class="fr-manualform">
           <textarea id="firebaseConfigInput" class="fr-dbtextarea" style="min-height:90px;" placeholder="এখানে Firebase কনফিগ পেস্ট করুন, যেমন: { apiKey: &quot;...&quot;, authDomain: &quot;...&quot;, databaseURL: &quot;...&quot;, projectId: &quot;...&quot; }" readonly=""></textarea>
         </div>
         <div class="fr-manualform">
           <input type="text" id="firebaseRoomId" class="fr-mfinput" placeholder="Room ID (গোপন কোড, সব ডিভাইসে একই হতে হবে)" autocomplete="off" readonly="">
-          <button id="firebaseSyncSaveBtn" type="button" class="fr-dbimport">💾 সংরক্ষণ ও সংযুক্ত করুন</button>
+          <button id="firebaseSyncSaveBtn" type="button" class="icon-only fr-dbimport" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
           <button id="firebaseSyncClearBtn" type="button" class="fr-dbclear">বিচ্ছিন্ন করুন</button>
         </div>
         <div class="fr-dbstatus" id="firebaseSyncStatus">🟢 সিঙ্ক সক্রিয় — শেষ আপডেট: ২:৩১:৫৫ PM</div>
@@ -2702,14 +2774,15 @@ Emergency →↓
     </div>
   </div>
 
-  <footer><span class="gold">বিকাল</span>/Evening = 2:00pm – 8:30pm<br>
-<span class="gold">সকাল</span>/Morning = 7:30am – 2:00pm<br>
-<span class="gold">রাত</span>/Night = 8:30pm – 7:30am<br><br>
+  <footer><span class="gold">বিকাল</span>/Evening = 2:00pm – 8:30pm/14:00-20:30<br>
+<span class="gold">সকাল</span>/Morning = 7:30am – 2:00pm/07:30-14:00<br>
+<span class="gold">রাত</span>/Night = 8:30pm – 7:30am/20:30-07:30<br><br>
 Author - TARIF</footer>
 
 
 
 
+<script>window.HSIA_ICO={"edit": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z\"/></svg>", "save": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/><path d=\"M17 21v-8H7v8\"/><path d=\"M7 3v5h8\"/></svg>", "lock": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"11\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/></svg>"};</script>
 <script defer="" src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
@@ -2730,7 +2803,7 @@ const COLOR_KEY = 'dutyBoardColors';
 const LANG_KEY = 'dutyBoardLabelLang';
 const PANEL_KEY = 'dutyBoardPanelState';
 const ROSTER_KEY = 'dutyBoardRoster';
-const DEFAULT_COLORS = { bg:'#120F0D', morning:'#F6C84C', afternoon:'#00EB55', night:'#F54249' };
+const DEFAULT_COLORS = { bg:'#030202', morning:'#F6C84C', afternoon:'#00EB55', night:'#F54249' };
 
 // Duty Roster of ATS Assistant — default positions & names per team (A–E),
 // as per CAAB HSIA ATM Section roster W.E.F. 01/08/2026.
@@ -3269,7 +3342,7 @@ function requireDownloadAuth(){
   return false;
 }
 function unlockAllRosterInputs(){
-  document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterNewPos, #rosterNewPosCtrl').forEach(inp=>{
+  document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterTableComm input, #rosterNewPos, #rosterNewPosCtrl, #rosterNewPosComm').forEach(inp=>{
     inp.readOnly = false;
   });
 }
@@ -3283,8 +3356,243 @@ function loadRosterGeneric(key, def){
 }
 function saveRosterGeneric(key, r){ try{ localStorage.setItem(key, JSON.stringify(r)); }catch(e){} }
 
+const ROSTER_COMM_KEY = 'dutyBoardRosterCommunication';
+const DEFAULT_ROSTER_COMM = [
+  {
+    "pos": "DCO'S (ATM- OPS)",
+    "names": [
+      "GAUSUL AZAM AO (ATM)",
+      "MOJAMMEL HOSSAIN AO (ATM)",
+      "JALAL UDDIN AO (ATM)",
+      "ABDUL HALIM AO (ATM)",
+      "RAFIQUL ISLAM AO (ATM)"
+    ]
+  },
+  {
+    "pos": "A2M - (SUP)",
+    "names": [
+      "MAMUN",
+      "ALAMGIR",
+      "MOSHARROF",
+      "FONI",
+      "JOYNUL"
+    ]
+  },
+  {
+    "pos": "HSWS-03",
+    "names": [
+      "OT",
+      "OT",
+      "OT",
+      "OT",
+      "OT"
+    ]
+  },
+  {
+    "pos": "HSWS-04",
+    "names": [
+      "OT",
+      "OT",
+      "OT",
+      "OT",
+      "OT"
+    ]
+  },
+  {
+    "pos": "AMATIS - (WS-10)",
+    "names": [
+      "-",
+      "",
+      "-",
+      "",
+      "-"
+    ]
+  },
+  {
+    "pos": "WS-11",
+    "names": [
+      "OT",
+      "OT",
+      "OT",
+      "",
+      "OT"
+    ]
+  },
+  {
+    "pos": "AIS",
+    "names": [
+      "TOPON AO (ATM)",
+      "DIPANKAR AO (ATM)",
+      "MUSHTAK AO(ATM)",
+      "K. HASAN AO (ATM)",
+      "ZONAYED AO (ATM)"
+    ]
+  },
+  {
+    "pos": "HSWS-07 (AMATIS)",
+    "names": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "pos": "AIM SUP",
+    "names": [
+      "-",
+      "-",
+      "-",
+      "-",
+      "-"
+    ]
+  },
+  {
+    "pos": "ARO - 1",
+    "names": [
+      "A. KALAM",
+      "MONJURUL",
+      "SAIFUL",
+      "NOBI",
+      "RUHUL"
+    ]
+  },
+  {
+    "pos": "ARO - 2",
+    "names": [
+      "OT",
+      "OT",
+      "OT",
+      "OT",
+      "OT"
+    ]
+  },
+  {
+    "pos": "ARO - 3",
+    "names": [
+      "OT",
+      "OT",
+      "OT",
+      "OT",
+      "OT"
+    ]
+  },
+  {
+    "pos": "PRE FLIGHT",
+    "names": [
+      "ASIQUER RAHAMAN",
+      "JOBAER HASAN",
+      "DIDAR BHUYAIN",
+      "IMRAN HOSSAIN",
+      "AL MUBIN"
+    ]
+  },
+  {
+    "pos": "PRE FLIGHT CHECK",
+    "names": [
+      "SHUVOJIT ROY",
+      "-",
+      "LATIFUL ABEDIN",
+      "HIRANUR RAHMAN",
+      "-"
+    ]
+  },
+  {
+    "pos": "EEZ (HFRT)",
+    "names": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "pos": "BDWWS04",
+    "names": [
+      "OT",
+      "OT",
+      "OT",
+      "OT",
+      "OT"
+    ]
+  },
+  {
+    "pos": "MET- (WS06)",
+    "names": [
+      "SHIMA AHTER",
+      "SHIRENDRA NATH",
+      "KAZI SARIF",
+      "NOUSHER ALI",
+      "BOKUL CHANDRA"
+    ]
+  },
+  {
+    "pos": "ARL -1 (T-1,2)",
+    "names": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "pos": "ARL -2 (T-1,2)",
+    "names": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "pos": "ARL -3 (T-3)",
+    "names": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "pos": "ARL -4 (T-3)",
+    "names": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "pos": "TRAFFIC HAND",
+    "names": [
+      "SHILPI",
+      "-",
+      "SHOKIB",
+      "SELIM",
+      "-"
+    ]
+  }
+];
 let ROSTER = loadRosterGeneric(ROSTER_KEY, DEFAULT_ROSTER);
 let ROSTER_CTRL = loadRosterGeneric(ROSTER_CTRL_KEY, DEFAULT_ROSTER_CTRL);
+let ROSTER_COMM = (function(){
+  // carry over anything saved by the earlier Communication table version
+  try{
+    if(!localStorage.getItem(ROSTER_COMM_KEY)){
+      const old = JSON.parse(localStorage.getItem('HSIA_COMM_ROSTER_V1'));
+      if(Array.isArray(old) && old.length) localStorage.setItem(ROSTER_COMM_KEY, JSON.stringify(old));
+    }
+  }catch(e){}
+  return loadRosterGeneric(ROSTER_COMM_KEY, DEFAULT_ROSTER_COMM);
+})();
+function rosterDataFor(key){ return key === 'rosterCtrl' ? ROSTER_CTRL : key === 'rosterComm' ? ROSTER_COMM : ROSTER; }
+function rosterLabelFor(key){ return key === 'rosterCtrl' ? 'Controllers' : key === 'rosterComm' ? 'Communication' : 'Aerodrome Assistant'; }
 
 /* Correct the live clock, "who's on duty" lamps, hero card, and
    roster highlight as early as possible in page load — this HTML
@@ -3298,6 +3606,7 @@ try{ if(typeof tick === 'function') tick(); }catch(e){}
 
 function saveRoster(r){ saveRosterGeneric(ROSTER_KEY, r); pushRosterToFirebaseDebounced(); }
 function saveRosterCtrl(r){ saveRosterGeneric(ROSTER_CTRL_KEY, r); pushRosterCtrlToFirebaseDebounced(); }
+function saveRosterComm(r){ saveRosterGeneric(ROSTER_COMM_KEY, r); pushRosterCommToFirebaseDebounced(); }
 
 function flashRosterSaved(msg){
   const chip = document.getElementById('rosterSavedChip');
@@ -3787,7 +4096,7 @@ function checkMyExchangeNotifications(){
         if(!notified.has(uniqueKey)){
           notified.add(uniqueKey);
           hasUnseen = true;
-          const tableLabel = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
+          const tableLabel = rosterLabelFor(ex.table);
           const body = tableLabel + ' — ' + ex.pos + ' (Team ' + (TEAMS[ex.team]||'?') + ') — ' + dateKey + (dateKey===today ? ' (আজ)' : '');
           if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
             try{ new Notification('🔄 আপনাকে ডিউটি এক্সচেঞ্জ দেওয়া হয়েছে', { body, tag: uniqueKey }); }catch(e){}
@@ -3801,7 +4110,7 @@ function checkMyExchangeNotifications(){
   if(dot2) dot2.classList.toggle('show', hasUnseen);
   if(tbody){
     tbody.innerHTML = mine.length ? mine.map(({dateKey, ex})=>{
-      const tableLabel = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
+      const tableLabel = rosterLabelFor(ex.table);
       return `<tr class="${dateKey===today ? 'exchange-row-today' : ''}"><td>${dateKey}${dateKey===today?' (আজ)':''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>Team ${TEAMS[ex.team]||'?'}</td></tr>`;
     }).join('') : '<tr><td colspan="4" class="air-empty">আপনার জন্য কোনো এক্সচেঞ্জ নেই</td></tr>';
   }
@@ -4192,6 +4501,7 @@ function initAuthPanel(){
     const SRC = {
       rosterCtrl:{ label:'Roster · Controllers', c:[246,200,76] },
       roster:    { label:'Roster · Assistant',   c:[246,200,76] },
+      rosterComm:{ label:'Roster · Communication', c:[246,200,76] },
       exchange:  { label:'Duty Exchange',        c:[240,150,80] },
       vccs:      { label:'VCCS numbers',         c:[110,200,120] },
       adj:       { label:'Adjacent',             c:[230,120,170] },
@@ -4227,6 +4537,7 @@ function initAuthPanel(){
     }
     function clickTab(groupId, tabId){
       const b = document.querySelector('#' + groupId + ' [data-tab="' + tabId + '"]');
+      if(groupId === 'rosterTabs' && typeof setRosterNow === 'function') setRosterNow(false);
       if(b && !b.classList.contains('active')) b.click();
     }
     function flash(el){
@@ -4253,11 +4564,13 @@ function initAuthPanel(){
       // Duty roster (Controllers, then Aerodrome Assistant)
       safe(()=>{
         [['rosterCtrl', typeof ROSTER_CTRL !== 'undefined' ? ROSTER_CTRL : [], 'rosterBodyRowsCtrl'],
+         ['rosterComm', typeof ROSTER_COMM !== 'undefined' ? ROSTER_COMM : [], 'rosterBodyRowsComm'],
          ['roster', typeof ROSTER !== 'undefined' ? ROSTER : [], 'rosterBodyRows']].forEach(set=>{
           (set[1] || []).forEach((row, ri)=>{
             const names = (row.names || []).map((n,ci)=> n ? (TEAMS[ci] || '?') + ': ' + n : '').filter(Boolean).join('   ·   ');
             add(set[0], row.pos, names, ()=>{
               openPanel('rosterCardOuter','roster');
+              clickTab('rosterTabs', set[0] === 'rosterCtrl' ? 'rosterCtrlCol' : set[0] === 'rosterComm' ? 'rosterCommCol' : 'rosterAsstCol');
               return ()=>{ const x = document.querySelector('#' + set[2] + ' [data-ri="' + ri + '"]'); return x ? x.closest('tr') : null; };
             });
           });
@@ -4269,7 +4582,7 @@ function initAuthPanel(){
         if(typeof EXCHANGES !== 'object' || !EXCHANGES) return;
         Object.keys(EXCHANGES).sort().forEach(dateKey=>{
           (EXCHANGES[dateKey] || []).forEach(ex=>{
-            const tbl = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
+            const tbl = rosterLabelFor(ex.table);
             const half = ex.nightHalf === '1' ? ' (1st night)' : ex.nightHalf === '2' ? ' (2nd night)' : '';
             const who = ex.subName || '';
             add('exchange', ex.pos || '', dateKey + ' · ' + tbl + ' · Team ' + (TEAMS[ex.team] || '?') + half + (who ? ' · ' + who : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
@@ -4759,7 +5072,7 @@ function setQuickHalf(half){
 }
 
 function openQuickExchange(tableKey, ri, ci){
-  const data = tableKey === 'rosterCtrl' ? ROSTER_CTRL : ROSTER;
+  const data = rosterDataFor(tableKey);
   const row = data[ri];
   if(!row) return;
   const dateKey = todayDateKey();
@@ -4877,6 +5190,9 @@ function renderRoster(){
 }
 function renderRosterCtrl(){
   renderRosterTable('rosterBodyRowsCtrl', ROSTER_CTRL, saveRosterCtrl, renderRosterCtrl, 'rosterCtrl');
+}
+function renderRosterComm(){
+  renderRosterTable('rosterBodyRowsComm', ROSTER_COMM, saveRosterComm, renderRosterComm, 'rosterComm');
 }
 
 /* ============================================================
@@ -5011,6 +5327,7 @@ function connectFirebaseSync(config, roomId){
     const customAirportsRef = _fbDb.ref('hsia_sync/' + roomId + '/customAirports');
     const customAirlinesRef = _fbDb.ref('hsia_sync/' + roomId + '/customAirlines');
     const eqAircraftRef = _fbDb.ref('hsia_sync/' + roomId + '/eqAircraft');
+    const rosterCommRef = _fbDb.ref('hsia_sync/' + roomId + '/rosterComm');
     const adminNotepadRef = _fbDb.ref('hsia_sync/' + roomId + '/adminNotepad');
     const exchangesRef = _fbDb.ref('hsia_sync/' + roomId + '/exchanges');
     const vccsRef = _fbDb.ref('hsia_sync/' + roomId + '/vccs');
@@ -5060,6 +5377,15 @@ function connectFirebaseSync(config, roomId){
         CUSTOM_AIRLINES = val;
         try{ localStorage.setItem(CUSTOM_AIRLINES_KEY, JSON.stringify(CUSTOM_AIRLINES)); }catch(e){}
         if(typeof renderAirlinesTable === 'function') renderAirlinesTable(getAllAirlines());
+      }
+    });
+
+    listen(rosterCommRef, snap=>{
+      const val = snap.val();
+      if(Array.isArray(val) && val.length && JSON.stringify(val) !== JSON.stringify(ROSTER_COMM)){
+        ROSTER_COMM = val;
+        saveRosterGeneric(ROSTER_COMM_KEY, ROSTER_COMM);
+        renderRosterComm();
       }
     });
 
@@ -5147,6 +5473,11 @@ function pushCustomAirlinesToFirebase(){
   if(!_fbDb || !saved) return;
   fbSet(saved.roomId, 'customAirlines', CUSTOM_AIRLINES);
 }
+function pushRosterCommToFirebase(){
+  const saved = loadFirebaseSyncConfig();
+  if(!_fbDb || !saved) return;
+  fbSet(saved.roomId, 'rosterComm', ROSTER_COMM);
+}
 function pushEqAircraftToFirebase(){
   const saved = loadFirebaseSyncConfig();
   if(!_fbDb || !saved) return;
@@ -5167,6 +5498,7 @@ const pushRosterCtrlToFirebaseDebounced = debounce(pushRosterCtrlToFirebase, 500
 const pushFlightDbToFirebaseDebounced = debounce(pushFlightDbToFirebase, 500);
 const pushCustomAirportsToFirebaseDebounced = debounce(pushCustomAirportsToFirebase, 500);
 const pushCustomAirlinesToFirebaseDebounced = debounce(pushCustomAirlinesToFirebase, 500);
+const pushRosterCommToFirebaseDebounced = debounce(pushRosterCommToFirebase, 500);
 const pushEqAircraftToFirebaseDebounced = debounce(pushEqAircraftToFirebase, 500);
 const pushExchangesToFirebaseDebounced = debounce(pushExchangesToFirebase, 500);
 const pushAdminNotepadToFirebaseDebounced = debounce(pushAdminNotepadToFirebase, 500);
@@ -5242,6 +5574,8 @@ function exportRosterHtml(){
     if(!re1.test(html) || !re2.test(html)) return false;
     html = html.replace(re1, 'const DEFAULT_ROSTER = ' + JSON.stringify(ROSTER, null, 2) + ';');
     html = html.replace(re2, 'const DEFAULT_ROSTER_CTRL = ' + JSON.stringify(ROSTER_CTRL, null, 2) + ';');
+    const re3 = /const DEFAULT_ROSTER_COMM = \[[\s\S]*?\];/;
+    if(re3.test(html)) html = html.replace(re3, 'const DEFAULT_ROSTER_COMM = ' + JSON.stringify(ROSTER_COMM, null, 2) + ';');
     const fullHtml = '<!DOCTYPE html>\n' + html;
     const blob = new Blob([fullHtml], {type:'text/html'});
     const url = URL.createObjectURL(blob);
@@ -5280,10 +5614,13 @@ function initAddRow(addBtnId, addInputId, data, onChange, onRender){
 function initRoster(){
   renderRoster();
   renderRosterCtrl();
+  renderRosterComm();
   attachLongPressForRoster('rosterBodyRows', 'roster');
   attachLongPressForRoster('rosterBodyRowsCtrl', 'rosterCtrl');
+  attachLongPressForRoster('rosterBodyRowsComm', 'rosterComm');
   initAddRow('rosterAddBtn', 'rosterNewPos', ROSTER, saveRoster, renderRoster);
   initAddRow('rosterAddBtnCtrl', 'rosterNewPosCtrl', ROSTER_CTRL, saveRosterCtrl, renderRosterCtrl);
+  initAddRow('rosterAddBtnComm', 'rosterNewPosComm', ROSTER_COMM, saveRosterComm, renderRosterComm);
 
   const editBtn = document.getElementById('rosterEditBtn');
   if(editBtn){
@@ -5298,7 +5635,7 @@ function initRoster(){
   if(saveBtn){
     saveBtn.addEventListener('click', ()=>{
       if(!requireRosterAuth()) return;
-      [ROSTER, ROSTER_CTRL].forEach(list=>{
+      [ROSTER, ROSTER_CTRL, ROSTER_COMM].forEach(list=>{
         list.forEach(r=>{
           r.pos = (r.pos || '').trim();
           r.names = r.names.map(n => (n || '').trim());
@@ -5306,8 +5643,10 @@ function initRoster(){
       });
       saveRoster(ROSTER);
       saveRosterCtrl(ROSTER_CTRL);
+      saveRosterComm(ROSTER_COMM);
       renderRoster();
       renderRosterCtrl();
+      renderRosterComm();
       flashRosterSaved('সেভ হয়েছে ✓ (এই ডিভাইসে সংরক্ষিত)');
     });
   }
@@ -5329,7 +5668,7 @@ function populateExchangePositions(){
   const tableSel = document.getElementById('exchangeTable');
   const posSel = document.getElementById('exchangePos');
   if(!tableSel || !posSel) return;
-  const data = tableSel.value === 'rosterCtrl' ? ROSTER_CTRL : ROSTER;
+  const data = rosterDataFor(tableSel.value);
   posSel.innerHTML = data.map(r => {
     const safe = (r.pos || '').replace(/"/g,'&quot;');
     return `<option value="${safe}">${safe}</option>`;
@@ -5345,7 +5684,7 @@ function updateExchangeCurrentHint(){
   const hint = document.getElementById('exchangeCurrentHint');
   const halfSel = document.getElementById('exchangeNightHalf');
   if(!tableSel || !posSel || !teamSel || !hint) return;
-  const data = tableSel.value === 'rosterCtrl' ? ROSTER_CTRL : ROSTER;
+  const data = rosterDataFor(tableSel.value);
   const row = data.find(r => r.pos === posSel.value);
   const ci = +teamSel.value;
   const current = row ? (row.names[ci] || '—') : '—';
@@ -5374,7 +5713,7 @@ function renderExchangeList(){
   const rows = [];
   dates.forEach(dateKey=>{
     (EXCHANGES[dateKey] || []).forEach((ex, idx)=>{
-      const tableLabel = ex.table === 'rosterCtrl' ? 'Controllers' : 'Aerodrome Assistant';
+      const tableLabel = rosterLabelFor(ex.table);
       const halfLabel = ex.nightHalf === '1' ? ' (1st Night)' : ex.nightHalf === '2' ? ' (2nd Night)' : '';
       const teamLabel = 'Team ' + (TEAMS[ex.team] || '?') + halfLabel;
       const isToday = dateKey === today;
@@ -5476,20 +5815,12 @@ function currentOnDutyTeamIndex(){
 }
 function updateRosterHighlight(){
   const idx = currentOnDutyTeamIndex();
-  ['rosterTable','rosterTableCtrl'].forEach(id=>{
+  ['rosterTable','rosterTableCtrl','rosterTableComm'].forEach(id=>{
     const table = document.getElementById(id);
     if(!table) return;
     TEAMS.forEach((t,i)=>{ table.classList.toggle('hl-'+t, i===idx); });
   });
-  const nowOn = document.getElementById('rosterNowOn');
-  if(nowOn){
-    if(idx>=0){
-      const s = getStatus(idx, Date.now(), nowDhakaFields());
-      nowOn.textContent = `এখন ডিউটিতে — টিম ${TEAMS[idx]} (${s.shiftType})`;
-    } else {
-      nowOn.textContent = '';
-    }
-  }
+  updateRosterNowBtn(idx);
 }
 
 function applyColors(){
@@ -6664,14 +6995,14 @@ function initAdminNotepad(){
       if(notepadUnlocked){
         ta.readOnly = true;
         notepadUnlocked = false;
-        editBtn.textContent = '🔓 এডিট করুন (Admin)';
+        editBtn.innerHTML = window.HSIA_ICO.edit;
         return;
       }
       if(!requireQuickAuth()) return;
       ta.readOnly = false;
       ta.focus();
       notepadUnlocked = true;
-      editBtn.textContent = '🔒 লক করুন';
+      editBtn.innerHTML = window.HSIA_ICO.lock;
     });
   }
 
@@ -7342,12 +7673,12 @@ function initFlightDb(){
     adminBtn.addEventListener('click', ()=>{
       if(adminSection.style.display !== 'none'){
         adminSection.style.display = 'none';
-        adminBtn.textContent = '🔒 Admin Input';
+        adminBtn.classList.remove('is-on');
         return;
       }
       if(requireRosterAuth()){
         adminSection.style.display = 'block';
-        adminBtn.textContent = '🔓 Admin Input (লুকান)';
+        adminBtn.classList.add('is-on');
       }
     });
   }
@@ -7564,6 +7895,94 @@ function initFlightDb(){
 }
 
 
+
+
+/* ---- Duty Roster "Now" button: shows only who is on the shift running right now, inside the panel ---- */
+let ROSTER_NOW_ON = false;
+function updateRosterNowBtn(idx){
+  const btn = document.getElementById('rosterNowBtn');
+  if(!btn) return;
+  if(idx == null) idx = currentOnDutyTeamIndex();
+  let col = '';
+  if(idx >= 0){
+    const st = getStatus(idx, Date.now(), nowDhakaFields());
+    col = getShiftColor(st.shiftType) || '';
+  }
+  btn.style.background = col;
+  btn.style.color = col ? '#1B2130' : '';
+  if(ROSTER_NOW_ON) renderRosterNow();
+}
+function setRosterNow(on){
+  ROSTER_NOW_ON = !!on;
+  const body = document.getElementById('rosterBody');
+  const btn = document.getElementById('rosterNowBtn');
+  if(body) body.classList.toggle('rost-now-on', ROSTER_NOW_ON);
+  if(btn) btn.classList.toggle('on', ROSTER_NOW_ON);
+  if(ROSTER_NOW_ON) renderRosterNow();
+}
+function renderRosterNow(){
+  const view = document.getElementById('rosterNowView');
+  if(!view) return;
+  const idx = currentOnDutyTeamIndex();
+  const closeBtn = '<button type="button" class="now-close" id="rosterNowClose">✕ Close</button>';
+  if(idx < 0){
+    view.innerHTML = '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div><div class="now-head-v">No team on duty</div></div>' + closeBtn + '</div>';
+    return;
+  }
+  const st = getStatus(idx, Date.now(), nowDhakaFields());
+  const acc = getShiftColor(st.shiftType) || '';
+  const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const sets = [['rosterCtrl', 'Controllers'], ['roster', 'Aerodrome Assistant'], ['rosterComm', 'Communication']];
+  let rowsHtml = '';
+  sets.forEach(set=>{
+    const data = rosterDataFor(set[0]);
+    const ex = activeExchangesFor(set[0]);
+    let part = '';
+    data.forEach(r=>{
+      const base = String((r.names && r.names[idx]) || '').trim();
+      const e = ex.find(x=> x.pos === r.pos && +x.team === idx);
+      let name = base, note = '';
+      if(e){
+        if(e.vacant){ name = 'Vacant'; note = base; }
+        else if((e.subName || '').trim()){ name = '🔄 ' + e.subName.trim(); note = base; }
+      }
+      if(!name || name === '-') return;
+      part += '<tr><td class="now-pos">' + esc(r.pos) + '</td><td class="now-name">' + esc(name) + (note ? '<small>' + esc(note) + '</small>' : '') + '</td></tr>';
+    });
+    rowsHtml += '<tr class="now-group"><td colspan="2">' + set[1] + '</td></tr>' + (part || '<tr><td colspan="2" class="now-empty">—</td></tr>');
+  });
+  view.style.setProperty('--acc', acc || 'var(--gold)');
+  view.innerHTML =
+    '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div>' +
+    '<div class="now-head-v">Team ' + esc(TEAMS[idx]) + ' · <span>' + esc(st.shiftType) + '</span></div></div>' + closeBtn + '</div>' +
+    '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+}
+(function initRosterNow(){
+  const btn = document.getElementById('rosterNowBtn');
+  if(btn) btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    setRosterNow(!ROSTER_NOW_ON);
+  });
+  const view = document.getElementById('rosterNowView');
+  if(view) view.addEventListener('click', e=>{
+    if(e.target.closest('#rosterNowClose')) setRosterNow(false);
+  });
+})();
+
+/* ---- Duty Roster: tab switcher ---- */
+(function initRosterTabs(){
+  const tabs = document.querySelectorAll('#rosterTabs .iflow-tab-btn');
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=> b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.rost-col').forEach(c=> c.classList.remove('rost-active'));
+      const target = document.getElementById(btn.getAttribute('data-tab'));
+      if(target) target.classList.add('rost-active');
+    });
+  });
+})();
+
 /* ---- Equivalent Aircraft Type: editable table (add/delete rows & columns) ---- */
 const EQ_KEY = 'HSIA_EQ_AIRCRAFT_V1';
 const EQ_DEFAULT = {"cols": ["Type of Aircraft", "Type in DPR(Top Sky- ATC)"], "rows": [["MIG-29", "MG29"], ["F-7MG", "F-7"], ["F-7BG", "F-7"], ["F-7BGI", "F-7"], ["FT-7BGI", "F-7"], ["FT-7A", "F-7"], ["FT7B", "F-7"], ["YAK-130", "YAK"], ["K-8W", "K8W"], ["G-120TP", "G120"], ["PT-6", "PT6"], ["L-410", "L410"], ["C-130J", "C130"], ["C-130B", "C130"], ["AN-32", "AN32"], ["CASA-295", "CN29"], ["BELL-206", "B06"], ["BELL-212", "B212"], ["BELL-407", "B407"], ["DIAMOND-407", "D407"], ["AW-119KX", "A119"], ["AW-139KX", "A139"], ["MI-17", "MI17"], ["MI-171SH", "MI17"], ["MI-171E", "MI17"], ["D-228", "D228"], ["AS-365", "AS36"], ["AW109", "A109"], ["AN-124", "A124"], ["F-50(FOKKEV)", "FK50"], ["E35L", "BE35"], ["GA5C/Gulfstream", "GLF5"]]};
@@ -7619,7 +8038,7 @@ function eqSetEditing(on){
   const btn = document.getElementById('eqEditBtn');
   const colName = document.getElementById('eqNewColName');
   const addCol = document.getElementById('eqAddColBtn');
-  if(btn) btn.textContent = on ? '💾 Save' : '🔒 Edit (Admin)';
+  if(btn) btn.innerHTML = on ? window.HSIA_ICO.save : window.HSIA_ICO.edit;
   if(colName) colName.style.display = on ? '' : 'none';
   if(addCol) addCol.style.display = on ? '' : 'none';
   renderEqTable();
@@ -7763,13 +8182,13 @@ initAdminNotepad();
         if(unlocked){
           unlocked = false;
           apply(false);
-          editBtn.textContent = '🔒 এডিট করুন (Admin)';
+          editBtn.innerHTML = window.HSIA_ICO.edit;
           return;
         }
         if(!requireRosterAuth()) return;
         unlocked = true;
         apply(true);
-        editBtn.textContent = '🔒 লক করুন';
+        editBtn.innerHTML = window.HSIA_ICO.lock;
         if(focusEl && document.getElementById(focusEl)) document.getElementById(focusEl).focus();
       });
     }
