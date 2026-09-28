@@ -4202,6 +4202,7 @@ function initAuthPanel(){
       freq:      { label:'Frequency',            c:[80,190,150] },
       airport:   { label:'Airport',              c:[90,170,240] },
       airline:   { label:'Airline',              c:[80,200,230] },
+      eqtype:    { label:'Aircraft Type',        c:[100,180,255] },
       flightdb:  { label:'Flight DB',            c:[60,190,190] },
       map:       { label:'Map point',            c:[150,160,180] }
     };
@@ -4379,6 +4380,20 @@ function initAuthPanel(){
             const i = $('airlineSearchInput');
             if(i){ i.value = r[0]; i.dispatchEvent(new Event('input', { bubbles:true })); }
             return ()=> document.querySelector('#airlinesTbody tr');
+          });
+        });
+      });
+
+      // Equivalent aircraft types (every column of every row is searchable)
+      safe(()=>{
+        if(typeof EQ_STATE === 'undefined' || !EQ_STATE) return;
+        (EQ_STATE.rows || []).forEach((r, ri)=>{
+          const body = EQ_STATE.cols.slice(1).map((c, i)=> r[i+1] ? c + ': ' + r[i+1] : '').filter(Boolean).join('   ·   ');
+          add('eqtype', r[0], body, ()=>{
+            openPanel('airportsCardOuter','airports'); clickTab('airTabs','eqAircraftColumn');
+            const i = $('eqSearchInput');
+            if(i){ i.value = r[0] || r.find(Boolean) || ''; i.dispatchEvent(new Event('input', { bubbles:true })); }
+            return ()=> document.querySelector('#eqTbody tr');
           });
         });
       });
