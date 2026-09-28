@@ -851,12 +851,6 @@ table.now-table td.now-name .now-line{ padding:2px 0; }
 table.now-table .now-tag{ display:inline-block; margin-left:7px; padding:1px 7px; border-radius:999px; font-size:9.5px; font-weight:700; letter-spacing:.03em; vertical-align:middle; }
 table.now-table .now-tag.n1{ background:rgba(64,156,255,.18); color:#7cc0ff; }
 table.now-table .now-tag.n2{ background:rgba(176,102,255,.18); color:#c99bff; }
-table.now-table .now-line.now-idle{ opacity:.5; }
-table.now-table .now-line.now-live{ border-radius:8px; padding:3px 8px; margin:1px -8px; font-weight:800; }
-table.now-table .now-line.now-live.n1{ color:#7cc0ff; background:rgba(64,156,255,.14); box-shadow:inset 0 0 0 1.2px #409cff; }
-table.now-table .now-line.now-live.n2{ color:#c99bff; background:rgba(176,102,255,.14); box-shadow:inset 0 0 0 1.2px #b066ff; }
-table.now-table .now-line.now-live .now-tag{ background:#409cff; color:#0b1830; }
-table.now-table .now-line.now-live.n2 .now-tag{ background:#b066ff; color:#1a0b30; }
 table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255,255,255,0.02); }
 .now-empty{ color:var(--muted); font-size:13px; padding:14px 12px; }
 /* ---- Duty Roster tabs + Communication roster ---- */
@@ -8174,7 +8168,7 @@ function renderRosterNow(){
           if(!nm || nm === '-') return '';
           const tag = e.nightHalf === '1' ? '<span class="now-tag n1">1st Night</span>'
                     : e.nightHalf === '2' ? '<span class="now-tag n2">2nd Night</span>' : '';
-          const cls = 'now-line' + (e.nightHalf ? (o.live ? ' now-live n' + e.nightHalf : ' now-idle') : '');
+          const cls = 'now-line';
           const note = (sub && base) ? '<small>' + esc(base) + '</small>' : '';
           return '<div class="' + cls + '"><span class="now-nm">' + esc(nm) + '</span>' + tag + note + '</div>';
         }).join('');
