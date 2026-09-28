@@ -5075,8 +5075,18 @@ function openQuickExchange(tableKey, ri, ci){
   const data = rosterDataFor(tableKey);
   const row = data[ri];
   if(!row) return;
-  const dateKey = todayDateKey();
-  const [y,m,day] = dateKey.split('-').map(Number);
+  let dateKey = todayDateKey();
+  let [y,m,day] = dateKey.split('-').map(Number);
+  // A night shift runs 8:30 PM → 7:30 AM, so after midnight the night that is
+  // still running belongs to YESTERDAY's roster date. Check that first.
+  {
+    const pd = addDays(y, m-1, day, -1);
+    const pKey = pd.y + '-' + String(pd.m+1).padStart(2,'0') + '-' + String(pd.day).padStart(2,'0');
+    if(shiftFor(ci, pd.y, pd.m, pd.day) === 'Night'){
+      const pw = exchangeShiftWindow(pKey, ci, '');
+      if(pw && Date.now() < pw.end){ dateKey = pKey; y = pd.y; m = pd.m + 1; day = pd.day; }
+    }
+  }
   const st = shiftFor(ci, y, m-1, day);
   if(st === 'Off'){
     alert('আজ Team ' + TEAMS[ci] + '-এর কোনো ডিউটি নেই, তাই এক্সচেঞ্জ যোগ করা যাবে না।');
