@@ -847,6 +847,16 @@ table.now-table tr.now-group td{
 table.now-table td.now-pos{ width:42%; font-weight:600; color:var(--muted); }
 table.now-table td.now-name{ font-weight:700; color:var(--text); }
 table.now-table td.now-name small{ display:block; margin-top:2px; font-weight:500; font-size:11px; color:var(--muted); }
+table.now-table td.now-name .now-line{ padding:2px 0; }
+table.now-table .now-tag{ display:inline-block; margin-left:7px; padding:1px 7px; border-radius:999px; font-size:9.5px; font-weight:700; letter-spacing:.03em; vertical-align:middle; }
+table.now-table .now-tag.n1{ background:rgba(64,156,255,.18); color:#7cc0ff; }
+table.now-table .now-tag.n2{ background:rgba(176,102,255,.18); color:#c99bff; }
+table.now-table .now-line.now-idle{ opacity:.5; }
+table.now-table .now-line.now-live{ border-radius:8px; padding:3px 8px; margin:1px -8px; font-weight:800; }
+table.now-table .now-line.now-live.n1{ color:#7cc0ff; background:rgba(64,156,255,.14); box-shadow:inset 0 0 0 1.2px #409cff; }
+table.now-table .now-line.now-live.n2{ color:#c99bff; background:rgba(176,102,255,.14); box-shadow:inset 0 0 0 1.2px #b066ff; }
+table.now-table .now-line.now-live .now-tag{ background:#409cff; color:#0b1830; }
+table.now-table .now-line.now-live.n2 .now-tag{ background:#b066ff; color:#1a0b30; }
 table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255,255,255,0.02); }
 .now-empty{ color:var(--muted); font-size:13px; padding:14px 12px; }
 /* ---- Duty Roster tabs + Communication roster ---- */
@@ -1722,6 +1732,22 @@ flex:0 0 auto !important;cursor:pointer;line-height:0;transition:opacity .2s eas
 .xch-btn span{white-space:nowrap}
 #rosterSharedBars .roster-savebar{justify-content:stretch;gap:12px;align-items:center}
 #flightDbAdminBtn.icon-only{display:flex !important;margin:0 auto}
+.cal-cell[data-date], .mini-cell[data-date]{ cursor:pointer; }
+.cal-cell.has-log, .mini-cell.has-log{ position:relative; }
+.cal-cell.has-log::after, .mini-cell.has-log::after{ content:''; position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:#ffb020; box-shadow:0 0 5px rgba(255,176,32,.8); }
+.mini-cell.has-log::after{ width:5px; height:5px; top:2px; right:2px; }
+.dl-body{ max-height:62vh; overflow:auto; margin-top:6px; }
+.dl-empty{ text-align:center; color:var(--muted); font-size:13px; padding:26px 8px; }
+.dl-group{ margin:12px 0 4px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.dl-row{ display:flex; gap:12px; align-items:flex-start; padding:9px 10px; margin-bottom:6px; border:1px solid var(--border); background:var(--panel-2); border-radius:10px; }
+.dl-pos{ flex:0 0 38%; display:flex; flex-direction:column; gap:2px; font-size:13px; color:var(--text); }
+.dl-pos span{ font-size:11px; color:var(--muted); }
+.dl-main{ flex:1; min-width:0; }
+.dl-who{ font-weight:700; font-size:14px; color:var(--text); }
+.dl-who .now-tag{ display:inline-block; margin-left:7px; padding:1px 7px; border-radius:999px; font-size:9.5px; font-weight:700; vertical-align:middle; }
+.dl-who .now-tag.n1{ background:rgba(64,156,255,.18); color:#7cc0ff; }
+.dl-who .now-tag.n2{ background:rgba(176,102,255,.18); color:#c99bff; }
+.dl-sub{ margin-top:2px; font-size:11px; color:var(--muted); }
 </style>
 <script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs" async=""></script><script src="https://apis.google.com/js/api.js?onload=__iframefcb63634" type="text/javascript" charset="UTF-8" gapi_processed="true"></script></head>
 <body>
@@ -2086,6 +2112,16 @@ flex:0 0 auto !important;cursor:pointer;line-height:0;transition:opacity .2s eas
           <tbody id="exchangeListTbody"><tr class=""><td>2026-10-03</td><td>Aerodrome Assistant</td><td>ACC UPPER-2</td><td>Team A</td><td>Zahid mim</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-03" data-idx="0">✕</button></td></tr><tr class=""><td>2026-10-03</td><td>Aerodrome Assistant</td><td>EOC</td><td>Team A</td><td>--------</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-03" data-idx="1">✕</button></td></tr><tr class=""><td>2026-10-04</td><td>Aerodrome Assistant</td><td>ACC UPPER-2</td><td>Team A</td><td>Zahid mim</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-04" data-idx="0">✕</button></td></tr><tr class=""><td>2026-10-04</td><td>Aerodrome Assistant</td><td>EOC</td><td>Team A</td><td>-------</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-04" data-idx="1">✕</button></td></tr><tr class=""><td>2026-10-05</td><td>Aerodrome Assistant</td><td>ACC UPPER-2</td><td>Team A (1st Night)</td><td>Saiduzzaman</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-05" data-idx="0">✕</button></td></tr></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="dayLogModalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" id="dayLogTitle"></div>
+        <button type="button" class="modal-close" id="dayLogClose">✕</button>
+      </div>
+      <div id="dayLogBody" class="dl-body"></div>
     </div>
   </div>
 
@@ -3321,6 +3357,7 @@ function adminGate(unlockInputs){
     rememberAdmin();
     if(unlockInputs) unlockAllRosterInputs();
     adminFirebaseSignIn();
+    try{ onAdminUnlockedHistory(); }catch(e){}
     return true;
   }
   alert('পাসওয়ার্ড ভুল হয়েছে।');
@@ -3646,7 +3683,129 @@ function loadExchanges(){
   }catch(e){}
   return {};
 }
-function saveExchangesData(obj){ try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); }
+/* ============================================================
+   Exchange history (kept 6 months): every duty exchange / 1st-2nd night
+   assignment is archived here the moment it is saved, so it is still
+   available after the live exchange expires. Click a date on the duty
+   calendar to see that day's log. Synced via Firebase like everything else.
+   ============================================================ */
+const EX_HISTORY_KEY = 'HSIA_EXCHANGE_HISTORY_V1';
+const EX_HISTORY_DAYS = 366;
+function exHistLoadLocal(){
+  try{ const o = JSON.parse(localStorage.getItem(EX_HISTORY_KEY)); if(o && typeof o === 'object' && !Array.isArray(o)) return o; }catch(e){}
+  return {};
+}
+/* The history is admin-only: it is only loaded / recorded / shown on a device where the admin is logged in. */
+let EX_HISTORY = rosterUnlocked ? exHistLoadLocal() : {};
+function exHistIsAdmin(){ return !!rosterUnlocked; }
+function onAdminUnlockedHistory(){
+  EX_HISTORY = exHistLoadLocal();
+  try{ archiveExchangesToHistory(EXCHANGES, false); saveExHistory(); }catch(e){}
+  try{
+    Promise.resolve(window._adminAuthPromise).catch(()=>{}).then(()=>{ if(typeof window._attachExHistory === 'function') window._attachExHistory(); });
+  }catch(e){}
+  try{ buildCalendar(); }catch(e){}
+}
+function exHistKey(h){ return [h.table, h.pos, +h.team, h.nightHalf || ''].join('|'); }
+function exHistList(v){ return (Array.isArray(v) ? v : Object.values(v || {})).filter(Boolean); }
+function exHistBaseName(x){
+  try{
+    const d = rosterDataFor(x.table);
+    const r = d && d.find(r=> r.pos === x.pos);
+    return r && r.names ? String(r.names[+x.team] || '').trim() : '';
+  }catch(e){ return ''; }
+}
+function saveExHistory(){
+  if(!exHistIsAdmin()) return;
+  try{ localStorage.setItem(EX_HISTORY_KEY, JSON.stringify(EX_HISTORY)); }catch(e){}
+  try{ pushExHistoryToFirebaseDebounced(); }catch(e){}
+}
+function archiveExchangesToHistory(obj, syncDeletes){
+  if(!exHistIsAdmin() || !obj || typeof obj !== 'object') return false;
+  let changed = false;
+  const now = Date.now();
+  Object.keys(obj).forEach(dk=>{
+    const cur = EX_HISTORY[dk] = exHistList(EX_HISTORY[dk]);
+    exHistList(obj[dk]).forEach(x=>{
+      if(x.vacant) return;
+      const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
+      const i = cur.findIndex(h=> exHistKey(h) === exHistKey(rec));
+      if(i >= 0){
+        rec.base = cur[i].base || exHistBaseName(rec);
+        if(JSON.stringify(cur[i]) !== JSON.stringify(rec)){ cur[i] = rec; changed = true; }
+      } else { rec.base = exHistBaseName(rec); cur.push(rec); changed = true; }
+    });
+    if(!cur.length) delete EX_HISTORY[dk];
+  });
+  if(syncDeletes){
+    // gone from the live list while its shift had not ended yet = removed by the admin
+    Object.keys(EX_HISTORY).forEach(dk=>{
+      const present = new Set(exHistList(obj[dk]).map(exHistKey));
+      const kept = EX_HISTORY[dk].filter(h=>{
+        if(present.has(exHistKey(h))) return true;
+        const w = exchangeShiftWindow(dk, +h.team, h.nightHalf);
+        return !w || w.end <= now;
+      });
+      if(kept.length !== EX_HISTORY[dk].length) changed = true;
+      if(kept.length) EX_HISTORY[dk] = kept; else delete EX_HISTORY[dk];
+    });
+  }
+  const cutoff = new Date(Date.now() - EX_HISTORY_DAYS * 86400000).toISOString().slice(0,10);
+  Object.keys(EX_HISTORY).forEach(dk=>{ if(dk < cutoff){ delete EX_HISTORY[dk]; changed = true; } });
+  return changed;
+}
+/* history + still-live exchanges for one date-key */
+function exHistDayEntries(dk){
+  if(!exHistIsAdmin()) return [];
+  const out = exHistList(EX_HISTORY[dk]).slice();
+  const have = new Set(out.map(exHistKey));
+  try{
+    exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
+      if(x.vacant) return;
+      const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
+      if(!have.has(exHistKey(rec))){ rec.base = exHistBaseName(rec); out.push(rec); }
+    });
+  }catch(e){}
+  return out;
+}
+function exHistDateKey(y, m0, d){ return y + '-' + String(m0+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+function openDayLog(dk){
+  if(!exHistIsAdmin()) return;
+  const ov = document.getElementById('dayLogModalOverlay');
+  const body = document.getElementById('dayLogBody');
+  const title = document.getElementById('dayLogTitle');
+  if(!ov || !body) return;
+  const [y,m,d] = dk.split('-').map(Number);
+  const wd = WEEKDAYS[new Date(Date.UTC(y, m-1, d)).getUTCDay()];
+  title.textContent = wd + ', ' + MONTHS[m-1] + ' ' + d + ', ' + y;
+  const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const order = ['rosterCtrl','roster','rosterComm'];
+  const label = { rosterCtrl:'Controllers', roster:'Aerodrome Assistant', rosterComm:'Communication' };
+  const list = exHistDayEntries(dk).sort((a,b)=>
+    (order.indexOf(a.table) - order.indexOf(b.table)) || (a.team - b.team) || String(a.pos).localeCompare(String(b.pos)) || String(a.nightHalf).localeCompare(String(b.nightHalf)));
+  if(!list.length){
+    body.innerHTML = '<div class="dl-empty">No exchange or night assignment recorded</div>';
+  } else {
+    let html = '', last = '';
+    list.forEach(h=>{
+      if(h.table !== last){ html += '<div class="dl-group">' + esc(label[h.table] || h.table) + '</div>'; last = h.table; }
+      const tag = h.nightHalf === '1' ? '<span class="now-tag n1">1st Night</span>' : h.nightHalf === '2' ? '<span class="now-tag n2">2nd Night</span>' : '';
+      let who;
+      if(h.subName) who = '<div class="dl-who">\uD83D\uDD04 ' + esc(h.subName) + tag + '</div>' + (h.base ? '<div class="dl-sub">in place of ' + esc(h.base) + '</div>' : '');
+      else who = '<div class="dl-who">' + esc(h.base || '\u2014') + tag + '</div>';
+      html += '<div class="dl-row"><div class="dl-pos"><b>' + esc(h.pos) + '</b><span>Team ' + esc(TEAMS[h.team] != null ? TEAMS[h.team] : h.team) + '</span></div><div class="dl-main">' + who + '</div></div>';
+    });
+    body.innerHTML = html;
+  }
+  openModal('dayLogModalOverlay');
+}
+document.addEventListener('click', e=>{
+  const c = e.target.closest && e.target.closest('.cal-cell[data-date], .mini-cell[data-date]');
+  if(c && exHistIsAdmin()) openDayLog(c.getAttribute('data-date'));
+  const ov = document.getElementById('dayLogModalOverlay');
+  if(ov && (e.target === ov || (e.target.closest && e.target.closest('#dayLogClose')))) closeModal('dayLogModalOverlay');
+});
+function saveExchangesData(obj){ try{ if(archiveExchangesToHistory(obj, true)) saveExHistory(); }catch(e){} try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); try{ if(typeof buildCalendar === 'function') buildCalendar(); }catch(e){} }
 /* Removes exchange entries whose underlying shift has actually ended —
    not just "date-key isn't today anymore". This matters for Night shifts:
    an exchange dated "yesterday" can still be running until 7:30 AM today
@@ -3656,6 +3815,7 @@ function saveExchangesData(obj){ try{ localStorage.setItem(EXCHANGES_KEY, JSON.s
    even though the night shift itself runs until 7:30 AM. */
 function pruneExpiredExchanges(obj){
   if(!obj || typeof obj !== 'object') return false;
+  try{ if(archiveExchangesToHistory(obj, false)) saveExHistory(); }catch(e){}
   const now = Date.now();
   const today = todayDateKey();
   let changed = false;
@@ -5436,6 +5596,38 @@ function connectFirebaseSync(config, roomId){
         if(typeof checkMyExchangeNotifications === 'function') checkMyExchangeNotifications();
       }
     });
+    let _exHistAttached = false;
+    window._attachExHistory = function(){
+      if(_exHistAttached || !exHistIsAdmin()) return;
+      _exHistAttached = true;
+      listen(_fbDb.ref('hsia_sync/' + roomId + '/exchangeHistory'), snap=>{
+      const val = snap.val();
+      if(val && typeof val === 'object'){
+        const merged = {};
+        Object.keys(val).forEach(dk=>{ merged[dk] = exHistList(val[dk]); });
+        let extras = false;
+        const now = Date.now();
+        Object.keys(EX_HISTORY).forEach(dk=>{
+          const have = new Set((merged[dk] || []).map(exHistKey));
+          exHistList(EX_HISTORY[dk]).forEach(h=>{
+            if(have.has(exHistKey(h))) return;
+            const w = exchangeShiftWindow(dk, +h.team, h.nightHalf);
+            if(w && w.end > now) return;   // live entry missing remotely = removed elsewhere
+            (merged[dk] = merged[dk] || []).push(h); extras = true;
+          });
+        });
+        if(JSON.stringify(merged) !== JSON.stringify(EX_HISTORY)){
+          EX_HISTORY = merged;
+          try{ localStorage.setItem(EX_HISTORY_KEY, JSON.stringify(EX_HISTORY)); }catch(e){}
+          try{ buildCalendar(); }catch(e){}
+        }
+        if(extras) pushExHistoryToFirebaseDebounced();
+      } else if(Object.keys(EX_HISTORY).length){
+        pushExHistoryToFirebaseDebounced();
+      }
+      });
+    };
+    window._attachExHistory();
     listen(vccsRef, snap=>{
       const val = snap.val();
       if(val && typeof window.vccsApplyRemote === 'function') window.vccsApplyRemote(val);
@@ -5511,6 +5703,12 @@ const pushCustomAirlinesToFirebaseDebounced = debounce(pushCustomAirlinesToFireb
 const pushRosterCommToFirebaseDebounced = debounce(pushRosterCommToFirebase, 500);
 const pushEqAircraftToFirebaseDebounced = debounce(pushEqAircraftToFirebase, 500);
 const pushExchangesToFirebaseDebounced = debounce(pushExchangesToFirebase, 500);
+function pushExHistoryToFirebase(){
+  const saved = loadFirebaseSyncConfig();
+  if(!exHistIsAdmin() || !_fbDb || !saved) return;
+  fbSet(saved.roomId, 'exchangeHistory', EX_HISTORY);
+}
+const pushExHistoryToFirebaseDebounced = debounce(pushExHistoryToFirebase, 500);
 const pushAdminNotepadToFirebaseDebounced = debounce(pushAdminNotepadToFirebase, 500);
 function pushVccsToFirebase(){
   const saved = loadFirebaseSyncConfig();
@@ -6235,6 +6433,7 @@ function buildCalendar(){
     const isToday = inMonth && cy===f.y && cm===f.m && cd===f.day;
     cell.className = 'cal-cell ' + (inMonth ? CAL_CLASS[st] : 'muted') + (isToday ? ' today' : '');
     cell.innerHTML = `<div class="cnum">${cd}</div><div class="cshift">${inMonth ? shiftLabel(st) : ''}</div>`;
+    { const dk = exHistDateKey(cy, cm, cd); cell.setAttribute('data-date', dk); if(inMonth && exHistDayEntries(dk).length) cell.classList.add('has-log'); }
     grid.appendChild(cell);
   }
 }
@@ -6283,6 +6482,7 @@ function buildAllTeamsCalendars(){
       const cell = document.createElement('div');
       cell.className = 'mini-cell ' + (inMonth ? CAL_CLASS[st] : 'muted') + (isToday ? ' today' : '');
       cell.innerHTML = `<div class="mnum">${cd}</div><div class="mshift">${inMonth ? shiftLabel(st) : ''}</div>`;
+      { const dk = exHistDateKey(cy, cm, cd); cell.setAttribute('data-date', dk); if(inMonth && exHistDayEntries(dk).filter(h=>h.team===ti).length) cell.classList.add('has-log'); }
       grid.appendChild(cell);
     }
     mini.appendChild(grid);
@@ -7946,18 +8146,41 @@ function renderRosterNow(){
   let rowsHtml = '';
   sets.forEach(set=>{
     const data = rosterDataFor(set[0]);
-    const ex = activeExchangesFor(set[0]);
+    // every exchange of the night/shift that is running now - both halves, not only the half active this minute
+    const nowMs = Date.now();
+    const ex = [];
+    Object.keys(EXCHANGES).forEach(dk=>{
+      (EXCHANGES[dk] || []).forEach(x=>{
+        if(x.table !== set[0] || +x.team !== idx) return;
+        const full = exchangeShiftWindow(dk, idx, '');
+        if(!full || !(nowMs >= full.start && nowMs < full.end)) return;
+        const w = exchangeShiftWindow(dk, idx, x.nightHalf);
+        ex.push({ x: x, live: !!(w && nowMs >= w.start && nowMs < w.end) });
+      });
+    });
     let part = '';
     data.forEach(r=>{
       const base = String((r.names && r.names[idx]) || '').trim();
-      const e = ex.find(x=> x.pos === r.pos && +x.team === idx);
-      let name = base, note = '';
-      if(e){
-        if(e.vacant){ name = 'Vacant'; note = base; }
-        else if((e.subName || '').trim()){ name = '🔄 ' + e.subName.trim(); note = base; }
+      const mine = ex.filter(o=> o.x.pos === r.pos)
+        .sort((p,q)=> String(p.x.nightHalf||'').localeCompare(String(q.x.nightHalf||'')));
+      let cell = '';
+      if(!mine.length){
+        if(!base || base === '-') return;
+        cell = esc(base);
+      } else {
+        cell = mine.map(o=>{
+          const e = o.x, sub = (e.subName || '').trim();
+          const nm = e.vacant ? 'Vacant' : (sub ? '\uD83D\uDD04 ' + sub : base);
+          if(!nm || nm === '-') return '';
+          const tag = e.nightHalf === '1' ? '<span class="now-tag n1">1st Night</span>'
+                    : e.nightHalf === '2' ? '<span class="now-tag n2">2nd Night</span>' : '';
+          const cls = 'now-line' + (e.nightHalf ? (o.live ? ' now-live n' + e.nightHalf : ' now-idle') : '');
+          const note = (sub && base) ? '<small>' + esc(base) + '</small>' : '';
+          return '<div class="' + cls + '"><span class="now-nm">' + esc(nm) + '</span>' + tag + note + '</div>';
+        }).join('');
+        if(!cell) return;
       }
-      if(!name || name === '-') return;
-      part += '<tr><td class="now-pos">' + esc(r.pos) + '</td><td class="now-name">' + esc(name) + (note ? '<small>' + esc(note) + '</small>' : '') + '</td></tr>';
+      part += '<tr><td class="now-pos">' + esc(r.pos) + '</td><td class="now-name">' + cell + '</td></tr>';
     });
     rowsHtml += '<tr class="now-group"><td colspan="2">' + set[1] + '</td></tr>' + (part || '<tr><td colspan="2" class="now-empty">—</td></tr>');
   });
