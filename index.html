@@ -1747,6 +1747,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 .duty-ticker-box[data-date]{ cursor:pointer; }
 .dl-teams{ display:flex; align-items:center; justify-content:center; gap:6px; margin:0 0 14px; padding:8px 6px; min-height:64px; }
 .dl-teamchip{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+#rosterCardOuter.collapsed .rost-now-btn{ cursor:default; }
 </style>
 <script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs" async=""></script><script src="https://apis.google.com/js/api.js?onload=__iframefcb63634" type="text/javascript" charset="UTF-8" gapi_processed="true"></script></head>
 <body>
@@ -8253,10 +8254,20 @@ function renderRosterNow(){
 }
 (function initRosterNow(){
   const btn = document.getElementById('rosterNowBtn');
+  const outer = document.getElementById('rosterCardOuter');
+  const isClosed = ()=> !outer || outer.classList.contains('collapsed');
   if(btn) btn.addEventListener('click', e=>{
     e.stopPropagation();
+    // Now only works while the Duty Roster window is open
+    if(isClosed()) return;
     setRosterNow(!ROSTER_NOW_ON);
   });
+  // closing the Duty Roster window switches Now off automatically
+  if(outer){
+    if(isClosed()) setRosterNow(false);
+    new MutationObserver(()=>{ if(isClosed() && ROSTER_NOW_ON) setRosterNow(false); })
+      .observe(outer, { attributes:true, attributeFilter:['class'] });
+  }
   const view = document.getElementById('rosterNowView');
   if(view) view.addEventListener('click', e=>{
     if(e.target.closest('#rosterNowClose')) setRosterNow(false);
