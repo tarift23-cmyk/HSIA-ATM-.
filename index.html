@@ -1742,6 +1742,11 @@ flex:0 0 auto !important;cursor:pointer;line-height:0;transition:opacity .2s eas
 .dl-who .now-tag.n1{ background:rgba(64,156,255,.18); color:#7cc0ff; }
 .dl-who .now-tag.n2{ background:rgba(176,102,255,.18); color:#c99bff; }
 .dl-sub{ margin-top:2px; font-size:11px; color:var(--muted); }
+.dl-body{ max-height:80vh; }
+table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decoration-color:#ff3b3b; text-decoration-thickness:2px; margin-right:7px; font-weight:600; }
+.duty-ticker-box[data-date]{ cursor:pointer; }
+.dl-teams{ display:flex; align-items:center; justify-content:center; gap:6px; margin:0 0 14px; padding:8px 6px; min-height:64px; }
+.dl-teamchip{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
 </style>
 <script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs" async=""></script><script src="https://apis.google.com/js/api.js?onload=__iframefcb63634" type="text/javascript" charset="UTF-8" gapi_processed="true"></script></head>
 <body>
@@ -2111,10 +2116,6 @@ flex:0 0 auto !important;cursor:pointer;line-height:0;transition:opacity .2s eas
 
   <div class="modal-overlay" id="dayLogModalOverlay">
     <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title" id="dayLogTitle"></div>
-        <button type="button" class="modal-close" id="dayLogClose">✕</button>
-      </div>
       <div id="dayLogBody" class="dl-body"></div>
     </div>
   </div>
@@ -3762,42 +3763,107 @@ function exHistDayEntries(dk){
   }catch(e){}
   return out;
 }
+function exDayEntriesForView(dk){
+  if(exHistIsAdmin()) return exHistDayEntries(dk);
+  const out = [];
+  try{
+    exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
+      if(x.vacant) return;
+      out.push({ table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:exHistBaseName(x) });
+    });
+  }catch(e){}
+  return out;
+}
 function exHistDateKey(y, m0, d){ return y + '-' + String(m0+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
-function openDayLog(dk){
-  if(!exHistIsAdmin()) return;
+function openDayLog(dk, team){
   const ov = document.getElementById('dayLogModalOverlay');
   const body = document.getElementById('dayLogBody');
-  const title = document.getElementById('dayLogTitle');
   if(!ov || !body) return;
+  team = +team; if(isNaN(team) || team < 0 || team >= TEAMS.length) team = YOU_INDEX;
+  ov.setAttribute('data-date', dk);
   const [y,m,d] = dk.split('-').map(Number);
   const wd = WEEKDAYS[new Date(Date.UTC(y, m-1, d)).getUTCDay()];
-  title.textContent = wd + ', ' + MONTHS[m-1] + ' ' + d + ', ' + y;
+  const dateStr = wd + ', ' + MONTHS[m-1] + ' ' + d + ', ' + y;
   const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const order = ['rosterCtrl','roster','rosterComm'];
-  const label = { rosterCtrl:'Controllers', roster:'Aerodrome Assistant', rosterComm:'Communication' };
-  const list = exHistDayEntries(dk).sort((a,b)=>
-    (order.indexOf(a.table) - order.indexOf(b.table)) || (a.team - b.team) || String(a.pos).localeCompare(String(b.pos)) || String(a.nightHalf).localeCompare(String(b.nightHalf)));
-  if(!list.length){
-    body.innerHTML = '<div class="dl-empty">No exchange or night assignment recorded</div>';
-  } else {
-    let html = '', last = '';
-    list.forEach(h=>{
-      if(h.table !== last){ html += '<div class="dl-group">' + esc(label[h.table] || h.table) + '</div>'; last = h.table; }
-      const tag = h.nightHalf === '1' ? '<span class="now-tag n1">1st Night</span>' : h.nightHalf === '2' ? '<span class="now-tag n2">2nd Night</span>' : '';
-      let who;
-      if(h.subName) who = '<div class="dl-who">\uD83D\uDD04 ' + esc(h.subName) + tag + '</div>' + (h.base ? '<div class="dl-sub">in place of ' + esc(h.base) + '</div>' : '');
-      else who = '<div class="dl-who">' + esc(h.base || '\u2014') + tag + '</div>';
-      html += '<div class="dl-row"><div class="dl-pos"><b>' + esc(h.pos) + '</b><span>Team ' + esc(TEAMS[h.team] != null ? TEAMS[h.team] : h.team) + '</span></div><div class="dl-main">' + who + '</div></div>';
+  const st = shiftFor(team, y, m-1, d);
+  const acc = (st !== 'Off' && getShiftColor(st)) || '';
+  const all = exDayEntriesForView(dk).filter(h=> +h.team === team);
+  const sets = [['rosterCtrl','Controllers'], ['roster','Aerodrome Assistant'], ['rosterComm','Communication']];
+  let rowsHtml = '';
+  if(st !== 'Off'){
+    sets.forEach(set=>{
+      let part = '';
+      rosterDataFor(set[0]).forEach(r=>{
+        const cur = String((r.names && r.names[team]) || '').trim();
+        const mine = all.filter(h=> h.table === set[0] && h.pos === r.pos)
+          .sort((p,q)=> String(p.nightHalf||'').localeCompare(String(q.nightHalf||'')));
+        let cell = '';
+        if(!mine.length){
+          if(!cur || cur === '-') return;
+          cell = esc(cur);
+        } else {
+          cell = mine.map(h=>{
+            const base = (h.base || cur || '').trim();
+            const tag = h.nightHalf === '1' ? '<span class="now-tag n1">1st Night</span>'
+                      : h.nightHalf === '2' ? '<span class="now-tag n2">2nd Night</span>' : '';
+            let nm;
+            if(h.subName) nm = (base ? '<s class="dl-cut">' + esc(base) + '</s>' : '') + '<span class="now-nm">\uD83D\uDD04 ' + esc(h.subName) + '</span>';
+            else nm = '<span class="now-nm">' + esc(base || '\u2014') + '</span>';
+            return '<div class="now-line">' + nm + tag + '</div>';
+          }).join('');
+        }
+        part += '<tr><td class="now-pos">' + esc(r.pos) + '</td><td class="now-name">' + cell + '</td></tr>';
+      });
+      rowsHtml += '<tr class="now-group"><td colspan="2">' + set[1] + '</td></tr>' + (part || '<tr><td colspan="2" class="now-empty">\u2014</td></tr>');
     });
-    body.innerHTML = html;
+  }
+  const colorFor = i=> shiftColorVar(shiftFor(i, y, m-1, d));
+  const chips = TEAMS.map((t,i)=>
+    '<div class="dl-teamchip duty-ticker-box' + (i === team ? ' current' : '') + '" style="--dt-color:' + colorFor(i) + '" data-team="' + i + '" title="Team ' + esc(t) + '">' + esc(t) + '</div>').join('');
+  const headHtml =
+    '<div class="now-head-l"><div class="now-head-k">' + esc(dateStr) + '</div>' +
+    '<div class="now-head-v">Team ' + esc(TEAMS[team]) + ' \u00b7 <span>' + esc(st) + '</span></div></div>' +
+    '<button type="button" class="now-close" id="dayLogClose">\u2715 Close</button>';
+  const contentHtml = st === 'Off'
+    ? '<div class="dl-empty">No duty</div>'
+    : '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+  ov.style.setProperty('--acc', acc || 'var(--gold)');
+  body.style.setProperty('--acc', acc || 'var(--gold)');
+  const existing = body.querySelector('#dlContent');
+  if(existing && ov.classList.contains('show') && !ov.classList.contains('closing')){
+    // already open: morph in place (pearls glide, content cross-fades)
+    body.querySelector('#dlHead').innerHTML = headHtml;
+    body.querySelectorAll('.dl-teamchip').forEach(el=>{
+      const i = +el.getAttribute('data-team');
+      el.style.setProperty('--dt-color', colorFor(i));
+      el.classList.toggle('current', i === team);
+    });
+    existing.classList.remove('dl-swap'); void existing.offsetWidth;
+    existing.innerHTML = contentHtml;
+    existing.classList.add('dl-swap');
+  } else {
+    body.innerHTML = '<div class="now-head" id="dlHead">' + headHtml + '</div><div class="dl-teams">' + chips + '</div><div id="dlContent" class="dl-content dl-swap">' + contentHtml + '</div>';
   }
   openModal('dayLogModalOverlay');
 }
 document.addEventListener('click', e=>{
-  const c = e.target.closest && e.target.closest('.cal-cell[data-date], .mini-cell[data-date]');
-  if(c && exHistIsAdmin()) openDayLog(c.getAttribute('data-date'));
+  const t = e.target;
+  const tb = t.closest && t.closest('.duty-ticker-box[data-date]');
+  if(tb){ openDayLog(tb.getAttribute('data-date'), tb.getAttribute('data-team')); return; }
+  const c = t.closest && t.closest('.cal-cell[data-date], .mini-cell[data-date]');
+  if(c && exHistIsAdmin()){
+    const tm = c.getAttribute('data-team');
+    openDayLog(c.getAttribute('data-date'), tm == null ? YOU_INDEX : tm);
+    return;
+  }
+  const chip = t.closest && t.closest('.dl-teamchip');
+  if(chip){
+    const ov0 = document.getElementById('dayLogModalOverlay');
+    if(ov0) openDayLog(ov0.getAttribute('data-date'), chip.getAttribute('data-team'));
+    return;
+  }
   const ov = document.getElementById('dayLogModalOverlay');
-  if(ov && (e.target === ov || (e.target.closest && e.target.closest('#dayLogClose')))) closeModal('dayLogModalOverlay');
+  if(ov && (t === ov || (t.closest && t.closest('#dayLogClose')))) closeModal('dayLogModalOverlay');
 });
 function saveExchangesData(obj){ try{ if(archiveExchangesToHistory(obj, true)) saveExHistory(); }catch(e){} try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); try{ if(typeof buildCalendar === 'function') buildCalendar(); }catch(e){} }
 /* Removes exchange entries whose underlying shift has actually ended —
@@ -6199,12 +6265,13 @@ function renderDutyTicker(){
     const title = `Team ${TEAMS[s.team]} — ${s.shiftType}`;
     const ld = new Date(s.start + DHAKA_OFFSET);
     const dateLabel = `${ld.getUTCDate()} ${MONTHS[ld.getUTCMonth()].slice(0,3)}`;
+    const dateKey = exHistDateKey(ld.getUTCFullYear(), ld.getUTCMonth(), ld.getUTCDate());
     if(i > 0){
       parts.push(`<div class="duty-ticker-track${isPassed ? ' passed' : ''}"></div>`);
     }
     parts.push(
       `<div class="duty-ticker-item">` +
-        `<div class="duty-ticker-box${isCurrent ? ' current' : ''}" style="--dt-color:${color}" title="${title}">${TEAMS[s.team]}</div>` +
+        `<div class="duty-ticker-box${isCurrent ? ' current' : ''}" style="--dt-color:${color}" title="${title}" data-team="${s.team}" data-date="${dateKey}">${TEAMS[s.team]}</div>` +
         `<div class="duty-ticker-date">${dateLabel}</div>` +
         (isCurrent ? `<div class="duty-ticker-left" id="dutyTickerLeft"></div>` : '') +
       `</div>`
@@ -6427,7 +6494,7 @@ function buildCalendar(){
     const isToday = inMonth && cy===f.y && cm===f.m && cd===f.day;
     cell.className = 'cal-cell ' + (inMonth ? CAL_CLASS[st] : 'muted') + (isToday ? ' today' : '');
     cell.innerHTML = `<div class="cnum">${cd}</div><div class="cshift">${inMonth ? shiftLabel(st) : ''}</div>`;
-    { const dk = exHistDateKey(cy, cm, cd); cell.setAttribute('data-date', dk); if(inMonth && exHistDayEntries(dk).length) cell.classList.add('has-log'); }
+    { const dk = exHistDateKey(cy, cm, cd); cell.setAttribute('data-date', dk); cell.setAttribute('data-team', YOU_INDEX); if(inMonth && exHistDayEntries(dk).filter(h=>+h.team===YOU_INDEX).length) cell.classList.add('has-log'); }
     grid.appendChild(cell);
   }
 }
@@ -6476,7 +6543,7 @@ function buildAllTeamsCalendars(){
       const cell = document.createElement('div');
       cell.className = 'mini-cell ' + (inMonth ? CAL_CLASS[st] : 'muted') + (isToday ? ' today' : '');
       cell.innerHTML = `<div class="mnum">${cd}</div><div class="mshift">${inMonth ? shiftLabel(st) : ''}</div>`;
-      { const dk = exHistDateKey(cy, cm, cd); cell.setAttribute('data-date', dk); if(inMonth && exHistDayEntries(dk).filter(h=>h.team===ti).length) cell.classList.add('has-log'); }
+      { const dk = exHistDateKey(cy, cm, cd); cell.setAttribute('data-date', dk); cell.setAttribute('data-team', ti); if(inMonth && exHistDayEntries(dk).filter(h=>+h.team===ti).length) cell.classList.add('has-log'); }
       grid.appendChild(cell);
     }
     mini.appendChild(grid);
