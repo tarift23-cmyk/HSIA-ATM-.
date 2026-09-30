@@ -197,16 +197,28 @@
   .qbm-x{ background:none; border:1px solid rgba(245,66,73,0.6); color:#F54249; border-radius:5px; font-size:10px; line-height:1; padding:3px 5px; cursor:pointer; flex:0 0 auto; margin-top:1px; }
   #qbmPrintRoot{ display:none; }
   @media print{
-    @page{ size:A4 portrait; margin:12mm; }
+    @page{ size:210mm 297mm; margin:12mm; }
     body.qbm-printing{ background:#fff !important; }
     body.qbm-printing > *:not(#qbmPrintRoot){ display:none !important; }
     body.qbm-printing #qbmPrintRoot{ display:block !important; }
-    body.qbm-printing .qbm-paper{ background:#fff !important; color:#000 !important; padding:0; }
-    body.qbm-printing .qbm-title{ font-size:14pt; color:#000 !important; }
-    body.qbm-printing .qbm-table{ font-size:12pt; color:#000 !important; }
-    body.qbm-printing .qbm-table th, body.qbm-printing .qbm-table td{ background:#fff !important; color:#000 !important; border:1px solid #000 !important; }
-    body.qbm-printing .qbm-table th{ font-size:12pt; }
+    /* Same metrics as the "PDF A4" file: Times, 11pt cells, 10pt bold headers, 13pt title, 12mm margins, 0.6pt lines */
+    html.qbm-printing, body.qbm-printing{ margin:0 !important; padding:0 !important; background:#fff !important; }
+    body.qbm-printing .qbm-paper{ background:#fff !important; color:#000 !important; padding:0 !important; margin:0 !important; overflow:visible !important; border-radius:0 !important; font-family:"Times New Roman",Times,"Liberation Serif",serif; }
+    body.qbm-printing .qbm-paper, body.qbm-printing .qbm-paper *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; text-rendering:geometricPrecision; }
+    body.qbm-printing .qbm-title{ font-size:13pt !important; line-height:15pt; margin:0 0 15pt !important; color:#000 !important; text-decoration:underline; text-underline-offset:2pt; text-decoration-thickness:0.7pt; }
+    body.qbm-printing .qbm-table{ width:100% !important; min-width:0 !important; table-layout:fixed; border-collapse:collapse; font-size:11pt !important; color:#000 !important; }
+    body.qbm-printing .qbm-table th, body.qbm-printing .qbm-table td{ background:#fff !important; color:#000 !important; border:0.6pt solid #000 !important; padding:4pt !important; line-height:13.4pt; font-size:11pt; letter-spacing:0; }
+    body.qbm-printing .qbm-table th{ font-size:10pt !important; line-height:14pt; text-align:center; font-weight:700; }
+    body.qbm-printing .qbm-line{ display:block; }
+    body.qbm-printing .qbm-line + .qbm-line{ margin-top:0 !important; }
     body.qbm-printing .qbm-table tr{ page-break-inside:avoid; }
+    body.qbm-printing .qbm-table thead{ display:table-header-group; }
+    body.qbm-printing .qbm-table col:nth-child(1){ width:7% !important; }
+    body.qbm-printing .qbm-table col:nth-child(2){ width:18% !important; }
+    body.qbm-printing .qbm-table col:nth-child(3){ width:14% !important; }
+    body.qbm-printing .qbm-table col:nth-child(4){ width:33% !important; }
+    body.qbm-printing .qbm-table col:nth-child(5){ width:16% !important; }
+    body.qbm-printing .qbm-table col:nth-child(6){ width:12% !important; }
     .qbm-x{ display:none !important; }
   }
   .cld-row{ cursor:pointer; }
@@ -2283,6 +2295,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <div class="modal-header">
         <div class="modal-title">QBM</div>
         <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" id="qbmPdfBtn" class="fr-dbimport">⬇ PDF A4</button>
           <button type="button" id="qbmPrintBtn" class="fr-dbimport">🖨 Print</button>
           <button type="button" class="modal-close" id="qbmClose">✕</button>
         </div>
@@ -6132,7 +6145,7 @@ function stripVacantExchanges(o){
   if(!o || typeof o !== 'object') return o;
   Object.keys(o).forEach(k=>{
     const list = Array.isArray(o[k]) ? o[k] : Object.values(o[k] || {});
-    const kept = list.filter(x=> x && (!x.vacant || x.cl || x.special));
+    const kept = list.filter(x=> x && (!x.vacant || x.cl || x.special || x.moved));
     if(kept.length) o[k] = kept; else delete o[k];
   });
   return o;
@@ -6465,18 +6478,51 @@ function exTeamLabel(ex){
   return 'Team ' + (TEAMS[t] || '?');
 }
 /* puts one entry into EXCHANGES; a CL replaces everything on that position, a normal exchange replaces a CL */
+function exMovedKey(dateKey, e){ return [dateKey, e.table, e.pos, +e.team, e.nightHalf || ''].join('|'); }
+/* remove the auto-vacated cells that belong to a removed exchange */
+function exPurgeMoved(dateKey, parent){
+  const k = exMovedKey(dateKey, parent);
+  const list = exHistList(EXCHANGES[dateKey]);
+  const kept = list.filter(m=> !(m && m.moved && m.forKey === k));
+  if(kept.length !== list.length) EXCHANGES[dateKey] = kept;
+}
 function exPutEntry(dateKey, entry){
   const raw = EXCHANGES[dateKey];
   const list = Array.isArray(raw) ? raw : Object.values(raw || {});
+  const removed = [];
   EXCHANGES[dateKey] = list.filter(x=>{
     if(!x) return false;
     if(!(x.table === entry.table && x.pos === entry.pos && +x.team === +entry.team)) return true;
-    if(x.cl){ clLedgerDrop(dateKey, x); return false; }
-    if(entry.cl || entry.special) return false;
-    return (x.nightHalf || '') !== (entry.nightHalf || '');
+    if(x.cl){ clLedgerDrop(dateKey, x); removed.push(x); return false; }
+    if(entry.cl || entry.special){ removed.push(x); return false; }
+    if((x.nightHalf || '') !== (entry.nightHalf || '')) return true;
+    removed.push(x); return false;
   });
+  removed.forEach(x=> exPurgeMoved(dateKey, x));
   EXCHANGES[dateKey].push(entry);
   saveExchangesData(EXCHANGES);
+}
+/* Somebody of the SAME shift is sent to another position -> his own position that day stays vacant (nobody is put there) */
+function exVacateMovedCell(dateKey, parent){
+  const sub = String(parent.subName || '').trim();
+  const team = +parent.team;
+  if(!sub || !(team >= 0 && team < 100)) return;
+  const norm = x=> String(x == null ? '' : x).trim().toLowerCase();
+  const key = exMovedKey(dateKey, parent);
+  let added = false;
+  ['roster','rosterCtrl','rosterComm'].forEach(tbl=>{
+    (rosterDataFor(tbl) || []).forEach(row=>{
+      const nm = row.names && row.names[team];
+      if(!nm || norm(nm) !== norm(sub)) return;
+      if(tbl === parent.table && row.pos === parent.pos) return;
+      const cur = exHistList(EXCHANGES[dateKey]);
+      const busy = cur.some(x=> x && x.table === tbl && x.pos === row.pos && +x.team === team && (!x.nightHalf || (x.nightHalf || '') === (parent.nightHalf || '')));
+      if(busy) return;
+      EXCHANGES[dateKey] = cur.concat([{ table:tbl, pos:row.pos, team:team, subName:'', vacant:true, moved:true, forKey:key, who:String(nm).trim(), nightHalf:parent.nightHalf || '' }]);
+      added = true;
+    });
+  });
+  if(added) saveExchangesData(EXCHANGES);
 }
 function refreshThmrViews(){
   try{ if(window.hsiaTHMRRender) window.hsiaTHMRRender(); }catch(e){}
@@ -7695,7 +7741,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
         : 'roster-exchange-badge';
       const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
-      const badgeText = (ex && ex.vacant) ? (ex.special ? 'Special · Vacant' : 'CL · Vacant') : subEsc ? '🔄 ' + subEsc + halfTag + (ex && ex.cl ? ' · CL' : ex && ex.special ? ' · EL' : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
+      const badgeText = (ex && ex.vacant) ? (ex.special ? 'Special · Vacant' : ex.moved ? 'Vacant' : 'CL · Vacant') : subEsc ? '🔄 ' + subEsc + halfTag + (ex && ex.cl ? ' · CL' : ex && ex.special ? ' · EL' : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
       const badge = !ex ? '' : `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
     }).join('');
@@ -8870,6 +8916,14 @@ function qbmPeriod(ex, dk){
   if(st === 'Night') return ex.nightHalf === '1' ? '2030-0300' : ex.nightHalf === '2' ? '0300-0730' : '2030-0730';
   return '';
 }
+function qbmShiftLabel(ex, dk){
+  const t = +ex.team;
+  if(t >= 100) return ['night','night','morning','evening'][t - 100] || '';
+  const p = dk.split('-').map(Number);
+  const st = shiftFor(t, p[0], p[1]-1, p[2]);
+  const nm = st === 'Morning' ? 'morning' : st === 'Afternoon' ? 'evening' : st === 'Night' ? 'night' : '';
+  return (TEAMS[t] ? TEAMS[t] + '-shift ' : '') + nm;
+}
 function qbmCollect(from, to){
   const items = [];
   Object.keys(EXCHANGES || {}).sort().forEach(dk=>{
@@ -8885,7 +8939,8 @@ function qbmCollect(from, to){
         place: ex.pos || '',
         relieved: who,
         rmk: ex.cl ? 'CL' : ex.special ? 'Special' : 'Exchange',
-        period: qbmPeriod(ex, dk)
+        period: qbmPeriod(ex, dk),
+        label: qbmShiftLabel(ex, dk)
       });
     });
   });
@@ -8895,7 +8950,7 @@ function qbmDateText(run){
   const a = run.dates[0].split('-'), b = run.dates[run.dates.length-1].split('-');
   const dd = x=> String(x).padStart(2,'0');
   const txt = run.dates.length === 1 ? dd(a[2]) + '/' + a[1] + '/' + a[0] : dd(a[2]) + '-' + dd(b[2]) + '/' + a[1] + '/' + a[0];
-  return txt + (run.period ? ' (' + run.period + ')' : '');
+  return txt + (run.period ? ' (' + run.period + ')' : '') + (run.label ? ' ' + run.label : '');
 }
 function qbmBuild(items){
   const groups = {};
@@ -8909,12 +8964,12 @@ function qbmBuild(items){
     g.runs = [];
     g.items.forEach(it=>{
       const last = g.runs[g.runs.length - 1];
-      if(last && last.period === it.period){
+      if(last && last.period === it.period && last.label === it.label){
         const pd = last.dates[last.dates.length-1];
         const nx = new Date(Date.UTC(+pd.slice(0,4), +pd.slice(5,7)-1, +pd.slice(8,10)) + 86400000).toISOString().slice(0,10);
         if(nx === it.dk){ last.dates.push(it.dk); last.items.push(it); return; }
       }
-      g.runs.push({ dates:[it.dk], period:it.period, items:[it] });
+      g.runs.push({ dates:[it.dk], period:it.period, label:it.label, items:[it] });
     });
     g.first = g.items[0].dk;
     return g;
@@ -8964,8 +9019,9 @@ function qbmRemoveRun(idx){
     const i = list.findIndex(x=> x.table === it.ex.table && x.pos === it.ex.pos && +x.team === +it.ex.team && (x.nightHalf || '') === (it.ex.nightHalf || ''));
     if(i < 0) return;
     try{ if(list[i].cl) clLedgerDrop(it.dk, list[i]); }catch(e){}
-    list.splice(i, 1);
-    if(!list.length) delete EXCHANGES[it.dk];
+    const gone = list.splice(i, 1)[0];
+    exPurgeMoved(it.dk, gone);
+    if(!exHistList(EXCHANGES[it.dk]).length) delete EXCHANGES[it.dk];
   });
   saveExchangesData(EXCHANGES);
   try{ renderRoster(); renderRosterCtrl(); if(typeof renderRosterComm === 'function') renderRosterComm(); checkMyExchangeNotifications(); }catch(e){}
@@ -8979,10 +9035,141 @@ function printQbm(){
   root.innerHTML = '<div class="qbm-paper">' + paper.innerHTML + '</div>';
   root.querySelectorAll('.qbm-x').forEach(x=> x.remove());
   root.querySelectorAll('[contenteditable]').forEach(x=> x.removeAttribute('contenteditable'));
-  document.body.classList.add('qbm-printing');
-  const done = ()=>{ document.body.classList.remove('qbm-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
+  document.body.classList.add('qbm-printing'); document.documentElement.classList.add('qbm-printing');
+  const done = ()=>{ document.body.classList.remove('qbm-printing'); document.documentElement.classList.remove('qbm-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
   setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } }, 60);
+}
+/* ---- Real A4 vector PDF (no images: text + lines only, so it stays sharp at any zoom / any printer resolution) ---- */
+const _PDF_TR = [250,333,408,500,500,833,778,333,333,333,500,564,250,333,250,278,500,500,500,500,500,500,500,500,500,500,278,278,564,564,564,444,921,722,667,667,722,611,556,722,722,333,389,722,611,889,722,722,556,722,667,556,611,722,722,944,722,722,611,333,278,333,469,500,333,444,500,444,500,444,333,500,500,278,278,500,278,778,500,500,500,500,333,389,278,500,500,722,500,500,444,480,200,480,541];
+const _PDF_TB = [250,333,555,500,500,1000,833,333,333,333,500,570,250,333,250,278,500,500,500,500,500,500,500,500,500,500,333,333,570,570,570,500,930,722,667,722,722,667,611,778,778,389,500,778,667,944,722,778,611,778,722,556,667,722,722,1000,722,722,667,333,278,333,581,500,333,500,556,444,556,444,333,500,556,278,333,556,278,833,556,500,556,556,444,389,333,556,500,722,500,500,444,394,220,394,520];
+function pdfTextW(str, bold, size){
+  const t = bold ? _PDF_TB : _PDF_TR; let w = 0;
+  for(let i = 0; i < str.length; i++){ const c = str.charCodeAt(i) - 32; w += (c >= 0 && c < t.length) ? t[c] : 500; }
+  return w * size / 1000;
+}
+function pdfSafe(str){ return String(str == null ? '' : str).replace(/[^\x20-\x7E]/g, '?'); }
+function pdfEsc(str){ return pdfSafe(str).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
+function pdfWrap(str, bold, size, maxW){
+  const words = pdfSafe(str).split(/\s+/).filter(Boolean), lines = [];
+  let cur = '';
+  const push = w=>{
+    while(pdfTextW(w, bold, size) > maxW && w.length > 1){          /* a single very long word: split by characters */
+      let k = w.length - 1; while(k > 1 && pdfTextW(w.slice(0,k), bold, size) > maxW) k--;
+      lines.push(w.slice(0,k)); w = w.slice(k);
+    }
+    cur = w;
+  };
+  words.forEach(w=>{
+    const t = cur ? cur + ' ' + w : w;
+    if(pdfTextW(t, bold, size) <= maxW) cur = t;
+    else { if(cur) lines.push(cur); push(w); }
+  });
+  if(cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+function qbmPdfBytes(title, rows){
+  const PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;
+  const pct = [7,18,14,33,16,12], cw = pct.map(x=> TW * x / 100), cx = [];
+  cw.reduce((a,w,i)=>{ cx[i] = M + a; return a + w; }, 0);
+  const FS = 11, LD = 13.4, PX = 4, PY = 4, HS = 10;
+  const pages = []; let ops = null, y = 0;
+  const f = n=> (Math.round(n * 100) / 100).toString();
+  const text = (x, by, str, bold, size)=> ops.push('BT /F' + (bold ? 2 : 1) + ' ' + size + ' Tf ' + f(x) + ' ' + f(by) + ' Td (' + pdfEsc(str) + ') Tj ET');
+  const rect = (x, top, w, h)=> ops.push(f(x) + ' ' + f(top - h) + ' ' + f(w) + ' ' + f(h) + ' re S');
+  const header = ()=>{
+    const hl = [['SL.','NO'],['PERSON','DETAILED'],['DUTY','PLACE'],['DATE & DUTY PERIOD'],['PERSON','RELIEVED'],['RMKS']];
+    const h = 2 * (HS + 4) + 2 * PY;
+    hl.forEach((ls, i)=>{
+      rect(cx[i], y, cw[i], h);
+      const blockH = ls.length * (HS + 4), top = y - (h - blockH) / 2;
+      ls.forEach((t, k)=>{ const bl = top - k * (HS + 4) - (HS + 4) / 2 - 0.33 * HS; text(cx[i] + (cw[i] - pdfTextW(t, true, HS)) / 2, bl, t, true, HS); });
+    });
+    y -= h;
+  };
+  const newPage = first=>{
+    ops = []; pages.push(ops); ops.push('0.6 w 0 G 0 g'); y = PH - M;
+    if(first){
+      const t = pdfSafe(title), tw = pdfTextW(t, true, 13);
+      text((PW - tw) / 2, y - 13, t, true, 13);
+      ops.push('0.7 w ' + f((PW - tw) / 2) + ' ' + f(y - 15.5) + ' m ' + f((PW + tw) / 2) + ' ' + f(y - 15.5) + ' l S 0.6 w');
+      y -= 30;
+    }
+    header();
+  };
+  newPage(true);
+  const cellText = (i, lines, rowH, align)=>{
+    const blockH = lines.length * LD, top = y - (rowH - blockH) / 2;
+    lines.forEach((t, k)=>{
+      const bl = top - k * LD - LD / 2 - 0.33 * FS, tw = pdfTextW(t, false, FS);
+      const x = align === 'c' ? cx[i] + (cw[i] - tw) / 2 : cx[i] + PX;
+      text(x, bl, t, false, FS);
+    });
+  };
+  if(!rows.length){
+    const h = LD + 2 * PY + 6;
+    rect(M, y, TW, h); const t = 'No entries'; text(M + (TW - pdfTextW(t, false, FS)) / 2, y - h / 2 - 0.33 * FS, t, false, FS);
+  }
+  rows.forEach((g, ri)=>{
+    const c = [
+      [String(ri + 1).padStart(2, '0')],
+      pdfWrap(g.detailed, false, FS, cw[1] - 2 * PX),
+      pdfWrap(g.place, false, FS, cw[2] - 2 * PX),
+      [].concat.apply([], g.runs.map(run=> pdfWrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))),
+      pdfWrap(g.relieved, false, FS, cw[4] - 2 * PX),
+      pdfWrap(g.rmk, false, FS, cw[5] - 2 * PX)
+    ];
+    const n = Math.max.apply(null, c.map(x=> x.length));
+    const h = n * LD + 2 * PY;
+    if(y - h < M){ newPage(false); }
+    const al = ['c','l','c','l','l','c'];
+    c.forEach((ls, i)=>{ rect(cx[i], y, cw[i], h); cellText(i, ls, h, al[i]); });
+    y -= h;
+  });
+  /* --- assemble PDF (single-byte string -> bytes) --- */
+  const objs = [];
+  const add = body=> { objs.push(body); return objs.length; };
+  add('<< /Type /Catalog /Pages 2 0 R >>');
+  add('PAGES');
+  add('<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman /Encoding /WinAnsiEncoding >>');
+  add('<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>');
+  const kids = [];
+  pages.forEach(pg=>{
+    const stream = pg.join('\n');
+    const cid = add('<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream');
+    const pid = add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ' + cid + ' 0 R >>');
+    kids.push(pid + ' 0 R');
+  });
+  objs[1] = '<< /Type /Pages /Count ' + kids.length + ' /Kids [' + kids.join(' ') + '] >>';
+  const infoId = add('<< /Title (' + pdfEsc(title) + ') /Producer (HSIA ATM) >>');
+  let out = '%PDF-1.4\n', offs = [];
+  objs.forEach((b, i)=>{ offs.push(out.length); out += (i + 1) + ' 0 obj\n' + b + '\nendobj\n'; });
+  const xr = out.length;
+  out += 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n' + offs.map(o=> String(o).padStart(10, '0') + ' 00000 n \n').join('');
+  out += 'trailer\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R /Info ' + infoId + ' 0 R >>\nstartxref\n' + xr + '\n%%EOF';
+  const bytes = new Uint8Array(out.length);
+  for(let i = 0; i < out.length; i++) bytes[i] = out.charCodeAt(i) & 255;
+  return bytes;
+}
+function downloadQbmPdf(){
+  const items = qbmCollect('', '');
+  const rows = qbmBuild(items);
+  const tEl = document.querySelector('#qbmPaper .qbm-title');
+  const title = (tEl ? tEl.innerText : 'QBM: SATO').trim();
+  const all = [title].concat.apply([], rows.map(g=> [g.detailed, g.place, g.relieved, g.rmk].concat(g.runs.map(qbmDateText))));
+  if(all.some(t=> /[^\x20-\x7E]/.test(String(t)))){
+    /* the built-in PDF fonts are Latin-only; browser print uses the phone's own fonts (Bengali etc.) and is vector too */
+    alert('Some names use non-English letters, which this PDF cannot hold. Opening Print instead — choose "Save as PDF" (paper size A4).');
+    printQbm();
+    return;
+  }
+  const bytes = qbmPdfBytes(title, rows);
+  const blob = new Blob([bytes], { type:'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = title.replace(/[^A-Za-z0-9\-]+/g, '_') + '.pdf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 60000);
 }
 function initQbm(){
   const ov = document.getElementById('qbmOverlay'), btn = document.getElementById('qbmOpenBtn');
@@ -8991,6 +9178,7 @@ function initQbm(){
   document.getElementById('qbmClose').addEventListener('click', ()=> ov.classList.remove('show'));
   ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('show'); });
   document.getElementById('qbmPrintBtn').addEventListener('click', printQbm);
+  document.getElementById('qbmPdfBtn').addEventListener('click', downloadQbmPdf);
 }
 
 function initExchangePanel(){
@@ -9046,7 +9234,7 @@ function initExchangePanel(){
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
       const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
       // Same table+pos+team+half combo replaces any earlier entry for it; a 1st-night and a 2nd-night entry can both exist.
-      exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:r.team, subName, nightHalf, who:r.who });
+      { const _pe = { table:r.table, pos:r.pos, team:r.team, subName, nightHalf, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
       subInput.value = '';
       afterChange();
     });
@@ -9061,7 +9249,7 @@ function initExchangePanel(){
       if(!vacant && !sub){ alert('Select a substitute first.'); return; }
       if(special){
         /* Festival / EL / special case: no CL count, no ledger — only somebody is put on the position */
-        exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, vacant:!sub, who:r.who });
+        { const _pe = { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, vacant:!sub, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
         subInput.value = '';
         afterChange();
         return;
@@ -9074,7 +9262,7 @@ function initExchangePanel(){
         alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for this person. CL not added.');
         return;
       }
-      exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', cl:true, vacant:!sub, who:r.who });
+      { const _pe = { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', cl:true, vacant:!sub, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
       clLedgerSet(r.dateKey, r, days);
       subInput.value = '';
       afterChange();
@@ -11478,7 +11666,7 @@ function renderRosterNow(){
     if(!e) return base ? '<div class="thg-p">' + words(base, !last) + '</div>' : '';
     const sub = String(e.subName || '').trim();
     return '<div class="thg-p thg-x">' + (base ? '<div class="thg-old">' + words(base, false) + '</div>' : '') +
-      (sub ? '<span class="thg-sub">🔄 ' + esc(sub) + (e.cl ? ' · CL' : e.special ? ' · EL' : '') + (last ? '' : ',') + '</span>' : '<span class="thg-sub vac">' + (e.special ? 'Special' : 'CL') + ' · Vacant' + (last ? '' : ',') + '</span>') + '</div>';
+      (sub ? '<span class="thg-sub">🔄 ' + esc(sub) + (e.cl ? ' · CL' : e.special ? ' · EL' : '') + (last ? '' : ',') + '</span>' : '<span class="thg-sub vac">' + (e.special ? 'Special · Vacant' : e.moved ? 'Vacant' : 'CL · Vacant') + (last ? '' : ',') + '</span>') + '</div>';
   }
   function render(){
     if(!dateInput.value) dateInput.value = todayStr();
@@ -11579,7 +11767,7 @@ function renderRosterNow(){
         const e = findEx(dk, kind, b.slot, pi);
         if(!e) return String(n || '').trim();
         const sub = String(e.subName || '').trim();
-        return sub ? '🔄 ' + sub + (e.cl ? ' (CL)' : e.special ? ' (EL)' : '') : (e.special ? 'Vacant (Special)' : 'Vacant (CL)');
+        return sub ? '🔄 ' + sub + (e.cl ? ' (CL)' : e.special ? ' (EL)' : '') : (e.special ? 'Vacant (Special)' : e.moved ? 'Vacant' : 'Vacant (CL)');
       }).filter(Boolean)
     }));
     return { time: SH[cur.r][0], th: conv('th'), mr: conv('mr') };
