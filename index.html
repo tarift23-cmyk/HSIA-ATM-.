@@ -158,6 +158,64 @@
     line-height:1; padding:4px 10px; border-radius:8px; flex:0 0 auto;
   }
   .modal-close:active{ color:var(--text); }
+  .fr-dbstatus:empty{ display:none; }
+  #exchangeSubName{ cursor:pointer; }
+  .xp-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .xp-tab{ background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .xp-tab.active{ background:rgba(245,181,61,0.16); color:#f5b53d; border-color:rgba(245,181,61,0.5); }
+  .xp-search{ width:100%; margin-bottom:10px; }
+  .xp-wrap{ max-height:52vh; overflow:auto; border:1px solid var(--border); border-radius:10px; }
+  .xp-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .xp-table th{ position:sticky; top:0; background:var(--panel); color:var(--muted); font-weight:600; text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); white-space:nowrap; z-index:1; }
+  .xp-table td{ padding:4px 5px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+  .xp-table td.xp-pos{ color:var(--muted); white-space:nowrap; padding-left:8px; font-weight:600; }
+  .xp-name{ display:block; width:100%; text-align:left; background:rgba(255,255,255,0.04); border:1px solid transparent; color:var(--text); border-radius:7px; padding:6px 8px; font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .xp-name:hover, .xp-name:active{ background:rgba(245,181,61,0.18); border-color:rgba(245,181,61,0.5); }
+  .xp-name.cur{ outline:1px dashed var(--muted); }
+  .xp-name.sel{ background:rgba(245,181,61,0.22); border-color:#f5b53d; }
+  .xp-team-hl{ background:rgba(255,255,255,0.03); }
+  .xbtn{ background:transparent !important; color:var(--muted) !important; border:1px solid var(--border) !important; box-shadow:none; transition:background .12s,color .12s,border-color .12s; }
+  .xbtn:focus, .xbtn:active, .xbtn.on{ outline:none; }
+  .xbtn-ex:focus, .xbtn-ex:active, .xbtn-ex.on{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)) !important; color:#1B2130 !important; border-color:var(--gold) !important; }
+  .xbtn-row{ display:flex; gap:5px; width:100%; flex:0 0 100%; }
+  .xbtn-row .xbtn{ flex:1 1 auto; min-width:0; padding:10px 3px; font-size:11px; letter-spacing:-0.1px; white-space:nowrap; overflow:hidden; text-align:center; }
+  .xbtn-row .xbtn-cl{ flex:0 1 auto; }
+  .xbtn-sp:focus, .xbtn-sp:active, .xbtn-sp.on{ background:rgba(95,208,197,0.20) !important; color:#5fd0c5 !important; border-color:rgba(95,208,197,0.6) !important; }
+  .xbtn-cl:focus, .xbtn-cl:active, .xbtn-cl.on{ background:rgba(245,181,61,0.22) !important; color:#f5b53d !important; border-color:rgba(245,181,61,0.6) !important; }
+  .xp-choice{ display:block; width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--border); color:var(--text); font-size:15px; padding:16px 20px; cursor:pointer; font-family:inherit; }
+  .xp-choice:last-child{ border-bottom:0; }
+  .xp-choice:active{ background:rgba(245,181,61,0.16); }
+  .qbm-paper{ background:transparent; color:var(--text); font-family:"Times New Roman",Times,serif; padding:6px 0 4px; overflow:visible; margin-top:6px; }
+  .qbm-title{ text-align:center; font-weight:700; text-decoration:underline; font-size:15px; margin:4px 0 12px; outline:none; color:var(--text); }
+  .qbm-table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; color:var(--text); }
+  .qbm-table th, .qbm-table td{ border:1px solid var(--border); padding:4px 5px; vertical-align:middle; background:transparent; color:var(--text); text-align:left; overflow-wrap:break-word; }
+  .qbm-table th{ text-align:center; font-weight:700; text-transform:uppercase; padding:8px 2px; color:var(--muted); font-size:9.5px; }
+  .qbm-table td.c{ text-align:center; }
+  .qbm-table tr.blank td{ height:26px; }
+  .qbm-line{ display:flex; gap:6px; align-items:flex-start; }
+  .qbm-line + .qbm-line{ margin-top:3px; }
+  .qbm-x{ background:none; border:1px solid rgba(245,66,73,0.6); color:#F54249; border-radius:5px; font-size:10px; line-height:1; padding:3px 5px; cursor:pointer; flex:0 0 auto; margin-top:1px; }
+  #qbmPrintRoot{ display:none; }
+  @media print{
+    @page{ size:A4 portrait; margin:12mm; }
+    body.qbm-printing{ background:#fff !important; }
+    body.qbm-printing > *:not(#qbmPrintRoot){ display:none !important; }
+    body.qbm-printing #qbmPrintRoot{ display:block !important; }
+    body.qbm-printing .qbm-paper{ background:#fff !important; color:#000 !important; padding:0; }
+    body.qbm-printing .qbm-title{ font-size:14pt; color:#000 !important; }
+    body.qbm-printing .qbm-table{ font-size:12pt; color:#000 !important; }
+    body.qbm-printing .qbm-table th, body.qbm-printing .qbm-table td{ background:#fff !important; color:#000 !important; border:1px solid #000 !important; }
+    body.qbm-printing .qbm-table th{ font-size:12pt; }
+    body.qbm-printing .qbm-table tr{ page-break-inside:avoid; }
+    .qbm-x{ display:none !important; }
+  }
+  .cld-row{ cursor:pointer; }
+  .cld-row.open td{ background:rgba(255,255,255,0.05); }
+  .cld-detail td{ font-size:11.5px; color:var(--muted); line-height:1.6; }
+  .cld-rank{ background:transparent; color:inherit; border:1px solid var(--border); border-radius:6px; font-size:11px; padding:2px 4px; margin-left:6px; }
+  .cld-sec td{ background:rgba(245,181,61,0.10); color:#f5b53d; font-weight:700; font-size:11.5px; }
+  .xp-manual{ display:flex; gap:8px; margin-top:10px; }
+  .xp-manual input{ flex:1 1 auto; min-width:0; }
 
   header{margin-bottom:18px;}
   .brandline{
@@ -856,7 +914,7 @@ table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255
 /* ---- Duty Roster tabs + Communication roster ---- */
 .rost-col{ display:none; }
 .rost-col.rost-active{ display:block; }
-#rosterBody.rost-th-on #rosterSharedBars{ display:none; }
+
 .th-nav{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .th-navbtn,.th-today{ border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; font-weight:800; cursor:pointer; }
 .th-navbtn{ width:38px; height:38px; font-size:20px; line-height:1; }
@@ -875,6 +933,43 @@ table.th-table td.th-sh i{ display:inline-block; width:9px; height:9px; border-r
 table.th-table td.th-nm{ font-weight:700; }
 table.th-table td.th-nm div{ padding:1px 0; }
 table.th-table tr.th-now td{ background:rgba(246,200,76,0.14); box-shadow:inset 3px 0 0 var(--c); }
+/* Traffic Hand / Marshaller: 10-day cycle grid (rows = shifts, columns = cycle days), like the printed roster */
+.thg-wrap{ border:1px solid var(--border); border-radius:10px; overflow-x:auto; margin-bottom:6px; -webkit-overflow-scrolling:touch; }
+table.thg-table{ border-collapse:separate; border-spacing:0; font-size:11.5px; color:var(--text); background:var(--panel-2); min-width:100%; }
+table.thg-table th, table.thg-table td{ padding:7px 6px; border-bottom:1px solid var(--border); border-right:1px solid var(--border); text-align:center; vertical-align:middle; min-width:86px; }
+table.thg-table tbody tr:last-child td{ border-bottom:0; }
+table.thg-table th:last-child, table.thg-table td:last-child{ border-right:0; }
+table.thg-table thead th{ background:var(--panel); color:var(--muted); font-size:10.5px; letter-spacing:.04em; }
+table.thg-table thead th b{ display:block; font-size:13px; color:var(--text); }
+table.thg-table thead th small{ font-weight:600; }
+table.thg-table small.thg-tm{ display:block; margin-top:3px; font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+table.thg-table .thg-sh{ position:sticky; left:0; z-index:3; box-shadow:2px 0 0 var(--border); min-width:118px; text-align:left; white-space:nowrap; background:var(--panel); font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--muted); }
+table.thg-table td.thg-sh i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; background:var(--c); }
+table.thg-table td.thg-sh small{ display:block; margin-left:15px; font-size:10px; font-weight:600; opacity:.85; }
+table.thg-table td div{ padding:0; font-weight:700; }
+table.thg-table .thg-w{ display:block; padding:1px 0; }
+table.thg-table .thg-p + .thg-p{ margin-top:5px; }
+table.thg-table .thg-b + .thg-b{ margin-top:9px; }
+table.thg-table thead th.thg-sel{ background:rgba(246,200,76,0.22); }
+table.thg-table td.thg-live{ background:rgba(246,200,76,0.38); box-shadow:inset 0 0 0 2px var(--gold); }
+table.thg-table td.thg-sh.thg-live-row{ color:var(--gold); background:linear-gradient(rgba(246,200,76,0.14),rgba(246,200,76,0.14)), var(--panel); }
+/* Traffic Hand / Marshaller: live-shift tag, exchange / CL look, group editor */
+table.thg-table td.thg-sh small.thg-tag{ display:block; margin:3px 0 0 15px; font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; opacity:1; }
+table.thg-table td.thg-sh small.thg-tag.run{ color:#3ddc97; }
+table.thg-table td.thg-sh small.thg-tag.nxt{ color:var(--muted); }
+table.thg-table .thg-x{ padding:1px 0; }
+table.thg-table .thg-w{ white-space:nowrap; }
+table.thg-table .thg-old{ opacity:.5; text-decoration:line-through; text-decoration-color:#F54249; }
+table.thg-table .thg-sub{ display:block; margin-top:2px; color:#3ddc97; font-size:11px; font-weight:700; }
+table.thg-table .thg-sub.vac{ color:#F54249; }
+.thm-edit{ margin-top:14px; }
+.thm-row{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.thm-g{ flex:0 0 26px; font-size:11px; font-weight:700; color:var(--muted); }
+input.thm-inp{ flex:1 1 0; min-width:0; box-sizing:border-box; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; }
+input.thm-inp[readonly]{ background:transparent; border-color:transparent; }
+input.thm-inp:not([readonly]):focus{ outline:none; border-color:var(--gold); }
+table.now-table .now-tag.cl{ background:rgba(245,181,61,.18); color:#f5b53d; }
+.cl-sum summary{ cursor:pointer; font-size:12px; color:var(--muted); padding:8px 2px; }
 .th-note{ margin-top:12px; font-size:11.5px; color:var(--muted); line-height:1.5; }
 
 /* ---- Equivalent Aircraft Type tab ---- */
@@ -1979,8 +2074,8 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         </table>
       </div>
       <div class="roster-addrow">
-        <input id="rosterNewPosCtrl" type="text" placeholder="নতুন পজিশনের নাম লিখুন (e.g. NOTAM)">
-        <button id="rosterAddBtnCtrl">+ যোগ করুন</button>
+        <input id="rosterNewPosCtrl" type="text" placeholder="Enter new position name (e.g. NOTAM)">
+        <button id="rosterAddBtnCtrl">+ Add</button>
       </div>
 
       </div>
@@ -2003,8 +2098,8 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         </table>
       </div>
       <div class="roster-addrow">
-        <input id="rosterNewPos" type="text" placeholder="নতুন পজিশনের নাম লিখুন (e.g. NOTAM)">
-        <button id="rosterAddBtn">+ যোগ করুন</button>
+        <input id="rosterNewPos" type="text" placeholder="Enter new position name (e.g. NOTAM)">
+        <button id="rosterAddBtn">+ Add</button>
       </div>
 
       </div>
@@ -2027,8 +2122,8 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         </table>
       </div>
       <div class="roster-addrow">
-        <input id="rosterNewPosComm" type="text" placeholder="নতুন পজিশনের নাম লিখুন (e.g. NOTAM)">
-        <button id="rosterAddBtnComm">+ যোগ করুন</button>
+        <input id="rosterNewPosComm" type="text" placeholder="Enter new position name (e.g. NOTAM)">
+        <button id="rosterAddBtnComm">+ Add</button>
       </div>
       </div>
 
@@ -2041,16 +2136,22 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         </div>
         <div class="th-info" id="thInfo"></div>
         <div class="roster-subtitle">Traffic Hand</div>
-        <div class="th-wrap"><table class="th-table"><thead><tr><th>Shift</th><th>On duty</th></tr></thead><tbody id="thBodyTH"></tbody></table></div>
+        <div class="thg-wrap"><table class="thg-table"><thead id="thHeadTH"></thead><tbody id="thBodyTH"></tbody></table></div>
         <div class="roster-subtitle">Marshaller</div>
-        <div class="th-wrap"><table class="th-table"><thead><tr><th>Shift</th><th>On duty</th></tr></thead><tbody id="thBodyMR"></tbody></table></div>
+        <div class="thg-wrap"><table class="thg-table"><thead id="thHeadMR"></thead><tbody id="thBodyMR"></tbody></table></div>
+        <div class="thm-edit">
+          <div class="roster-subtitle">Traffic Hand — Groups</div>
+          <div id="thmEditTH"></div>
+          <div class="roster-subtitle" style="margin-top:12px;">Marshaller — Groups</div>
+          <div id="thmEditMR"></div>
+        </div>
       </div>
 
       <div id="rosterSharedBars">
       <div class="roster-savebar">
         <button id="rosterEditBtn" class="icon-only roster-edit-btn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
         <button id="rosterSaveBtn" class="icon-only roster-save-btn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
-<button id="exchangeModalOpenBtn" type="button" class="roster-save-btn xch-btn" aria-label="Duty Exchange"><svg class="xch-ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="#0E9F6E"><path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/></g><g stroke="#E5484D"><path d="m17 20 4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/></g></svg><span>Duty Exchange</span></button>
+<button id="exchangeModalOpenBtn" type="button" class="roster-save-btn xch-btn" aria-label="Exchange / CL" title="Exchange / CL"><svg class="xch-ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g stroke="#0E9F6E"><path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/></g><g stroke="#E5484D"><path d="m17 20 4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/></g></svg><span>Exchange / CL</span></button>
       </div>
       <div class="roster-savedchip" id="rosterSavedChip"></div>
       </div>
@@ -2110,7 +2211,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <div class="fr-dbstatus" id="authNotifStatus"></div>
         <div class="fr-dbtablewrap" id="authMyExchangesWrap">
           <table class="fr-dbtable" id="authMyExchangesTable">
-            <thead><tr><th>তারিখ</th><th>টেবিল</th><th>পজিশন</th><th>টিম</th></tr></thead>
+            <thead><tr><th>Date</th><th>Table</th><th>Position</th><th>Team</th></tr></thead>
             <tbody id="authMyExchangesTbody"></tbody>
           </table>
         </div>
@@ -2121,18 +2222,22 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
   <div class="modal-overlay" id="exchangeModalOverlay">
     <div class="modal-box">
       <div class="modal-header">
-        <div class="modal-title">🔄 ডিউটি এক্সচেঞ্জ (Exchange)</div>
+        <div class="modal-title">🔄 Exchange / CL</div>
         <button type="button" class="modal-close" id="exchangeModalClose">✕</button>
       </div>
       <div class="fr-manualform">
         <input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-09-28">
         <select id="exchangeTable" class="fr-mfinput">
+          <option value="" selected>Table</option>
           <option value="roster">Aerodrome Assistant</option>
           <option value="rosterCtrl">Controllers</option>
           <option value="rosterComm">Communication</option>
+          <option value="th">Traffic Hand</option>
+          <option value="mr">Marshaller</option>
         </select>
         <select id="exchangePos" class="fr-mfinput"><option value="TWR-1">TWR-1</option><option value="TWR-2">TWR-2</option><option value="SMC-1">SMC-1</option><option value="SMC-2">SMC-2</option><option value="EOC">EOC</option><option value="ACC LOWER-1">ACC LOWER-1</option><option value="ACC LOWER-2">ACC LOWER-2</option><option value="ACC LOWER-3">ACC LOWER-3</option><option value="ACC UPPER-1">ACC UPPER-1</option><option value="ACC UPPER-2">ACC UPPER-2</option><option value="ACC UPPER-3">ACC UPPER-3</option><option value="PFIU">PFIU</option><option value="RCC">RCC</option><option value="FDO">FDO</option><option value="APP">APP</option><option value="BILLING">BILLING</option><option value="FIC-1">FIC-1</option><option value="FIC-2">FIC-2</option><option value="Old FIC/CC">Old FIC/CC</option></select>
         <select id="exchangeTeam" class="fr-mfinput fr-mfinput-sm">
+          <option value="" selected>Team</option>
           <option value="0">Team A</option>
           <option value="1">Team B</option>
           <option value="2">Team C</option>
@@ -2140,19 +2245,85 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
           <option value="4">Team E</option>
         </select>
         <select id="exchangeNightHalf" class="fr-mfinput fr-mfinput-sm" style="display:none;">
-          <option value="">সম্পূর্ণ রাত (8:30 PM–7:30 AM)</option>
+          <option value="">Full Night (8:30 PM–7:30 AM)</option>
           <option value="1">1st Night (8:30 PM–3:00 AM)</option>
           <option value="2">2nd Night (3:00 AM–7:30 AM)</option>
         </select>
-        <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="যিনি ডিউটি করবেন (substitute name)">
-        <button id="exchangeAddBtn" type="button" class="fr-dbimport">+ এক্সচেঞ্জ যোগ করুন</button>
+        <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="Tap to select substitute" readonly inputmode="none">
+        <div class="xbtn-row">
+          <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
+          <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">Add CL</button>
+          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">Festival / EL / Special</button>
+        </div>
+        <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
       </div>
-      <div class="fr-dbstatus" id="exchangeCurrentHint">বর্তমানে এই ঘরে (রোস্টার অনুযায়ী) আছে: Moinul-2</div>
-      <div class="fr-dbtablewrap" id="exchangeListWrap">
-        <table class="fr-dbtable" id="exchangeListTable">
-          <thead><tr><th>তারিখ</th><th>টেবিল</th><th>পজিশন</th><th>টিম</th><th>Substitute</th><th></th></tr></thead>
-          <tbody id="exchangeListTbody"><tr class=""><td>2026-10-03</td><td>Aerodrome Assistant</td><td>ACC UPPER-2</td><td>Team A</td><td>Zahid mim</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-03" data-idx="0">✕</button></td></tr><tr class=""><td>2026-10-03</td><td>Aerodrome Assistant</td><td>EOC</td><td>Team A</td><td>--------</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-03" data-idx="1">✕</button></td></tr><tr class=""><td>2026-10-04</td><td>Aerodrome Assistant</td><td>ACC UPPER-2</td><td>Team A</td><td>Zahid mim</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-04" data-idx="0">✕</button></td></tr><tr class=""><td>2026-10-04</td><td>Aerodrome Assistant</td><td>EOC</td><td>Team A</td><td>-------</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-04" data-idx="1">✕</button></td></tr><tr class=""><td>2026-10-05</td><td>Aerodrome Assistant</td><td>ACC UPPER-2</td><td>Team A (1st Night)</td><td>Saiduzzaman</td><td><button type="button" class="exchange-del-btn" data-date="2026-10-05" data-idx="0">✕</button></td></tr></tbody>
-        </table>
+      <div class="fr-dbstatus" id="exchangeCurrentHint"></div>
+      <button id="qbmOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">QBM</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="exchangePickerOverlay" style="z-index:10001;">
+    <div class="modal-box" style="max-width:760px;">
+      <div class="modal-header">
+        <div class="modal-title">👥 Select Substitute</div>
+        <button type="button" class="modal-close" id="exchangePickerClose">✕</button>
+      </div>
+      <div class="xp-tabs" id="exchangePickerTabs"></div>
+      <input type="text" id="exchangePickerSearch" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off">
+      <div class="xp-wrap"><table class="xp-table" id="exchangePickerTable"></table></div>
+      <div class="xp-manual">
+        <input type="text" id="exchangePickerManual" class="fr-mfinput" placeholder="Not in roster? Type a name" autocomplete="off">
+        <button type="button" id="exchangePickerManualBtn" class="fr-dbimport">Use</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="qbmOverlay" style="z-index:10004;padding:16px 8px;">
+    <div class="modal-box" style="max-width:860px;">
+      <div class="modal-header">
+        <div class="modal-title">QBM</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" id="qbmPrintBtn" class="fr-dbimport">🖨 Print</button>
+          <button type="button" class="modal-close" id="qbmClose">✕</button>
+        </div>
+      </div>
+      <div class="qbm-paper" id="qbmPaper"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="pwOverlay" style="z-index:10010;align-items:center;">
+    <div class="modal-box" style="max-width:340px;">
+      <div class="modal-title" id="pwTitle" style="margin-bottom:12px;">Enter password</div>
+      <input type="password" id="pwInput" class="fr-mfinput" style="width:100%;" autocomplete="off" placeholder="Password">
+      <div class="fr-dbstatus" id="pwErr" style="color:#F54249;margin-top:8px;"></div>
+      <div class="fr-manualform" style="margin-top:8px;justify-content:flex-end;">
+        <button type="button" id="pwCancel" class="fr-dbclear">Cancel</button>
+        <button type="button" id="pwOk" class="fr-dbimport">Open</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="clChooseOverlay" style="z-index:10002;align-items:center;">
+    <div class="modal-box" style="max-width:340px;padding:8px 0;">
+      <button type="button" class="xp-choice" id="clChooseSub">CL + Substitute</button>
+      <button type="button" class="xp-choice" id="clChooseVacant">CL + Position left vacant</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="clDataOverlay" style="z-index:10003;">
+    <div class="modal-box" style="max-width:680px;">
+      <div class="modal-header">
+        <div class="modal-title">🔒 CL Data</div>
+        <button type="button" class="modal-close" id="clDataClose">✕</button>
+      </div>
+      <div class="fr-manualform">
+        <select id="clDataYear" class="fr-mfinput fr-mfinput-sm"></select>
+        <input type="text" id="clDataSearch" class="fr-mfinput" placeholder="Search name..." autocomplete="off">
+        <button type="button" id="clDataOnlyBtn" class="fr-dbclear">With CL only</button>
+        <button type="button" id="clDataCsvBtn" class="fr-dbclear">⬇ CSV</button>
+      </div>
+      <div class="fr-dbtablewrap" style="max-height:60vh;overflow:auto;">
+        <table class="fr-dbtable" id="clDataTable"></table>
       </div>
     </div>
   </div>
@@ -2166,7 +2337,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
   <div class="modal-overlay" id="quickExchangeModalOverlay">
     <div class="modal-box">
       <div class="modal-header">
-        <div class="modal-title" id="quickExchangeTitle">🔄 এক্সচেঞ্জ</div>
+        <div class="modal-title" id="quickExchangeTitle">🔄 Exchange</div>
         <button type="button" class="modal-close" id="quickExchangeClose">✕</button>
       </div>
       <div class="fr-dbstatus" id="quickExchangeSub"></div>
@@ -2176,7 +2347,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       </div>
       <div class="fr-manualform">
         <button id="quickExchangeSaveBtn" type="button" class="icon-only fr-dbimport" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
-        <button id="quickExchangeRemoveBtn" type="button" class="fr-dbimport" style="background:rgba(245,66,73,0.18);color:#F54249;">🗑 মুছুন</button>
+        <button id="quickExchangeRemoveBtn" type="button" class="fr-dbimport" style="background:rgba(245,66,73,0.18);color:#F54249;">🗑 Remove</button>
       </div>
     </div>
   </div>
@@ -2739,7 +2910,7 @@ Emergency →↓
           <input type="text" id="mfDest" class="fr-mfinput fr-mfinput-sm" placeholder="Destination" maxlength="4">
           <input type="text" id="mfRoute" class="fr-mfinput" placeholder="Route">
           <input type="text" id="mfTime" class="fr-mfinput fr-mfinput-sm" placeholder="Time">
-          <button id="mfAddBtn" type="button" class="fr-dbimport">+ যোগ করুন</button>
+          <button id="mfAddBtn" type="button" class="fr-dbimport">+ Add</button>
         </div>
 
         <textarea id="flightDbInput" class="fr-dbtextarea" placeholder="একসাথে একাধিক ফ্লাইট পেস্ট করুন, অথবা নিচে ছবি/PDF স্ক্যান করলে এখানে টেক্সট বসবে..."></textarea>
@@ -5638,7 +5809,7 @@ function adminGate(unlockInputs){
     if(unlockInputs) unlockAllRosterInputs();
     return true;
   }
-  const p = window.prompt('এডিট বা সেভ করতে পাসওয়ার্ড দিন:');
+  const p = window.prompt('Enter password to edit or save:');
   if(p === null) return false;
   if(p === ROSTER_PASSWORD){
     rosterUnlocked = true;
@@ -5649,7 +5820,7 @@ function adminGate(unlockInputs){
     try{ onAdminUnlockedHistory(); }catch(e){}
     return true;
   }
-  alert('পাসওয়ার্ড ভুল হয়েছে।');
+  alert('Wrong password.');
   return false;
 }
 // roster editing: also switches the roster cells to editable
@@ -5661,13 +5832,14 @@ function requireQuickAuth(){ return adminGate(false); }
    this session (rosterUnlocked). This is intentionally separate from
    requireRosterAuth() above. */
 function requireDownloadAuth(){
-  const p = window.prompt('ব্যাকআপ ফাইল ডাউনলোড করতে অ্যাডমিন পাসওয়ার্ড দিন:');
+  const p = window.prompt('Enter admin password to download the backup file:');
   if(p === null) return false;
   if(p === ROSTER_PASSWORD) return true;
-  alert('পাসওয়ার্ড ভুল হয়েছে।');
+  alert('Wrong password.');
   return false;
 }
 function unlockAllRosterInputs(){
+  try{ if(window.hsiaTHMRUnlock) window.hsiaTHMRUnlock(); }catch(e){}
   document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterTableComm input, #rosterNewPos, #rosterNewPosCtrl, #rosterNewPosComm').forEach(inp=>{
     inp.readOnly = false;
   });
@@ -5918,7 +6090,7 @@ let ROSTER_COMM = (function(){
   return loadRosterGeneric(ROSTER_COMM_KEY, DEFAULT_ROSTER_COMM);
 })();
 function rosterDataFor(key){ return key === 'rosterCtrl' ? ROSTER_CTRL : key === 'rosterComm' ? ROSTER_COMM : ROSTER; }
-function rosterLabelFor(key){ return key === 'rosterCtrl' ? 'Controllers' : key === 'rosterComm' ? 'Communication' : 'Aerodrome Assistant'; }
+function rosterLabelFor(key){ return key === 'th' ? 'Traffic Hand' : key === 'mr' ? 'Marshaller' : key === 'rosterCtrl' ? 'Controllers' : key === 'rosterComm' ? 'Communication' : 'Aerodrome Assistant'; }
 
 /* Correct the live clock, "who's on duty" lamps, hero card, and
    roster highlight as early as possible in page load — this HTML
@@ -5960,7 +6132,7 @@ function stripVacantExchanges(o){
   if(!o || typeof o !== 'object') return o;
   Object.keys(o).forEach(k=>{
     const list = Array.isArray(o[k]) ? o[k] : Object.values(o[k] || {});
-    const kept = list.filter(x=> x && !x.vacant);
+    const kept = list.filter(x=> x && (!x.vacant || x.cl || x.special));
     if(kept.length) o[k] = kept; else delete o[k];
   });
   return o;
@@ -6159,7 +6331,7 @@ document.addEventListener('click', e=>{
   const ov = document.getElementById('dayLogModalOverlay');
   if(ov && (t === ov || (t.closest && t.closest('#dayLogClose')))) closeModal('dayLogModalOverlay');
 });
-function saveExchangesData(obj){ try{ if(archiveExchangesToHistory(obj, true)) saveExHistory(); }catch(e){} try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); try{ if(typeof buildCalendar === 'function') buildCalendar(); }catch(e){} }
+function saveExchangesData(obj){ try{ if(archiveExchangesToHistory(obj, true)) saveExHistory(); }catch(e){} try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); try{ if(typeof buildCalendar === 'function') buildCalendar(); }catch(e){} try{ refreshThmrViews(); }catch(e){} }
 /* Removes exchange entries whose underlying shift has actually ended —
    not just "date-key isn't today anymore". This matters for Night shifts:
    an exchange dated "yesterday" can still be running until 7:30 AM today
@@ -6204,6 +6376,13 @@ function todayExchangesFor(tableKey){
 function exchangeShiftWindow(dateKey, team, half){
   const [y,m,day] = (dateKey||'').split('-').map(Number);
   if(!y || !m || !day) return null;
+  if(+team >= 100){   // Traffic Hand / Marshaller slot: 100 = 8:30PM-12AM, 101 = 12AM-7:30AM, 102 = Morning, 103 = Afternoon
+    const nd0 = addDays(y, m-1, day, 1), sl = +team - 100;
+    if(sl === 0) return { start: dhakaInstant(y, m-1, day, 20, 30), end: dhakaInstant(nd0.y, nd0.m, nd0.day, 0, 0) };
+    if(sl === 1) return { start: dhakaInstant(nd0.y, nd0.m, nd0.day, 0, 0), end: dhakaInstant(nd0.y, nd0.m, nd0.day, 7, 30) };
+    if(sl === 2) return { start: dhakaInstant(y, m-1, day, 7, 30), end: dhakaInstant(y, m-1, day, 14, 0) };
+    return { start: dhakaInstant(y, m-1, day, 14, 0), end: dhakaInstant(y, m-1, day, 20, 30) };
+  }
   const st = shiftFor(team, y, m-1, day);
   if(st === 'Off') return null;
   if(st === 'Night' && (half === '1' || half === 1)){
@@ -6231,6 +6410,77 @@ function activeExchangesFor(tableKey){
     });
   });
   return out;
+}
+
+
+/* ============================================================
+   Exchange / CL helpers.
+   - TH / Marshaller exchanges live in EXCHANGES too: table 'th' | 'mr', team = 100 + slot
+     (0 = 8:30PM-12AM, 1 = 12AM-7:30AM, 2 = Morning, 3 = Afternoon), pos = 'TH-1' / 'MR-1..3'.
+   - CL (casual leave): entry.cl = true; the person is absent that day. subName = who covers,
+     or vacant = true when the position is left empty. Every CL is also written to a permanent
+     ledger (CL_LOG) so the yearly total (1 Jan - 31 Dec, max 20 days) survives after the live
+     exchange expires. Morning = 1 day, Afternoon = 1 day, Night = 2 days.
+   ============================================================ */
+const CL_LOG_KEY = 'HSIA_CL_LOG_V1';
+const CL_LIMIT = 20;
+function clLoadLocal(){ try{ const o = JSON.parse(localStorage.getItem(CL_LOG_KEY)); if(o && typeof o === 'object' && !Array.isArray(o)) return o; }catch(e){} return {}; }
+let CL_LOG = clLoadLocal();
+function clNorm(n){ return String(n || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function clIdFor(dateKey, table, pos, team){ return (dateKey + '_' + table + '_' + String(pos).replace(/[^A-Za-z0-9]/g, '') + '_' + team).replace(/[.#$\[\]\/]/g, ''); }
+function clDaysForShift(sh){ return sh === 'Night' ? 2 : (sh === 'Morning' || sh === 'Afternoon') ? 1 : 0; }
+function clRecords(){
+  return Object.keys(CL_LOG).filter(k=> k !== '_v').map(k=> Object.assign({ _id:k }, CL_LOG[k])).filter(r=> r && r.date);
+}
+function clUsedBy(who, year, exceptId){
+  const key = clNorm(who); let n = 0;
+  clRecords().forEach(r=>{
+    if(r._id === exceptId || clNorm(r.who) !== key || String(r.date).slice(0,4) !== String(year)) return;
+    n += (+r.days || 0);
+  });
+  return n;
+}
+function clSave(){
+  CL_LOG._v = 1;
+  try{ localStorage.setItem(CL_LOG_KEY, JSON.stringify(CL_LOG)); }catch(e){}
+  try{ if(typeof pushClLogToFirebaseDebounced === 'function') pushClLogToFirebaseDebounced(); }catch(e){}
+}
+function clLedgerSet(dateKey, r, days){
+  CL_LOG[clIdFor(dateKey, r.table, r.pos, r.team)] = { date:dateKey, who:r.who, table:r.table, pos:r.pos, team:r.team, shift:r.shift, days:days };
+  clSave();
+}
+function clLedgerDrop(dateKey, e){
+  const id = clIdFor(dateKey, e.table, e.pos, e.team);
+  if(CL_LOG[id]){ delete CL_LOG[id]; clSave(); }
+}
+function clApplyRemote(val){
+  if(!val || typeof val !== 'object' || JSON.stringify(val) === JSON.stringify(CL_LOG)) return;
+  CL_LOG = val;
+  try{ localStorage.setItem(CL_LOG_KEY, JSON.stringify(CL_LOG)); }catch(e){}
+  try{ if(typeof updateExchangeCurrentHint === 'function') updateExchangeCurrentHint(); }catch(e){}
+}
+function exTeamLabel(ex){
+  const t = +ex.team;
+  if(t >= 100) return ['Night 8:30PM–12AM', 'Night 12AM–7:30AM', 'Morning', 'Afternoon'][t - 100] || '—';
+  return 'Team ' + (TEAMS[t] || '?');
+}
+/* puts one entry into EXCHANGES; a CL replaces everything on that position, a normal exchange replaces a CL */
+function exPutEntry(dateKey, entry){
+  const raw = EXCHANGES[dateKey];
+  const list = Array.isArray(raw) ? raw : Object.values(raw || {});
+  EXCHANGES[dateKey] = list.filter(x=>{
+    if(!x) return false;
+    if(!(x.table === entry.table && x.pos === entry.pos && +x.team === +entry.team)) return true;
+    if(x.cl){ clLedgerDrop(dateKey, x); return false; }
+    if(entry.cl || entry.special) return false;
+    return (x.nightHalf || '') !== (entry.nightHalf || '');
+  });
+  EXCHANGES[dateKey].push(entry);
+  saveExchangesData(EXCHANGES);
+}
+function refreshThmrViews(){
+  try{ if(window.hsiaTHMRRender) window.hsiaTHMRRender(); }catch(e){}
+  try{ if(ROSTER_NOW_ON) renderRosterNow(); }catch(e){}
 }
 
 /* ============================================================
@@ -6435,7 +6685,7 @@ function buildMyDutyEvents(daysAhead){
         events.push({
           uid: `exchange-${dateKey}-${ex.table}-${(ex.pos||'').replace(/[^a-zA-Z0-9]/g,'')}-${ex.team}-${ex.nightHalf||'full'}@hsia-atm-shift-tracker`,
           start: win.start, end: win.end,
-          summary: `🔄 এক্সচেঞ্জ ডিউটি — ${ex.pos} (Team ${TEAMS[+ex.team]})${halfTag}`,
+          summary: `🔄 এক্সচেঞ্জ ডিউটি — ${ex.pos} (${exTeamLabel(ex)})${halfTag}`,
           desc: 'আপনি অন্য কারো জায়গায় এই ডিউটিতে আছেন।'
         });
       });
@@ -6611,9 +6861,9 @@ function checkMyExchangeNotifications(){
           notified.add(uniqueKey);
           hasUnseen = true;
           const tableLabel = rosterLabelFor(ex.table);
-          const body = tableLabel + ' — ' + ex.pos + ' (Team ' + (TEAMS[ex.team]||'?') + ') — ' + dateKey + (dateKey===today ? ' (আজ)' : '');
+          const body = tableLabel + ' — ' + ex.pos + ' (' + exTeamLabel(ex) + ') — ' + dateKey + (dateKey===today ? ' (Today)' : '');
           if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-            try{ new Notification('🔄 আপনাকে ডিউটি এক্সচেঞ্জ দেওয়া হয়েছে', { body, tag: uniqueKey }); }catch(e){}
+            try{ new Notification('🔄 You have been given a duty exchange', { body, tag: uniqueKey }); }catch(e){}
           }
         }
       }
@@ -6625,8 +6875,8 @@ function checkMyExchangeNotifications(){
   if(tbody){
     tbody.innerHTML = mine.length ? mine.map(({dateKey, ex})=>{
       const tableLabel = rosterLabelFor(ex.table);
-      return `<tr class="${dateKey===today ? 'exchange-row-today' : ''}"><td>${dateKey}${dateKey===today?' (আজ)':''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>Team ${TEAMS[ex.team]||'?'}</td></tr>`;
-    }).join('') : '<tr><td colspan="4" class="air-empty">আপনার জন্য কোনো এক্সচেঞ্জ নেই</td></tr>';
+      return `<tr class="${dateKey===today ? 'exchange-row-today' : ''}"><td>${dateKey}${dateKey===today?' (Today)':''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>${exTeamLabel(ex)}</td></tr>`;
+    }).join('') : '<tr><td colspan="4" class="air-empty">No exchanges for you</td></tr>';
   }
 }
 
@@ -7016,7 +7266,7 @@ function initAuthPanel(){
       rosterCtrl:{ label:'Roster · Controllers', c:[246,200,76] },
       roster:    { label:'Roster · Assistant',   c:[246,200,76] },
       rosterComm:{ label:'Roster · Communication', c:[246,200,76] },
-      exchange:  { label:'Duty Exchange',        c:[240,150,80] },
+      exchange:  { label:'Exchange / CL',        c:[240,150,80] },
       vccs:      { label:'VCCS numbers',         c:[110,200,120] },
       adj:       { label:'Adjacent',             c:[230,120,170] },
       flowc:     { label:'Flow Chart · Contact', c:[170,130,240] },
@@ -7099,7 +7349,7 @@ function initAuthPanel(){
             const tbl = rosterLabelFor(ex.table);
             const half = ex.nightHalf === '1' ? ' (1st night)' : ex.nightHalf === '2' ? ' (2nd night)' : '';
             const who = ex.subName || '';
-            add('exchange', ex.pos || '', dateKey + ' · ' + tbl + ' · Team ' + (TEAMS[ex.team] || '?') + half + (who ? ' · ' + who : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
+            add('exchange', ex.pos || '', dateKey + ' · ' + tbl + ' · ' + exTeamLabel(ex) + half + (who ? ' · ' + who : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
           });
         });
       });
@@ -7437,7 +7687,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : ex.nightHalf === '2' ? 'roster-exchange-cell-night2'
         : 'roster-exchange-cell';
       // No substitute name (1st/2nd Night marker only): the person is still on duty, so the name stays as normal text.
-      const noSub = ex && !(ex.subName || '').trim();
+      const noSub = ex && !ex.cl && !ex.special && !(ex.subName || '').trim();
       const cellClass = cellClassName ? ` class="${cellClassName}${noSub ? ' roster-nosub' : ''}"` : '';
       const halfTag = ex && ex.nightHalf === '1' ? ' (1st Night)' : ex && ex.nightHalf === '2' ? ' (2nd Night)' : '';
       const badgeClassName = !ex ? '' : ex.vacant ? 'roster-vacant-badge'
@@ -7445,8 +7695,8 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
         : 'roster-exchange-badge';
       const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
-      const badgeText = subEsc ? '🔄 ' + subEsc + halfTag : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
-      const badge = !ex ? '' : `<div class="${badgeClassName}" title="মূল: ${origTitle}${halfTag}">${badgeText}</div>`;
+      const badgeText = (ex && ex.vacant) ? (ex.special ? 'Special · Vacant' : 'CL · Vacant') : subEsc ? '🔄 ' + subEsc + halfTag + (ex && ex.cl ? ' · CL' : ex && ex.special ? ' · EL' : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
+      const badge = !ex ? '' : `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
@@ -7504,7 +7754,7 @@ function attachLongPressForRoster(tbodyId, tableKey){
         try{
           openQuickExchange(tableKey, +inp.dataset.ri, +inp.dataset.ci);
         }catch(err){
-          alert('Quick exchange খুলতে সমস্যা: ' + (err && err.message ? err.message : err));
+          alert('Could not open Quick exchange: ' + (err && err.message ? err.message : err));
         }
       }
       clear();
@@ -7567,7 +7817,7 @@ function attachLongPressForRoster(tbodyId, tableKey){
       try{
         openQuickExchange(tableKey, +inp.dataset.ri, +inp.dataset.ci);
       }catch(err){
-        alert('Quick exchange খুলতে সমস্যা: ' + (err && err.message ? err.message : err));
+        alert('Could not open Quick exchange: ' + (err && err.message ? err.message : err));
       }
     }
   });
@@ -7605,12 +7855,12 @@ function openQuickExchange(tableKey, ri, ci){
   }
   const st = shiftFor(ci, y, m-1, day);
   if(st === 'Off'){
-    alert('আজ Team ' + TEAMS[ci] + '-এর কোনো ডিউটি নেই, তাই এক্সচেঞ্জ যোগ করা যাবে না।');
+    alert('Team ' + TEAMS[ci] + ' has no duty today, so an exchange cannot be added.');
     return;
   }
   // This popup is only for the 1st / 2nd night split (someone rests for half the night, another covers).
   if(st !== 'Night'){
-    alert('আজ এই ঘরে নাইট ডিউটি নেই — 1st/2nd Night এসাইন শুধু নাইট ডিউটিতে করা যায়।');
+    alert('No night duty in this cell today — 1st/2nd Night can only be assigned on night duty.');
     return;
   }
   const isNight = true;
@@ -7635,7 +7885,7 @@ function openQuickExchange(tableKey, ri, ci){
   if(!titleEl || !subEl || !removeBtn) return;
 
   titleEl.textContent = '🔄 ' + row.pos + ' — Team ' + TEAMS[ci];
-  subEl.textContent = 'আজ (' + dateKey + ') — বর্তমান রোস্টার নাম: ' + (row.names[ci] || '—');
+  subEl.textContent = 'Today (' + dateKey + ') — current roster name: ' + (row.names[ci] || '—');
 
   function fillFromEntry(ex){
     removeBtn.style.display = ex ? '' : 'none';
@@ -7657,6 +7907,7 @@ function openQuickExchange(tableKey, ri, ci){
 }
 
 function commitExchangeEntry(dateKey, entry){
+  if((EXCHANGES[dateKey] || []).some(x=> (x.cl || x.special) && x.table===entry.table && x.pos===entry.pos && +x.team===+entry.team)){ alert('A CL / special entry already exists for this position on that day — remove it from Exchange / CL first.'); return; }
   if(!EXCHANGES[dateKey]) EXCHANGES[dateKey] = [];
   EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===entry.table && x.pos===entry.pos && x.team===entry.team && (x.nightHalf||'')===(entry.nightHalf||'')));
   EXCHANGES[dateKey].push(entry);
@@ -7692,7 +7943,7 @@ function initQuickExchangeModal(){
       if(!quickExchangeCtx) return;
       if(!requireQuickAuth()) return;
       // Only the half is assigned — no substitute name. (Save is only reachable for night shifts.)
-      if(!quickExchangeCtx.half){ alert('1st Night না 2nd Night, একটা বেছে নিন।'); return; }
+      if(!quickExchangeCtx.half){ alert('Please choose 1st Night or 2nd Night.'); return; }
       const entry = {
         table: quickExchangeCtx.table, pos: quickExchangeCtx.pos, team: quickExchangeCtx.team,
         subName: '', nightHalf: quickExchangeCtx.isNight ? (quickExchangeCtx.half || '') : ''
@@ -7856,6 +8107,8 @@ function connectFirebaseSync(config, roomId){
     const rosterCommRef = _fbDb.ref('hsia_sync/' + roomId + '/rosterComm');
     const adminNotepadRef = _fbDb.ref('hsia_sync/' + roomId + '/adminNotepad');
     const exchangesRef = _fbDb.ref('hsia_sync/' + roomId + '/exchanges');
+    const thmrRef = _fbDb.ref('hsia_sync/' + roomId + '/thmr');
+    const clLogRef = _fbDb.ref('hsia_sync/' + roomId + '/clLog');
     const vccsRef = _fbDb.ref('hsia_sync/' + roomId + '/vccs');
 
     rosterRef.on('value', snap=>{
@@ -7947,11 +8200,14 @@ function connectFirebaseSync(config, roomId){
         try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(EXCHANGES)); }catch(e){}
         if(wasPruned || (stripped && rosterUnlocked)) pushExchangesToFirebaseDebounced();
         if(typeof renderExchangeList === 'function') renderExchangeList();
+        try{ refreshThmrViews(); }catch(e){}
         renderRoster();
         renderRosterCtrl();
         if(typeof checkMyExchangeNotifications === 'function') checkMyExchangeNotifications();
       }
     });
+    listen(thmrRef, snap=>{ const val = snap.val(); if(val && typeof val === 'object' && window.hsiaTHMRApplyRemote) window.hsiaTHMRApplyRemote(val); });
+    listen(clLogRef, snap=>{ const val = snap.val(); if(val && typeof val === 'object') clApplyRemote(val); });
     let _exHistAttached = false;
     window._attachExHistory = function(){
       if(_exHistAttached || !exHistIsAdmin()) return;
@@ -8059,6 +8315,18 @@ const pushCustomAirlinesToFirebaseDebounced = debounce(pushCustomAirlinesToFireb
 const pushRosterCommToFirebaseDebounced = debounce(pushRosterCommToFirebase, 500);
 const pushEqAircraftToFirebaseDebounced = debounce(pushEqAircraftToFirebase, 500);
 const pushExchangesToFirebaseDebounced = debounce(pushExchangesToFirebase, 500);
+function pushThmrToFirebase(){
+  const saved = loadFirebaseSyncConfig();
+  if(!_fbDb || !saved || !window.hsiaTHMRData) return;
+  fbSet(saved.roomId, 'thmr', window.hsiaTHMRData());
+}
+function pushClLogToFirebase(){
+  const saved = loadFirebaseSyncConfig();
+  if(!_fbDb || !saved) return;
+  fbSet(saved.roomId, 'clLog', CL_LOG);
+}
+const pushThmrToFirebaseDebounced = debounce(pushThmrToFirebase, 500);
+const pushClLogToFirebaseDebounced = debounce(pushClLogToFirebase, 500);
 function pushExHistoryToFirebase(){
   const saved = loadFirebaseSyncConfig();
   if(!exHistIsAdmin() || !_fbDb || !saved) return;
@@ -8169,7 +8437,7 @@ function initAddRow(addBtnId, addInputId, data, onChange, onRender){
     onChange(data);
     addInput.value='';
     onRender();
-    flashRosterSaved('পজিশন যোগ হয়েছে — এবার নিচে সেভ করুন');
+    flashRosterSaved('Position added — now save below');
   };
   addBtn.addEventListener('click', doAdd);
   addInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doAdd(); });
@@ -8208,6 +8476,7 @@ function initRoster(){
       saveRoster(ROSTER);
       saveRosterCtrl(ROSTER_CTRL);
       saveRosterComm(ROSTER_COMM);
+      try{ if(window.hsiaTHMRSave) window.hsiaTHMRSave(); }catch(e){}
       renderRoster();
       renderRosterCtrl();
       renderRosterComm();
@@ -8228,45 +8497,84 @@ function initRoster(){
   }
 }
 
-function populateExchangePositions(){
-  const tableSel = document.getElementById('exchangeTable');
-  const posSel = document.getElementById('exchangePos');
-  if(!tableSel || !posSel) return;
-  const data = rosterDataFor(tableSel.value);
-  posSel.innerHTML = data.map(r => {
-    const safe = (r.pos || '').replace(/"/g,'&quot;');
-    return `<option value="${safe}">${safe}</option>`;
-  }).join('');
-  updateExchangeCurrentHint();
-}
-
-function updateExchangeCurrentHint(){
+function isThMrTable(v){ return v === 'th' || v === 'mr'; }
+function _xEsc(t){ return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/* what the form currently points at: {thmr, table, pos, team, who, shift, dateKey} */
+function exchangeResolve(){
   const tableSel = document.getElementById('exchangeTable');
   const posSel = document.getElementById('exchangePos');
   const teamSel = document.getElementById('exchangeTeam');
   const dateInput = document.getElementById('exchangeDate');
-  const hint = document.getElementById('exchangeCurrentHint');
-  const halfSel = document.getElementById('exchangeNightHalf');
-  if(!tableSel || !posSel || !teamSel || !hint) return;
+  const teamSel0 = document.getElementById('exchangeTeam');
+  if(!tableSel || !posSel || !dateInput || !dateInput.value) return null;
+  if(!tableSel.value || !posSel.value) return null;
+  if(!isThMrTable(tableSel.value) && (!teamSel0 || teamSel0.value === '')) return null;
+  const dateKey = dateInput.value;
+  const parts = dateKey.split('-').map(Number);
+  if(!parts[0] || !parts[1] || !parts[2]) return null;
+  if(isThMrTable(tableSel.value)){
+    const v = String(posSel.value || '').split('|');
+    const slot = +v[0], pi = +v[1];
+    if(v.length < 2 || isNaN(slot) || isNaN(pi) || !window.hsiaTHMRPerson) return null;
+    const who = window.hsiaTHMRPerson(dateKey, tableSel.value, slot, pi);
+    return { thmr:true, table:tableSel.value, pos:(tableSel.value === 'th' ? 'TH-' : 'MR-') + (pi + 1), team:100 + slot,
+             who:String(who || '').trim(), shift: slot <= 1 ? 'Night' : slot === 2 ? 'Morning' : 'Afternoon', dateKey };
+  }
   const data = rosterDataFor(tableSel.value);
   const row = data.find(r => r.pos === posSel.value);
   const ci = +teamSel.value;
-  const current = row ? (row.names[ci] || '—') : '—';
-  hint.textContent = 'বর্তমানে এই ঘরে (রোস্টার অনুযায়ী) আছে: ' + current;
+  return { thmr:false, table:tableSel.value, pos:posSel.value, team:ci,
+           who: row ? String((row.names && row.names[ci]) || '').trim() : '',
+           shift: shiftFor(ci, parts[0], parts[1]-1, parts[2]), dateKey };
+}
 
-  /* The 1st/2nd-night split only makes sense when this team is actually
-     on a Night shift on the selected date — hide the picker otherwise
-     (and reset it to "full" so a stray leftover value can't sneak in). */
-  if(halfSel && dateInput && dateInput.value){
-    const [y,m,day] = dateInput.value.split('-').map(Number);
-    const st = (y && m && day) ? shiftFor(ci, y, m-1, day) : null;
-    if(st === 'Night'){
-      halfSel.style.display = '';
-    } else {
-      halfSel.style.display = 'none';
-      halfSel.value = '';
-    }
+function populateExchangePositions(){
+  const tableSel = document.getElementById('exchangeTable');
+  const posSel = document.getElementById('exchangePos');
+  const teamSel = document.getElementById('exchangeTeam');
+  const halfSel = document.getElementById('exchangeNightHalf');
+  const dateInput = document.getElementById('exchangeDate');
+  if(!tableSel || !posSel) return;
+  if(isThMrTable(tableSel.value)){
+    if(teamSel) teamSel.style.display = 'none';
+    if(halfSel){ halfSel.style.display = 'none'; halfSel.value = ''; }
+    const dk = (dateInput && dateInput.value) ? dateInput.value : todayDateKey();
+    const slots = window.hsiaTHMRPeople ? window.hsiaTHMRPeople(dk, tableSel.value) : [];
+    const prev = posSel.value;
+    let html = '';
+    slots.forEach(sl=> sl.people.forEach((nm, pi)=>{
+      if(!String(nm || '').trim()) return;
+      html += '<option value="' + sl.slot + '|' + pi + '">' + _xEsc(sl.label) + ' — ' + _xEsc(nm) + '</option>';
+    }));
+    posSel.innerHTML = '<option value="">Position</option>' + html;
+    if(prev && Array.prototype.some.call(posSel.options, o=> o.value === prev)) posSel.value = prev;
+  } else {
+    if(teamSel) teamSel.style.display = '';
+    const data = rosterDataFor(tableSel.value);
+    posSel.innerHTML = '<option value="">Position</option>' + (tableSel.value ? data.map(r => {
+      const safe = (r.pos || '').replace(/"/g,'&quot;');
+      return `<option value="${safe}">${safe}</option>`;
+    }).join('') : '');
   }
+  updateExchangeCurrentHint();
+}
+
+function updateExchangeCurrentHint(){
+  const hint = document.getElementById('exchangeCurrentHint');
+  const clInfo = document.getElementById('exchangeClInfo');
+  const halfSel = document.getElementById('exchangeNightHalf');
+  const dateInput = document.getElementById('exchangeDate');
+  if(!hint) return;
+  const r = exchangeResolve();
+  hint.textContent = '';
+  if(!r){ if(clInfo) clInfo.textContent = ''; if(halfSel){ halfSel.style.display = 'none'; halfSel.value = ''; } return; }
+
+  /* The 1st/2nd-night split only makes sense for a team roster on a Night shift */
+  if(halfSel && dateInput && dateInput.value){
+    if(!r.thmr && r.shift === 'Night'){ halfSel.style.display = ''; }
+    else { halfSel.style.display = 'none'; halfSel.value = ''; }
+  }
+
 }
 
 function renderExchangeList(){
@@ -8279,21 +8587,25 @@ function renderExchangeList(){
     (EXCHANGES[dateKey] || []).forEach((ex, idx)=>{
       const tableLabel = rosterLabelFor(ex.table);
       const halfLabel = ex.nightHalf === '1' ? ' (1st Night)' : ex.nightHalf === '2' ? ' (2nd Night)' : '';
-      const teamLabel = 'Team ' + (TEAMS[ex.team] || '?') + halfLabel;
+      const teamLabel = exTeamLabel(ex) + halfLabel;
       const isToday = dateKey === today;
-      const subCell = (ex.subName||'').replace(/</g,'&lt;') || '—';
+      const _sub = (ex.subName||'').replace(/</g,'&lt;');
+      const subCell = ex.cl ? ('<b style="color:#f5b53d">CL</b>' + (_sub ? ' → ' + _sub : ' · Vacant')) : (_sub || '—');
+      const _who = (ex.who || '').replace(/</g,'&lt;');
+      const posCell = (ex.table === 'th' || ex.table === 'mr') ? (_who || (ex.pos||'').replace(/</g,'&lt;')) : ((ex.pos||'').replace(/</g,'&lt;') + (ex.cl && _who ? ' <small>(' + _who + ')</small>' : ''));
       rows.push(
-        `<tr class="${isToday ? 'exchange-row-today' : ''}"><td>${dateKey}${isToday ? ' (আজ)' : ''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>${teamLabel}</td><td>${subCell}</td><td><button type="button" class="exchange-del-btn" data-date="${dateKey}" data-idx="${idx}">✕</button></td></tr>`
+        `<tr class="${isToday ? 'exchange-row-today' : ''}"><td>${dateKey}${isToday ? ' (Today)' : ''}</td><td>${tableLabel}</td><td>${posCell}</td><td>${teamLabel}</td><td>${subCell}</td><td><button type="button" class="exchange-del-btn" data-date="${dateKey}" data-idx="${idx}">✕</button></td></tr>`
       );
     });
   });
-  tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="6" class="air-empty">কোনো এক্সচেঞ্জ যোগ করা হয়নি</td></tr>';
+  tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="6" class="air-empty">No exchanges added</td></tr>';
   tbody.querySelectorAll('.exchange-del-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       if(!requireRosterAuth()) return;
       const dateKey = btn.getAttribute('data-date');
       const idx = +btn.getAttribute('data-idx');
       if(EXCHANGES[dateKey]){
+        try{ const _e = EXCHANGES[dateKey][idx]; if(_e && _e.cl) clLedgerDrop(dateKey, _e); }catch(e){}
         EXCHANGES[dateKey].splice(idx, 1);
         if(!EXCHANGES[dateKey].length) delete EXCHANGES[dateKey];
       }
@@ -8319,6 +8631,368 @@ setInterval(()=>{
   }
 }, 30*60*1000);
 
+/* ---- Substitute picker: tap the name box -> full roster table -> tap a name ---- */
+let _xpTab = 'roster';
+const _XP_TABS = [['roster','Aerodrome Assistant'],['rosterCtrl','Controllers'],['rosterComm','Communication'],['th','Traffic Hand'],['mr','Marshaller']];
+function _xpBadName(n){ n = String(n == null ? '' : n).trim(); return !n || n === '-' || /^-+$/.test(n); }
+function renderExchangePicker(){
+  const tabsEl = document.getElementById('exchangePickerTabs');
+  const tbl = document.getElementById('exchangePickerTable');
+  const qEl = document.getElementById('exchangePickerSearch');
+  const subEl = document.getElementById('exchangeSubName');
+  if(!tabsEl || !tbl) return;
+  const q = ((qEl && qEl.value) || '').trim().toLowerCase();
+  const cur = (subEl && subEl.value || '').trim().toLowerCase();
+  const dateInput = document.getElementById('exchangeDate');
+  const teamSel = document.getElementById('exchangeTeam');
+  const hlTeam = (teamSel && teamSel.value !== '') ? +teamSel.value : -1;
+  tabsEl.innerHTML = _XP_TABS.map(t => '<button type="button" class="xp-tab' + (t[0] === _xpTab ? ' active' : '') + '" data-t="' + t[0] + '">' + t[1] + '</button>').join('');
+  tabsEl.querySelectorAll('.xp-tab').forEach(b => b.addEventListener('click', ()=>{ _xpTab = b.getAttribute('data-t'); renderExchangePicker(); }));
+
+  const r = exchangeResolve();
+  const whoNow = r && r.who ? String(r.who).trim().toLowerCase() : '';
+  const match = n => !q || String(n).toLowerCase().indexOf(q) !== -1;
+  const btn = (n, extra) => {
+    const low = String(n).trim().toLowerCase();
+    return '<button type="button" class="xp-name' + (low === cur ? ' sel' : '') + (low === whoNow ? ' cur' : '') + '" data-name="' + _xEsc(n) + '"' + (extra || '') + '>' + _xEsc(n) + '</button>';
+  };
+  let html = '';
+  if(_xpTab === 'th' || _xpTab === 'mr'){
+    const dk = (dateInput && dateInput.value) ? dateInput.value : todayDateKey();
+    const slots = window.hsiaTHMRPeople ? window.hsiaTHMRPeople(dk, _xpTab) : [];
+    const max = Math.max(1, ...slots.map(sl => sl.people.length));
+    html += '<thead><tr><th>Shift</th>' + Array.from({length:max}, (_,i)=> '<th>#' + (i+1) + '</th>').join('') + '</tr></thead><tbody>';
+    slots.forEach(sl=>{
+      html += '<tr><td class="xp-pos">' + _xEsc(sl.label) + '</td>';
+      for(let i=0;i<max;i++){
+        const n = sl.people[i];
+        html += '<td>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim())) + '</td>';
+      }
+      html += '</tr>';
+    });
+    html += '</tbody>';
+  } else {
+    const data = rosterDataFor(_xpTab) || [];
+    html += '<thead><tr><th>Position</th>' + TEAMS.map(t => '<th>Team ' + t + '</th>').join('') + '</tr></thead><tbody>';
+    data.forEach(row=>{
+      html += '<tr><td class="xp-pos">' + _xEsc(row.pos) + '</td>';
+      TEAMS.forEach((t, ci)=>{
+        const n = row.names && row.names[ci];
+        html += '<td' + (ci === hlTeam ? ' class="xp-team-hl"' : '') + '>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim())) + '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody>';
+  }
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('.xp-name').forEach(b => b.addEventListener('click', ()=> pickExchangeSub(b.getAttribute('data-name'))));
+}
+function pickExchangeSub(name){
+  const subEl = document.getElementById('exchangeSubName');
+  if(subEl){ subEl.value = String(name || '').trim(); subEl.style.opacity = ''; }
+  closeExchangePicker();
+  updateExchangeCurrentHint();
+  if(window._pendingClAfterPick){ window._pendingClAfterPick = false; if(window._commitCl) window._commitCl(false); }
+}
+function openExchangePicker(){
+  const ov = document.getElementById('exchangePickerOverlay');
+  if(!ov) return;
+  const tableSel = document.getElementById('exchangeTable');
+  if(tableSel && _XP_TABS.some(t => t[0] === tableSel.value)) _xpTab = tableSel.value;
+  const qEl = document.getElementById('exchangePickerSearch'); if(qEl) qEl.value = '';
+  const mEl = document.getElementById('exchangePickerManual'); if(mEl) mEl.value = '';
+  renderExchangePicker();
+  ov.classList.add('show');
+}
+function closeExchangePicker(){
+  const ov = document.getElementById('exchangePickerOverlay');
+  if(ov) ov.classList.remove('show');
+}
+function initExchangePicker(){
+  const subEl = document.getElementById('exchangeSubName');
+  const ov = document.getElementById('exchangePickerOverlay');
+  if(!subEl || !ov) return;
+  subEl.addEventListener('click', ()=>{ subEl.blur(); window._pendingClAfterPick = false; openExchangePicker(); });
+  const cl = document.getElementById('exchangePickerClose'); if(cl) cl.addEventListener('click', ()=>{ window._pendingClAfterPick = false; closeExchangePicker(); });
+  ov.addEventListener('click', e=>{ if(e.target === ov){ window._pendingClAfterPick = false; closeExchangePicker(); } });
+  const q = document.getElementById('exchangePickerSearch'); if(q) q.addEventListener('input', renderExchangePicker);
+  const mb = document.getElementById('exchangePickerManualBtn');
+  const mi = document.getElementById('exchangePickerManual');
+  const useManual = ()=>{ const v = (mi && mi.value || '').trim(); if(v) pickExchangeSub(v); };
+  if(mb) mb.addEventListener('click', useManual);
+  if(mi) mi.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); useManual(); } });
+}
+
+/* ---- CL Data: always locked. Needs the password EVERY time it is opened,
+        even when the admin is already logged in / remembered. ---- */
+const CL_DESIG_LABEL = { rosterCtrl:'Controller', roster:'Aerodrome Assistant', rosterComm:'Communication', th:'Traffic Hand', mr:'Marshaller' };
+const CL_DESIG_ORDER = ['rosterCtrl','roster','rosterComm','th','mr'];
+let _cldOnly = false, _cldOpen = {};
+function clRankMap(){ if(!CL_LOG._desig || typeof CL_LOG._desig !== 'object') CL_LOG._desig = {}; return CL_LOG._desig; }
+function clBuildPeople(year){
+  const by = {};
+  const add = (name, table)=>{
+    const n = String(name == null ? '' : name).trim();
+    if(!n || /^-+$/.test(n)) return null;
+    const k = clNorm(n);
+    if(!by[k]) by[k] = { key:k, name:n, table:table, used:0, recs:[] };
+    return by[k];
+  };
+  ['rosterCtrl','roster','rosterComm'].forEach(key=>{
+    (rosterDataFor(key) || []).forEach(row=> (row.names || []).forEach(n=> add(n, key)));
+  });
+  clRecords().slice().sort((a,b)=> String(a.date) < String(b.date) ? -1 : 1).forEach(r=>{
+    if(String(r.date).slice(0,4) !== String(year)) return;
+    const pr = add(r.who, r.table); if(!pr) return;
+    pr.used += (+r.days || 0);
+    pr.recs.push({ date:r.date, days:+r.days || 0, shift:r.shift });
+  });
+  return Object.keys(by).map(k=> by[k]);
+}
+function renderClData(){
+  const tbl = document.getElementById('clDataTable');
+  const yearSel = document.getElementById('clDataYear');
+  if(!tbl || !yearSel) return;
+  const year = +yearSel.value || new Date().getFullYear();
+  const q = ((document.getElementById('clDataSearch') || {}).value || '').trim().toLowerCase();
+  const ranks = clRankMap();
+  let people = clBuildPeople(year);
+  if(_cldOnly) people = people.filter(p=> p.used > 0);
+  if(q) people = people.filter(p=> p.name.toLowerCase().indexOf(q) !== -1);
+  let html = '<thead><tr><th>Name</th><th>Designation</th><th>CL taken</th><th>Left</th></tr></thead><tbody>';
+  let any = false;
+  CL_DESIG_ORDER.forEach(t=>{
+    const grp = people.filter(p=> p.table === t).sort((a,b)=> a.name.localeCompare(b.name));
+    if(!grp.length) return;
+    any = true;
+    html += '<tr class="cld-sec"><td colspan="4">' + CL_DESIG_LABEL[t] + '</td></tr>';
+    grp.forEach(p=>{
+      const rank = ranks[p.key] || '';
+      const desig = t === 'rosterCtrl'
+        ? 'Controller <select class="cld-rank" data-k="' + _xEsc(p.key) + '"><option value="">—</option>' + ['AO','AD','DD'].map(x=> '<option' + (x === rank ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>'
+        : CL_DESIG_LABEL[t];
+      html += '<tr class="cld-row' + (_cldOpen[p.key] ? ' open' : '') + '" data-k="' + _xEsc(p.key) + '"><td>' + _xEsc(p.name) + '</td><td>' + desig + '</td><td>' + p.used + ' / ' + CL_LIMIT + '</td><td>' + Math.max(0, CL_LIMIT - p.used) + '</td></tr>';
+      if(_cldOpen[p.key]){
+        html += '<tr class="cld-detail"><td colspan="4">' + (p.recs.length ? p.recs.map(r=> _xEsc(r.date) + ' (' + _xEsc(r.shift || '') + ', ' + r.days + 'd)').join(' · ') : 'No CL taken') + '</td></tr>';
+      }
+    });
+  });
+  if(!any) html += '<tr><td colspan="4" class="air-empty">No data</td></tr>';
+  html += '</tbody>';
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('.cld-rank').forEach(sel=>{
+    sel.addEventListener('click', e=> e.stopPropagation());
+    sel.addEventListener('change', ()=>{
+      const m = clRankMap(), k = sel.getAttribute('data-k');
+      if(sel.value) m[k] = sel.value; else delete m[k];
+      clSave();
+    });
+  });
+  tbl.querySelectorAll('.cld-row').forEach(tr=> tr.addEventListener('click', ()=>{
+    const k = tr.getAttribute('data-k'); _cldOpen[k] = !_cldOpen[k]; renderClData();
+  }));
+}
+function clDataCsv(){
+  const year = +document.getElementById('clDataYear').value;
+  const ranks = clRankMap();
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+  const rows = [['Name','Designation','Rank','Year','CL taken','Left','Dates']];
+  clBuildPeople(year).sort((a,b)=> CL_DESIG_ORDER.indexOf(a.table) - CL_DESIG_ORDER.indexOf(b.table) || a.name.localeCompare(b.name)).forEach(p=>{
+    rows.push([p.name, CL_DESIG_LABEL[p.table] || '', p.table === 'rosterCtrl' ? (ranks[p.key] || '') : '', year, p.used, Math.max(0, CL_LIMIT - p.used), p.recs.map(r=> r.date).join(' ')]);
+  });
+  const blob = new Blob(['\ufeff' + rows.map(r=> r.map(esc).join(',')).join('\n')], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'CL-data-' + year + '.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+/* In-page password dialog: works everywhere (window.prompt is silently blocked in some apps / PWAs) */
+function askPassword(title, onOk){
+  const ov = document.getElementById('pwOverlay'), inp = document.getElementById('pwInput');
+  const err = document.getElementById('pwErr'), ok = document.getElementById('pwOk'), cancel = document.getElementById('pwCancel');
+  if(!ov || !inp){ const v = window.prompt(title); if(v !== null && v === ROSTER_PASSWORD) onOk(); return; }
+  document.getElementById('pwTitle').textContent = title;
+  inp.value = ''; err.textContent = '';
+  const close = ()=>{ ov.classList.remove('show'); inp.value = ''; ok.onclick = cancel.onclick = inp.onkeydown = ov.onclick = null; };
+  const submit = ()=>{
+    if(inp.value === ROSTER_PASSWORD){ close(); onOk(); }
+    else { err.textContent = 'Wrong password.'; inp.value = ''; inp.focus(); }
+  };
+  ok.onclick = submit; cancel.onclick = close;
+  inp.onkeydown = e=>{ if(e.key === 'Enter'){ e.preventDefault(); submit(); } };
+  ov.onclick = e=>{ if(e.target === ov) close(); };
+  ov.classList.add('show');
+  setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 50);
+}
+function openClData(){ askPassword('Enter password to open CL Data', openClDataNow); }
+function openClDataNow(){
+  const ov = document.getElementById('clDataOverlay'), ys = document.getElementById('clDataYear');
+  if(!ov || !ys) return;
+  const cur = new Date().getFullYear();
+  const years = {}; years[cur] = 1;
+  clRecords().forEach(r=> { const y = +String(r.date).slice(0,4); if(y) years[y] = 1; });
+  ys.innerHTML = Object.keys(years).sort().reverse().map(y=> '<option value="' + y + '"' + (+y === cur ? ' selected' : '') + '>' + y + '</option>').join('');
+  const q = document.getElementById('clDataSearch'); if(q) q.value = '';
+  _cldOpen = {};
+  renderClData();
+  ov.classList.add('show');
+}
+function closeClData(){
+  const ov = document.getElementById('clDataOverlay'); if(ov) ov.classList.remove('show');
+  const t = document.getElementById('clDataTable'); if(t) t.innerHTML = '';   /* wipe data from the DOM so it is locked again */
+}
+function initClData(){
+  const btn = document.getElementById('clDataBtn'), ov = document.getElementById('clDataOverlay');
+  if(!btn || !ov) return;
+  btn.addEventListener('click', openClData);
+  document.getElementById('clDataClose').addEventListener('click', closeClData);
+  ov.addEventListener('click', e=>{ if(e.target === ov) closeClData(); });
+  document.getElementById('clDataYear').addEventListener('change', renderClData);
+  document.getElementById('clDataSearch').addEventListener('input', renderClData);
+  document.getElementById('clDataCsvBtn').addEventListener('click', clDataCsv);
+  const ob = document.getElementById('clDataOnlyBtn');
+  ob.addEventListener('click', ()=>{ _cldOnly = !_cldOnly; ob.style.color = _cldOnly ? '#f5b53d' : ''; renderClData(); });
+}
+
+/* ============================================================
+   QBM sheet: every exchange / CL / special entry laid out as the
+   official QBM table (Person detailed, Duty place, Date & duty
+   period, Person relieved, Remarks) + print.
+   ============================================================ */
+let _qbmRuns = [];
+function qbmPeriod(ex, dk){
+  const t = +ex.team;
+  if(t >= 100) return ['2030-0000','0000-0730','0730-1400','1400-2030'][t - 100] || '';
+  const p = dk.split('-').map(Number);
+  const st = shiftFor(t, p[0], p[1]-1, p[2]);
+  if(st === 'Morning') return '0730-1400';
+  if(st === 'Afternoon') return '1400-2030';
+  if(st === 'Night') return ex.nightHalf === '1' ? '2030-0300' : ex.nightHalf === '2' ? '0300-0730' : '2030-0730';
+  return '';
+}
+function qbmCollect(from, to){
+  const items = [];
+  Object.keys(EXCHANGES || {}).sort().forEach(dk=>{
+    if(from && dk < from) return;
+    if(to && dk > to) return;
+    exHistList(EXCHANGES[dk]).forEach(ex=>{
+      const sub = String(ex.subName || '').trim();
+      if(!sub && !ex.cl && !ex.special) return;            /* bare 1st/2nd-night markers are not a QBM change */
+      const who = String(ex.who || '').trim() || exHistBaseName(ex);
+      items.push({
+        dk, ex,
+        detailed: sub || 'Vacant',
+        place: ex.pos || '',
+        relieved: who,
+        rmk: ex.cl ? 'CL' : ex.special ? 'Special' : 'Exchange',
+        period: qbmPeriod(ex, dk)
+      });
+    });
+  });
+  return items;
+}
+function qbmDateText(run){
+  const a = run.dates[0].split('-'), b = run.dates[run.dates.length-1].split('-');
+  const dd = x=> String(x).padStart(2,'0');
+  const txt = run.dates.length === 1 ? dd(a[2]) + '/' + a[1] + '/' + a[0] : dd(a[2]) + '-' + dd(b[2]) + '/' + a[1] + '/' + a[0];
+  return txt + (run.period ? ' (' + run.period + ')' : '');
+}
+function qbmBuild(items){
+  const groups = {};
+  items.forEach(it=>{
+    const k = [it.detailed, it.place, it.relieved, it.rmk].join('|');
+    (groups[k] = groups[k] || { detailed:it.detailed, place:it.place, relieved:it.relieved, rmk:it.rmk, items:[] }).items.push(it);
+  });
+  const rows = Object.keys(groups).map(k=>{
+    const g = groups[k];
+    g.items.sort((a,b)=> a.dk < b.dk ? -1 : a.dk > b.dk ? 1 : (a.period < b.period ? -1 : 1));
+    g.runs = [];
+    g.items.forEach(it=>{
+      const last = g.runs[g.runs.length - 1];
+      if(last && last.period === it.period){
+        const pd = last.dates[last.dates.length-1];
+        const nx = new Date(Date.UTC(+pd.slice(0,4), +pd.slice(5,7)-1, +pd.slice(8,10)) + 86400000).toISOString().slice(0,10);
+        if(nx === it.dk){ last.dates.push(it.dk); last.items.push(it); return; }
+      }
+      g.runs.push({ dates:[it.dk], period:it.period, items:[it] });
+    });
+    g.first = g.items[0].dk;
+    return g;
+  }).sort((a,b)=> a.first < b.first ? -1 : a.first > b.first ? 1 : a.detailed.localeCompare(b.detailed));
+  return rows;
+}
+function qbmMonthLabel(items){
+  const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const seen = [];
+  items.map(i=> i.dk.slice(0,7)).sort().forEach(m=>{ if(seen.indexOf(m) === -1) seen.push(m); });
+  if(!seen.length){ const f = nowDhakaFields(); return names[f.m] + '-' + f.y; }
+  const years = seen.map(m=> m.slice(0,4)).filter((y,i,a)=> a.indexOf(y) === i);
+  if(years.length === 1) return seen.map(m=> names[+m.slice(5,7)-1]).join('/') + '-' + years[0];
+  return seen.map(m=> names[+m.slice(5,7)-1] + '-' + m.slice(0,4)).join('/');
+}
+function renderQbm(){
+  const paper = document.getElementById('qbmPaper');
+  if(!paper) return;
+  const items = qbmCollect('', '');
+  const rows = qbmBuild(items);
+  _qbmRuns = [];
+  let body = '';
+  rows.forEach((g, i)=>{
+    const lines = g.runs.map(run=>{
+      _qbmRuns.push(run);
+      return '<div class="qbm-line"><button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button><span>' + _xEsc(qbmDateText(run)) + '</span></div>';
+    }).join('');
+    body += '<tr><td class="c">' + String(i+1).padStart(2,'0') + '</td><td>' + _xEsc(g.detailed) + '</td><td class="c">' + _xEsc(g.place) + '</td><td>' + lines + '</td><td>' + _xEsc(g.relieved) + '</td><td class="c">' + _xEsc(g.rmk) + '</td></tr>';
+  });
+  if(!rows.length) body = '<tr><td colspan="6" class="c">No entries</td></tr>';
+  paper.innerHTML =
+    '<div class="qbm-title" contenteditable="true" spellcheck="false">QBM: SATO (' + _xEsc(qbmMonthLabel(items)) + ')' + '' + '</div>' +
+    '<table class="qbm-table"><colgroup><col style="width:8%"><col style="width:17%"><col style="width:14%"><col style="width:26%"><col style="width:17%"><col style="width:18%"></colgroup>' +
+    '<thead><tr><th>SL.<br>NO</th><th>PERSON<br>DETAILED</th><th>DUTY<br>PLACE</th><th>DATE &amp; DUTY PERIOD</th><th>PERSON<br>RELIEVED</th><th>RMKS</th></tr></thead>' +
+    '<tbody>' + body + '</tbody></table>' +
+    '';
+  paper.querySelectorAll('.qbm-x').forEach(b=> b.addEventListener('click', ()=> qbmRemoveRun(+b.getAttribute('data-r'))));
+}
+function qbmRemoveRun(idx){
+  const run = _qbmRuns[idx];
+  if(!run) return;
+  if(!requireRosterAuth()) return;
+  if(!confirm('Remove this entry (' + qbmDateText(run) + ')?')) return;
+  run.items.forEach(it=>{
+    const list = EXCHANGES[it.dk];
+    if(!Array.isArray(list)) return;
+    const i = list.findIndex(x=> x.table === it.ex.table && x.pos === it.ex.pos && +x.team === +it.ex.team && (x.nightHalf || '') === (it.ex.nightHalf || ''));
+    if(i < 0) return;
+    try{ if(list[i].cl) clLedgerDrop(it.dk, list[i]); }catch(e){}
+    list.splice(i, 1);
+    if(!list.length) delete EXCHANGES[it.dk];
+  });
+  saveExchangesData(EXCHANGES);
+  try{ renderRoster(); renderRosterCtrl(); if(typeof renderRosterComm === 'function') renderRosterComm(); checkMyExchangeNotifications(); }catch(e){}
+  renderQbm();
+}
+function printQbm(){
+  const paper = document.getElementById('qbmPaper');
+  if(!paper) return;
+  let root = document.getElementById('qbmPrintRoot');
+  if(!root){ root = document.createElement('div'); root.id = 'qbmPrintRoot'; document.body.appendChild(root); }
+  root.innerHTML = '<div class="qbm-paper">' + paper.innerHTML + '</div>';
+  root.querySelectorAll('.qbm-x').forEach(x=> x.remove());
+  root.querySelectorAll('[contenteditable]').forEach(x=> x.removeAttribute('contenteditable'));
+  document.body.classList.add('qbm-printing');
+  const done = ()=>{ document.body.classList.remove('qbm-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } }, 60);
+}
+function initQbm(){
+  const ov = document.getElementById('qbmOverlay'), btn = document.getElementById('qbmOpenBtn');
+  if(!ov || !btn) return;
+  btn.addEventListener('click', ()=>{ renderQbm(); ov.classList.add('show'); });
+  document.getElementById('qbmClose').addEventListener('click', ()=> ov.classList.remove('show'));
+  ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('show'); });
+  document.getElementById('qbmPrintBtn').addEventListener('click', printQbm);
+}
+
 function initExchangePanel(){
   const dateInput = document.getElementById('exchangeDate');
   const tableSel = document.getElementById('exchangeTable');
@@ -8327,6 +9001,8 @@ function initExchangePanel(){
   const halfSel = document.getElementById('exchangeNightHalf');
   const subInput = document.getElementById('exchangeSubName');
   const addBtn = document.getElementById('exchangeAddBtn');
+  const clBtn = document.getElementById('exchangeClBtn');
+  const clMode = document.getElementById('exchangeClMode');
   if(!dateInput) return;
 
   const today = todayDateKey();
@@ -8337,31 +9013,103 @@ function initExchangePanel(){
   tableSel.addEventListener('change', populateExchangePositions);
   posSel.addEventListener('change', updateExchangeCurrentHint);
   teamSel.addEventListener('change', updateExchangeCurrentHint);
-  dateInput.addEventListener('change', updateExchangeCurrentHint);
+  dateInput.addEventListener('change', ()=>{
+    if(isThMrTable(tableSel.value)) populateExchangePositions(); else updateExchangeCurrentHint();
+  });
+  if(clMode) clMode.addEventListener('change', ()=>{ if(subInput) subInput.style.opacity = clMode.value === 'vacant' ? '.45' : ''; });
+  initExchangePicker();
+  initClData();
+  initQbm();
+  document.querySelectorAll('.xbtn').forEach(b=> b.addEventListener('click', ()=>{
+    document.querySelectorAll('.xbtn').forEach(x=> x.classList.toggle('on', x === b));
+  }));
+
+  const afterChange = ()=>{
+    renderExchangeList();
+    renderRoster();
+    renderRosterCtrl();
+    if(typeof renderRosterComm === 'function') renderRosterComm();
+    checkMyExchangeNotifications();
+    updateExchangeCurrentHint();
+    try{ const q = document.getElementById('qbmOverlay'); if(q && q.classList.contains('show')) renderQbm(); }catch(e){}
+  };
 
   if(addBtn){
     addBtn.addEventListener('click', ()=>{
       if(!requireRosterAuth()) return;
-      const dateKey = dateInput.value;
-      if(!dateKey){ alert('একটা তারিখ দিন।'); return; }
-      if(dateKey < today){ alert('আজকের আগের তারিখে এক্সচেঞ্জ দেওয়া যাবে না।'); return; }
+      const r = exchangeResolve();
+      if(!r){ alert('Please select a date and a position.'); return; }
+      if(r.dateKey < today){ alert('Exchange cannot be added for a past date.'); return; }
       const subName = (subInput.value || '').trim();
-      if(!subName){ alert('Substitute-এর নাম দিন।'); return; }
-      const nightHalf = (halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
-      const entry = { table: tableSel.value, pos: posSel.value, team: +teamSel.value, subName, nightHalf };
-      if(!EXCHANGES[dateKey]) EXCHANGES[dateKey] = [];
-      // Same table+pos+team+half combo replaces any earlier entry for it,
-      // but a 1st-night and 2nd-night entry for the same position/team/date
-      // are different halves and must both be able to exist at once.
-      EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===entry.table && x.pos===entry.pos && x.team===entry.team && (x.nightHalf||'')===(entry.nightHalf||'')));
-      EXCHANGES[dateKey].push(entry);
-      saveExchangesData(EXCHANGES);
+      if(!subName){ alert('Please select a substitute.'); return; }
+      const hasCl = (EXCHANGES[r.dateKey] || []).some(x=> (x.cl || x.special) && x.table === r.table && x.pos === r.pos && +x.team === +r.team);
+      if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
+      const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
+      // Same table+pos+team+half combo replaces any earlier entry for it; a 1st-night and a 2nd-night entry can both exist.
+      exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:r.team, subName, nightHalf, who:r.who });
       subInput.value = '';
-      renderExchangeList();
-      renderRoster();
-      renderRosterCtrl();
-      checkMyExchangeNotifications();
+      afterChange();
     });
+  }
+
+  if(clBtn){
+    const commitCl = (vacant)=>{
+      const r = exchangeResolve();
+      if(!r) return;
+      const special = window._clKind === 'special';
+      const sub = vacant ? '' : (subInput.value || '').trim();
+      if(!vacant && !sub){ alert('Select a substitute first.'); return; }
+      if(special){
+        /* Festival / EL / special case: no CL count, no ledger — only somebody is put on the position */
+        exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, vacant:!sub, who:r.who });
+        subInput.value = '';
+        afterChange();
+        return;
+      }
+      const days = clDaysForShift(r.shift);
+      const year = +r.dateKey.slice(0,4);
+      const id = clIdFor(r.dateKey, r.table, r.pos, r.team);
+      const used = clUsedBy(r.who, year, id);
+      if(used + days > CL_LIMIT){
+        alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for this person. CL not added.');
+        return;
+      }
+      exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', cl:true, vacant:!sub, who:r.who });
+      clLedgerSet(r.dateKey, r, days);
+      subInput.value = '';
+      afterChange();
+    };
+    window._commitCl = commitCl;
+    const chooser = document.getElementById('clChooseOverlay');
+    const closeChooser = ()=>{ if(chooser) chooser.classList.remove('show'); };
+    if(chooser){
+      chooser.addEventListener('click', e=>{ if(e.target === chooser) closeChooser(); });
+      document.getElementById('clChooseVacant').addEventListener('click', ()=>{ closeChooser(); commitCl(true); });
+      document.getElementById('clChooseSub').addEventListener('click', ()=>{
+        closeChooser();
+        if((subInput.value || '').trim()) commitCl(false);
+        else { window._pendingClAfterPick = true; openExchangePicker(); }
+      });
+    }
+    const openChooser = (kind)=>{
+      if(!requireRosterAuth()) return;
+      const r = exchangeResolve();
+      const what = kind === 'special' ? 'Leave' : 'CL';
+      if(!r){ alert('Please select a date and a position.'); return; }
+      if(r.dateKey < today){ alert(what + ' cannot be given for a past date.'); return; }
+      if(!r.thmr && r.shift === 'Off'){ alert('This team has no duty on this date.'); return; }
+      const win = exchangeShiftWindow(r.dateKey, r.team, '');
+      if(win && win.end <= Date.now()){ alert('This shift has already ended.'); return; }
+      if(!r.who || r.who === '-'){ alert('No name in this cell, so ' + what + ' cannot be given.'); return; }
+      window._clKind = kind;
+      const lab = kind === 'special' ? 'Festival / EL / Special' : 'CL';
+      document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
+      document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
+      if(chooser) chooser.classList.add('show');
+    };
+    clBtn.addEventListener('click', ()=> openChooser('cl'));
+    const spBtn = document.getElementById('exchangeSpBtn');
+    if(spBtn) spBtn.addEventListener('click', ()=> openChooser('special'));
   }
 
   renderExchangeList();
@@ -10548,8 +11296,22 @@ function renderRosterNow(){
   if(!view) return;
   const idx = currentOnDutyTeamIndex();
   const closeBtn = '<button type="button" class="now-close" id="rosterNowClose">✕ Close</button>';
+  const escT = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Traffic Hand & Marshaller run on their own 4-slot rotation, so they come from that module, not from the A-E team index
+  const thmrRows = ()=>{
+    const t = (typeof window.hsiaTHMRNow === 'function') ? window.hsiaTHMRNow() : null;
+    if(!t) return '';
+    const lines = bl=> bl.map(x=>
+      (x.tag ? '<div class="now-line"><small>' + escT(x.tag) + '</small></div>' : '') +
+      (x.names.length ? '<div class="now-line"><span class="now-nm">' + x.names.map(escT).join(', ') + '</span></div>' : '')
+    ).join('');
+    return '<tr class="now-group"><td colspan="2">Traffic Hand &amp; Marshaller · ' + escT(t.time) + '</td></tr>' +
+      '<tr><td class="now-pos">Traffic Hand</td><td class="now-name">' + lines(t.th) + '</td></tr>' +
+      '<tr><td class="now-pos">Marshaller</td><td class="now-name">' + lines(t.mr) + '</td></tr>';
+  };
   if(idx < 0){
-    view.innerHTML = '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div><div class="now-head-v">No team on duty</div></div>' + closeBtn + '</div>';
+    view.innerHTML = '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div><div class="now-head-v">No team on duty</div></div>' + closeBtn + '</div>' +
+      '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + thmrRows() + '</tbody></table></div>';
     return;
   }
   const st = getStatus(idx, Date.now(), nowDhakaFields());
@@ -10587,9 +11349,9 @@ function renderRosterNow(){
           if(!nm || nm === '-') return '';
           const tag = e.nightHalf === '1' ? '<span class="now-tag n1">1st Night</span>'
                     : e.nightHalf === '2' ? '<span class="now-tag n2">2nd Night</span>' : '';
-          const cls = 'now-line';
+          const cls = 'now-line'; const clTag = e.cl ? '<span class="now-tag cl">CL</span>' : e.special ? '<span class="now-tag cl">EL</span>' : '';
           const note = (sub && base) ? '<small>' + esc(base) + '</small>' : '';
-          return '<div class="' + cls + '"><span class="now-nm">' + esc(nm) + '</span>' + tag + note + '</div>';
+          return '<div class="' + cls + '"><span class="now-nm">' + esc(nm) + '</span>' + tag + clTag + note + '</div>';
         }).join('');
         if(!cell) return;
       }
@@ -10601,7 +11363,7 @@ function renderRosterNow(){
   view.innerHTML =
     '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div>' +
     '<div class="now-head-v">Team ' + esc(TEAMS[idx]) + ' · <span>' + esc(st.shiftType) + '</span></div></div>' + closeBtn + '</div>' +
-    '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + thmrRows() + '</tbody></table></div>';
 }
 (function initRosterNow(){
   const btn = document.getElementById('rosterNowBtn');
@@ -10641,44 +11403,203 @@ function renderRosterNow(){
   });
 })();
 
-/* ---- Duty Roster: Traffic Hand & Marshaller (10-day cycle repeating indefinitely, 5 rotating teams) ---- */
+/* ---- Duty Roster: Traffic Hand & Marshaller — follows the main "Who's on duty" team rotation (A-E) ---- */
 (function initTrafficMarshaller(){
-  const START = Date.UTC(2026,7,31);            // cycle day 1 = 31 Aug 2026; pattern repeats forever
-  const TH = [['Alim Faruk'],['Monowar'],['Tanvir Bashar'],['Masum Sathee'],['Arif Tipu']];
-  const MR = [['Borkat','Siddiq','Jobaydur'],['Shagor','Shohag','Ashraful'],['Waliul','Mehedi','Tarek'],['Dilip','Shahidul','Alamin'],['Taher','Jamal','Alamgir']];
-  // [time, shift letter, team offset, colour var]; team offset from that day's team k (evening = k, night = k-1, morning = afternoon = k+2)
-  const SH = [['8:30 PM – 12:00 AM','C',0,'--night'],['12:00 AM – 7:30 AM','C',4,'--night'],['7:30 AM – 2:00 PM','A',2,'--morning'],['2:00 PM – 8:30 PM','B',2,'--afternoon']];
+  const START = Date.UTC(2026,7,31);            // cycle day 1 = 31 Aug 2026; the 5-group pattern repeats forever
+  const THMR_KEY = 'HSIA_THMR_V1';
+  const DEF_TH = [['Alim','Faruk'],['Monowar',''],['Tanvir','Bashar'],['Masum','Sathee'],['Arif','Tipu']];   // every name is its own person
+  const DEF_MR = [['Borkat','Siddiq','Jobaydur'],['Shagor','Shohag','Ashraful'],['Waliul','Mehedi','Tarek'],['Dilip','Shahidul','Alamin'],['Taher','Jamal','Alamgir']];
+  // group lists survive Firebase (which turns arrays into objects and drops empty ones)
+  // oldFmt: data saved before Traffic Hand had two people per group ("Tanvir Bashar" in one box) -> split into separate people
+  function normGroups(v, n, def, oldFmt){
+    if(!v || typeof v !== 'object') return def.map(a=> a.slice());
+    const out = [];
+    for(let g=0; g<5; g++){
+      const src = v[g];
+      let a = [];
+      for(let i=0; i<n; i++){ const x = src ? src[i] : ''; a.push(x == null ? '' : String(x)); }
+      if(oldFmt && n === 2 && !a[1] && a[0]){
+        const w = a[0].trim().split(/\s+/);
+        a = [w[0] || '', w.slice(1).join(' ')];
+      }
+      out.push(a);
+    }
+    return out;
+  }
+  let TH = DEF_TH.map(a=> a.slice()), MR = DEF_MR.map(a=> a.slice());
+  try{
+    const sv = JSON.parse(localStorage.getItem(THMR_KEY));
+    if(sv && sv.th && sv.mr){ TH = normGroups(sv.th, 2, DEF_TH, sv.v !== 2); MR = normGroups(sv.mr, 3, DEF_MR); }
+  }catch(e){}
+  let EDITING = false;
+  function persist(){
+    try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2 })); }catch(e){}
+    try{ if(typeof pushThmrToFirebaseDebounced === 'function') pushThmrToFirebaseDebounced(); }catch(e){}
+  }
+  // Exactly the printed roster (one column per date). With k = (days since START) % 5:
+  //   20:30-00:00 = group k, 00:00-07:30 = group k-1, 07:30-14:00 = 14:00-20:30 = group k+2.
+  // The two night slots are shown together as ONE Night row, names only.
+  const SH = [['8:30 PM – 7:30 AM','Night','--night'],['7:30 AM – 2:00 PM','Morning','--morning'],['2:00 PM – 8:30 PM','Afternoon','--afternoon']];
+  const SLOT_LABEL = ['Night 8:30PM–12AM','Night 12AM–7:30AM','Morning','Afternoon'];
   const $ = id=> document.getElementById(id);
   const dateInput = $('thDate');
   if(!dateInput) return;
   const pad = n=> String(n).padStart(2,'0');
+  const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const todayStr = ()=>{ const f = nowDhakaFields(); return f.y + '-' + pad(f.m+1) + '-' + pad(f.day); };
   const toUtc = str=>{ const a = str.split('-').map(Number); return Date.UTC(a[0], a[1]-1, a[2]); };
   const fmt = ms=>{ const d = new Date(ms); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth()+1) + '-' + pad(d.getUTCDate()); };
-  function curShiftRow(){
+  // night belongs to the date column it STARTS on; after midnight it is still that (previous) date's night
+  function curShift(){
     const f = nowDhakaFields(), m = f.h*60 + f.min;
-    return m >= 1230 ? 0 : m < 450 ? 1 : m < 840 ? 2 : 3;
+    return { r: (m >= 1230 || m < 450) ? 0 : m < 840 ? 1 : 2, prev: m < 450 };
+  }
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dayIdxMs = ms=> Math.round((ms - START)/86400000);
+  const dayIdx = str=> dayIdxMs(toUtc(str));
+  const grp = (teams, idx, off)=> teams[((((idx % 5) + 5) % 5) + off) % 5];
+  // blocks of names for shift row r on day index idx: [{tag, slot, names}]
+  function blocks(teams, idx, r){
+    if(r === 0) return [{ tag:'', slot:0, names:grp(teams, idx, 0) }, { tag:'', slot:1, names:grp(teams, idx, 4) }];   // night: 8:30 PM-12 AM group, then 12-7:30 AM group
+    return [{ tag:'', slot: r === 1 ? 2 : 3, names:grp(teams, idx, 2) }];
+  }
+  const teamsOf = kind=> kind === 'th' ? TH : MR;
+  // exchange / CL entry for one person of one slot on one date column
+  function findEx(dk, kind, slot, pi){
+    const raw = (typeof EXCHANGES === 'object' && EXCHANGES) ? EXCHANGES[dk] : null;
+    const list = Array.isArray(raw) ? raw : Object.values(raw || {});
+    const pos = (kind === 'th' ? 'TH-' : 'MR-') + (pi + 1);
+    return list.find(x=> x && x.table === kind && +x.team === 100 + slot && x.pos === pos) || null;
+  }
+  const words = (n, cm)=> '<span class="thg-w">' + esc(String(n).trim()) + (cm ? ',' : '') + '</span>';
+  function personHtml(dk, kind, slot, pi, name, last){
+    const base = String(name || '').trim();
+    const e = findEx(dk, kind, slot, pi);
+    if(!e) return base ? '<div class="thg-p">' + words(base, !last) + '</div>' : '';
+    const sub = String(e.subName || '').trim();
+    return '<div class="thg-p thg-x">' + (base ? '<div class="thg-old">' + words(base, false) + '</div>' : '') +
+      (sub ? '<span class="thg-sub">🔄 ' + esc(sub) + (e.cl ? ' · CL' : e.special ? ' · EL' : '') + (last ? '' : ',') + '</span>' : '<span class="thg-sub vac">' + (e.special ? 'Special' : 'CL') + ' · Vacant' + (last ? '' : ',') + '</span>') + '</div>';
   }
   function render(){
     if(!dateInput.value) dateInput.value = todayStr();
-    const ms = toUtc(dateInput.value), i = Math.round((ms - START)/86400000), k = ((i % 5) + 5) % 5;
-    const live = dateInput.value === todayStr() ? curShiftRow() : -1;
+    const i = dayIdx(dateInput.value), cd = ((i % 10) + 10) % 10;   // cd = selected column (0-9)
+    const base = toUtc(dateInput.value) - cd*86400000;              // date of column 1 in this 10-day block
+    const cur = curShift(), liveMs = toUtc(todayStr()) - (cur.prev ? 86400000 : 0);
+    // which A-E team works each shift on the selected date (Night belongs to the date it starts on)
+    const selD = new Date(toUtc(dateInput.value));
+    const teamFor = r=>{
+      const want = r === 0 ? 'Night' : r === 1 ? 'Morning' : 'Afternoon';
+      for(let t=0;t<5;t++){ if(shiftFor(t, selD.getUTCFullYear(), selD.getUTCMonth(), selD.getUTCDate()) === want) return TEAMS[t]; }
+      return '';
+    };
     const cs = getComputedStyle(document.documentElement);
-    const build = teams=> SH.map((s,r)=>{
-      const c = cs.getPropertyValue(s[3]).trim();
-      const names = teams[(k + s[2]) % 5].map(n=> '<div>' + n + '</div>').join('');
-      return '<tr' + (r === live ? ' class="th-now"' : '') + ' style="--c:' + c + '"><td class="th-sh"><i></i>' + s[0] + ' <small>(' + s[1] + ' shift)</small></td><td class="th-nm">' + names + '</td></tr>';
+    let head = '<tr><th class="thg-sh">Shift</th>';
+    for(let c=0;c<10;c++){
+      const d = new Date(base + c*86400000);
+      head += '<th class="thg-c' + (c === cd ? ' thg-sel' : '') + '"><b>' + (c+1) + '</b><small>' + pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + '</small></th>';
+    }
+    head += '</tr>';
+    const build = kind=> SH.map((s,r)=>{
+      const teams = teamsOf(kind);
+      const col = cs.getPropertyValue(s[2]).trim();
+      const tm = teamFor(r);
+      const tag = tm ? '<small class="thg-tag' + (r === cur.r && dateInput.value === todayStr() ? ' run' : ' nxt') + '">Team ' + tm + '</small>' : '';
+      let tr = '<tr style="--c:' + col + '"><td class="thg-sh' + (r === cur.r ? ' thg-live-row' : '') + '"><i></i>' + s[1] + tag + '</td>';
+      for(let c=0;c<10;c++){
+        const ms = base + c*86400000, dk = fmt(ms);
+        const names = blocks(teams, dayIdxMs(ms), r).map(bl=>
+          '<div class="thg-b">' + bl.names.map((n,pi)=> personHtml(dk, kind, bl.slot, pi, n, pi >= bl.names.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1))).join('') + '</div>'
+        ).join('');
+        tr += '<td class="' + (c === cd ? 'thg-sel' : '') + (r === cur.r && ms === liveMs ? ' thg-live' : '') + '">' + names + '</td>';
+      }
+      return tr + '</tr>';
     }).join('');
-    $('thBodyTH').innerHTML = build(TH);
-    $('thBodyMR').innerHTML = build(MR);
-    $('thInfo').textContent = 'Cycle day ' + (((i % 10) + 10) % 10 + 1) + ' of 10';
+    $('thHeadMR').innerHTML = head;  $('thBodyMR').innerHTML = build('mr');
+    $('thHeadTH').innerHTML = head;  $('thBodyTH').innerHTML = build('th');
+    $('thInfo').textContent = 'Cycle day ' + (cd + 1) + ' of 10';
   }
+  // group editor (base roster): one input per person, saved as you type
+  function renderEdit(){
+    const mk = (id, groups, kind)=>{
+      const el = $(id); if(!el) return;
+      el.innerHTML = groups.map((names,g)=>
+        '<div class="thm-row"><span class="thm-g">G' + (g+1) + '</span>' +
+        names.map((n,p)=> '<input class="thm-inp" type="text" autocomplete="off" data-k="' + kind + '" data-g="' + g + '" data-p="' + p + '" value="' + esc(n) + '"' + (EDITING ? '' : ' readonly') + '>').join('') +
+        '</div>').join('');
+    };
+    mk('thmEditTH', TH, 'th');
+    mk('thmEditMR', MR, 'mr');
+  }
+  const col = $('rosterTHCol');
+  if(col) col.addEventListener('input', e=>{
+    const inp = e.target.closest ? e.target.closest('.thm-inp') : null;
+    if(!inp) return;
+    const arr = inp.getAttribute('data-k') === 'th' ? TH : MR;
+    arr[+inp.getAttribute('data-g')][+inp.getAttribute('data-p')] = inp.value;
+    persist(); render();
+    try{ if(typeof updateExchangeCurrentHint === 'function') populateExchangePositions(); }catch(err){}
+  });
+  window.hsiaTHMRUnlock = function(){
+    EDITING = true;
+    document.querySelectorAll('#rosterTHCol .thm-inp').forEach(i=> i.readOnly = false);
+  };
+  window.hsiaTHMRSave = function(){
+    const trim = a=> a.map(g=> g.map(n=> String(n || '').trim()));
+    TH = trim(TH); MR = trim(MR);
+    persist(); renderEdit(); if(EDITING) window.hsiaTHMRUnlock(); render();
+  };
+  window.hsiaTHMRData = ()=> ({ th:TH, mr:MR, v:2 });
+  window.hsiaTHMRApplyRemote = function(val){
+    const th = normGroups(val.th, 2, DEF_TH, val.v !== 2), mr = normGroups(val.mr, 3, DEF_MR);
+    if(JSON.stringify({ th:th, mr:mr }) === JSON.stringify({ th:TH, mr:MR })) return;
+    const ae = document.activeElement;
+    if(ae && ae.classList && ae.classList.contains('thm-inp')) return;   // someone is typing here right now
+    TH = th; MR = mr;
+    try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2 })); }catch(e){}
+    renderEdit(); render();
+  };
+  window.hsiaTHMRRender = render;
+  // used by the Exchange / CL form: who stands in slot `slot` (0-3), person `pi`, on a date
+  window.hsiaTHMRPerson = function(dateKey, kind, slot, pi){
+    const idx = dayIdx(dateKey), teams = teamsOf(kind);
+    const g = grp(teams, idx, slot === 0 ? 0 : slot === 1 ? 4 : 2);
+    return g[pi] || '';
+  };
+  window.hsiaTHMRPeople = function(dateKey, kind){
+    const idx = dayIdx(dateKey), teams = teamsOf(kind);
+    return [0,1,2,3].map(slot=> ({ slot:slot, label:SLOT_LABEL[slot], people: grp(teams, idx, slot === 0 ? 0 : slot === 1 ? 4 : 2).slice() }));
+  };
+  // used by the Duty Roster "Now" view: Traffic Hand / Marshaller of the shift running right now (with exchange / CL applied)
+  window.hsiaTHMRNow = function(){
+    const cur = curShift(), idx = dayIdxMs(toUtc(todayStr())) - (cur.prev ? 1 : 0);
+    const dk = fmt(START + idx*86400000);
+    const conv = kind=> blocks(teamsOf(kind), idx, cur.r).map(b=>({
+      tag: b.tag,
+      names: b.names.map((n,pi)=>{
+        const e = findEx(dk, kind, b.slot, pi);
+        if(!e) return String(n || '').trim();
+        const sub = String(e.subName || '').trim();
+        return sub ? '🔄 ' + sub + (e.cl ? ' (CL)' : e.special ? ' (EL)' : '') : (e.special ? 'Vacant (Special)' : 'Vacant (CL)');
+      }).filter(Boolean)
+    }));
+    return { time: SH[cur.r][0], th: conv('th'), mr: conv('mr') };
+  };
   const shift = d=>{ dateInput.value = fmt(toUtc(dateInput.value || todayStr()) + d*86400000); render(); };
   $('thPrev').addEventListener('click', ()=> shift(-1));
   $('thNext').addEventListener('click', ()=> shift(1));
   $('thToday').addEventListener('click', ()=>{ dateInput.value = todayStr(); render(); });
+  // keep the "running now" highlight current: re-render as time passes, and follow today across midnight
+  let lastToday = todayStr();
+  const refresh = ()=>{
+    const t = todayStr();
+    if(t !== lastToday){ if(dateInput.value === lastToday) dateInput.value = t; lastToday = t; }
+    render();
+  };
+  setInterval(refresh, 30000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refresh(); });
   dateInput.addEventListener('change', render);
   document.querySelector('#rosterTabs [data-tab="rosterTHCol"]').addEventListener('click', render);
+  renderEdit();
   render();
 })();
 
