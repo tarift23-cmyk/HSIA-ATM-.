@@ -974,6 +974,7 @@ table.thg-table .thg-w{ white-space:nowrap; }
 table.thg-table .thg-old{ opacity:.5; text-decoration:line-through; text-decoration-color:#F54249; }
 table.thg-table .thg-sub{ display:block; margin-top:2px; color:#3ddc97; font-size:11px; font-weight:700; }
 table.thg-table .thg-sub.vac{ color:#F54249; }
+table.thg-table small.thg-tm.ot{ color:#f5b53d; }
 .thm-edit{ margin-top:14px; }
 .thm-row{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
 .thm-g{ flex:0 0 26px; font-size:11px; font-weight:700; color:var(--muted); }
@@ -5298,6 +5299,17 @@ T7ACP|GLF6|T7ACP|ZSJN|VIDP|A201|12:04-12:26
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js"></script>
 <script>
 const TEAMS = ['A','B','C','D','E'];
+/* Traffic Hand and Marshaller both work the 5 shifts A-E (regular rotation = main roster) plus overtime.
+   Their Exchange / CL entries use team = 110 + slot (older entries used 100 + slot and are only shown in the list). */
+const THS_BASE = 110;
+const THS_META = [
+  { label:'Night',          shift:'Night',     period:'2030-0730', cl:'night',   ot:false },
+  { label:'Night OT',       shift:'OT',        period:'2030-0730', cl:'night',   ot:true  },
+  { label:'Morning',        shift:'Morning',   period:'0730-1400', cl:'morning', ot:false },
+  { label:'Afternoon',      shift:'Afternoon', period:'1400-2030', cl:'evening', ot:false },
+  { label:'Morning OT',     shift:'OT',        period:'0730-1400', cl:'morning', ot:true  },
+  { label:'Afternoon OT',   shift:'OT',        period:'1400-2030', cl:'evening', ot:true  }
+];
 const BASE = ['Night','Off','Off','Afternoon','Morning'];
 const CAL_CLASS = { 'Morning':'morning', 'Afternoon':'afternoon', 'Night':'night', 'Off':'off' };
 const BN_LABEL = { 'Morning':'সকাল', 'Afternoon':'বিকাল', 'Night':'রাত', 'Off':'Off' };
@@ -6389,7 +6401,13 @@ function todayExchangesFor(tableKey){
 function exchangeShiftWindow(dateKey, team, half){
   const [y,m,day] = (dateKey||'').split('-').map(Number);
   if(!y || !m || !day) return null;
-  if(+team >= 100){   // Traffic Hand / Marshaller slot: 100 = 8:30PM-12AM, 101 = 12AM-7:30AM, 102 = Morning, 103 = Afternoon
+  if(+team >= THS_BASE){   // Traffic Hand (A-E model): 0 Night, 1 Night OT, 2 Morning, 3 Afternoon, 4 Morning OT, 5 Afternoon OT
+    const nd1 = addDays(y, m-1, day, 1), sl1 = +team - THS_BASE;
+    if(sl1 === 0 || sl1 === 1) return { start: dhakaInstant(y, m-1, day, 20, 30), end: dhakaInstant(nd1.y, nd1.m, nd1.day, 7, 30) };
+    if(sl1 === 2 || sl1 === 4) return { start: dhakaInstant(y, m-1, day, 7, 30), end: dhakaInstant(y, m-1, day, 14, 0) };
+    return { start: dhakaInstant(y, m-1, day, 14, 0), end: dhakaInstant(y, m-1, day, 20, 30) };
+  }
+  if(+team >= 100){   // Marshaller slot: 100 = 8:30PM-12AM, 101 = 12AM-7:30AM, 102 = Morning, 103 = Afternoon
     const nd0 = addDays(y, m-1, day, 1), sl = +team - 100;
     if(sl === 0) return { start: dhakaInstant(y, m-1, day, 20, 30), end: dhakaInstant(nd0.y, nd0.m, nd0.day, 0, 0) };
     if(sl === 1) return { start: dhakaInstant(nd0.y, nd0.m, nd0.day, 0, 0), end: dhakaInstant(nd0.y, nd0.m, nd0.day, 7, 30) };
@@ -6474,6 +6492,7 @@ function clApplyRemote(val){
 }
 function exTeamLabel(ex){
   const t = +ex.team;
+  if(t >= THS_BASE) return (THS_META[t - THS_BASE] || {}).label || '—';
   if(t >= 100) return ['Night 8:30PM–12AM', 'Night 12AM–7:30AM', 'Morning', 'Afternoon'][t - 100] || '—';
   return 'Team ' + (TEAMS[t] || '?');
 }
@@ -8563,8 +8582,9 @@ function exchangeResolve(){
     const slot = +v[0], pi = +v[1];
     if(v.length < 2 || isNaN(slot) || isNaN(pi) || !window.hsiaTHMRPerson) return null;
     const who = window.hsiaTHMRPerson(dateKey, tableSel.value, slot, pi);
-    return { thmr:true, table:tableSel.value, pos:(tableSel.value === 'th' ? 'TH-' : 'MR-') + (pi + 1), team:100 + slot,
-             who:String(who || '').trim(), shift: slot <= 1 ? 'Night' : slot === 2 ? 'Morning' : 'Afternoon', dateKey };
+    const isTH = tableSel.value === 'th';
+    return { thmr:true, table:tableSel.value, pos:(isTH ? 'TH-' : 'MR-') + (pi + 1), team:THS_BASE + slot,
+             who:String(who || '').trim(), shift:(THS_META[slot] || {}).shift || '', dateKey };
   }
   const data = rosterDataFor(tableSel.value);
   const row = data.find(r => r.pos === posSel.value);
@@ -8908,6 +8928,7 @@ function initClData(){
 let _qbmRuns = [];
 function qbmPeriod(ex, dk){
   const t = +ex.team;
+  if(t >= THS_BASE) return (THS_META[t - THS_BASE] || {}).period || '';
   if(t >= 100) return ['2030-0000','0000-0730','0730-1400','1400-2030'][t - 100] || '';
   const p = dk.split('-').map(Number);
   const st = shiftFor(t, p[0], p[1]-1, p[2]);
@@ -8918,6 +8939,7 @@ function qbmPeriod(ex, dk){
 }
 function qbmShiftLabel(ex, dk){
   const t = +ex.team;
+  if(t >= THS_BASE) return (THS_META[t - THS_BASE] || {}).cl || '';
   if(t >= 100) return ['night','night','morning','evening'][t - 100] || '';
   const p = dk.split('-').map(Number);
   const st = shiftFor(t, p[0], p[1]-1, p[2]);
@@ -10766,9 +10788,54 @@ function findOpenskyByCallsign(states, cs){
    { status: 'outside_fir' }    — found, but currently outside Bangladesh airspace
    { status: 'not_found' }      — not seen anywhere in the search rectangle at all
 */
+/* Free community ADS-B feeds (no key needed) — used when OpenSky has no answer or its quota is used up. */
+const ADSB_SOURCES = [
+  { name:'adsb.lol',       url: cs=> 'https://api.adsb.lol/v2/callsign/' + encodeURIComponent(cs) },
+  { name:'airplanes.live', url: cs=> 'https://api.airplanes.live/v2/callsign/' + encodeURIComponent(cs) }
+];
+/* -> { answered:boolean, rec:OpenSky-shaped record | null } */
+async function lookupAdsbLive(cs){
+  const want = normalizeCallsignKey(cs);
+  let answered = false;
+  for(const src of ADSB_SOURCES){
+    try{
+      const ctl = new AbortController(); const tm = setTimeout(()=> ctl.abort(), 8000);
+      const resp = await fetch(src.url(cs), { signal: ctl.signal }); clearTimeout(tm);
+      if(!resp.ok) continue;
+      const data = await resp.json();
+      answered = true;
+      const list = data.ac || data.aircraft || [];
+      const ac = list.find(a=> a && a.lat != null && a.lon != null && normalizeCallsignKey(a.flight || '') === want);
+      if(!ac) continue;
+      const ground = ac.alt_baro === 'ground';
+      const altFt = (typeof ac.alt_baro === 'number') ? ac.alt_baro : (typeof ac.alt_geom === 'number' ? ac.alt_geom : null);
+      return { answered:true, rec:{
+        callsign: String(ac.flight || cs).trim(),
+        latitude: +ac.lat, longitude: +ac.lon,
+        baro_altitude: ground ? 0 : (altFt != null ? altFt / 3.28084 : null),
+        on_ground: ground,
+        velocity: (ac.gs != null) ? ac.gs / 1.94384 : null,
+        true_track: (ac.track != null) ? +ac.track : null,
+        last_contact: Math.floor(Date.now()/1000 - (+ac.seen_pos || +ac.seen || 0)),
+        source: src.name
+      }};
+    }catch(e){ /* try the next feed */ }
+  }
+  return { answered, rec:null };
+}
+
 async function lookupOpenskyLive(cs){
-  const states = await fetchOpenskyStates();
-  const rec = findOpenskyByCallsign(states, cs);
+  let osErr = null, rec = null;
+  try{
+    const states = await fetchOpenskyStates();
+    rec = findOpenskyByCallsign(states, cs);
+    if(rec) rec.source = 'OpenSky';
+  }catch(e){ osErr = e; }
+  if(!rec){
+    const alt = await lookupAdsbLive(cs);            /* fallback: adsb.lol / airplanes.live */
+    if(alt.rec) rec = alt.rec;
+    else if(osErr && !alt.answered) throw osErr;      /* nothing answered at all -> show the old error message */
+  }
   if(!rec) return { status: 'not_found' };
   if(rec.latitude == null || rec.longitude == null || !pointInBdFir(rec.latitude, rec.longitude)){
     return { status: 'outside_fir' };
@@ -10867,7 +10934,7 @@ function initFlightRadar(){
       }
 
       const rec = result.rec;
-      if(liveCs) liveCs.textContent = '🔴 লাইভ (OpenSky, Dhaka FIR) — ' + (rec.callsign || cs).trim();
+      if(liveCs) liveCs.textContent = '🔴 লাইভ (' + (rec.source || 'OpenSky') + ', Dhaka FIR) — ' + (rec.callsign || cs).trim();
       if(liveGround) liveGround.textContent = rec.on_ground ? 'গ্রাউন্ডে (Ground)' : 'উড্ডয়নরত (Airborne)';
       if(liveAlt) liveAlt.textContent = (rec.baro_altitude!=null) ? Math.round(rec.baro_altitude*3.28084).toLocaleString() + ' ft' : '—';
       if(liveSpeed) liveSpeed.textContent = (rec.velocity!=null) ? Math.round(rec.velocity*1.94384) + ' kt' : '—';
@@ -11595,8 +11662,11 @@ function renderRosterNow(){
 (function initTrafficMarshaller(){
   const START = Date.UTC(2026,7,31);            // cycle day 1 = 31 Aug 2026; the 5-group pattern repeats forever
   const THMR_KEY = 'HSIA_THMR_V1';
-  const DEF_TH = [['Alim','Faruk'],['Monowar',''],['Tanvir','Bashar'],['Masum','Sathee'],['Arif','Tipu']];   // every name is its own person
-  const DEF_MR = [['Borkat','Siddiq','Jobaydur'],['Shagor','Shohag','Ashraful'],['Waliul','Mehedi','Tarek'],['Dilip','Shahidul','Alamin'],['Taher','Jamal','Alamgir']];
+  // index = shift A..E; every name is its own person (up to 3 per shift)
+  const DEF_TH = [['Arif','Tipu',''],['Alim','Faruk',''],['Monowar','Mizan',''],['Bashar','Tanvir',''],['Masum','Sathee','Kawsar']];
+  let MIGRATED = false;
+  // index = shift A..E (printed roster group g = shift (g+1)%5)
+  const DEF_MR = [['Taher','Jamal','Alamgir'],['Borkat','Siddiq','Jobaydur'],['Shagor','Shohag','Ashraful'],['Waliul','Mehedi','Tarek'],['Dilip','Shahidul','Alamin']];
   // group lists survive Firebase (which turns arrays into objects and drops empty ones)
   // oldFmt: data saved before Traffic Hand had two people per group ("Tanvir Bashar" in one box) -> split into separate people
   function normGroups(v, n, def, oldFmt){
@@ -11617,11 +11687,14 @@ function renderRosterNow(){
   let TH = DEF_TH.map(a=> a.slice()), MR = DEF_MR.map(a=> a.slice());
   try{
     const sv = JSON.parse(localStorage.getItem(THMR_KEY));
-    if(sv && sv.th && sv.mr){ TH = normGroups(sv.th, 2, DEF_TH, sv.v !== 2); MR = normGroups(sv.mr, 3, DEF_MR); }
+    if(sv){
+      if(sv.th && sv.tv === 3) TH = normGroups(sv.th, 3, DEF_TH); else MIGRATED = true;
+      if(sv.mr && sv.mv === 3) MR = normGroups(sv.mr, 3, DEF_MR); else MIGRATED = true;
+    }
   }catch(e){}
   let EDITING = false;
   function persist(){
-    try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2 })); }catch(e){}
+    try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2, tv:3, mv:3 })); }catch(e){}
     try{ if(typeof pushThmrToFirebaseDebounced === 'function') pushThmrToFirebaseDebounced(); }catch(e){}
   }
   // Exactly the printed roster (one column per date). With k = (days since START) % 5:
@@ -11652,12 +11725,37 @@ function renderRosterNow(){
     return [{ tag:'', slot: r === 1 ? 2 : 3, names:grp(teams, idx, 2) }];
   }
   const teamsOf = kind=> kind === 'th' ? TH : MR;
+  // ---- Traffic Hand: 5 shifts A-E. Regular duty = the main roster (shiftFor); overtime on top of it:
+  //   * 2 days after a Night (Night, Off, Off) -> Morning + Afternoon overtime
+  //   * on the shift's Morning day            -> Night overtime
+  function thDay(ms){
+    const at = t=>{ const d = new Date(ms - t*86400000); return [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()]; };
+    const o = { night:-1, nightOT:-1, morning:-1, afternoon:-1, ot:-1 };
+    for(let t=0;t<5;t++){
+      const st = shiftFor.apply(null, [t].concat(at(0)));
+      if(st === 'Night') o.night = t;
+      else if(st === 'Morning'){ o.morning = t; o.nightOT = t; }
+      else if(st === 'Afternoon') o.afternoon = t;
+      else if(st === 'Off' && shiftFor.apply(null, [t].concat(at(1))) === 'Off' && shiftFor.apply(null, [t].concat(at(2))) === 'Night') o.ot = t;
+    }
+    return o;
+  }
+  const TH_SLOT_KEY = ['night','nightOT','morning','afternoon','ot','ot'];
+  const TH_ROW_SLOTS = [[0,1],[2,4],[3,5]];         // Night / Morning / Afternoon row -> regular slot, overtime slot
+  const thTeam = (ms, slot)=> thDay(ms)[TH_SLOT_KEY[slot]];   // same shift/OT rules for Traffic Hand and Marshaller
+  function thBlocks(ms, r, kind){
+    const d = thDay(ms), grpOf = kind === 'mr' ? MR : TH;
+    return TH_ROW_SLOTS[r].map(sl=>{
+      const t = d[TH_SLOT_KEY[sl]];
+      return t < 0 ? null : { tag:'Shift ' + TEAMS[t] + (THS_META[sl].ot ? ' · OT' : ''), ot:THS_META[sl].ot, slot:sl, names:grpOf[t] };
+    }).filter(Boolean);
+  }
   // exchange / CL entry for one person of one slot on one date column
   function findEx(dk, kind, slot, pi){
     const raw = (typeof EXCHANGES === 'object' && EXCHANGES) ? EXCHANGES[dk] : null;
     const list = Array.isArray(raw) ? raw : Object.values(raw || {});
     const pos = (kind === 'th' ? 'TH-' : 'MR-') + (pi + 1);
-    return list.find(x=> x && x.table === kind && +x.team === 100 + slot && x.pos === pos) || null;
+    return list.find(x=> x && x.table === kind && +x.team === THS_BASE + slot && x.pos === pos) || null;
   }
   const words = (n, cm)=> '<span class="thg-w">' + esc(String(n).trim()) + (cm ? ',' : '') + '</span>';
   function personHtml(dk, kind, slot, pi, name, last){
@@ -11670,48 +11768,53 @@ function renderRosterNow(){
   }
   function render(){
     if(!dateInput.value) dateInput.value = todayStr();
-    const i = dayIdx(dateInput.value), cd = ((i % 10) + 10) % 10;   // cd = selected column (0-9)
-    const base = toUtc(dateInput.value) - cd*86400000;              // date of column 1 in this 10-day block
+    const i = dayIdx(dateInput.value);
     const cur = curShift(), liveMs = toUtc(todayStr()) - (cur.prev ? 86400000 : 0);
-    // which A-E team works each shift on the selected date (Night belongs to the date it starts on)
-    const selD = new Date(toUtc(dateInput.value));
-    const teamFor = r=>{
-      const want = r === 0 ? 'Night' : r === 1 ? 'Morning' : 'Afternoon';
-      for(let t=0;t<5;t++){ if(shiftFor(t, selD.getUTCFullYear(), selD.getUTCMonth(), selD.getUTCDate()) === want) return TEAMS[t]; }
-      return '';
-    };
     const cs = getComputedStyle(document.documentElement);
-    let head = '<tr><th class="thg-sh">Shift</th>';
-    for(let c=0;c<10;c++){
-      const d = new Date(base + c*86400000);
-      head += '<th class="thg-c' + (c === cd ? ' thg-sel' : '') + '"><b>' + (c+1) + '</b><small>' + pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + '</small></th>';
-    }
-    head += '</tr>';
-    const build = kind=> SH.map((s,r)=>{
-      const teams = teamsOf(kind);
-      const col = cs.getPropertyValue(s[2]).trim();
-      const tm = teamFor(r);
-      const tag = tm ? '<small class="thg-tag' + (r === cur.r && dateInput.value === todayStr() ? ' run' : ' nxt') + '">Team ' + tm + '</small>' : '';
-      let tr = '<tr style="--c:' + col + '"><td class="thg-sh' + (r === cur.r ? ' thg-live-row' : '') + '"><i></i>' + s[1] + tag + '</td>';
-      for(let c=0;c<10;c++){
-        const ms = base + c*86400000, dk = fmt(ms);
-        const names = blocks(teams, dayIdxMs(ms), r).map(bl=>
-          '<div class="thg-b">' + bl.names.map((n,pi)=> personHtml(dk, kind, bl.slot, pi, n, pi >= bl.names.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1))).join('') + '</div>'
-        ).join('');
-        tr += '<td class="' + (c === cd ? 'thg-sel' : '') + (r === cur.r && ms === liveMs ? ' thg-live' : '') + '">' + names + '</td>';
+    const headFor = (n, cd, base)=>{
+      let h = '<tr><th class="thg-sh">Shift</th>';
+      for(let c=0;c<n;c++){
+        const d = new Date(base + c*86400000);
+        h += '<th class="thg-c' + (c === cd ? ' thg-sel' : '') + '"><b>' + (c+1) + '</b><small>' + pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + '</small></th>';
       }
-      return tr + '</tr>';
-    }).join('');
-    $('thHeadMR').innerHTML = head;  $('thBodyMR').innerHTML = build('mr');
-    $('thHeadTH').innerHTML = head;  $('thBodyTH').innerHTML = build('th');
-    $('thInfo').textContent = 'Cycle day ' + (cd + 1) + ' of 10';
+      return h + '</tr>';
+    };
+    // left label: shift name + which A-E shift is on it (regular, and the overtime shift) on the selected date
+    const rowHead = (r, s)=>{
+      const isToday = dateInput.value === todayStr();
+      let ms = toUtc(dateInput.value);
+      if(r === 0 && cur.prev && isToday) ms -= 86400000;      // after midnight the running night started yesterday
+      const d = thDay(ms), reg = [d.night, d.morning, d.afternoon][r], ot = [d.nightOT, d.ot, d.ot][r];
+      const tag = reg >= 0 ? '<small class="thg-tag' + (isToday && r === cur.r ? ' run' : ' nxt') + '">Shift ' + TEAMS[reg] + (ot >= 0 ? ' · OT ' + TEAMS[ot] : '') + '</small>' : '';
+      return '<tr style="--c:' + cs.getPropertyValue(s[2]).trim() + '"><td class="thg-sh' + (r === cur.r ? ' thg-live-row' : '') + '"><i></i>' + s[1] + tag + '</td>';
+    };
+    const blockHtml = (dk, kind, bl)=>{
+      const last = bl.names.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1);
+      return '<div class="thg-b">' + (bl.tag ? '<small class="thg-tm' + (bl.ot ? ' ot' : '') + '">' + bl.tag + '</small>' : '') +
+        bl.names.map((n,pi)=> personHtml(dk, kind, bl.slot, pi, n, pi >= last)).join('') + '</div>';
+    };
+    // ---- Traffic Hand + Marshaller: 5 columns (cycle days 1-5), A-E shifts with overtime ----
+    const cd5 = ((i % 5) + 5) % 5, base5 = toUtc(dateInput.value) - cd5*86400000;
+    [['th','TH'],['mr','MR']].forEach(function(k){
+      $('thHead' + k[1]).innerHTML = headFor(5, cd5, base5);
+      $('thBody' + k[1]).innerHTML = SH.map((s,r)=>{
+        let tr = rowHead(r, s);
+        for(let c=0;c<5;c++){
+          const ms = base5 + c*86400000, dk = fmt(ms);
+          tr += '<td class="' + (c === cd5 ? 'thg-sel' : '') + (r === cur.r && ms === liveMs ? ' thg-live' : '') + '">' +
+            thBlocks(ms, r, k[0]).map(bl=> blockHtml(dk, k[0], bl)).join('') + '</td>';
+        }
+        return tr + '</tr>';
+      }).join('');
+    });
+    $('thInfo').textContent = 'Cycle day ' + (cd5 + 1) + ' of 5';
   }
   // group editor (base roster): one input per person, saved as you type
   function renderEdit(){
     const mk = (id, groups, kind)=>{
       const el = $(id); if(!el) return;
       el.innerHTML = groups.map((names,g)=>
-        '<div class="thm-row"><span class="thm-g">G' + (g+1) + '</span>' +
+        '<div class="thm-row"><span class="thm-g">' + 'Shift ' + TEAMS[g] + '</span>' +
         names.map((n,p)=> '<input class="thm-inp" type="text" autocomplete="off" data-k="' + kind + '" data-g="' + g + '" data-p="' + p + '" value="' + esc(n) + '"' + (EDITING ? '' : ' readonly') + '>').join('') +
         '</div>').join('');
     };
@@ -11736,32 +11839,35 @@ function renderRosterNow(){
     TH = trim(TH); MR = trim(MR);
     persist(); renderEdit(); if(EDITING) window.hsiaTHMRUnlock(); render();
   };
-  window.hsiaTHMRData = ()=> ({ th:TH, mr:MR, v:2 });
+  window.hsiaTHMRData = ()=> ({ th:TH, mr:MR, v:2, tv:3, mv:3 });
   window.hsiaTHMRApplyRemote = function(val){
-    const th = normGroups(val.th, 2, DEF_TH, val.v !== 2), mr = normGroups(val.mr, 3, DEF_MR);
-    if(JSON.stringify({ th:th, mr:mr }) === JSON.stringify({ th:TH, mr:MR })) return;
+    const stale = val.tv !== 3 || val.mv !== 3;      // remote still has an old layout -> keep ours and push it
+    const th = val.tv === 3 ? normGroups(val.th, 3, DEF_TH) : TH.map(a=> a.slice());
+    const mr = val.mv === 3 ? normGroups(val.mr, 3, DEF_MR) : MR.map(a=> a.slice());
+    if(JSON.stringify({ th:th, mr:mr }) === JSON.stringify({ th:TH, mr:MR })){ if(stale) persist(); return; }
     const ae = document.activeElement;
     if(ae && ae.classList && ae.classList.contains('thm-inp')) return;   // someone is typing here right now
     TH = th; MR = mr;
-    try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2 })); }catch(e){}
+    try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2, tv:3, mv:3 })); }catch(e){}
     renderEdit(); render();
+    if(stale) persist();
   };
   window.hsiaTHMRRender = render;
+  if(MIGRATED) persist();
   // used by the Exchange / CL form: who stands in slot `slot` (0-3), person `pi`, on a date
   window.hsiaTHMRPerson = function(dateKey, kind, slot, pi){
-    const idx = dayIdx(dateKey), teams = teamsOf(kind);
-    const g = grp(teams, idx, slot === 0 ? 0 : slot === 1 ? 4 : 2);
-    return g[pi] || '';
+    const t = thTeam(toUtc(dateKey), slot);
+    return t >= 0 ? ((teamsOf(kind)[t] || [])[pi] || '') : '';
   };
   window.hsiaTHMRPeople = function(dateKey, kind){
-    const idx = dayIdx(dateKey), teams = teamsOf(kind);
-    return [0,1,2,3].map(slot=> ({ slot:slot, label:SLOT_LABEL[slot], people: grp(teams, idx, slot === 0 ? 0 : slot === 1 ? 4 : 2).slice() }));
+    const ms = toUtc(dateKey), teams = teamsOf(kind);
+    return [0,1,2,3,4,5].map(sl=>{ const t = thTeam(ms, sl); return t < 0 ? null : { slot:sl, label:THS_META[sl].label + ' · Shift ' + TEAMS[t], people:teams[t].slice() }; }).filter(Boolean);
   };
   // used by the Duty Roster "Now" view: Traffic Hand / Marshaller of the shift running right now (with exchange / CL applied)
   window.hsiaTHMRNow = function(){
     const cur = curShift(), idx = dayIdxMs(toUtc(todayStr())) - (cur.prev ? 1 : 0);
-    const dk = fmt(START + idx*86400000);
-    const conv = kind=> blocks(teamsOf(kind), idx, cur.r).map(b=>({
+    const ms = START + idx*86400000, dk = fmt(ms);
+    const conv = kind=> thBlocks(ms, cur.r, kind).map(b=>({
       tag: b.tag,
       names: b.names.map((n,pi)=>{
         const e = findEx(dk, kind, b.slot, pi);
