@@ -2148,7 +2148,6 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
           <button type="button" class="th-navbtn" id="thNext" aria-label="Next day">&#8250;</button>
           <button type="button" class="th-today" id="thToday">Today</button>
         </div>
-        <div class="th-info" id="thInfo"></div>
         <div class="roster-subtitle">Traffic Hand</div>
         <div class="thg-wrap"><table class="thg-table"><thead id="thHeadTH"></thead><tbody id="thBodyTH"></tbody></table></div>
         <div class="roster-subtitle">Marshaller</div>
@@ -11800,7 +11799,7 @@ function renderRosterNow(){
       let h = '<tr><th class="thg-sh">Shift</th>';
       for(let c=0;c<n;c++){
         const d = new Date(base + c*86400000);
-        h += '<th class="thg-c' + (c === cd ? ' thg-sel' : '') + '"><b>' + (c+1) + '</b><small>' + pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + '</small></th>';
+        h += '<th class="thg-c' + (c === cd ? ' thg-sel' : '') + '"><b>' + TEAMS[c] + '</b><small>' + pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + '</small></th>';
       }
       return h + '</tr>';
     };
@@ -11819,7 +11818,10 @@ function renderRosterNow(){
         bl.names.map((n,pi)=> personHtml(dk, kind, bl.slot, pi, n, pi >= last)).join('') + '</div>';
     };
     // ---- Traffic Hand + Marshaller: 5 columns (cycle days 1-5), A-E shifts with overtime ----
-    const cd5 = ((i % 5) + 5) % 5, base5 = toUtc(dateInput.value) - cd5*86400000;
+    // columns are labelled A-E: column X = the day shift X works the regular Morning duty,
+    // so on a day when C is on regular Morning duty the live (highlighted) box sits in column C
+    const mTeam = thDay(toUtc(dateInput.value)).morning;
+    const cd5 = mTeam >= 0 ? mTeam : ((i % 5) + 5) % 5, base5 = toUtc(dateInput.value) - cd5*86400000;
     [['th','TH'],['mr','MR']].forEach(function(k){
       $('thHead' + k[1]).innerHTML = headFor(5, cd5, base5);
       $('thBody' + k[1]).innerHTML = SH.map((s,r)=>{
@@ -11832,7 +11834,6 @@ function renderRosterNow(){
         return tr + '</tr>';
       }).join('');
     });
-    $('thInfo').textContent = 'Cycle day ' + (cd5 + 1) + ' of 5';
   }
   // group editor (base roster): one input per person, saved as you type
   function renderEdit(){
