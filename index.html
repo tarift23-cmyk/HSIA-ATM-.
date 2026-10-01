@@ -965,6 +965,18 @@ table.thg-table .thg-b + .thg-b{ margin-top:9px; }
 table.thg-table thead th.thg-sel{ background:rgba(246,200,76,0.22); }
 table.thg-table td.thg-live{ background:rgba(246,200,76,0.38); box-shadow:inset 0 0 0 2px var(--gold); }
 table.thg-table td.thg-sh.thg-live-row{ color:var(--gold); background:linear-gradient(rgba(246,200,76,0.14),rgba(246,200,76,0.14)), var(--panel); }
+table.thg-table .thg-sh.thg-pos{ min-width:52px; text-align:center; }
+table.thg-table .thg-ds{ margin-top:4px; display:flex; flex-direction:column; gap:2px; align-items:center; }
+table.thg-table .thg-duty{ font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; color:var(--muted); }
+table.thg-table .thg-duty.d-night{ color:var(--night); }
+table.thg-table .thg-duty.d-morning{ color:var(--morning); }
+table.thg-table .thg-duty.d-afternoon{ color:var(--afternoon); }
+table.thg-table .thg-duty.ot{ color:#f5b53d; }
+table.thg-table .thg-duty.d-off{ color:var(--muted); opacity:.7; }
+table.thg-table .thg-time{ font-size:9px; font-weight:600; color:var(--muted); white-space:nowrap; }
+table.thg-table small.thg-off{ color:var(--muted); font-size:10px; font-weight:700; }
+table.thg-table td.thg-offc{ opacity:.8; }
+table.thg-table td{ vertical-align:top; }
 /* Traffic Hand / Marshaller: live-shift tag, exchange / CL look, group editor */
 table.thg-table td.thg-sh small.thg-tag{ display:block; margin:3px 0 0 15px; font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; opacity:1; }
 table.thg-table td.thg-sh small.thg-tag.run{ color:#3ddc97; }
@@ -6308,6 +6320,18 @@ function openDayLog(dk, team){
       rowsHtml += '<tr class="now-group"><td colspan="2">' + set[1] + '</td></tr>' + (part || '<tr><td colspan="2" class="now-empty">\u2014</td></tr>');
     });
   }
+  // Traffic Hand & Marshaller (A-E shifts, regular + overtime)
+  let thmr = null;
+  try{ thmr = (typeof window.hsiaTHMRDay === 'function') ? window.hsiaTHMRDay(dk, team) : null; }catch(e){}
+  if(thmr){
+    const lines = bl=> bl.map(x=>
+      (x.tag ? '<div class="now-line"><small>' + esc(x.tag) + '</small></div>' : '') +
+      (x.names.length ? '<div class="now-line"><span class="now-nm">' + x.names.map(esc).join(', ') + '</span></div>' : '')
+    ).join('');
+    rowsHtml += '<tr class="now-group"><td colspan="2">Traffic Hand &amp; Marshaller</td></tr>' +
+      (thmr.th.length ? '<tr><td class="now-pos">Traffic Hand</td><td class="now-name">' + lines(thmr.th) + '</td></tr>' : '') +
+      (thmr.mr.length ? '<tr><td class="now-pos">Marshaller</td><td class="now-name">' + lines(thmr.mr) + '</td></tr>' : '');
+  }
   const colorFor = i=> shiftColorVar(shiftFor(i, y, m-1, d));
   const chips = TEAMS.map((t,i)=>
     '<div class="dl-teamchip duty-ticker-box' + (i === team ? ' current' : '') + '" style="--dt-color:' + colorFor(i) + '" data-team="' + i + '" title="Team ' + esc(t) + '">' + esc(t) + '</div>').join('');
@@ -6315,7 +6339,7 @@ function openDayLog(dk, team){
     '<div class="now-head-l"><div class="now-head-k">' + esc(dateStr) + '</div>' +
     '<div class="now-head-v">Team ' + esc(TEAMS[team]) + ' \u00b7 <span>' + esc(st) + '</span></div></div>' +
     '<button type="button" class="now-close" id="dayLogClose">\u2715 Close</button>';
-  const contentHtml = st === 'Off'
+  const contentHtml = (st === 'Off' && !thmr)
     ? '<div class="dl-empty">No duty</div>'
     : '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
   ov.style.setProperty('--acc', acc || 'var(--gold)');
@@ -11792,48 +11816,41 @@ function renderRosterNow(){
   }
   function render(){
     if(!dateInput.value) dateInput.value = todayStr();
-    const i = dayIdx(dateInput.value);
+    const sel = toUtc(dateInput.value), selKey = fmt(sel);
     const cur = curShift(), liveMs = toUtc(todayStr()) - (cur.prev ? 86400000 : 0);
-    const cs = getComputedStyle(document.documentElement);
-    const headFor = (n, cd, base)=>{
-      let h = '<tr><th class="thg-sh">Shift</th>';
-      for(let c=0;c<n;c++){
-        const d = new Date(base + c*86400000);
-        h += '<th class="thg-c' + (c === cd ? ' thg-sel' : '') + '"><b>' + TEAMS[c] + '</b><small>' + pad(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + '</small></th>';
-      }
-      return h + '</tr>';
-    };
-    // left label: shift name + which A-E shift is on it (regular, and the overtime shift) on the selected date
-    const rowHead = (r, s)=>{
-      const isToday = dateInput.value === todayStr();
-      let ms = toUtc(dateInput.value);
-      if(r === 0 && cur.prev && isToday) ms -= 86400000;      // after midnight the running night started yesterday
-      const d = thDay(ms), reg = [d.night, d.morning, d.afternoon][r], ot = [d.nightOT, d.ot, d.ot][r];
-      const tag = reg >= 0 ? '<small class="thg-tag' + (isToday && r === cur.r ? ' run' : ' nxt') + '">Shift ' + TEAMS[reg] + (ot >= 0 ? ' · OT ' + TEAMS[ot] : '') + '</small>' : '';
-      return '<tr style="--c:' + cs.getPropertyValue(s[2]).trim() + '"><td class="thg-sh' + (r === cur.r ? ' thg-live-row' : '') + '"><i></i>' + s[1] + tag + '</td>';
-    };
-    const blockHtml = (dk, kind, bl)=>{
+    const d = thDay(sel);
+    const regRow = t=> d.night === t ? 0 : d.morning === t ? 1 : d.afternoon === t ? 2 : -1;   // which row (Night/Morning/Afternoon) shift t works regularly
+    const liveRow = (fmt(liveMs) === selKey) ? cur.r : -1;
+    const KEYS = ['night','morning','afternoon'];
+    const blockHtml = (kind, bl)=>{
       const last = bl.names.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1);
-      return '<div class="thg-b">' + (bl.tag ? '<small class="thg-tm' + (bl.ot ? ' ot' : '') + '">' + bl.tag + '</small>' : '') +
-        bl.names.map((n,pi)=> personHtml(dk, kind, bl.slot, pi, n, pi >= last)).join('') + '</div>';
+      return '<div class="thg-b"><small class="thg-tm' + (bl.ot ? ' ot' : '') + '">' + bl.tag + '</small>' +
+        bl.names.map((n,pi)=> personHtml(selKey, kind, bl.slot, pi, n, pi >= last)).join('') + '</div>';
     };
-    // ---- Traffic Hand + Marshaller: 5 columns (cycle days 1-5), A-E shifts with overtime ----
-    // columns are labelled A-E: column X = the day shift X works the regular Morning duty,
-    // so on a day when C is on regular Morning duty the live (highlighted) box sits in column C
-    const mTeam = thDay(toUtc(dateInput.value)).morning;
-    const cd5 = mTeam >= 0 ? mTeam : ((i % 5) + 5) % 5, base5 = toUtc(dateInput.value) - cd5*86400000;
-    [['th','TH'],['mr','MR']].forEach(function(k){
-      $('thHead' + k[1]).innerHTML = headFor(5, cd5, base5);
-      $('thBody' + k[1]).innerHTML = SH.map((s,r)=>{
-        let tr = rowHead(r, s);
-        for(let c=0;c<5;c++){
-          const ms = base5 + c*86400000, dk = fmt(ms);
-          tr += '<td class="' + (c === cd5 ? 'thg-sel' : '') + (r === cur.r && ms === liveMs ? ' thg-live' : '') + '">' +
-            thBlocks(ms, r, k[0]).map(bl=> blockHtml(dk, k[0], bl)).join('') + '</td>';
+    let head = '<tr>', cells = {th:'<tr>', mr:'<tr>'};
+    for(let t=0; t<5; t++){
+      const r = regRow(t), live = r >= 0 && r === liveRow;
+      let sub;
+      if(r >= 0) sub = '<span class="thg-duty d-' + KEYS[r] + '">' + SH[r][1] + '</span>';
+      else sub = '<span class="thg-duty d-off">Off</span>';
+      head += '<th class="thg-c' + (live ? ' thg-sel' : '') + '"><b>' + TEAMS[t] + '</b><div class="thg-ds">' + sub + '</div></th>';
+      ['th','mr'].forEach(k=>{
+        let inner;
+        if(r >= 0) inner = thBlocks(sel, r, k).map(bl=> blockHtml(k, bl)).join('');
+        else {
+          // off day: just this shift's own people; if they are on overtime today, say which slots
+          const nm = (k === 'mr' ? MR : TH)[t] || [], lastO = nm.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1);
+          const sl = d.ot === t ? (findEx(selKey, k, 4, 0) || findEx(selKey, k, 4, 1) || findEx(selKey, k, 4, 2) ? 4 : 5) : -1;
+          inner = '<div class="thg-b">' + (d.ot === t ? '<small class="thg-tm ot">OT · Morning + Afternoon</small>' : '') +
+            nm.map((n,pi)=> personHtml(selKey, k, sl, pi, n, pi >= lastO)).join('') + '</div>';
         }
-        return tr + '</tr>';
-      }).join('');
-    });
+        cells[k] += '<td class="' + (live ? 'thg-live' : '') + (r < 0 ? ' thg-offc' : '') + '">' + inner + '</td>';
+      });
+    }
+    head += '</tr>';
+    $('thHeadTH').innerHTML = head; $('thHeadMR').innerHTML = head;
+    $('thBodyTH').innerHTML = cells.th + '</tr>';
+    $('thBodyMR').innerHTML = cells.mr + '</tr>';
   }
   // group editor (base roster): one input per person, saved as you type
   function renderEdit(){
@@ -11911,6 +11928,27 @@ function renderRosterNow(){
       }).filter(Boolean)
     }));
     return { time: SH[cur.r][0], th: conv('th'), mr: conv('mr') };
+  };
+  // used by the day-detail popup (Who's on duty shift click / calendar date click): Traffic Hand + Marshaller of shift `team` (0-4) on a date
+  window.hsiaTHMRDay = function(dateKey, team){
+    const ms = toUtc(dateKey), d = thDay(ms);
+    const r = d.night === team ? 0 : d.morning === team ? 1 : d.afternoon === team ? 2 : -1;
+    const conv = (kind, slot, names)=> names.map((n,pi)=>{
+      const e = findEx(dateKey, kind, slot, pi);
+      if(!e) return String(n || '').trim();
+      const sub = String(e.subName || '').trim();
+      return sub ? '🔄 ' + sub + (e.cl ? ' (CL)' : e.special ? ' (EL)' : '') : (e.special ? 'Vacant (Special)' : e.moved ? 'Vacant' : 'Vacant (CL)');
+    }).filter(Boolean);
+    const one = kind=>{
+      if(r >= 0) return thBlocks(ms, r, kind).map(b=>({ tag:b.tag, names:conv(kind, b.slot, b.names) }));
+      if(d.ot === team){
+        const g = (kind === 'mr' ? MR : TH)[team] || [];
+        return [{ tag:'OT · Morning + Afternoon', names:conv(kind, 4, g) }];
+      }
+      return [];
+    };
+    const th = one('th'), mr = one('mr');
+    return (th.length || mr.length) ? { th:th, mr:mr } : null;
   };
   const shift = d=>{ dateInput.value = fmt(toUtc(dateInput.value || todayStr()) + d*86400000); render(); };
   $('thPrev').addEventListener('click', ()=> shift(-1));
