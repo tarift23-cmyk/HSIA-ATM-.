@@ -975,7 +975,8 @@ table.thg-table .thg-old{ opacity:.5; text-decoration:line-through; text-decorat
 table.thg-table .thg-sub{ display:block; margin-top:2px; color:#3ddc97; font-size:11px; font-weight:700; }
 table.thg-table .thg-sub.vac{ color:#F54249; }
 table.thg-table small.thg-tm.ot{ color:#f5b53d; }
-.thm-edit{ margin-top:14px; }
+.thm-edit{ margin-top:14px; display:none; }
+.thm-edit.show{ display:block; }
 .thm-row{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
 .thm-g{ flex:0 0 26px; font-size:11px; font-weight:700; color:var(--muted); }
 input.thm-inp{ flex:1 1 0; min-width:0; box-sizing:border-box; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 10px; font-size:13px; font-family:inherit; }
@@ -8545,6 +8546,7 @@ function initRoster(){
   if(editBtn){
     editBtn.addEventListener('click', ()=>{
       if(requireRosterAuth()){
+        try{ if(window.hsiaTHMRShowEdit) window.hsiaTHMRShowEdit(); }catch(e){}
         flashRosterSaved('এডিট মোড চালু হয়েছে — এখন ঘরে ক্লিক করে পরিবর্তন করুন');
       }
     });
@@ -8564,6 +8566,7 @@ function initRoster(){
       saveRosterCtrl(ROSTER_CTRL);
       saveRosterComm(ROSTER_COMM);
       try{ if(window.hsiaTHMRSave) window.hsiaTHMRSave(); }catch(e){}
+      try{ if(window.hsiaTHMRHideEdit) window.hsiaTHMRHideEdit(); }catch(e){}
       renderRoster();
       renderRosterCtrl();
       renderRosterComm();
@@ -11875,6 +11878,14 @@ function renderRosterNow(){
     if(stale) persist();
   };
   window.hsiaTHMRRender = render;
+  // the group editor only appears after the Edit (pencil) button, and tucks away again after Save
+  window.hsiaTHMRShowEdit = function(){
+    const el = document.querySelector('#rosterTHCol .thm-edit'); if(!el) return;
+    el.classList.add('show');
+    const colEl = document.getElementById('rosterTHCol');
+    if(colEl && colEl.classList.contains('rost-active')) setTimeout(()=>{ try{ el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }catch(e){} }, 60);
+  };
+  window.hsiaTHMRHideEdit = function(){ const el = document.querySelector('#rosterTHCol .thm-edit'); if(el) el.classList.remove('show'); };
   if(MIGRATED) persist();
   // used by the Exchange / CL form: who stands in slot `slot` (0-3), person `pi`, on a date
   window.hsiaTHMRPerson = function(dateKey, kind, slot, pi){
