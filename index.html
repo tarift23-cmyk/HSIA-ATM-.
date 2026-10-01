@@ -7331,6 +7331,8 @@ function initAuthPanel(){
       rosterCtrl:{ label:'Roster · Controllers', c:[246,200,76] },
       roster:    { label:'Roster · Assistant',   c:[246,200,76] },
       rosterComm:{ label:'Roster · Communication', c:[246,200,76] },
+      th:        { label:'Roster · Traffic Hand', c:[246,200,76] },
+      mr:        { label:'Roster · Marshaller',   c:[246,200,76] },
       exchange:  { label:'Exchange / CL',        c:[240,150,80] },
       vccs:      { label:'VCCS numbers',         c:[110,200,120] },
       adj:       { label:'Adjacent',             c:[230,120,170] },
@@ -7406,6 +7408,23 @@ function initAuthPanel(){
         });
       });
 
+      // Traffic Hand & Marshaller: one record per A-E shift (every person's name is searchable)
+      safe(()=>{
+        const d = (typeof window.hsiaTHMRData === 'function') ? window.hsiaTHMRData() : null;
+        if(!d) return;
+        [['th', d.th, 'thmEditTH', 'Traffic Hand'], ['mr', d.mr, 'thmEditMR', 'Marshaller']].forEach(set=>{
+          (set[1] || []).forEach((names, g)=>{
+            const list = (names || []).map(n=> String(n || '').trim()).filter(Boolean);
+            if(!list.length) return;
+            add(set[0], set[3] + ' · Shift ' + (TEAMS[g] || '?'), list.join('   ·   '), ()=>{
+              openPanel('rosterCardOuter','roster');
+              clickTab('rosterTabs', 'rosterTHCol');
+              return ()=>{ const x = document.querySelectorAll('#' + set[2] + ' .thm-row')[g]; return x || null; };
+            });
+          });
+        });
+      });
+
       // Duty exchanges
       safe(()=>{
         if(typeof EXCHANGES !== 'object' || !EXCHANGES) return;
@@ -7414,7 +7433,10 @@ function initAuthPanel(){
             const tbl = rosterLabelFor(ex.table);
             const half = ex.nightHalf === '1' ? ' (1st night)' : ex.nightHalf === '2' ? ' (2nd night)' : '';
             const who = ex.subName || '';
-            add('exchange', ex.pos || '', dateKey + ' · ' + tbl + ' · ' + exTeamLabel(ex) + half + (who ? ' · ' + who : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
+            const away = String(ex.who || '').trim();
+            const kind = ex.cl ? ' · CL' : ex.special ? ' · EL' : '';
+            const title = ((ex.table === 'th' || ex.table === 'mr') && away) ? away : (ex.pos || '');
+            add('exchange', title, dateKey + ' · ' + tbl + ' · ' + exTeamLabel(ex) + half + kind + (who ? ' · ' + who : (ex.vacant ? ' · Vacant' : '')) + (away && title !== away ? ' · ' + away : ''), ()=>{ openModal('exchangeModalOverlay'); return null; });
           });
         });
       });
