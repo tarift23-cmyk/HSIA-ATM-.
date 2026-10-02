@@ -6573,6 +6573,17 @@ function exchangeShiftWindow(dateKey, team, half){
    those whose target team is actually mid-shift right now (so a swap
    appears exactly while that duty is running, and reverts to the base
    roster the moment it ends) — not just "same calendar date". */
+/* Roster tables follow the date picked above them: today = live (mid-shift) behaviour as before; any other date = every
+   exchange / CL / special entry of that day (live data first, then the archived history, whose "base" is the person who
+   was rostered at that time even if the roster has changed since). */
+function rosterViewExchanges(tableKey){
+  const sel = window._rosterSelKey;
+  if(typeof sel !== 'string' || sel === todayDateKey()) return activeExchangesFor(tableKey);
+  const cur = exHistList(EXCHANGES && EXCHANGES[sel]).filter(x=> x && x.table === tableKey);
+  let hist = [];
+  try{ hist = (exDayEntriesForView(sel) || []).filter(h=> h.table === tableKey && !cur.some(c=> exHistKey(c) === exHistKey(h))); }catch(e){}
+  return cur.concat(hist);
+}
 function activeExchangesFor(tableKey){
   const now = Date.now();
   const out = [];
@@ -7908,12 +7919,12 @@ function initAuthPanel(){
 function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const tbody = document.getElementById(tbodyId);
   if(!tbody) return;
-  const activeEx = tableKey ? activeExchangesFor(tableKey) : [];
+  const activeEx = tableKey ? rosterViewExchanges(tableKey) : [];
   tbody.innerHTML = data.map((row, ri)=>{
     const cells = TEAMS.map((t, ci)=>{
-      const val = (row.names[ci] || '').replace(/"/g,'&quot;');
       const ex = activeEx.find(x => x.pos === row.pos && +x.team === ci);
-      const origTitle = (row.names[ci]||'—').replace(/"/g,'&quot;');
+      const val = ((ex && ex.base) || row.names[ci] || '').replace(/"/g,'&quot;');
+      const origTitle = ((ex && ex.base) || row.names[ci] || '—').replace(/"/g,'&quot;');
       const cellClassName = !ex ? '' : ex.vacant ? 'roster-vacant-cell'
         : ex.nightHalf === '1' ? 'roster-exchange-cell-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-cell-night2'
@@ -8070,6 +8081,7 @@ function setQuickHalf(half){
 }
 
 function openQuickExchange(tableKey, ri, ci){
+  if(typeof window._rosterSelKey === 'string' && window._rosterSelKey !== todayDateKey()){ alert('Quick exchange works for today only. Press Today first.'); return; }
   const data = rosterDataFor(tableKey);
   const row = data[ri];
   if(!row) return;
@@ -12114,6 +12126,7 @@ function renderRosterNow(){
         el.textContent = st;
       }
     });
+    try{ renderRoster(); renderRosterCtrl(); renderRosterComm(); }catch(e){}
     try{ updateRosterHighlight(); }catch(e){}
   }
   function setKey(k, byUser){
