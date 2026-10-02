@@ -892,6 +892,88 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 #rosterBody.rost-now-on > .rost-col,
 #rosterBody.rost-now-on > #rosterSharedBars{ display:none !important; }
 .rost-now-btn.on{ box-shadow:0 0 0 2px var(--panel), 0 0 0 4px currentColor; }
+.rost-me-btn{ background:#c9ccd6; }
+.rost-me-btn.on{ box-shadow:0 0 0 2px var(--panel), 0 0 0 4px #c9ccd6; }
+/* ---- Me window (futuristic) ---- */
+.meh{ position:relative; border-radius:22px; padding:14px; overflow:hidden; color:#eef1f7;
+  background:radial-gradient(120% 80% at 0% 0%, rgba(110,160,255,.20), transparent 55%), radial-gradient(90% 70% at 100% 0%, rgba(63,226,127,.14), transparent 50%), #111318;
+  border:1px solid rgba(255,255,255,.09); box-shadow:0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); animation:mehIn .45s cubic-bezier(.2,.8,.2,1) both; }
+.meh::before{ content:''; position:absolute; inset:0; pointer-events:none; opacity:.55;
+  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px); background-size:24px 24px;
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent 55%); mask-image:linear-gradient(180deg,#000,transparent 55%); }
+.meh > *{ position:relative; }
+.meh-hero{ display:flex; align-items:center; gap:12px; }
+.meh-av{ position:relative; flex:0 0 auto; width:58px; height:58px; border-radius:50%; display:grid; place-items:center; background:#12141a; font-weight:800; font-size:19px; letter-spacing:.02em; }
+.meh-av::before{ content:''; position:absolute; inset:-3px; border-radius:50%; background:conic-gradient(#7aa8ff,#3fe27f,#f5b53d,#ff7b80,#7aa8ff); animation:mehSpin 5s linear infinite;
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px)); mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px)); filter:drop-shadow(0 0 8px rgba(122,168,255,.55)); }
+.meh-av span{ position:relative; background:linear-gradient(135deg,#fff,#9cc0ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.meh-who{ min-width:0; flex:1 1 auto; }
+.meh-k{ font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#8d94a6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.meh-nm{ font-size:17px; font-weight:800; line-height:1.2; margin:2px 0; overflow:hidden; text-overflow:ellipsis; }
+.meh-team{ display:inline-block; font-size:10px; font-weight:800; letter-spacing:.14em; padding:2px 8px; border-radius:999px; color:#9cc0ff; background:rgba(122,168,255,.14); border:1px solid rgba(122,168,255,.35); }
+.meh-acts{ display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+.meh-btn{ border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#eef1f7; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; backdrop-filter:blur(6px); font-family:inherit; }
+.meh-btn:active{ background:rgba(255,255,255,.14); }
+.meh-btn.x{ padding:4px 10px; }
+.meh-next{ display:flex; align-items:center; gap:10px; margin:14px 0 10px; padding:10px 12px; border-radius:14px; font-size:12.5px; color:#cfd5e3;
+  background:linear-gradient(90deg,rgba(255,255,255,.07),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.09); }
+.meh-next b{ letter-spacing:.1em; color:#fff; font-size:11px; }
+.meh-dot{ flex:0 0 auto; width:10px; height:10px; border-radius:50%; background:var(--c,#8d94a6); box-shadow:0 0 0 0 var(--c,#8d94a6); animation:mehPulse 1.8s ease-out infinite; }
+.meh-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.meh-stats > div{ padding:10px 8px; border-radius:14px; text-align:center; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); }
+.meh-stats b{ display:block; font-size:26px; font-weight:800; line-height:1; background:linear-gradient(180deg,#fff,#8fb4ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.meh-stats .cl b{ background:linear-gradient(180deg,#fff,#ff7b80); -webkit-background-clip:text; background-clip:text; }
+.meh-stats .ex b{ background:linear-gradient(180deg,#fff,#3fe27f); -webkit-background-clip:text; background-clip:text; }
+.meh-stats span{ display:block; margin-top:5px; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#8d94a6; line-height:1.3; }
+.meh-filters{ display:flex; gap:6px; padding:4px; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); margin-bottom:12px; }
+.meh-f{ flex:1 1 0; border:0; background:transparent; color:#8d94a6; font-size:12px; font-weight:700; padding:7px 4px; border-radius:999px; cursor:pointer; font-family:inherit; transition:all .2s; }
+.meh-f.on{ color:#0d0f14; background:linear-gradient(135deg,#9cc0ff,#3fe27f); box-shadow:0 0 16px rgba(122,168,255,.45); }
+.meh-month{ position:sticky; top:0; z-index:2; margin:14px 0 8px; padding:6px 2px; font-size:10.5px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:#8fb4ff; background:linear-gradient(180deg,#111318 70%,transparent); }
+.meh-month.past{ color:#8d94a6; }
+.meh-day{ display:flex; gap:12px; align-items:stretch; margin-bottom:8px; padding:10px 12px 10px 10px; border-radius:16px; border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(135deg,rgba(255,255,255,.065),rgba(255,255,255,.02)); position:relative; overflow:hidden; animation:mehUp .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i,0) * 45ms); }
+.meh-day::before{ content:''; position:absolute; left:0; top:10px; bottom:10px; width:3px; border-radius:3px; background:var(--c); box-shadow:0 0 12px var(--c); }
+.meh-day.today{ border-color:var(--c); box-shadow:0 0 0 1px var(--c), 0 0 22px -6px var(--c); animation:mehUp .5s cubic-bezier(.2,.8,.2,1) both, mehGlow 2.4s ease-in-out infinite; }
+.meh-day.past{ opacity:.72; }
+.meh-date{ flex:0 0 46px; text-align:center; padding-left:6px; }
+.meh-date b{ display:block; font-size:24px; font-weight:800; line-height:1; }
+.meh-date span{ display:block; margin-top:3px; font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#8d94a6; }
+.meh-items{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:7px; justify-content:center; }
+.meh-itt{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.meh-lab{ font-size:14px; font-weight:800; color:var(--c); text-shadow:0 0 14px color-mix(in srgb, var(--c) 55%, transparent); }
+.meh-lab.cut{ color:#8d94a6; text-shadow:none; text-decoration-thickness:2px; }
+.meh-it small{ display:block; margin-top:2px; font-size:11.5px; color:#aeb5c6; font-weight:600; }
+.meh-tag{ padding:2px 8px; border-radius:999px; font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; border:1px solid transparent; }
+.meh-tag.cl{ color:#ff8d92; background:rgba(245,66,73,.14); border-color:rgba(245,66,73,.4); }
+.meh-tag.ex{ color:#9cc0ff; background:rgba(122,168,255,.14); border-color:rgba(122,168,255,.4); }
+.meh-tag.in{ color:#3fe27f; background:rgba(63,226,127,.12); border-color:rgba(63,226,127,.4); }
+.meh-tag.ot{ color:#f5b53d; background:rgba(245,181,61,.12); border-color:rgba(245,181,61,.4); }
+.meh-none,.meh-empty{ padding:30px 10px; text-align:center; color:#8d94a6; font-size:13px; }
+.meh-empty .meh-btn{ margin-top:12px; }
+@keyframes mehIn{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:none; } }
+@keyframes mehUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+@keyframes mehSpin{ to{ transform:rotate(360deg); } }
+@keyframes mehPulse{ 0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--c,#8d94a6) 70%, transparent); } 100%{ box-shadow:0 0 0 10px transparent; } }
+@keyframes mehGlow{ 0%,100%{ box-shadow:0 0 0 1px var(--c), 0 0 14px -6px var(--c); } 50%{ box-shadow:0 0 0 1px var(--c), 0 0 26px -2px var(--c); } }
+@media (prefers-reduced-motion: reduce){ .meh,.meh *{ animation:none !important; } }
+
+.me-grp{ margin:12px 0 4px; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.me-pos{ margin:8px 0 4px; font-size:12px; font-weight:600; color:var(--muted); }
+.me-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.me-chip{ border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:6px 10px; font-size:12.5px; font-weight:600; cursor:pointer; text-align:left; }
+.me-chip b{ color:var(--gold); margin-right:6px; }
+.me-chip:active{ filter:brightness(1.2); }
+.me-btnrow{ display:flex; gap:8px; align-items:center; }
+.me-change{ border:1px solid var(--border); background:transparent; color:var(--text); border-radius:999px; padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; }
+.me-dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+.me-tag{ display:inline-block; margin-left:6px; padding:1px 7px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.04em; background:rgba(245,181,61,.18); color:#f5b53d; }
+.me-tag.cl{ background:rgba(245,66,73,.18); color:#ff7b80; }
+.me-tag.ex{ background:rgba(120,170,255,.18); color:#9cc0ff; }
+.me-tag.in{ background:rgba(0,235,85,.15); color:#3fe27f; }
+table.now-table tr.me-past td{ opacity:.8; }
+table.now-table td.me-date{ width:34%; font-weight:600; color:var(--muted); white-space:nowrap; }
+table.now-table td.me-date.today{ color:var(--gold); }
+
 .now-head{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
   padding:12px 14px; margin-bottom:12px; border-radius:10px;
@@ -932,6 +1014,18 @@ table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255
 .th-navbtn{ width:38px; height:38px; font-size:20px; line-height:1; }
 .th-today{ padding:0 14px; height:38px; font-size:12px; background:var(--gold); color:#1B2130; border-color:var(--gold); }
 .th-date{ flex:1; min-width:0; height:38px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:0 10px; font-size:14px; color-scheme:dark; }
+
+/* ---- date bar + per-shift duty under A-E (Controllers / Aerodrome Assistant / Communication) ---- */
+.rd-sub{ display:block; margin-top:3px; font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; line-height:1.1; color:var(--muted); }
+.rd-sub.d-night{ color:var(--night); }
+.rd-sub.d-morning{ color:var(--morning); }
+.rd-sub.d-afternoon{ color:var(--afternoon); }
+.rd-sub.d-off{ opacity:.75; }
+table.roster-table.hl-A thead th:nth-child(2) .rd-sub,
+table.roster-table.hl-B thead th:nth-child(3) .rd-sub,
+table.roster-table.hl-C thead th:nth-child(4) .rd-sub,
+table.roster-table.hl-D thead th:nth-child(5) .rd-sub,
+table.roster-table.hl-E thead th:nth-child(6) .rd-sub{ color:#1B2130; }
 .th-info{ font-size:11.5px; color:var(--muted); margin-bottom:4px; }
 .th-info.warn{ color:var(--night); }
 .th-wrap{ border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -1873,7 +1967,7 @@ flex:0 0 auto !important;cursor:pointer;line-height:0;transition:opacity .2s eas
 .xch-btn span{white-space:nowrap}
 #rosterSharedBars .roster-savebar{justify-content:stretch;gap:12px;align-items:center}
 #flightDbAdminBtn.icon-only{display:flex !important;margin:0 auto}
-.cal-cell[data-date], .mini-cell[data-date]{ cursor:pointer; }
+.cal-cell[data-date], .mini-cell[data-date]{ cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .cal-cell.has-log, .mini-cell.has-log{ position:relative; }
 .cal-cell.has-log::after, .mini-cell.has-log::after{ content:''; position:absolute; top:3px; right:3px; width:6px; height:6px; border-radius:50%; background:#ffb020; box-shadow:0 0 5px rgba(255,176,32,.8); }
 .mini-cell.has-log::after{ width:5px; height:5px; top:2px; right:2px; }
@@ -2069,7 +2163,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 
   <div class="cardpanel" id="rosterCardOuter">
     <div class="collapse-head" id="rosterHead">
-      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn">Now</button></div>
+      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn">Now</button><button type="button" class="rost-now-btn rost-me-btn" id="rosterMeBtn">Me</button></div>
       <div class="collapse-toggle" id="rosterToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="rosterBody">
@@ -2300,6 +2394,18 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <input type="text" id="exchangePickerManual" class="fr-mfinput" placeholder="Not in roster? Type a name" autocomplete="off">
         <button type="button" id="exchangePickerManualBtn" class="fr-dbimport">Use</button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="meOverlay" style="z-index:10001;">
+    <div class="modal-box" style="max-width:760px;">
+      <div class="modal-header">
+        <div class="modal-title">👤 Select Your Name</div>
+        <button type="button" class="modal-close" id="meOverlayClose">✕</button>
+      </div>
+      <div class="xp-tabs" id="meTabs"></div>
+      <input type="text" id="meSearch" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off">
+      <div class="xp-wrap"><table class="xp-table" id="meTable"></table></div>
     </div>
   </div>
 
@@ -6324,9 +6430,13 @@ function openDayLog(dk, team){
   let thmr = null;
   try{ thmr = (typeof window.hsiaTHMRDay === 'function') ? window.hsiaTHMRDay(dk, team) : null; }catch(e){}
   if(thmr){
+    const person = pp=> pp.ex
+      ? (pp.base ? '<s class="dl-cut">' + esc(pp.base) + '</s> ' : '') +
+        (pp.sub ? '<span class="now-nm">\uD83D\uDD04 ' + esc(pp.sub) + (pp.note ? ' <small>' + pp.note + '</small>' : '') + '</span>' : '<span class="now-nm">Vacant</span>')
+      : '<span class="now-nm">' + esc(pp.base) + '</span>';
     const lines = bl=> bl.map(x=>
       (x.tag ? '<div class="now-line"><small>' + esc(x.tag) + '</small></div>' : '') +
-      (x.names.length ? '<div class="now-line"><span class="now-nm">' + x.names.map(esc).join(', ') + '</span></div>' : '')
+      (x.names.length ? '<div class="now-line">' + x.names.map(person).join(', ') + '</div>' : '')
     ).join('');
     rowsHtml += '<tr class="now-group"><td colspan="2">Traffic Hand &amp; Marshaller</td></tr>' +
       (thmr.th.length ? '<tr><td class="now-pos">Traffic Hand</td><td class="now-name">' + lines(thmr.th) + '</td></tr>' : '') +
@@ -6366,9 +6476,18 @@ document.addEventListener('click', e=>{
   const tb = t.closest && t.closest('.duty-ticker-box[data-date]');
   if(tb){ openDayLog(tb.getAttribute('data-date'), tb.getAttribute('data-team')); return; }
   const c = t.closest && t.closest('.cal-cell[data-date], .mini-cell[data-date]');
-  if(c && exHistIsAdmin()){
-    const tm = c.getAttribute('data-team');
-    openDayLog(c.getAttribute('data-date'), tm == null ? YOU_INDEX : tm);
+  if(c){
+    // calendar date: open only on 3 quick taps in a row on the same cell (so scrolling / stray taps do nothing)
+    const key = c.getAttribute('data-date') + '|' + c.getAttribute('data-team');
+    const now = Date.now();
+    const st = window._calTap || (window._calTap = { key:'', n:0, t:0 });
+    if(st.key === key && now - st.t < 700) st.n++; else { st.key = key; st.n = 1; }
+    st.t = now;
+    if(st.n >= 3){
+      st.n = 0; st.key = '';
+      const tm = c.getAttribute('data-team');
+      openDayLog(c.getAttribute('data-date'), tm == null ? YOU_INDEX : tm);
+    }
     return;
   }
   const chip = t.closest && t.closest('.dl-teamchip');
@@ -6569,6 +6688,7 @@ function exVacateMovedCell(dateKey, parent){
 }
 function refreshThmrViews(){
   try{ if(window.hsiaTHMRRender) window.hsiaTHMRRender(); }catch(e){}
+  try{ if(window.hsiaRosterMeRefresh) window.hsiaRosterMeRefresh(); }catch(e){}
   try{ if(ROSTER_NOW_ON) renderRosterNow(); }catch(e){}
 }
 
@@ -6970,6 +7090,7 @@ function checkMyExchangeNotifications(){
 }
 
 function applyAuthUI(session){
+  try{ setTimeout(()=>{ if(window.hsiaMeAuthRefresh) window.hsiaMeAuthRefresh(); }, 0); }catch(e){}
   const loggedOut = document.getElementById('authLoggedOutView');
   const loggedIn = document.getElementById('authLoggedInView');
   const welcome = document.getElementById('authWelcome');
@@ -9388,8 +9509,10 @@ function updateRosterHighlight(){
   ['rosterTable','rosterTableCtrl','rosterTableComm'].forEach(id=>{
     const table = document.getElementById(id);
     if(!table) return;
-    TEAMS.forEach((t,i)=>{ table.classList.toggle('hl-'+t, i===idx); });
+    const live = (typeof window._rosterSelKey !== 'string') || window._rosterSelKey === todayDateKey();
+    TEAMS.forEach((t,i)=>{ table.classList.toggle('hl-'+t, live && i===idx); });
   });
+  try{ if(window.hsiaRosterDutyTick) window.hsiaRosterDutyTick(); }catch(e){}
   updateRosterNowBtn(idx);
 }
 
@@ -11587,6 +11710,7 @@ function updateRosterNowBtn(idx){
   if(ROSTER_NOW_ON) renderRosterNow();
 }
 function setRosterNow(on){
+  if(on && window._rosterMeOn && window.hsiaRosterMeOff) window.hsiaRosterMeOff();
   ROSTER_NOW_ON = !!on;
   const body = document.getElementById('rosterBody');
   const btn = document.getElementById('rosterNowBtn');
@@ -11690,6 +11814,258 @@ function renderRosterNow(){
   });
 })();
 
+/* ---- Duty Roster "Me" button: pick your own name once, then see all your duties / CL / exchanges ---- */
+(function initRosterMe(){
+  const ME_KEY = 'HSIA_ME_V1';
+  const AHEAD = 90, BACK = 90;
+  const btn = document.getElementById('rosterMeBtn');
+  const outer = document.getElementById('rosterCardOuter');
+  if(!btn) return;
+  const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const norm = x=> String(x == null ? '' : x).trim().toLowerCase();
+  const isClosed = ()=> !outer || outer.classList.contains('collapsed');
+  const SETS = [['rosterCtrl','Controllers'], ['roster','Aerodrome Assistant'], ['rosterComm','Communication']];
+  // Me works only for a signed-in user (Google or manually registered); the chosen name is stored per account, on this device only
+  const gSession = ()=>{ try{ const x = loadAuthSession(); return (x && x.identifier) ? x : null; }catch(e){ return null; } };
+  const meKey = ()=>{ const x = gSession(); return x ? ME_KEY + ':' + String(x.identifier).toLowerCase() : null; };
+  const loadMe = ()=>{ const k = meKey(); if(!k) return null; try{ const o = JSON.parse(localStorage.getItem(k)); return (o && o.name) ? o : null; }catch(e){ return null; } };
+  const saveMe = o=>{ const k = meKey(); if(!k) return; try{ localStorage.setItem(k, JSON.stringify(o)); }catch(e){} };
+  window._rosterMeOn = false;
+  const body = ()=> document.getElementById('rosterBody');
+  const view = ()=> document.getElementById('rosterNowView');
+
+  // every person of every table: [{table, team, pos, name}]
+  function everyone(){
+    const out = [];
+    SETS.forEach(st=>{
+      (rosterDataFor(st[0]) || []).forEach(r=>{
+        for(let t=0; t<5; t++){ const n = String((r.names && r.names[t]) || '').trim(); if(n && n !== '-') out.push({ table:st[0], team:t, pos:r.pos, name:n, grp:st[1] }); }
+      });
+    });
+    try{
+      const g = window.hsiaTHMRGroups ? window.hsiaTHMRGroups() : null;
+      if(g) [['th','Traffic Hand',g.th],['mr','Marshaller',g.mr]].forEach(k=>{
+        (k[2] || []).forEach((names,t)=> (names || []).forEach((n,pi)=>{ n = String(n || '').trim(); if(n) out.push({ table:k[0], team:t, pos:k[0].toUpperCase() + '-' + (pi+1), name:n, grp:k[1] }); }));
+      });
+    }catch(e){}
+    return out;
+  }
+  // make sure the saved person still exists (roster may have been edited): same spot first, then same name anywhere
+  function resolveMe(){
+    const me = loadMe(); if(!me) return null;
+    const all = everyone();
+    return all.find(x=> x.table === me.table && x.team === +me.team && x.pos === me.pos && norm(x.name) === norm(me.name))
+        || all.find(x=> norm(x.name) === norm(me.name)) || null;
+  }
+
+  // ---------- name picker (first time / "Change"): full roster table, tap your name ----------
+  const TABS = [['rosterCtrl','Controllers'],['roster','Aerodrome Assistant'],['rosterComm','Communication'],['th','Traffic Hand'],['mr','Marshaller']];
+  let pickTab = 'rosterCtrl';
+  const bad = n=>{ n = String(n == null ? '' : n).trim(); return !n || /^-+$/.test(n); };
+  function renderPicker(){
+    const tabsEl = document.getElementById('meTabs'), tbl = document.getElementById('meTable'), qEl = document.getElementById('meSearch');
+    if(!tabsEl || !tbl) return;
+    const q = ((qEl && qEl.value) || '').trim().toLowerCase();
+    const cur = loadMe();
+    tabsEl.innerHTML = TABS.map(t=> '<button type="button" class="xp-tab' + (t[0] === pickTab ? ' active' : '') + '" data-t="' + t[0] + '">' + t[1] + '</button>').join('');
+    tabsEl.querySelectorAll('.xp-tab').forEach(b=> b.addEventListener('click', ()=>{ pickTab = b.getAttribute('data-t'); renderPicker(); }));
+    let rows;
+    if(pickTab === 'th' || pickTab === 'mr'){
+      const g = window.hsiaTHMRGroups ? window.hsiaTHMRGroups() : { th:[], mr:[] };
+      const grp = g[pickTab] || [];
+      rows = [0,1,2].map(pi=>({ pos:pickTab.toUpperCase() + '-' + (pi+1), names:[0,1,2,3,4].map(t=> (grp[t] || [])[pi]) }));
+    } else rows = rosterDataFor(pickTab) || [];
+    let h = '<thead><tr><th>Position</th>' + TEAMS.map(t=> '<th>Team ' + t + '</th>').join('') + '</tr></thead><tbody>';
+    rows.forEach(row=>{
+      h += '<tr><td class="xp-pos">' + esc(row.pos) + '</td>';
+      TEAMS.forEach((t,ci)=>{
+        const n = row.names && row.names[ci];
+        const ok = !bad(n) && (!q || String(n).toLowerCase().indexOf(q) !== -1);
+        const sel = ok && cur && cur.table === pickTab && +cur.team === ci && cur.pos === row.pos;
+        h += '<td>' + (ok ? '<button type="button" class="xp-name me-pick' + (sel ? ' sel' : '') + '" data-table="' + pickTab + '" data-team="' + ci + '" data-pos="' + esc(row.pos) + '" data-name="' + esc(String(n).trim()) + '">' + esc(String(n).trim()) + '</button>' : '') + '</td>';
+      });
+      h += '</tr>';
+    });
+    tbl.innerHTML = h + '</tbody>';
+  }
+  function openPicker(){
+    const ov = document.getElementById('meOverlay'); if(!ov) return;
+    const cur = loadMe(); if(cur && TABS.some(t=> t[0] === cur.table)) pickTab = cur.table;
+    const q = document.getElementById('meSearch'); if(q) q.value = '';
+    renderPicker();
+    ov.classList.add('show');
+  }
+  function closePicker(){ const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); }
+  (function(){
+    const ov = document.getElementById('meOverlay'), x = document.getElementById('meOverlayClose'), q = document.getElementById('meSearch');
+    if(x) x.addEventListener('click', closePicker);
+    if(ov) ov.addEventListener('click', e=>{ if(e.target === ov) closePicker(); });
+    if(q) q.addEventListener('input', renderPicker);
+  })();
+  document.addEventListener('click', e=>{
+    const c = e.target.closest && e.target.closest('.me-pick');
+    if(!c) return;
+    saveMe({ name:c.getAttribute('data-name'), table:c.getAttribute('data-table'), team:+c.getAttribute('data-team'), pos:c.getAttribute('data-pos') });
+    closePicker();
+    setMe(true);
+  });
+
+  // ---------- the "Me" view ----------
+  let meFilter = 'all';
+  // every exchange / CL record of a day: live ones (with CL / EL flags) first, then archived ones not already covered. Works without any login.
+  function entriesFor(dk){
+    const cur = exHistList(EXCHANGES && EXCHANGES[dk]).filter(x=> x && !x.moved);
+    let hist = [];
+    try{ hist = exDayEntriesForView(dk) || []; }catch(e){}
+    return cur.concat(hist.filter(h=> !cur.some(c=> exHistKey(c) === exHistKey(h))));
+  }
+  function dayList(me){
+    const f = nowDhakaFields(), base = Date.UTC(f.y, f.m, f.day);
+    const rows = [];
+    for(let i = -BACK; i < AHEAD; i++){
+      const dt = new Date(base + i*86400000);
+      const y = dt.getUTCFullYear(), m0 = dt.getUTCMonth(), d = dt.getUTCDate(), dk = exHistDateKey(y, m0, d);
+      const upcoming = i >= 0, list = entriesFor(dk), items = [];
+      let duties = [];
+      if(me.table === 'th' || me.table === 'mr'){
+        try{ duties = (window.hsiaTHMRDuty ? window.hsiaTHMRDuty(dk, me.team) : []).map(x=>({ label:x.label, ot:x.ot, key:THS_BASE + x.slot })); }catch(e){}
+      } else {
+        const st = shiftFor(me.team, y, m0, d);
+        if(st !== 'Off') duties = [{ label:st, ot:false, key:me.team }];
+      }
+      duties.forEach(du=>{
+        const ex = list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key);
+        if(!ex){ items.push({ kind:'duty', label:du.label, ot:du.ot }); return; }
+        items.push({ kind:'gone', label:du.label, ot:du.ot, tp: ex.cl ? 'CL' : ex.special ? 'EL' : 'Exchange', sub:String(ex.subName || '').trim() });
+      });
+      list.forEach(x=>{
+        if(!x || norm(x.subName) !== norm(me.name)) return;
+        if(x.table === me.table && x.pos === me.pos && duties.some(du=> du.key === +x.team)) return;
+        const lab = (+x.team >= THS_BASE) ? ((THS_META[+x.team - THS_BASE] || {}).label || 'Duty') : shiftFor(+x.team, y, m0, d);
+        items.push({ kind:'take', label:lab, who:String(x.base || x.who || exHistBaseName(x) || '').trim(), pos:x.pos });
+      });
+      if(!items.length) continue;
+      if(!upcoming && !items.some(it=> it.kind !== 'duty')) continue;
+      rows.push({ i:i, y:y, m0:m0, d:d, dow:dt.getUTCDay(), items:items });
+    }
+    return rows;
+  }
+  function colorOf(label, ot){
+    if(ot || /OT$/.test(String(label))) return '#f5b53d';
+    try{ return getShiftColor(String(label)) || '#8B909B'; }catch(e){ return '#8B909B'; }
+  }
+  const isCl = it=> it.kind === 'gone' && (it.tp === 'CL' || it.tp === 'EL');
+  const isEx = it=> (it.kind === 'gone' && it.tp === 'Exchange') || it.kind === 'take';
+  const isDuty = it=> it.kind === 'duty' || it.kind === 'take';
+  const passes = it=> meFilter === 'all' || (meFilter === 'duty' && isDuty(it)) || (meFilter === 'cl' && isCl(it)) || (meFilter === 'ex' && isEx(it));
+  function initials(n){
+    const w = String(n).replace(/\./g,' ').split(/\s+/).filter(x=> x && !/^(md|mst|mr|mrs|ms)$/i.test(x));
+    return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
+  }
+  function itemHtml(it){
+    const c = colorOf(it.label, it.ot);
+    let tag = '', sub = '', lab = '<span class="meh-lab">' + esc(it.label) + '</span>';
+    if(it.kind === 'gone'){
+      lab = '<s class="meh-lab cut">' + esc(it.label) + '</s>';
+      tag = '<span class="meh-tag ' + (isCl(it) ? 'cl' : 'ex') + '">' + it.tp + '</span>';
+      sub = '<small>' + (it.sub ? '\uD83D\uDD04 ' + esc(it.sub) + ' will do' : 'Vacant') + '</small>';
+    } else if(it.kind === 'take'){
+      tag = '<span class="meh-tag in">Taking duty</span>';
+      sub = '<small>' + (it.who ? 'for ' + esc(it.who) : '') + (it.pos ? ' \u00b7 ' + esc(it.pos) : '') + '</small>';
+    } else if(it.ot){ tag = '<span class="meh-tag ot">OT</span>'; }
+    return '<div class="meh-it" style="--c:' + c + '"><div class="meh-itt">' + lab + tag + '</div>' + sub + '</div>';
+  }
+  function renderMe(){
+    const v = view(); if(!v) return;
+    const me = resolveMe();
+    if(!me){
+      v.innerHTML = '<div class="meh"><div class="meh-empty">Name not found in the roster<br><button type="button" class="meh-btn" id="meChange">Select your name</button></div></div>';
+      return;
+    }
+    const all = dayList(me), up = all.filter(r=> r.i >= 0), past = all.filter(r=> r.i < 0).reverse();
+    const cnt = { duty:0, cl:0, ex:0, all:0 };
+    all.forEach(r=> r.items.forEach(it=>{ if(r.i >= 0 && isDuty(it)) cnt.duty++; if(isCl(it)) cnt.cl++; if(isEx(it)) cnt.ex++; }));
+    // next / today duty
+    let hero = '<span class="meh-dot"></span>No duty in the next ' + AHEAD + ' days';
+    const nx = up.find(r=> r.items.some(isDuty));
+    if(nx){
+      const it = nx.items.find(isDuty);
+      const when = nx.i === 0 ? 'Today' : nx.i === 1 ? 'Tomorrow' : 'in ' + nx.i + ' days \u00b7 ' + WEEKDAYS[nx.dow] + ' ' + nx.d + ' ' + MONTHS[nx.m0].slice(0,3);
+      hero = '<span class="meh-dot" style="--c:' + colorOf(it.label, it.ot) + '"></span><span><b>' + (nx.i === 0 ? 'ON DUTY TODAY' : 'NEXT DUTY') + '</b> \u00b7 ' + esc(it.label) + ' \u00b7 ' + when + '</span>';
+    }
+    const mk = (r, k)=>{
+      const its = r.items.filter(passes);
+      if(!its.length || (r.i < 0 && meFilter === 'duty')) return '';
+      const c = colorOf(its[0].label, its[0].ot);
+      return '<div class="meh-day' + (r.i === 0 ? ' today' : '') + (r.i < 0 ? ' past' : '') + '" style="--i:' + Math.min(k, 14) + ';--c:' + c + '">' +
+        '<div class="meh-date"><b>' + r.d + '</b><span>' + WEEKDAYS[r.dow] + '</span></div><div class="meh-items">' + its.map(itemHtml).join('') + '</div></div>';
+    };
+    let k = 0, lastM = '', body = '';
+    up.forEach(r=>{
+      const h = mk(r, k); if(!h) return; k++;
+      const mm = r.y + '-' + r.m0;
+      if(mm !== lastM){ lastM = mm; body += '<div class="meh-month">' + MONTHS[r.m0] + ' ' + r.y + '</div>'; }
+      body += h;
+    });
+    let pb = '';
+    past.forEach(r=>{ pb += mk(r, 0).replace(/ style="--i:0;/, ' style="--i:0;'); });
+    if(pb && meFilter !== 'duty') body += '<div class="meh-month past">Earlier \u00b7 CL / Exchange</div>' + pb;
+    if(!body) body = '<div class="meh-none">Nothing here yet</div>';
+    const F = [['all','All'],['duty','Duty'],['cl','CL'],['ex','Exchange']];
+    v.innerHTML = '<div class="meh">' +
+      '<div class="meh-hero"><div class="meh-av"><span>' + esc(initials(me.name)) + '</span></div>' +
+        '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
+        '<div class="meh-acts"><button type="button" class="meh-btn" id="meChange">Change</button><button type="button" class="meh-btn x" id="meClose">\u2715</button></div></div>' +
+      '<div class="meh-next">' + hero + '</div>' +
+      '<div class="meh-stats"><div><b data-n="' + cnt.duty + '">0</b><span>Duty days<br>next ' + AHEAD + 'd</span></div><div class="cl"><b data-n="' + cnt.cl + '">0</b><span>CL taken</span></div><div class="ex"><b data-n="' + cnt.ex + '">0</b><span>Exchanges</span></div></div>' +
+      '<div class="meh-filters">' + F.map(x=> '<button type="button" class="meh-f' + (meFilter === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+      '<div class="meh-list">' + body + '</div></div>';
+    v.querySelectorAll('.meh-stats b').forEach(el=>{
+      const n = +el.getAttribute('data-n'); if(!n){ el.textContent = '0'; return; }
+      const t0 = performance.now();
+      const step = t=>{ const p = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if(p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    });
+  }
+
+  function setMe(on){
+    if(on && typeof setRosterNow === 'function' && ROSTER_NOW_ON){ ROSTER_NOW_ON = false; const nb = document.getElementById('rosterNowBtn'); if(nb) nb.classList.remove('on'); }
+    window._rosterMeOn = !!on;
+    const b = body();
+    if(b) b.classList.toggle('rost-now-on', !!on);
+    btn.classList.toggle('on', !!on);
+    if(on) renderMe();
+  }
+  function refreshAuth(){
+    const ok = !!gSession();
+    btn.style.display = ok ? '' : 'none';
+    if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); }
+    else if(window._rosterMeOn) renderMe();
+  }
+  window.hsiaMeAuthRefresh = refreshAuth;
+  window.addEventListener('storage', refreshAuth);
+  refreshAuth();
+  window.hsiaRosterMeOff = function(){ window._rosterMeOn = false; btn.classList.remove('on'); };
+
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(isClosed()) return;
+    if(!gSession()){ refreshAuth(); return; }
+    if(window._rosterMeOn){ setMe(false); return; }
+    if(!resolveMe()){ openPicker(); return; }       // first time: choose your name from the roster
+    setMe(true);
+  });
+  const v0 = view();
+  if(v0) v0.addEventListener('click', e=>{
+    if(e.target.closest('#meClose') && window._rosterMeOn) setMe(false);
+    else if(e.target.closest('#meChange')) openPicker();
+    else { const f = e.target.closest('.meh-f'); if(f){ meFilter = f.getAttribute('data-f'); renderMe(); } }
+  });
+  if(outer) new MutationObserver(()=>{ if(isClosed() && window._rosterMeOn) setMe(false); }).observe(outer, { attributes:true, attributeFilter:['class'] });
+  // keep the list fresh when exchanges / roster change
+  window.hsiaRosterMeRefresh = function(){ if(window._rosterMeOn) renderMe(); };
+})();
+
 /* ---- Duty Roster: tab switcher ---- */
 (function initRosterTabs(){
   const tabs = document.querySelectorAll('#rosterTabs .iflow-tab-btn');
@@ -11704,6 +12080,56 @@ function renderRosterNow(){
       if(rb) rb.classList.toggle('rost-th-on', btn.getAttribute('data-tab') === 'rosterTHCol');
     });
   });
+})();
+
+/* ---- Duty Roster: date selector + each shift's duty (Night / Morning / Afternoon / Off) on the chosen date, for Controllers / Aerodrome Assistant / Communication ---- */
+(function initRosterDuty(){
+  const COLS = ['rosterCtrlCol','rosterAsstCol','rosterCommCol'];
+  let auto = true;
+  window._rosterSelKey = todayDateKey();
+  const bars = [];
+  COLS.forEach(id=>{
+    const col = document.getElementById(id); if(!col) return;
+    const sub = col.querySelector('.roster-subtitle'); if(!sub) return;
+    const bar = document.createElement('div');
+    bar.className = 'th-nav';
+    bar.innerHTML = '<button type="button" class="th-navbtn rd-prev" aria-label="Previous day">&#8249;</button>' +
+      '<input type="date" class="th-date rd-date"><button type="button" class="th-navbtn rd-next" aria-label="Next day">&#8250;</button>' +
+      '<button type="button" class="th-today rd-today">Today</button>';
+    sub.parentNode.insertBefore(bar, sub);
+    bars.push(bar);
+  });
+  const addDays = (key, n)=>{ const [y,m,d] = key.split('-').map(Number); return exHistDateKey.apply(null, (function(dt){ return [dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()]; })(new Date(Date.UTC(y, m-1, d + n)))); };
+  function render(){
+    const key = window._rosterSelKey, [y,m,d] = key.split('-').map(Number);
+    bars.forEach(b=>{ const i = b.querySelector('.rd-date'); if(i && i.value !== key) i.value = key; });
+    ['rosterTableCtrl','rosterTable','rosterTableComm'].forEach(id=>{
+      const ths = document.querySelectorAll('#' + id + ' thead th');
+      for(let t=0; t<5; t++){
+        const th = ths[t+1]; if(!th) continue;
+        const st = shiftFor(t, y, m-1, d);
+        let el = th.querySelector('.rd-sub');
+        if(!el){ el = document.createElement('span'); th.appendChild(el); }
+        el.className = 'rd-sub d-' + String(st).toLowerCase();
+        el.textContent = st;
+      }
+    });
+    try{ updateRosterHighlight(); }catch(e){}
+  }
+  function setKey(k, byUser){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+    window._rosterSelKey = k; if(byUser) auto = (k === todayDateKey());
+    render();
+  }
+  bars.forEach(b=>{
+    b.querySelector('.rd-prev').addEventListener('click', ()=> setKey(addDays(window._rosterSelKey, -1), true));
+    b.querySelector('.rd-next').addEventListener('click', ()=> setKey(addDays(window._rosterSelKey, 1), true));
+    b.querySelector('.rd-today').addEventListener('click', ()=> setKey(todayDateKey(), true));
+    b.querySelector('.rd-date').addEventListener('change', e=> setKey(e.target.value, true));
+  });
+  // keeps following "today" after midnight until the user picks another date
+  window.hsiaRosterDutyTick = function(){ if(auto && window._rosterSelKey !== todayDateKey()){ window._rosterSelKey = todayDateKey(); render(); } };
+  render();
 })();
 
 /* ---- Duty Roster: Traffic Hand & Marshaller — follows the main "Who's on duty" team rotation (A-E) ---- */
@@ -11929,15 +12355,24 @@ function renderRosterNow(){
     }));
     return { time: SH[cur.r][0], th: conv('th'), mr: conv('mr') };
   };
+  // "Me" view: which shifts a Traffic Hand / Marshaller person works on a date (regular + overtime)
+  window.hsiaTHMRGroups = function(){ return { th:TH, mr:MR }; };
+  window.hsiaTHMRDuty = function(dateKey, team){
+    const d = thDay(toUtc(dateKey)), out = [];
+    for(let sl=0; sl<6; sl++) if(d[TH_SLOT_KEY[sl]] === team) out.push({ label:THS_META[sl].label, ot:!!THS_META[sl].ot, slot:sl });
+    return out;
+  };
   // used by the day-detail popup (Who's on duty shift click / calendar date click): Traffic Hand + Marshaller of shift `team` (0-4) on a date
   window.hsiaTHMRDay = function(dateKey, team){
     const ms = toUtc(dateKey), d = thDay(ms);
     const r = d.night === team ? 0 : d.morning === team ? 1 : d.afternoon === team ? 2 : -1;
     const conv = (kind, slot, names)=> names.map((n,pi)=>{
-      const e = findEx(dateKey, kind, slot, pi);
-      if(!e) return String(n || '').trim();
+      const base = String(n || '').trim();
+      const e = findEx(dateKey, kind, slot, pi) || (slot === 4 ? findEx(dateKey, kind, 5, pi) : null);
+      if(!e) return base ? { base:base, sub:'', ex:false } : null;
       const sub = String(e.subName || '').trim();
-      return sub ? '🔄 ' + sub + (e.cl ? ' (CL)' : e.special ? ' (EL)' : '') : (e.special ? 'Vacant (Special)' : e.moved ? 'Vacant' : 'Vacant (CL)');
+      const note = e.cl ? 'CL' : e.special ? 'EL' : '';
+      return { base:base, sub:sub, note:note, ex:true };
     }).filter(Boolean);
     const one = kind=>{
       if(r >= 0) return thBlocks(ms, r, kind).map(b=>({ tag:b.tag, names:conv(kind, b.slot, b.names) }));
