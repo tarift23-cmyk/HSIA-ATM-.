@@ -950,6 +950,35 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .meh-tag.ot{ color:#f5b53d; background:rgba(245,181,61,.12); border-color:rgba(245,181,61,.4); }
 .meh-none,.meh-empty{ padding:30px 10px; text-align:center; color:#8d94a6; font-size:13px; }
 .meh-empty .meh-btn{ margin-top:12px; }
+/* ---- Swap suggestions + exchange requests ---- */
+body:not(.hsia-priv) .hsia-priv-only{ display:none !important; }
+.aud-row{ margin-bottom:8px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--panel-2); }
+.aud-top{ display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.aud-a{ font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--gold-soft); }
+.aud-t{ font-size:11px; color:var(--muted); font-weight:700; }
+.aud-d{ margin-top:4px; font-size:13px; font-weight:600; line-height:1.35; word-break:break-word; }
+.aud-by{ margin-top:3px; font-size:10.5px; color:var(--muted); }
+.iflow-others-lock,.iflow-others-import{ padding:16px; text-align:center; color:var(--muted); font-weight:700; }
+.exreq-badge{ display:inline-block; min-width:18px; padding:1px 6px; margin-left:6px; border-radius:999px; background:#F54249; color:#fff; font-size:11px; font-weight:800; text-align:center; }
+.exr-h{ margin:14px 0 8px; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+.exr-card{ margin-bottom:10px; padding:12px; border-radius:14px; border:1px solid var(--border); background:var(--panel-2); }
+.exr-card.ask{ border-color:#f5b53d; box-shadow:0 0 0 1px rgba(245,181,61,.5), 0 0 18px -6px #f5b53d; }
+.exr-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.exr-top b{ font-size:14px; }
+.exr-date{ font-size:12px; color:var(--muted); font-weight:700; }
+.exr-st{ margin-left:auto; padding:2px 9px; border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; background:rgba(245,181,61,.16); color:#f5b53d; }
+.exr-st.approved{ background:rgba(63,226,127,.15); color:#3fe27f; }
+.exr-st.declined,.exr-st.failed,.exr-st.cancelled{ background:rgba(245,66,73,.15); color:#ff7b80; }
+.exr-line{ margin-top:6px; font-size:12px; color:var(--muted); font-weight:600; }
+.exr-people{ margin-top:6px; font-size:15px; }
+.exr-people s{ color:var(--muted); }
+.exr-need{ margin-top:6px; font-size:12px; color:var(--text); }
+.exr-by{ margin-top:4px; font-size:11px; color:var(--muted); }
+.exr-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.exr-actions button{ border:1px solid var(--border); background:var(--panel); color:var(--text); border-radius:999px; padding:7px 14px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; }
+.exr-actions button.ok{ background:linear-gradient(135deg,#3fe27f,#9cc0ff); color:#0d0f14; border-color:transparent; }
+.exr-actions button.no{ color:#ff7b80; border-color:rgba(245,66,73,.5); }
+.exr-empty{ padding:18px 6px; text-align:center; color:var(--muted); font-size:13px; }
 @keyframes mehIn{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:none; } }
 @keyframes mehUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
 @keyframes mehSpin{ to{ transform:rotate(360deg); } }
@@ -1013,6 +1042,13 @@ table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255
 .th-navbtn,.th-today{ border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; font-weight:800; cursor:pointer; }
 .th-navbtn{ width:38px; height:38px; font-size:20px; line-height:1; }
 .th-today{ padding:0 14px; height:38px; font-size:12px; background:var(--gold); color:#1B2130; border-color:var(--gold); }
+/* ---- date fields always show dd/mm/yyyy (the native text is hidden, a label shows the value; the native picker still opens on tap) ---- */
+.dfmt{ position:relative; }
+.dfmt > input[type=date]{ width:100%; margin:0; box-sizing:border-box; }
+.dfmt > input[type=date]::-webkit-datetime-edit{ opacity:0; }
+.dfmt > input[type=date]::-webkit-calendar-picker-indicator{ cursor:pointer; }
+.dfmt-t{ position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center; pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 34px); }
+.dfmt-t.ph{ opacity:.55; }
 .th-date{ flex:1; min-width:0; height:38px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:0 10px; font-size:14px; color-scheme:dark; }
 
 /* ---- date bar + per-shift duty under A-E (Controllers / Aerodrome Assistant / Communication) ---- */
@@ -2317,6 +2353,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <div id="authLoggedInView" style="display:none;">
         <div class="fr-dbsection-hint" id="authWelcome"></div>
         <div class="fr-manualform">
+          <button type="button" id="authReqOpenBtn" class="fr-dbimport">📨 Exchange requests <span class="exreq-badge" style="display:none;"></span></button>
           <button type="button" id="authNotifPermBtn" class="fr-dbimport">🔔 নোটিফিকেশন চালু করুন</button>
           <button type="button" id="calendarSyncBtn" class="fr-dbimport">🗓️ ক্যালেন্ডারে সিঙ্ক করুন</button>
           <button type="button" id="authChangePassBtn" class="fr-dbclear">পাসওয়ার্ড বদলান</button>
@@ -2377,11 +2414,13 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
       </div>
       <div class="fr-dbstatus" id="exchangeCurrentHint"></div>
+      <button id="exReqOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">📨 Requests <span class="exreq-badge" style="display:none;"></span></button>
       <button id="qbmOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">QBM</button>
+      <button id="auditOpenBtn" type="button" class="fr-dbimport hsia-priv-only" style="width:100%;margin-top:12px;">🧾 Change log</button>
     </div>
   </div>
 
-  <div class="modal-overlay" id="exchangePickerOverlay" style="z-index:10001;">
+  <div class="modal-overlay" id="exchangePickerOverlay" style="z-index:10010;">
     <div class="modal-box" style="max-width:760px;">
       <div class="modal-header">
         <div class="modal-title">👥 Select Substitute</div>
@@ -2406,6 +2445,27 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <div class="xp-tabs" id="meTabs"></div>
       <input type="text" id="meSearch" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off">
       <div class="xp-wrap"><table class="xp-table" id="meTable"></table></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="auditOverlay" style="z-index:10006;">
+    <div class="modal-box" style="max-width:560px;">
+      <div class="modal-header">
+        <div class="modal-title">🧾 Change log</div>
+        <button type="button" class="modal-close" id="auditClose">✕</button>
+      </div>
+      <div id="auditBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="exReqOverlay" style="z-index:10006;">
+    <div class="modal-box" style="max-width:560px;">
+      <div class="modal-header">
+        <div class="modal-title">📨 Exchange requests</div>
+        <button type="button" class="modal-close" id="exReqClose">✕</button>
+      </div>
+      <div class="fr-dbstatus" id="exReqNote"></div>
+      <div id="exReqBody"></div>
     </div>
   </div>
 
@@ -2814,7 +2874,7 @@ Emergency →↓
       </div>
 
       <div class="iflow-col" id="iflowOthersColumn">
-        <div class="iflow-freetext" id="iflowOthersNotes" contenteditable="false"><h4>INDEX / TWR BUILDING</h4><div>Sato — 8100 | Dy Sato — 8110 | NOTAM — 8179 | Briefing — 8176, 8377 | Sato Admin — 8189 | PA to Sato — 8188 | ECR — 3092 | TWR — 8193</div><div>DSO — 3053, 01894908826 | Met — 8393 | Communication: 008177</div><h4>A</h4><div>Agartala — 0091 381 234 2821 (OK)</div><div>AASIIC-BD — Head: Gp Capt (Retd) Md Harunur Rashid, 01617785671 / 041091759 (Tel); Member (Engineering): Wg Cdr (Retd) MM Asaduzzaman, 01713125955 / 028901132 (Tel); Member (ATC): Md. Ayub Khan, 01718152577 / 041091756 (Tel)</div><div>Airport police station → 8901853, OC (Phn no): 01320041873</div><div>ABDULLAH AL MAMUN — AD (ATM Sup/OJTI) 01922545227</div><div>AVSEC — 42161, 4094, 01894-908853</div><div>Air Astra — 01324730880 (OPS AWA), 01713255990 (Sales)</div><div>A/C problem — (Nsr) 01712-088952</div><div>AC maintenance — Night: 01602949854 (Ataur); Day: 01662083029 (Asgar)</div><div>ATI time — 01764834772 (Rayhan)</div><div>AK-Traders in charge — 01817-145203</div><div>ADNC — 5837 (BAF D.T. Phone), 01769993467 (Whatsapp)</div><div class="iflow-src">(পাতা: P-1, P-27)</div><h4>B</h4><div>Bibam (Lost &amp; Found) → 8901500 + 5402/5404</div><div>BRAC Net — A212 — 01678-084871</div><div>Biman Ticket — 5526, 2571</div><div>Traffic Manager — 01777155333</div><div>OPS — 8901530, 8901260</div><div>Ramp control — 01716489835</div><div>Biman Engr → 01677715537, 630 / 01777715760</div><div>TNT — 8901500, 36</div><div class="iflow-src">(পাতা: P-28, P-2)</div><h4>C</h4><div>Custom &amp; Immigration — Custom: (i) 8901758 (ii) 01317-249273; Immigration: (i) 8901599 (ii) 01713-373072</div><div>VIP gate — 3232 | Media gate — 8858</div><div>One stop service — 01777715558</div><div>Cleaner — 01817145203 (AK.T. Supervisor), 01958575705</div><div>Chennai — 600027; Telephone: 91-44-22560700 (RCC), 91-44-22561803 (FIC), 91-44-22560893 (WSO); Fax: 91-44-22560700 (RCC), 91-44-22560894 (WSO); AFS: VOMMYCYX</div><div class="iflow-src">(পাতা: P-29, P-3)</div><h4>D</h4><div>Delhi RCC (110017 postal); Telephone: 91-11-25654061 (RCC), 91-11-25653457 (FIC), 91-11-25653283 (WSO); Fax: 91-11-25654061 (RCC), 91-11-25653284 (WSO); AFS: VIDPYCYXIMOV</div><div>DSO — 0028014653, Phn: 01890608826, 9226</div><div class="iflow-src">(পাতা: P-4)</div><h4>E</h4><div>Immigration — 8901599 (Duty officer)</div><div>Add SP (Immigration) — 01320005376</div><div>ECR = 601152 | ECR (IP) = 3092 | ECR (Airport JTA) = 01890315904 | ECR (Cargo Airport ART) = 01641074969</div><div>Exchange — 009999; (Airport TIS) 01710828698 (T/S); (TIA) 01531712341 (T/A)</div><div class="iflow-src">(পাতা: P-31, P-5)</div><h4>F</h4><div>Fine — 8901077, 3583</div><div>01812145828</div><div class="iflow-src">(পাতা: P-32)</div><h4>G</h4><div>Guwahati — 0091 0361 2840085</div><div class="iflow-src">(পাতা: P-7)</div><h4>H</h4><div>Health — 8901844, 01799430033 (Dro)</div><div>First Aid → 3219, 01305-489824</div><div class="iflow-src">(পাতা: P-34)</div><h4>K</h4><div>Kolkata (ACC) — 0091 3325110517, 9831479366</div><div>Kolkata (WSO) — 0091 3325119520</div><div>Kolkata (RCC) — 00913325130218</div><div>AFS — VECCYCYX</div><div>Kolkata (EAST) — 00913325110517; VTTIS</div><div>Kolkata whatsapp number — 91 8314 79366</div><div>Kolkata MED/MCD — 0091291332511305 0; MLU — 0091033251119521</div><div class="iflow-src">(পাতা: P-11)</div><h4>M</h4><div>MTD (মধ্যম বাযার) = 01753-290382; Mumbai RCC</div><div>Telephone: 91-22-26819421 (RCC), 91-22-26828088 (WSO)</div><div>(OCC/FIC): 91-22-26828002/8022</div><div>Fax: 91-22-26828121 (RCC), 91-22-26819341 (OCC/FIC)</div><div>AFS: 91-22-26828066 (WSO), VABBYCYX</div><div class="iflow-src">(পাতা: P-13)</div><h4>N</h4><div>Novo-Air — SPS: 01755856645; Eng: 01833-090053</div><div>Ground Handling — 01730-785015</div><div>NAV — 3284; Freq — 127.4</div><div>Net Broc (A212) — 01678-084871</div><div class="iflow-src">(পাতা: P-40)</div><h4>O</h4><div>OMA Air — 01711-409213</div><div class="iflow-src">(পাতা: P-41)</div><h4>R</h4><div>Radar control — Tech: 3203, Head: 3228</div><div>NAV AID — 3284; Principal CAA — 3386; Equipment — 3054; Civil Devision — 3250; RDP center — 60115</div><div class="iflow-src">(পাতা: P-44)</div><h4>S</h4><div>SSF C/Rm — 9144865</div><div>SSF commander airport — 01755510486, 01766299576</div><div class="iflow-src">(পাতা: P-45)</div><h4>T</h4><div>PABX- Telephone Complain — 6797</div><div class="iflow-src">(পাতা: P-20)</div><h4>U</h4><div>US-Bangla — 3643, 01777-77779/878 (সংখ্যা অস্পষ্ট, মূল পাতায় যাচাই করুন)</div><div class="iflow-src">(পাতা: P-47)</div><h4>Y</h4><div>Yangon Control (ACC) — 009515-33268, 009515-33040, 009517-533040</div><div class="iflow-src">(পাতা: P-15)</div><h4 data-aa="1">Aerodrome Assistant Number List</h4><div>1. Md. Asraful Islam / মোঃ আশরাফুল ইসলাম — 01521211423</div><div>2. Abeer Rahman / আবির রহমান — 01511060733</div><div>3. Md. Asaduzzaman / মো. আসাদুজ্জামান — 01841161736</div><div>4. Md. Uzzal / মো: উজ্জ্বল — 01774749468</div><div>5. Tareq Iqbal / তারেক ইকবাল — 01740175277</div><div>6. Md Jewel Rana / মোঃ জুয়েল রানা — 01745232092</div><div>7. Md Mamun / মোঃ মামুন — 01753454441</div><div>8. Amena Akter / আমেনা আক্তার — 01874440182</div><div>9. Md. Shahid Hossain / মো: শহীদ হোসেন — 01755185099</div><div>10. Md. Zahid Hasan Mim / মোঃ জাহিদ হাসান মিম — 01783299000</div><div>11. Md. Imran Hossain / মো: ইমরান হোসেন — 01764124970</div><div>12. Tarifuzzaman Tarif / তারিফুজ্জামান তারিফ — 01521317256</div><div>13. Amit Datta / অমিত দত্ত — 01755150627</div><div>14. Md. Didar Ahmed / মো: দিদার আহমেদ — 01823350995</div><div>15. Ranjan Kumar / রঞ্জন কুমার — 01738051364</div><div>16. Md. Milon Islam / মো: মিলন ইসলাম — 01783139492</div><div>17. Md. Sadekul Islam / মোঃ সাদেকুল ইসলাম — 01738385959</div><div>18. Sidratul Moon Taha / সিদরাতুল মুনতাহা — 01878796973</div><div>19. Khan Mohd. Atta-E-Rabbi / খান মো: আতা-ই-রাব্বি — 01775667137</div><div>20. Shirendra Nath Singha / শীরেন্দ্র নাথ সিংহ — 01521245747</div><div>21. Md. Emdad Kabir / মো: ইমদাদ কবীর — 01515630590</div><div>22. Asaduzzaman / আসাদুজ্জামান — 01521482919</div><div>23. Akib Rayahan Suman / আকিব রায়হান সুমন — 01517175096</div><div>24. Md. Rahidul Islam / মোঃ রহিদুল ইসলাম — 01571703490</div><div>25. Md.Kamrul Hasan Repon / মো:কামরুল হাসান রিপন — 01581850532</div><div>26. Sheik Faisal Ahmed / শেখ ফয়সাল আহমেদ — 01773855787</div><div>27. Md. Imtiaz Masrur / মো: ইমতিয়াজ মাসরুর — 01762925344</div><div>28. Kazi Md. Nurul Amin / কাজী মোহা: নূরুল আমীন — 01926207030</div><div>29. Mahbubur Rahman / মাহবুবুর রহমান — 01516572055</div><div>30. Md.Mogibur Rahman Khan / মো.মজিবুর রহমান খান — 01311179722</div><div>31. Md.Mogibur Rahman Khan / মো.মজিবুর রহমান খান — 01311179722</div><div>32. Shuvo Jit Roy / শুভ জিৎ রায় — 01571183729</div><div>33. Nayan Podder / নয়ন পোদ্দার — 01518649006</div><div>34. Md.Samiul Islam / মোঃসামিউল ইসলাম — 01568865938</div><div>35. Raihan Joardar / রায়হান জোয়ার্দ্দার — 01731615667</div><div>36. Md Nymul Hasan Juwel / মো: নাইমুল হাসান জুয়েল — 01751259829</div><div>37. Asadullah Ahmed / আসাদুল্লাহ আহমেদ — 01725766261</div><div>38. Md. Razin Saleh / মোঃ রাজিন সালেহ্ — 01606133342</div><div>39. Md. Almas Raihan / মোঃ আলমাচ রায়হান — 01775657132</div><div>40. K.M. Syduzzaman / কে,এম, সাইদুজ্জামান — 01773608517</div><div>41. Md. Al Amin / মোঃ আল আমিন — 01521203731</div><div>42. Md. Asikul Hoq / মো: আশিকুল হক — 01307074684</div><div>43. Md.Jobaer Hasan / মোঃজোবায়ের হাসান — 01568925943</div><div>44. Sk. Sadi / শেখ সাদী — 01989600577</div><div>45. Shaker Bin Iqbal / শাকের বিন ইকবাল — 01955382251</div><div>46. Razu Ahmmed / রাজু আহম্মেদ — 01727248944</div><div>47. Md. Abdul Khaleque / মোঃ আব্দুল খালেক — 01768579377</div><div>48. Md. Arifur Rahman / মোঃ আরিফুর রহমান — 01772795424</div><div>49. Md. Rabiul Hasan / মো. রবিউল হাসান — 01812551125</div><div>50. Md. Sarwar Zahan / মোঃ সারোয়ার জাহান — 01746027744</div><div>51. Md. Abdur Razzaque / মো: আব্দুর রাজ্জাক — 01724905948</div><div>52. Md. Piaus Uddin / মোঃ পিয়াস উদ্দীন — 01767515854</div><div>53. Sumon Kumar Das / সুমন কুমার দাশ — 01738198683</div><div>54. Md. Obydul Haque / মোঃ ওবায়দুল হক — 01893795929</div><div>55. Mst. Warda Rashid / মোছা: ওয়ারদা রশিদ — 01788842247</div><div>56. Md.Habibur Rahman Zion / মোঃ হাবিবুর রহমান জিয়ন — 01742358497</div><div>57. Md. Jakaria / মো: জাকারিয়া — 01516500110</div><div>58. Md.Abdullah / মোঃ আব্দুল্লাহ — 01725680599</div><div>59. Aysha Siddika / আয়শা সিদ্দিকা — 01728178510</div><div>60. Marzia Akter / মার্জিয়া আক্তার — 01946209334</div><div>61. Md. Razibul Hasan / মোঃ রাজিবুল হাসান — 01732034205</div><div>62. Md. Moinul Islam / মোঃ মইনুল ইসলাম — 01749318065</div><div>63. Biprojit Bairagi / বিপ্রজীৎ বৈরাগী — 01956452272</div><div>64. Sahara Zamil Nabila / সাহারা জামিল নাবিলা — 01533005892</div><div>65. Zobeda Ahmed Papri / জোবেদা আহমদ পাপড়ি — 01515243447</div><div>66. Md. Abdur Rahim / মোঃ আব্দুর রহিম — 01779691256</div><div>67. Md. Ashiqur Rahman / মো: আশিকুর রহমান — 01703485189</div><div>68. Reshma Khatun / রেশমা খাতুন — 01956422047</div><div>69. Shawan Mondal / শাওন মন্ডল — 01953349114</div><div>70. Sourav Roy / সৌরভ রায় — 01785946194</div><div>71. Sharmin Shultana / শারমিন সুলতানা — 01740731060</div><div>72. Didar Bhuiyan / দিদার ভূঞা — 01517161300</div><div>73. Md.Hiranur Rahman / মোঃ হিরানুর রহমান — 01738478999</div><div>74. Kazi Sharif / কাজী শরীফ — 01967908446</div><div>75. Md. Latiful Abedin / মোঃ লাতিফুল আবেদীন — 01804184140</div><div>76. Mahadee Hasan Shubho / মেহেদী হাসান শুভ — 01520090385</div><div>77. Afsana Lima / আফসানা লিমা — 01518792801</div><div>78. Md.Rokibul Islam / মোঃ রকিবুল ইসলাম — 01673782341</div><div>79. Muhammad Al Mubin / মোহাম্মদ আল মবীন — 01768155181</div></div>
+        <div class="iflow-freetext" id="iflowOthersNotes" contenteditable="false"><p class="iflow-others-lock">🔒 Admin sign-in required.</p></div>
         <div class="iflow-save-row">
           <button type="button" class="icon-only fr-dbimport" id="iflowOthersEditBtn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
           <button type="button" class="icon-only fr-dbimport" id="iflowOthersSaveBtn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></button>
@@ -5904,14 +5964,10 @@ function initCollapsePanels(){
 }
 
 /* ---- Duty roster: editable position ↔ name grids, persisted to localStorage + exportable ---- */
-const ROSTER_PASSWORD = "tarif12345^";
-/* Paired with a real Firebase Authentication (Email/Password) account —
-   see requireRosterAuth() below. The email itself isn't secret (same
-   spirit as a Firebase apiKey); what matters is that only someone who
-   knows ROSTER_PASSWORD can actually complete this sign-in, and Firebase
-   verifies that server-side — unlike the plain client-side compare this
-   function also does, which is visible to anyone who views page source. */
-const ROSTER_ADMIN_EMAIL = "admin@hsia-atm-tarif.app";
+/* ADMIN = a Google account whose Firebase uid is listed under hsia_private/admins/<uid> in the database (added by hand in the
+   Firebase Console, never from this page). There is NO password in this file any more: every admin write is checked by the
+   Realtime Database Rules on Google's servers, so reading this page's source gives nobody any power.
+   "rosterUnlocked" below is only the UI flag; it is re-verified against the database on every sign-in (adminVerify). */
 /* Remember the admin on THIS device, so the password isn't asked again and again (before, every
    page reload asked again). Kept only in this browser's localStorage; every admin action pushes the
    expiry forward, so it only asks again after a full week without any admin action. */
@@ -5925,45 +5981,66 @@ function rememberAdmin(){
 }
 let rosterUnlocked = isAdminRemembered();
 
-/* Establishes a real, server-verified Firebase Auth session so the Realtime Database Rules can
-   require auth.token.firebase.sign_in_provider === 'password' for writes — a check that can't be
-   bypassed just by reading this file's source. Not awaited by the UI; writes wait for it (see fbSet). */
-function adminFirebaseSignIn(){
-  if(typeof firebase !== 'undefined' && firebase.auth){
-    window._adminAuthFailed = null;
-    window._adminAuthPromise = firebase.auth().signInWithEmailAndPassword(ROSTER_ADMIN_EMAIL, ROSTER_PASSWORD)
-      .catch(err=>{
-        const code = (err && err.code) ? err.code : ((err && err.message) || 'unknown');
-        window._adminAuthFailed = code;
-        console.warn('Firebase admin sign-in failed (writes will be rejected by Rules):', err);
-        let hint = 'Firebase Console → Authentication → Users-এ ' + ROSTER_ADMIN_EMAIL + ' নামে ইউজার আছে কিনা এবং তার পাসওয়ার্ড এই অ্যাডমিন পাসওয়ার্ডের সাথে মেলে কিনা দেখুন।';
-        if(code === 'auth/operation-not-allowed') hint = 'Firebase Console → Authentication → Sign-in method-এ "Email/Password" চালু করুন।';
-        else if(code === 'auth/network-request-failed') hint = 'ইন্টারনেট সংযোগ চেক করুন।';
-        else if(code === 'auth/too-many-requests') hint = 'অনেকবার চেষ্টা হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।';
-        try{ setFirebaseSyncStatus('❌ অ্যাডমিন সাইন-ইন ব্যর্থ (' + code + ') — ' + hint); }catch(e){}
-        alert('⚠️ অ্যাডমিন সাইন-ইন ব্যর্থ হয়েছে (' + code + ').\nতাই এখন রোস্টার এডিট Firebase-এ সেভ হবে না, অন্য ডিভাইসে দেখাবে না।\n\n' + hint);
-      });
+window._adminReadyHooks = []; window._adminLostHooks = []; window._adminReadyDone = false;
+window.hsiaOnAdminReady = function(fn){ window._adminReadyHooks.push(fn); if(window._adminReadyDone){ try{ fn(); }catch(e){ console.error(e); } } };
+window.hsiaOnAdminLost = function(fn){ window._adminLostHooks.push(fn); };
+function adminSetState(on){
+  rosterUnlocked = !!on;
+  try{ if(on) rememberAdmin(); else localStorage.removeItem(ADMIN_REMEMBER_KEY); }catch(e){}
+  try{ if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI(); }catch(e){}
+  if(on && !window._adminReadyDone){
+    window._adminReadyDone = true;
+    try{ onAdminUnlockedHistory(); }catch(e){}
+    try{ if(window._attachAdminListeners) window._attachAdminListeners(); }catch(e){}
+    window._adminReadyHooks.forEach(fn=>{ try{ fn(); }catch(e){ console.error(e); } });
+    try{ auditLog('admin-signin', ''); }catch(e){}
+  }
+  if(!on && window._adminReadyDone){
+    window._adminReadyDone = false;
+    window._adminLostHooks.forEach(fn=>{ try{ fn(); }catch(e){ console.error(e); } });
   }
 }
-
+/* Server-side check: hsia_private/adminCheck can only be read by an admin (see the Rules), so a successful read proves it. */
+async function adminVerify(){
+  try{
+    const u = firebase.auth().currentUser;
+    if(!u || u.isAnonymous) return false;
+    await firebase.database().ref('hsia_private/adminCheck').once('value');
+    return true;
+  }catch(e){ return false; }
+}
+async function adminGoogleSignIn(){
+  if(typeof firebase === 'undefined' || !firebase.auth){ alert('Firebase is not loaded yet. Check the internet connection and try again.'); return false; }
+  const auth = firebase.auth();
+  try{
+    const cur = auth.currentUser;
+    if(cur && !cur.isAnonymous){ const ok0 = await adminVerify(); if(ok0){ adminSetState(true); return true; } }
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt:'select_account' });
+    await auth.signInWithPopup(provider);
+    const ok = await adminVerify();
+    adminSetState(ok);
+    if(!ok) alert('Signed in as ' + (auth.currentUser && auth.currentUser.email) + ', but this Google account is not an admin.');
+    return ok;
+  }catch(err){
+    const code = (err && err.code) ? err.code : String(err && err.message || err);
+    if(code === 'auth/popup-blocked'){ try{ await auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }catch(e2){} return false; }
+    if(code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return false;
+    let hint = '';
+    if(code === 'auth/unauthorized-domain') hint = '\nFirebase Console \u2192 Authentication \u2192 Settings \u2192 Authorized domains \u2192 add this site\u2019s domain.';
+    else if(code === 'auth/operation-not-allowed') hint = '\nFirebase Console \u2192 Authentication \u2192 Sign-in method \u2192 enable Google.';
+    else if(code === 'auth/network-request-failed') hint = '\nCheck the internet connection.';
+    alert('Google sign-in failed (' + code + ').' + hint);
+    return false;
+  }
+}
 function adminGate(unlockInputs){
   if(rosterUnlocked){
     rememberAdmin();
     if(unlockInputs) unlockAllRosterInputs();
     return true;
   }
-  const p = window.prompt('Enter password to edit or save:');
-  if(p === null) return false;
-  if(p === ROSTER_PASSWORD){
-    rosterUnlocked = true;
-    rememberAdmin();
-    if(unlockInputs) unlockAllRosterInputs();
-    adminFirebaseSignIn();
-    try{ if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI(); }catch(e){}
-    try{ onAdminUnlockedHistory(); }catch(e){}
-    return true;
-  }
-  alert('Wrong password.');
+  adminGoogleSignIn().then(ok=>{ if(ok) alert('Admin sign-in complete. Please tap the action again.'); });
   return false;
 }
 // roster editing: also switches the roster cells to editable
@@ -5974,18 +6051,110 @@ function requireQuickAuth(){ return adminGate(false); }
    time — regardless of whether roster editing is already unlocked in
    this session (rosterUnlocked). This is intentionally separate from
    requireRosterAuth() above. */
-function requireDownloadAuth(){
-  const p = window.prompt('Enter admin password to download the backup file:');
-  if(p === null) return false;
-  if(p === ROSTER_PASSWORD) return true;
-  alert('Wrong password.');
-  return false;
-}
+function requireDownloadAuth(){ return adminGate(false); }
 function unlockAllRosterInputs(){
   try{ if(window.hsiaTHMRUnlock) window.hsiaTHMRUnlock(); }catch(e){}
   document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterTableComm input, #rosterNewPos, #rosterNewPosCtrl, #rosterNewPosComm').forEach(inp=>{
     inp.readOnly = false;
   });
+}
+
+/* ============================================================
+   Audit trail: who / when / what for every admin edit.
+   Written to hsia_private/audit (admin-only read, write-once entries) and also kept as a short local copy.
+   ============================================================ */
+const AUDIT_LOCAL_KEY = 'HSIA_AUDIT_LOCAL_V1';
+function auditWho(){
+  try{ const u = firebase.auth().currentUser; return (u && !u.isAnonymous) ? (u.email || u.uid) : 'unknown'; }catch(e){ return 'unknown'; }
+}
+function auditLog(action, detail){
+  const e = { t:Date.now(), by:auditWho(), a:String(action), d:String(detail == null ? '' : detail).slice(0, 400) };
+  try{ const arr = JSON.parse(localStorage.getItem(AUDIT_LOCAL_KEY) || '[]'); arr.push(e); localStorage.setItem(AUDIT_LOCAL_KEY, JSON.stringify(arr.slice(-200))); }catch(_){}
+  try{
+    const u = firebase.auth().currentUser;
+    if(rosterUnlocked && _fbDb && u && !u.isAnonymous) _fbDb.ref('hsia_private/audit').push(e).catch(()=>{});
+  }catch(_){}
+}
+function auditTableLabel(key){
+  try{ if(key === ROSTER_KEY) return 'Aerodrome Assistant'; if(key === ROSTER_CTRL_KEY) return 'Controllers'; if(key === ROSTER_COMM_KEY) return 'Communication'; }catch(e){}
+  return String(key);
+}
+function auditDiffRoster(label, oldR, newR){
+  const out = [];
+  if(!Array.isArray(oldR) || !Array.isArray(newR)) return out;
+  const om = {}, nm = {};
+  oldR.forEach(r=>{ if(r) om[r.pos] = r; }); newR.forEach(r=>{ if(r) nm[r.pos] = r; });
+  Object.keys(nm).forEach(pos=>{ if(!om[pos]) out.push(label + ' \u00b7 position added: ' + pos); });
+  Object.keys(om).forEach(pos=>{ if(!nm[pos]) out.push(label + ' \u00b7 position removed: ' + pos); });
+  Object.keys(nm).forEach(pos=>{
+    if(!om[pos]) return;
+    for(let t = 0; t < 5; t++){
+      const a = String((om[pos].names || [])[t] || '').trim(), b = String((nm[pos].names || [])[t] || '').trim();
+      if(a !== b) out.push(label + ' \u00b7 ' + pos + ' \u00b7 Team ' + 'ABCDE'[t] + ': "' + a + '" \u2192 "' + b + '"');
+    }
+  });
+  return out;
+}
+/* roster cells save on every keystroke: remember how it looked BEFORE the first keystroke, and log one entry per changed cell after 4 s of quiet */
+const _auditBurst = {};
+function auditRosterSaved(key, newR){
+  if(!rosterUnlocked) return;
+  let b = _auditBurst[key];
+  if(!b){ let old = null; try{ old = JSON.parse(localStorage.getItem(key)); }catch(e){} b = _auditBurst[key] = { old:old, latest:newR, timer:0 }; }
+  b.latest = JSON.parse(JSON.stringify(newR));
+  clearTimeout(b.timer);
+  b.timer = setTimeout(()=>{
+    delete _auditBurst[key];
+    const d = auditDiffRoster(auditTableLabel(key), b.old, b.latest);
+    d.slice(0, 40).forEach(x=> auditLog('roster-edit', x));
+    if(d.length > 40) auditLog('roster-edit', '\u2026and ' + (d.length - 40) + ' more changes');
+  }, 4000);
+}
+let _auditThmrBase = null, _auditThmrTimer = 0;
+function auditThmrSaved(oldRaw, TH, MR){
+  if(!rosterUnlocked) return;
+  if(!_auditThmrBase){ try{ _auditThmrBase = oldRaw ? JSON.parse(oldRaw) : null; }catch(e){ _auditThmrBase = null; } }
+  const latest = JSON.parse(JSON.stringify({ th:TH, mr:MR }));
+  clearTimeout(_auditThmrTimer);
+  _auditThmrTimer = setTimeout(()=>{
+    const base = _auditThmrBase; _auditThmrBase = null;
+    if(!base) return;
+    const out = [];
+    [['th','Traffic Hand'],['mr','Marshaller']].forEach(k=>{
+      for(let t = 0; t < 5; t++) for(let pi = 0; pi < 3; pi++){
+        const a = String((((base[k[0]] || [])[t]) || [])[pi] || '').trim(), b = String((((latest[k[0]] || [])[t]) || [])[pi] || '').trim();
+        if(a !== b) out.push(k[1] + ' \u00b7 Team ' + 'ABCDE'[t] + ' #' + (pi + 1) + ': "' + a + '" \u2192 "' + b + '"');
+      }
+    });
+    out.slice(0, 40).forEach(x=> auditLog('roster-edit', x));
+  }, 4000);
+}
+function auditExchangeDesc(x, dk){
+  const kind = x.cl ? 'CL' : x.special ? 'EL/Special' : 'Exchange';
+  return kind + ' \u00b7 ' + dk + ' \u00b7 ' + x.pos + ' (Team ' + 'ABCDE'[+x.team] + ') \u00b7 ' + (x.who || '\u2014') + ' \u2192 ' + (x.subName || 'Vacant');
+}
+function initAuditViewer(){
+  const ov = document.getElementById('auditOverlay'), body = document.getElementById('auditBody'), btn = document.getElementById('auditOpenBtn');
+  if(!ov || !body || !btn) return;
+  const esc = _xEsc;
+  const render = (arr, note)=>{
+    arr = (arr || []).slice().sort((a, b)=> (b.t || 0) - (a.t || 0));
+    body.innerHTML = (note ? '<div class="fr-dbstatus">' + esc(note) + '</div>' : '') +
+      (arr.length ? arr.map(e=> '<div class="aud-row"><div class="aud-top"><span class="aud-a">' + esc(e.a) + '</span><span class="aud-t">' +
+        esc(new Date(e.t).toLocaleString('en-GB', { timeZone:'Asia/Dhaka', day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })) +
+        '</span></div><div class="aud-d">' + esc(e.d) + '</div><div class="aud-by">' + esc(e.by) + '</div></div>').join('') : '<div class="exr-empty">No changes recorded yet.</div>');
+  };
+  const local = ()=>{ try{ return JSON.parse(localStorage.getItem(AUDIT_LOCAL_KEY) || '[]'); }catch(e){ return []; } };
+  btn.addEventListener('click', ()=>{
+    if(!rosterUnlocked){ adminGate(false); return; }
+    ov.classList.add('show'); body.innerHTML = '<div class="exr-empty">Loading\u2026</div>';
+    if(!_fbDb){ render(local(), 'Sync is off \u2014 showing this device only.'); return; }
+    _fbDb.ref('hsia_private/audit').orderByKey().limitToLast(300).once('value').then(snap=>{
+      const arr = []; snap.forEach(c=>{ arr.push(c.val()); }); render(arr);
+    }).catch(()=> render(local(), 'Could not read the shared log \u2014 showing this device only.'));
+  });
+  const x = document.getElementById('auditClose'); if(x) x.addEventListener('click', ()=> ov.classList.remove('show'));
+  ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('show'); });
 }
 
 function loadRosterGeneric(key, def){
@@ -5995,7 +6164,10 @@ function loadRosterGeneric(key, def){
   }catch(e){}
   return def.map(r=>({ pos:r.pos, names:r.names.slice() }));
 }
-function saveRosterGeneric(key, r){ try{ localStorage.setItem(key, JSON.stringify(r)); }catch(e){} }
+function saveRosterGeneric(key, r, noAudit){
+  if(!noAudit){ try{ auditRosterSaved(key, r); }catch(e){} }
+  try{ localStorage.setItem(key, JSON.stringify(r)); }catch(e){}
+}
 
 const ROSTER_COMM_KEY = 'dutyBoardRosterCommunication';
 const DEFAULT_ROSTER_COMM = [
@@ -6674,6 +6846,7 @@ function exPutEntry(dateKey, entry){
   removed.forEach(x=> exPurgeMoved(dateKey, x));
   EXCHANGES[dateKey].push(entry);
   saveExchangesData(EXCHANGES);
+  try{ auditLog(entry.cl ? 'cl-add' : entry.special ? 'el-add' : 'exchange-add', auditExchangeDesc(entry, dateKey)); }catch(e){}
 }
 /* Somebody of the SAME shift is sent to another position -> his own position that day stays vacant (nobody is put there) */
 function exVacateMovedCell(dateKey, parent){
@@ -6823,45 +6996,45 @@ function setupGoogleClientId(){
   alert(id.trim() ? 'সেভ হয়েছে। এখন "🔵 Continue with Google" কাজ করবে।' : 'Client ID খালি রাখা হয়েছে — Google লগইন কাজ করবে না যতক্ষণ না আবার সেট করা হয়।');
 }
 async function continueWithGoogle(){
-  const clientId = loadGoogleClientId();
-  if(!clientId){
-    alert('আগে Google sign-in সেটআপ করতে হবে — পাশের "⚙️ সেটআপ" লিংকে ক্লিক করুন (শুধু অ্যাডমিন একবার করবেন)।');
-    return;
-  }
   if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
-    alert('Google sign-in শুধু https দিয়ে হোস্ট করা পেজে কাজ করে (লোকাল ফাইল হিসেবে খুললে হবে না)।');
+    alert('Google sign-in only works over https.');
     return;
   }
   const saved = loadFirebaseSyncConfig();
-  if(!_fbDb || !saved){ setAuthStatus('⚠️ প্রথমে "ক্রস-ডিভাইস সিঙ্ক (Firebase)" সেটআপ করুন — লগইন এটার উপর নির্ভর করে।'); return; }
+  if(!_fbDb || !saved){ setAuthStatus('\u26a0\ufe0f Firebase sync is not ready yet. Try again in a moment.'); return; }
   const btn = document.getElementById('googleLoginBtn');
-  if(btn){ btn.disabled = true; btn.textContent = '⏳...'; }
+  const oldLabel = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '\u2026'; }
   try{
-    await ensureGoogleIdentityLoaded();
-    const token = await getGoogleAccessToken(clientId);
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers:{ Authorization: 'Bearer ' + token } });
-    if(!res.ok) throw new Error('প্রোফাইল তথ্য আনা যায়নি');
-    const profile = await res.json();
-    const identifier = (profile.email || '').trim();
-    const displayName = (profile.name || identifier).trim();
-    if(!identifier){ throw new Error('Google থেকে ইমেইল পাওয়া যায়নি'); }
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt:'select_account' });
+    const res = await firebase.auth().signInWithPopup(provider);       // verified by Google + Firebase: the email below cannot be faked
+    const user = res.user;
+    const identifier = (user.email || '').trim();
+    const displayName = (user.displayName || identifier).trim();
+    if(!identifier) throw new Error('No email on this Google account.');
     const key = sanitizeUserKey(identifier);
     const ref = _fbDb.ref('hsia_sync/' + saved.roomId + '/users/' + key);
     const snap = await ref.once('value');
-    if(snap.exists()){
-      await ref.update({ displayName, viaGoogle: true });
-    } else {
-      await ref.set({ identifier, displayName, phone: '', viaGoogle: true, createdAt: Date.now() });
-    }
-    const session = { identifier, displayName, key, viaGoogle: true };
+    if(snap.exists()) await ref.update({ displayName, viaGoogle:true, uid:user.uid });
+    else await ref.set({ identifier, displayName, phone:'', viaGoogle:true, uid:user.uid, createdAt:Date.now() });
+    const session = { identifier, displayName, key, viaGoogle:true };
     saveAuthSession(session);
     setAuthStatus('');
     applyAuthUI(session);
-    alert('✅ স্বাগতম, ' + displayName + '! Google দিয়ে লগইন হয়েছে, এবং ক্যালেন্ডার সিঙ্কের অনুমতিও পাওয়া গেছে।');
+    alert('Welcome, ' + displayName + '! You are signed in with Google.');
   }catch(err){
-    alert('Google দিয়ে লগইন করা যায়নি: ' + (err && err.message ? err.message : err));
+    const code = (err && err.code) ? err.code : '';
+    if(code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request'){ /* user closed it */ }
+    else if(code === 'auth/popup-blocked'){ try{ await firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider()); }catch(e2){} }
+    else{
+      let hint = '';
+      if(code === 'auth/unauthorized-domain') hint = '\nFirebase Console \u2192 Authentication \u2192 Settings \u2192 Authorized domains \u2192 add this site\u2019s domain.';
+      else if(code === 'auth/operation-not-allowed') hint = '\nFirebase Console \u2192 Authentication \u2192 Sign-in method \u2192 enable Google.';
+      alert('Google sign-in failed: ' + (code || (err && err.message) || err) + hint);
+    }
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '🔵 Continue with Google'; }
+    if(btn){ btn.disabled = false; btn.textContent = oldLabel || 'Continue with Google'; }
   }
 }
 
@@ -6960,6 +7133,7 @@ async function syncDutyToGoogleCalendar(){
   }
 }
 
+
 async function registerUser(identifier, displayName, phone, password){
   const saved = loadFirebaseSyncConfig();
   if(!_fbDb || !saved){ setAuthStatus('⚠️ প্রথমে "ক্রস-ডিভাইস সিঙ্ক (Firebase)" সেটআপ করুন — লগইন এটার উপর নির্ভর করে।'); return; }
@@ -6970,7 +7144,8 @@ async function registerUser(identifier, displayName, phone, password){
     const snap = await ref.once('value');
     if(snap.exists()){ setAuthStatus('⚠️ এই আইডি দিয়ে আগেই একটা অ্যাকাউন্ট আছে — লগইন করুন।'); return; }
     const passHash = await hashPassword(password);
-    await ref.set({ identifier: identifier.trim(), displayName: displayName.trim(), phone: (phone||'').trim(), passHash, createdAt: Date.now() });
+    const _cu = firebase.auth().currentUser;
+    await ref.set({ identifier: identifier.trim(), displayName: displayName.trim(), phone: (phone||'').trim(), passHash, uid: _cu ? _cu.uid : '', createdAt: Date.now() });
     const session = { identifier: identifier.trim(), displayName: displayName.trim(), key };
     saveAuthSession(session);
     setAuthStatus('✅ রেজিস্ট্রেশন সম্পন্ন!');
@@ -6992,6 +7167,7 @@ async function loginUser(identifier, password){
     const rec = snap.val();
     const passHash = await hashPassword(password);
     if(passHash !== rec.passHash){ setAuthStatus('⚠️ পাসওয়ার্ড ভুল।'); return; }
+    try{ const _cu = firebase.auth().currentUser; if(_cu && !rec.uid) await ref.update({ uid:_cu.uid }); }catch(e){}     // first login after the security update: this device becomes the owner of the record
     const session = { identifier: rec.identifier, displayName: rec.displayName, key };
     saveAuthSession(session);
     setAuthStatus('');
@@ -7019,7 +7195,11 @@ async function forgotPasswordReset(identifier, verifyValue, newPassword){
     const nameMatch = rec.displayName && rec.displayName.trim().toLowerCase() === v;
     if(!phoneMatch && !nameMatch){ setAuthStatus('⚠️ যাচাই মিলছে না — রেজিস্টার্ড ফোন নম্বর অথবা নাম হুবহু দিন।'); return; }
     const passHash = await hashPassword(newPassword);
-    await ref.update({ passHash });
+    try{ await ref.update({ passHash }); }
+    catch(e){
+      if(e && /permission/i.test(String(e.code || e.message))){ setAuthStatus('\u26a0\ufe0f \u09b8\u09bf\u0995\u09bf\u0989\u09b0\u09bf\u099f\u09bf\u09b0 \u099c\u09a8\u09cd\u09af \u098f\u0987 \u0985\u09cd\u09af\u09be\u0995\u09be\u0989\u09a8\u09cd\u099f\u09c7\u09b0 \u09aa\u09be\u09b8\u0993\u09af\u09bc\u09be\u09b0\u09cd\u09a1 \u098f\u0996\u09be\u09a8 \u09a5\u09c7\u0995\u09c7 \u09ac\u09a6\u09b2\u09be\u09a8\u09cb \u09af\u09be\u09ac\u09c7 \u09a8\u09be\u0964 \u098f\u09a1\u09ae\u09bf\u09a8\u09c7\u09b0 \u09b8\u09be\u09a5\u09c7 \u09af\u09cb\u0997\u09be\u09af\u09cb\u0997 \u0995\u09b0\u09c1\u09a8\u0964 (Contact the admin to reset this password.)'); return; }
+      throw e;
+    }
     setAuthStatus('✅ পাসওয়ার্ড পরিবর্তন হয়েছে — এখন লগইন করুন।');
     document.getElementById('authTabLogin').click();
   }catch(e){
@@ -7042,7 +7222,11 @@ async function changeMyPassword(oldPassword, newPassword){
     const oldHash = await hashPassword(oldPassword);
     if(oldHash !== rec.passHash){ if(statusEl) statusEl.textContent = '⚠️ বর্তমান পাসওয়ার্ড ভুল।'; return; }
     const newHash = await hashPassword(newPassword);
-    await ref.update({ passHash: newHash });
+    try{ await ref.update({ passHash: newHash }); }
+    catch(e){
+      if(e && /permission/i.test(String(e.code || e.message))){ if(statusEl) statusEl.textContent = '\u26a0\ufe0f This account was created on another device, so the password can\u2019t be changed here. Contact the admin.'; return; }
+      throw e;
+    }
     if(statusEl) statusEl.textContent = '✅ পাসওয়ার্ড বদলানো হয়েছে।';
     document.getElementById('authChangeOldPass').value = '';
     document.getElementById('authChangeNewPass').value = '';
@@ -7098,6 +7282,7 @@ function checkMyExchangeNotifications(){
       return `<tr class="${dateKey===today ? 'exchange-row-today' : ''}"><td>${dateKey}${dateKey===today?' (Today)':''}</td><td>${tableLabel}</td><td>${(ex.pos||'').replace(/</g,'&lt;')}</td><td>${exTeamLabel(ex)}</td></tr>`;
     }).join('') : '<tr><td colspan="4" class="air-empty">No exchanges for you</td></tr>';
   }
+  try{ exReqNotifyCheck(); }catch(e){}
 }
 
 function applyAuthUI(session){
@@ -7644,6 +7829,7 @@ function initAuthPanel(){
         Array.from(on.children).forEach(ch=>{
           const t = cellText(ch);
           if(!t) return;
+          if(ch.classList && (ch.classList.contains('iflow-others-lock') || ch.classList.contains('iflow-others-import'))) return;
           if(/^H\d$/.test(ch.tagName)){ heading = t; return; }
           add('others', heading, t, goInfoflow('iflowOthersColumn', ch));
         });
@@ -8163,6 +8349,7 @@ function commitExchangeEntry(dateKey, entry){
 }
 function removeExchangeEntry(dateKey, table, pos, team, nightHalf){
   if(!EXCHANGES[dateKey]) return;
+  try{ EXCHANGES[dateKey].filter(x => x.table===table && x.pos===pos && +x.team===team && (x.nightHalf||'')===(nightHalf||'')).forEach(x=> auditLog('exchange-remove', auditExchangeDesc(x, dateKey))); }catch(e){}
   EXCHANGES[dateKey] = EXCHANGES[dateKey].filter(x => !(x.table===table && x.pos===pos && +x.team===team && (x.nightHalf||'')===(nightHalf||'')));
   if(!EXCHANGES[dateKey].length) delete EXCHANGES[dateKey];
   saveExchangesData(EXCHANGES);
@@ -8359,7 +8546,7 @@ function connectFirebaseSync(config, roomId){
       const val = snap.val();
       if(Array.isArray(val) && val.length && JSON.stringify(val) !== JSON.stringify(ROSTER)){
         ROSTER = val;
-        saveRosterGeneric(ROSTER_KEY, ROSTER);
+        saveRosterGeneric(ROSTER_KEY, ROSTER, true);
         renderRoster();
       }
       setFirebaseSyncStatus('🟢 সিঙ্ক সক্রিয় — শেষ আপডেট: ' + new Date().toLocaleTimeString('bn-BD'));
@@ -8371,7 +8558,7 @@ function connectFirebaseSync(config, roomId){
       const val = snap.val();
       if(Array.isArray(val) && val.length && JSON.stringify(val) !== JSON.stringify(ROSTER_CTRL)){
         ROSTER_CTRL = val;
-        saveRosterGeneric(ROSTER_CTRL_KEY, ROSTER_CTRL);
+        saveRosterGeneric(ROSTER_CTRL_KEY, ROSTER_CTRL, true);
         renderRosterCtrl();
       }
     });
@@ -8407,7 +8594,7 @@ function connectFirebaseSync(config, roomId){
       const val = snap.val();
       if(Array.isArray(val) && val.length && JSON.stringify(val) !== JSON.stringify(ROSTER_COMM)){
         ROSTER_COMM = val;
-        saveRosterGeneric(ROSTER_COMM_KEY, ROSTER_COMM);
+        saveRosterGeneric(ROSTER_COMM_KEY, ROSTER_COMM, true);
         renderRosterComm();
       }
     });
@@ -8423,16 +8610,21 @@ function connectFirebaseSync(config, roomId){
       }
     });
 
-    listen(adminNotepadRef, snap=>{
-      const val = snap.val();
-      const incoming = (typeof val === 'string') ? (val ? [{ id:'general', name:'General', text: val }] : null) : normalizeNotepadSections(val);
-      if(!incoming) return;
-      const state = loadNotepadState();
-      if(JSON.stringify(incoming) === JSON.stringify(state.sections)) return;
-      if(notepadUnlocked) return; // an admin is actively typing on this device — don't yank the textarea from under them
-      try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify({ sections: incoming, activeId: state.activeId })); }catch(e){}
-      if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
-    });
+    let adminListeners = false;
+    window._attachAdminListeners = ()=>{      // admin-only data (Rules refuse everybody else, so ordinary users never attach it)
+      if(adminListeners) return; adminListeners = true;
+      listen(adminNotepadRef, snap=>{
+        const val = snap.val();
+        const incoming = (typeof val === 'string') ? (val ? [{ id:'general', name:'General', text: val }] : null) : normalizeNotepadSections(val);
+        if(!incoming) return;
+        const state = loadNotepadState();
+        if(JSON.stringify(incoming) === JSON.stringify(state.sections)) return;
+        if(notepadUnlocked) return; // an admin is actively typing on this device — don't yank the textarea from under them
+        try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify({ sections: incoming, activeId: state.activeId })); }catch(e){}
+        if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
+      });
+    };
+    if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked && window._adminReadyDone) window._attachAdminListeners();
 
     listen(exchangesRef, snap=>{
       const val = snap.val();
@@ -8452,6 +8644,7 @@ function connectFirebaseSync(config, roomId){
     });
     listen(thmrRef, snap=>{ const val = snap.val(); if(val && typeof val === 'object' && window.hsiaTHMRApplyRemote) window.hsiaTHMRApplyRemote(val); });
     listen(clLogRef, snap=>{ const val = snap.val(); if(val && typeof val === 'object') clApplyRemote(val); });
+    listen(_fbDb.ref('hsia_sync/' + roomId + '/exreq'), snap=>{ try{ exReqRemote(snap.val()); }catch(e){ console.error(e); } });
     let _exHistAttached = false;
     window._attachExHistory = function(){
       if(_exHistAttached || !exHistIsAdmin()) return;
@@ -8494,7 +8687,8 @@ function connectFirebaseSync(config, roomId){
       if(u){
         attachSyncListeners();
         // Remembered admin, but this browser session is only anonymous → sign in as admin again (silently).
-        if(u.isAnonymous && typeof rosterUnlocked !== 'undefined' && rosterUnlocked && !window._adminAuthPromise && typeof adminFirebaseSignIn === 'function') adminFirebaseSignIn();
+        if(u.isAnonymous){ if(rosterUnlocked) adminSetState(false); }
+        else adminVerify().then(ok=> adminSetState(ok));
         return;
       }
       auth.signInAnonymously().catch(err=>{
@@ -8785,7 +8979,7 @@ function populateExchangePositions(){
   if(isThMrTable(tableSel.value)){
     if(teamSel) teamSel.style.display = 'none';
     if(halfSel){ halfSel.style.display = 'none'; halfSel.value = ''; }
-    const dk = (dateInput && dateInput.value) ? dateInput.value : todayDateKey();
+    const dk = window._exReqAssignDate || ((dateInput && dateInput.value) ? dateInput.value : todayDateKey());
     const slots = window.hsiaTHMRPeople ? window.hsiaTHMRPeople(dk, tableSel.value) : [];
     const prev = posSel.value;
     let html = '';
@@ -8935,6 +9129,12 @@ function renderExchangePicker(){
   tbl.querySelectorAll('.xp-name').forEach(b => b.addEventListener('click', ()=> pickExchangeSub(b.getAttribute('data-name'))));
 }
 function pickExchangeSub(name){
+  if(window._exReqAssignId){
+    const id = window._exReqAssignId, nm = String(name || '').trim();
+    closeExchangePicker();
+    if(nm && confirm('Approve and assign ' + nm + ' to this position?')) exReqAdminDecide(id, true, { subName:nm });
+    return;
+  }
   const subEl = document.getElementById('exchangeSubName');
   if(subEl){ subEl.value = String(name || '').trim(); subEl.style.opacity = ''; }
   closeExchangePicker();
@@ -8952,6 +9152,7 @@ function openExchangePicker(){
   ov.classList.add('show');
 }
 function closeExchangePicker(){
+  window._exReqAssignId = null; window._exReqAssignDate = null;
   const ov = document.getElementById('exchangePickerOverlay');
   if(ov) ov.classList.remove('show');
 }
@@ -9055,21 +9256,8 @@ function clDataCsv(){
 }
 /* In-page password dialog: works everywhere (window.prompt is silently blocked in some apps / PWAs) */
 function askPassword(title, onOk){
-  const ov = document.getElementById('pwOverlay'), inp = document.getElementById('pwInput');
-  const err = document.getElementById('pwErr'), ok = document.getElementById('pwOk'), cancel = document.getElementById('pwCancel');
-  if(!ov || !inp){ const v = window.prompt(title); if(v !== null && v === ROSTER_PASSWORD) onOk(); return; }
-  document.getElementById('pwTitle').textContent = title;
-  inp.value = ''; err.textContent = '';
-  const close = ()=>{ ov.classList.remove('show'); inp.value = ''; ok.onclick = cancel.onclick = inp.onkeydown = ov.onclick = null; };
-  const submit = ()=>{
-    if(inp.value === ROSTER_PASSWORD){ close(); onOk(); }
-    else { err.textContent = 'Wrong password.'; inp.value = ''; inp.focus(); }
-  };
-  ok.onclick = submit; cancel.onclick = close;
-  inp.onkeydown = e=>{ if(e.key === 'Enter'){ e.preventDefault(); submit(); } };
-  ov.onclick = e=>{ if(e.target === ov) close(); };
-  ov.classList.add('show');
-  setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 50);
+  if(rosterUnlocked){ onOk(); return; }
+  adminGoogleSignIn().then(ok=>{ if(ok) onOk(); });
 }
 function openClData(){ askPassword('Enter password to open CL Data', openClDataNow); }
 function openClDataNow(){
@@ -9384,7 +9572,324 @@ function initQbm(){
   document.getElementById('qbmPdfBtn').addEventListener('click', downloadQbmPdf);
 }
 
+
+/* ============================================================
+   Exchange / CL request flow (v2)
+   EXCHANGE : the person on duty sends a request -> the substitute confirms -> the ADMIN approves -> it is applied to the roster
+              and therefore shows up in the QBM automatically.
+   CL / EL  : the request goes straight to the ADMIN. On approval the admin either assigns somebody to the position or leaves it
+              vacant (or rejects it).
+   Everybody concerned gets a follow-up notification at each step. Requests live in EX_REQUESTS (synced at hsia_sync/<room>/exreq).
+   Only the admin device writes the roster (EXCHANGES) when it approves, so the roster / QBM stay consistent for everyone.
+   People are matched by account name or by the name picked with the "Me" button.
+   ============================================================ */
+const EXREQ_KEY = 'HSIA_EXREQ_V2', EXREQ_APPLIED_KEY = 'HSIA_EXREQ_APPLIED_V2';
+function exReqNormalize(val){
+  const out = {};
+  if(!val || typeof val !== 'object') return out;
+  Object.keys(val).forEach(id=>{
+    const q = val[id]; if(!q || typeof q !== 'object' || q.v !== 2) return;     // older test requests are ignored
+    out[id] = Object.assign({}, q, { id:id, sub:q.sub || null, admin:q.admin || { status:'pending' } });
+  });
+  return out;
+}
+function exReqLoad(){ try{ return exReqNormalize(JSON.parse(localStorage.getItem(EXREQ_KEY))); }catch(e){ return {}; } }
+let EX_REQUESTS = exReqLoad();
+function exReqSaveLocal(){ try{ localStorage.setItem(EXREQ_KEY, JSON.stringify(EX_REQUESTS)); }catch(e){} }
+function exReqAppliedSet(){ try{ const a = JSON.parse(localStorage.getItem(EXREQ_APPLIED_KEY)); return new Set(Array.isArray(a) ? a : []); }catch(e){ return new Set(); } }
+function exReqAppliedAdd(id){ const st = exReqAppliedSet(); st.add(id); try{ localStorage.setItem(EXREQ_APPLIED_KEY, JSON.stringify(Array.from(st).slice(-300))); }catch(e){} }
+function exReqSyncOn(){ try{ return !!(_fbDb && loadFirebaseSyncConfig()); }catch(e){ return false; } }
+function exReqRef(id){
+  try{ const saved = loadFirebaseSyncConfig(); if(!_fbDb || !saved) return null; return _fbDb.ref('hsia_sync/' + saved.roomId + '/exreq' + (id ? '/' + id : '')); }catch(e){ return null; }
+}
+const exClean = o=> JSON.parse(JSON.stringify(o));
+function exReqPush(id){
+  exReqSaveLocal();
+  const ref = exReqRef(id); if(!ref) return;
+  try{ ref.set(EX_REQUESTS[id] ? exClean(EX_REQUESTS[id]) : null).catch(()=>{}); }catch(e){}
+}
+function exReqPatch(id, patch){
+  exReqSaveLocal();
+  const ref = exReqRef(id); if(!ref) return;
+  try{ ref.update(exClean(patch)).catch(()=>{}); }catch(e){}
+}
+function exNormName(n){ return String(n == null ? '' : n).toLowerCase().replace(/\s+/g, ' ').trim(); }
+function exMyNames(){
+  const s = loadAuthSession(), out = [];
+  if(s){
+    out.push(exNormName(s.displayName));
+    try{ const me = JSON.parse(localStorage.getItem('HSIA_ME_V1:' + String(s.identifier).toLowerCase())); if(me && me.name) out.push(exNormName(me.name)); }catch(e){}
+  }
+  return out.filter(Boolean);
+}
+function exIsMe(name){ const n = exNormName(name); return !!n && exMyNames().indexOf(n) !== -1; }
+function exIsAdmin(){ return !!rosterUnlocked; }
+function exReqKindLabel(k){ return k === 'cl' ? 'CL' : k === 'special' ? 'EL / Special' : 'Exchange'; }
+function exReqLine(q){
+  return exReqKindLabel(q.kind) + ' \u00b7 ' + q.dateKey + ' \u00b7 ' + rosterLabelFor(q.table) + ' ' + q.pos + ' (' + exTeamLabel(q) + ') \u00b7 ' + (q.who || '\u2014') + (q.subName ? ' \u2192 ' + q.subName : (q.kind === 'exchange' ? '' : ' \u2192 Vacant'));
+}
+const exReqOpen = q=> q && (q.status === 'sub' || q.status === 'admin');
+function exAfterApply(){
+  try{ renderExchangeList(); renderRoster(); renderRosterCtrl(); if(typeof renderRosterComm === 'function') renderRosterComm(); }catch(e){}
+  try{ refreshThmrViews(); }catch(e){}
+  try{ updateExchangeCurrentHint(); }catch(e){}
+  try{ const q = document.getElementById('qbmOverlay'); if(q && q.classList.contains('show')) renderQbm(); }catch(e){}
+  try{ checkMyExchangeNotifications(); }catch(e){}
+}
+// writes an approved request into EXCHANGES (same as adding it directly) -> the QBM reads EXCHANGES, so it appears there at once. Admin device only.
+function exReqApply(q){
+  if(!q || q.status !== 'approved' || q.applied || !exIsAdmin()) return false;
+  if(exReqAppliedSet().has(q.id)) return false;
+  const dk = q.dateKey, sub = String(q.subName || '').trim();
+  const base = { table:q.table, pos:q.pos, team:+q.team, who:q.who };
+  if(q.kind === 'exchange'){
+    const pe = Object.assign({}, base, { subName:sub, nightHalf:q.nightHalf || '' });
+    exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
+  } else if(q.kind === 'special'){
+    const pe = Object.assign({}, base, { subName:sub, nightHalf:'', special:true, vacant:!sub });
+    exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
+  } else {
+    const days = clDaysForShift(q.shift), year = +dk.slice(0,4), id = clIdFor(dk, q.table, q.pos, q.team);
+    if(clUsedBy(q.who, year, id) + days > CL_LIMIT){
+      q.status = 'failed'; q.note = 'CL limit exceeded'; exReqPatch(q.id, { status:'failed', note:q.note }); return false;
+    }
+    const pe = Object.assign({}, base, { subName:sub, nightHalf:'', cl:true, vacant:!sub });
+    exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
+    clLedgerSet(dk, { table:q.table, pos:q.pos, team:q.team, who:q.who, shift:q.shift }, days);
+  }
+  q.applied = true; exReqAppliedAdd(q.id);
+  exReqPatch(q.id, { applied:true });
+  exAfterApply();
+  return true;
+}
+function exReqApplyAll(){
+  if(!exIsAdmin()) return;
+  Object.keys(EX_REQUESTS).forEach(id=>{ const q = EX_REQUESTS[id]; if(q.status === 'approved' && !q.applied) exReqApply(q); });
+}
+function exReqPrune(){
+  const f = nowDhakaFields(), c = addDays(f.y, f.m, f.day, -7);
+  const cutoff = c.y + '-' + String(c.m + 1).padStart(2,'0') + '-' + String(c.day).padStart(2,'0');
+  Object.keys(EX_REQUESTS).forEach(id=>{
+    if(String(EX_REQUESTS[id].dateKey) < cutoff){ delete EX_REQUESTS[id]; if(exIsAdmin()){ const ref = exReqRef(id); if(ref){ try{ ref.remove().catch(()=>{}); }catch(e){} } } }
+  });
+}
+function exReqUiRefresh(){ try{ exReqRender(); }catch(e){} try{ checkMyExchangeNotifications(); }catch(e){} try{ exReqNotifyCheck(); }catch(e){} }
+function exReqRemote(val){
+  const remote = exReqNormalize(val || {});
+  Object.keys(EX_REQUESTS).forEach(id=>{ if(!remote[id] && EX_REQUESTS[id].status !== 'cancelled') exReqPush(id); });      // created offline / before sync was on
+  EX_REQUESTS = Object.assign({}, EX_REQUESTS, remote);
+  exReqPrune(); exReqSaveLocal(); exReqApplyAll(); exReqUiRefresh();
+}
+function exReqAsR(q){
+  return { thmr:!!q.thmr, table:q.table, pos:q.pos, team:+q.team, who:q.who, shift:q.shift, dateKey:q.dateKey };
+}
+function exReqSubmit(o){
+  const s = loadAuthSession(); if(!s){ alert('Please log in first.'); return false; }
+  const r = o.r, sub = String(o.subName || '').trim();
+  if(!exIsMe(r.who)){
+    alert('You can send a request only for your own duty.\n\nThis position is held by "' + (r.who || '\u2014') + '". If that is you but the name differs from your account name, tap "Me" (Duty Roster) and select your name first.');
+    return false;
+  }
+  if(o.kind === 'exchange'){
+    if(!sub){ alert('Please select a substitute.'); return false; }
+    if(exNormName(sub) === exNormName(r.who)){ alert('The substitute cannot be the same person.'); return false; }
+  }
+  if(o.kind === 'cl'){
+    const days = clDaysForShift(r.shift), year = +r.dateKey.slice(0,4), id = clIdFor(r.dateKey, r.table, r.pos, r.team);
+    if(clUsedBy(r.who, year, id) + days > CL_LIMIT){ alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded. CL request not sent.'); return false; }
+  }
+  const dup = Object.values(EX_REQUESTS).some(q=> exReqOpen(q) && q.dateKey === r.dateKey && q.table === r.table && q.pos === r.pos && +q.team === +r.team && (q.nightHalf || '') === (o.nightHalf || ''));
+  if(dup){ alert('A request for this position is already waiting.'); return false; }
+  const now = Date.now();
+  const id = 'r' + now.toString(36) + Math.random().toString(36).slice(2, 6);
+  const q = { v:2, id:id, createdAt:now, by:{ id:String(s.identifier), name:String(s.displayName) }, kind:o.kind, dateKey:r.dateKey, table:r.table, pos:r.pos, team:+r.team,
+              who:String(r.who || ''), subName:o.kind === 'exchange' ? sub : '', nightHalf:o.nightHalf || '', shift:r.shift || '', thmr:!!r.thmr,
+              status: o.kind === 'exchange' ? 'sub' : 'admin',
+              sub: o.kind === 'exchange' ? { status:'pending', at:0 } : null, admin:{ status:'pending', at:0 } };
+  EX_REQUESTS[id] = q;
+  exReqPush(id);
+  exReqUiRefresh();
+  alert(o.kind === 'exchange'
+    ? 'Request sent to ' + sub + '.\n\nStep 1: ' + sub + ' confirms.\nStep 2: the admin approves.\nThen it is added to the roster and QBM automatically. You get a notification at every step.'
+    : exReqKindLabel(o.kind) + ' request sent to the admin.\n\nThe admin will approve (and assign someone or leave it vacant) or reject it. You get a notification.');
+  if(!exReqSyncOn()) alert('\u26A0 Sync is off, so this request only exists on this device.');
+  return q;
+}
+// substitute answers (exchange step 1)
+function exReqSubRespond(id, accept){
+  const q = EX_REQUESTS[id]; if(!q || q.status !== 'sub' || !exIsMe(q.subName)) return;
+  q.sub = { status: accept ? 'approved' : 'declined', at: Date.now() };
+  q.status = accept ? 'admin' : 'declined';
+  exReqPatch(id, { status:q.status, sub:q.sub });
+  exReqUiRefresh();
+}
+// admin decision (exchange step 2, or CL / EL)
+function exReqAdminDecide(id, accept, opts){
+  const q = EX_REQUESTS[id]; if(!q || !exReqOpen(q) || !exIsAdmin()) return;
+  opts = opts || {};
+  q.admin = { status: accept ? 'approved' : 'rejected', at: Date.now() };
+  const patch = { admin:q.admin };
+  if(!accept){ q.status = 'rejected'; }
+  else {
+    if(q.kind !== 'exchange'){ q.subName = String(opts.subName || '').trim(); patch.subName = q.subName; }
+    q.status = 'approved';
+  }
+  patch.status = q.status;
+  exReqPatch(id, patch);
+  try{ auditLog(accept ? 'request-approve' : 'request-reject', exReqLine(q)); }catch(e){}
+  if(q.status === 'approved') exReqApply(q);
+  exReqUiRefresh();
+}
+function exReqCancel(id){
+  const q = EX_REQUESTS[id]; if(!exReqOpen(q)) return;
+  const s = loadAuthSession();
+  if(!(exIsAdmin() || (s && q.by && String(q.by.id) === String(s.identifier)))) return;
+  q.status = 'cancelled'; exReqPatch(id, { status:'cancelled' }); exReqUiRefresh();
+}
+// admin: assign somebody to a CL / EL position through the substitute picker
+function exReqOpenAssign(id){
+  const q = EX_REQUESTS[id]; if(!q || !exIsAdmin()) return;
+  window._exReqAssignId = id; window._exReqAssignDate = q.dateKey; window._pendingClAfterPick = false;
+  if(_XP_TABS.some(t=> t[0] === q.table)) _xpTab = q.table;
+  const qEl = document.getElementById('exchangePickerSearch'); if(qEl) qEl.value = '';
+  const mEl = document.getElementById('exchangePickerManual'); if(mEl) mEl.value = '';
+  renderExchangePicker();
+  const ov = document.getElementById('exchangePickerOverlay'); if(ov) ov.classList.add('show');
+}
+// what is waiting for ME to act on: a substitute confirmation addressed to me, or (admin device) anything waiting for the admin
+function exReqNeedsAction(){
+  return Object.values(EX_REQUESTS).filter(q=>
+    (q.status === 'sub' && exIsMe(q.subName)) || (exIsAdmin() && exReqOpen(q)));
+}
+function exReqNotifyCheck(){
+  const s = loadAuthSession(), admin = exIsAdmin();
+  if(!s && !admin) return;
+  const notified = loadNotifiedSet();
+  let fresh = false;
+  const fire = (key, title, body)=>{
+    if(notified.has(key)) return;
+    notified.add(key); fresh = true;
+    if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){ try{ new Notification(title, { body:body, tag:key }); }catch(e){} }
+  };
+  const mineId = s ? String(s.identifier) : '';
+  Object.values(EX_REQUESTS).forEach(q=>{
+    const line = exReqLine(q);
+    const isReq = !!(s && q.by && String(q.by.id) === mineId);
+    const isSub = !!(q.subName && exIsMe(q.subName));
+    const k = x=> 'req2|' + q.id + '|' + x;
+    // substitute
+    if(isSub && !isReq){
+      if(q.status === 'sub') fire(k('sub-ask'), '\uD83D\uDCE8 Please take over a duty', (q.by ? q.by.name : '?') + ' asks you: ' + line);
+      else if(q.status === 'approved' && q.kind === 'exchange') fire(k('sub-ok'), '\u2705 Exchange approved \u2014 you are on duty', line);
+      else if(q.status === 'approved') fire(k('sub-assigned'), '\u2705 You are assigned to a position', line);
+      else if(q.status === 'rejected' && q.kind === 'exchange') fire(k('sub-rej'), '\u274C Exchange rejected by admin', line);
+      else if(q.status === 'cancelled' && q.kind === 'exchange') fire(k('sub-cx'), 'Request cancelled', line);
+    }
+    // requester
+    if(isReq){
+      if(q.status === 'admin' && q.kind === 'exchange') fire(k('req-sub-ok'), '\u2705 ' + (q.subName || 'Substitute') + ' confirmed \u2014 waiting for admin', line);
+      else if(q.status === 'declined') fire(k('req-dec'), '\u274C ' + (q.subName || 'Substitute') + ' declined your request', line);
+      else if(q.status === 'approved') fire(k('req-ok'), '\u2705 ' + exReqKindLabel(q.kind) + ' approved by admin', line);
+      else if(q.status === 'rejected') fire(k('req-rej'), '\u274C ' + exReqKindLabel(q.kind) + ' not approved by admin', line);
+      else if(q.status === 'failed') fire(k('req-fail'), '\u26A0 Request could not be applied', line + (q.note ? ' \u2014 ' + q.note : ''));
+    }
+    // admin device
+    if(admin && q.status === 'admin') fire(k('admin'), '\uD83D\uDCE8 Request waiting for admin approval', ((q.by && q.by.name) || '?') + ': ' + line);
+  });
+  saveNotifiedSet(notified);
+  const need = exReqNeedsAction();
+  if(need.length || fresh){
+    ['authNotifDot','authNotifDotSettings'].forEach(i=>{ const d = document.getElementById(i); if(d) d.classList.add('show'); });
+  }
+  document.querySelectorAll('.exreq-badge').forEach(b=>{ b.textContent = need.length; b.style.display = need.length ? 'inline-block' : 'none'; });
+}
+function exReqAgo(t){
+  const m = Math.max(0, Math.round((Date.now() - (+t || 0)) / 60000));
+  return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago';
+}
+const EXR_STATUS = { sub:'waiting for substitute', admin:'waiting for admin', approved:'approved', declined:'declined', rejected:'rejected', cancelled:'cancelled', failed:'failed' };
+function exReqRender(){
+  const box = document.getElementById('exReqBody'); if(!box) return;
+  const note = document.getElementById('exReqNote');
+  if(note) note.textContent = exReqSyncOn() ? '' : '\u26A0 Sync is off \u2014 requests only reach people on this device.';
+  const s = loadAuthSession(), admin = exIsAdmin();
+  const esc = _xEsc;
+  let top = '';
+  if(!admin) top = '<div class="exr-actions" style="margin:0 0 4px;"><button type="button" data-act="adminlogin">\uD83D\uDD11 Admin login</button></div>';
+  if(!s && !admin){ box.innerHTML = top + '<div class="exr-empty">Log in (\u2699\uFE0F Settings) to send or confirm exchange / CL requests.</div>'; return; }
+  const all = Object.values(EX_REQUESTS).sort((a,b)=> (b.createdAt || 0) - (a.createdAt || 0));
+  const mineId = s ? String(s.identifier) : '';
+  const isMineReq = q=> s && q.by && String(q.by.id) === mineId;
+  const subAsk = q=> q.status === 'sub' && exIsMe(q.subName);
+  const mark = st=> st === 'approved' ? '\u2705' : (st === 'declined' || st === 'rejected') ? '\u274C' : '\u23F3';
+  const card = (q, hl)=>{
+    const steps = (q.kind === 'exchange' ? 'Substitute <b>' + esc(q.subName) + '</b> ' + mark(q.sub && q.sub.status) + ' \u2192 ' : '') + 'Admin ' + mark(q.admin && q.admin.status);
+    let acts = '';
+    if(subAsk(q)) acts += '<button class="ok" data-act="subyes" data-id="' + q.id + '">Confirm</button><button class="no" data-act="subno" data-id="' + q.id + '">Decline</button>';
+    if(admin && exReqOpen(q)){
+      if(q.kind === 'exchange') acts += '<button class="ok" data-act="aok" data-id="' + q.id + '">' + (q.status === 'sub' ? 'Approve anyway' : 'Approve') + '</button>';
+      else acts += '<button class="ok" data-act="avac" data-id="' + q.id + '">Approve \u00b7 leave vacant</button><button class="ok" data-act="aassign" data-id="' + q.id + '">Approve \u00b7 assign someone</button>';
+      acts += '<button class="no" data-act="arej" data-id="' + q.id + '">Reject</button>';
+    }
+    if(exReqOpen(q) && (isMineReq(q) || admin)) acts += '<button data-act="cancel" data-id="' + q.id + '">Cancel request</button>';
+    const who = q.who ? '<s>' + esc(q.who) + '</s> \u2192 ' : '';
+    const to = q.subName ? esc(q.subName) : (q.kind === 'exchange' ? '' : (q.status === 'approved' ? 'Vacant' : 'Admin decides'));
+    return '<div class="exr-card' + (hl ? ' ask' : '') + '"><div class="exr-top"><b>' + exReqKindLabel(q.kind) + '</b><span class="exr-date">' + esc(q.dateKey) + '</span><span class="exr-st ' + q.status + '">' + (EXR_STATUS[q.status] || q.status) + '</span></div>' +
+      '<div class="exr-line">' + esc(rosterLabelFor(q.table)) + ' \u00b7 ' + esc(q.pos) + ' \u00b7 ' + esc(exTeamLabel(q)) + '</div>' +
+      '<div class="exr-people">' + who + '<b>' + to + '</b></div>' +
+      '<div class="exr-need">' + steps + '</div>' +
+      '<div class="exr-by">Requested by ' + esc((q.by && q.by.name) || '?') + ' \u00b7 ' + exReqAgo(q.createdAt) + (q.note ? ' \u00b7 ' + esc(q.note) : '') + '</div>' +
+      (acts ? '<div class="exr-actions">' + acts + '</div>' : '') + '</div>';
+  };
+  const askMe = all.filter(subAsk);
+  const forAdmin = admin ? all.filter(q=> exReqOpen(q) && !subAsk(q)) : [];
+  const shown = new Set(askMe.concat(forAdmin).map(q=> q.id));
+  const mine = all.filter(q=> !shown.has(q.id) && (isMineReq(q) || exIsMe(q.subName))).slice(0, 30);
+  let h = top;
+  if(askMe.length) h += '<div class="exr-h">Waiting for your confirmation</div>' + askMe.map(q=> card(q, true)).join('');
+  if(admin) h += '<div class="exr-h">Admin \u00b7 waiting for approval</div>' + (forAdmin.length ? forAdmin.map(q=> card(q, true)).join('') : '<div class="exr-empty">Nothing waiting for approval.</div>');
+  h += '<div class="exr-h">Your requests &amp; history</div>' + (mine.length ? mine.map(q=> card(q, false)).join('') : '<div class="exr-empty">No requests yet.</div>');
+  box.innerHTML = h;
+}
+function exReqAdminLogin(){
+  adminGoogleSignIn().then(ok=>{ if(ok){ exReqApplyAll(); exReqUiRefresh(); } });
+}
+function initExReq(){
+  exReqPrune();
+  const ov = document.getElementById('exReqOverlay');
+  const open = ()=>{ exReqRender(); if(ov) ov.classList.add('show'); };
+  ['exReqOpenBtn','authReqOpenBtn'].forEach(id=>{ const b = document.getElementById(id); if(b) b.addEventListener('click', open); });
+  const x = document.getElementById('exReqClose'); if(x) x.addEventListener('click', ()=> ov && ov.classList.remove('show'));
+  if(ov) ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('show'); });
+  const body = document.getElementById('exReqBody');
+  if(body) body.addEventListener('click', e=>{
+    const b = e.target.closest && e.target.closest('button[data-act]'); if(!b) return;
+    const id = b.getAttribute('data-id'), act = b.getAttribute('data-act');
+    if(act === 'adminlogin') exReqAdminLogin();
+    else if(act === 'subyes') exReqSubRespond(id, true);
+    else if(act === 'subno'){ if(confirm('Decline this request?')) exReqSubRespond(id, false); }
+    else if(act === 'aok'){ if(confirm('Approve and add it to the roster / QBM now?')) exReqAdminDecide(id, true); }
+    else if(act === 'avac'){ if(confirm('Approve this leave and leave the position vacant?')) exReqAdminDecide(id, true, { subName:'' }); }
+    else if(act === 'aassign') exReqOpenAssign(id);
+    else if(act === 'arej'){ if(confirm('Reject this request?')) exReqAdminDecide(id, false); }
+    else if(act === 'cancel'){ if(confirm('Cancel this request?')) exReqCancel(id); }
+  });
+  exReqApplyAll();
+  exReqUiRefresh();
+}
+// direct (admin password) or request (logged in) ?
+function exAddMode(){
+  if(exIsAdmin()){ requireRosterAuth(); return 'direct'; }
+  if(loadAuthSession()) return 'request';
+  if(confirm('You are not logged in.\n\nOK = enter the admin password and add it directly\nCancel = log in first (\u2699\uFE0F Settings) to send a request')){
+    return requireRosterAuth() ? 'direct' : null;
+  }
+  return null;
+}
+
 function initExchangePanel(){
+  try{ initExReq(); }catch(e){ console.error(e); }
+  try{ initAuditViewer(); }catch(e){ console.error(e); }
   const dateInput = document.getElementById('exchangeDate');
   const tableSel = document.getElementById('exchangeTable');
   const posSel = document.getElementById('exchangePos');
@@ -9427,7 +9932,7 @@ function initExchangePanel(){
 
   if(addBtn){
     addBtn.addEventListener('click', ()=>{
-      if(!requireRosterAuth()) return;
+      const _mode = exAddMode(); if(!_mode) return;
       const r = exchangeResolve();
       if(!r){ alert('Please select a date and a position.'); return; }
       if(r.dateKey < today){ alert('Exchange cannot be added for a past date.'); return; }
@@ -9437,6 +9942,7 @@ function initExchangePanel(){
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
       const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
       // Same table+pos+team+half combo replaces any earlier entry for it; a 1st-night and a 2nd-night entry can both exist.
+      if(_mode === 'request'){ if(exReqSubmit({ kind:'exchange', r:r, subName:subName, nightHalf:nightHalf })) subInput.value = ''; return; }
       { const _pe = { table:r.table, pos:r.pos, team:r.team, subName, nightHalf, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
       subInput.value = '';
       afterChange();
@@ -9450,6 +9956,14 @@ function initExchangePanel(){
       const special = window._clKind === 'special';
       const sub = vacant ? '' : (subInput.value || '').trim();
       if(!vacant && !sub){ alert('Select a substitute first.'); return; }
+      if(window._exMode === 'request'){
+        if(!special){
+          const _days = clDaysForShift(r.shift), _year = +r.dateKey.slice(0,4), _id = clIdFor(r.dateKey, r.table, r.pos, r.team);
+          if(clUsedBy(r.who, _year, _id) + _days > CL_LIMIT){ alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for this person. CL not added.'); return; }
+        }
+        if(exReqSubmit({ kind: special ? 'special' : 'cl', r:r, subName:sub, vacant:!sub })) subInput.value = '';
+        return;
+      }
       if(special){
         /* Festival / EL / special case: no CL count, no ledger — only somebody is put on the position */
         { const _pe = { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, vacant:!sub, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
@@ -9483,7 +9997,8 @@ function initExchangePanel(){
       });
     }
     const openChooser = (kind)=>{
-      if(!requireRosterAuth()) return;
+      const _m = exAddMode(); if(!_m) return;
+      window._exMode = _m;
       const r = exchangeResolve();
       const what = kind === 'special' ? 'Leave' : 'CL';
       if(!r){ alert('Please select a date and a position.'); return; }
@@ -9496,6 +10011,12 @@ function initExchangePanel(){
       const lab = kind === 'special' ? 'Festival / EL / Special' : 'CL';
       document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
       document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
+      if(_m === 'request'){
+        if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
+          exReqSubmit({ kind: kind === 'special' ? 'special' : 'cl', r:r, subName:'', vacant:true });
+        }
+        return;
+      }
       if(chooser) chooser.classList.add('show');
     };
     clBtn.addEventListener('click', ()=> openChooser('cl'));
@@ -12181,6 +12702,7 @@ function renderRosterNow(){
   }catch(e){}
   let EDITING = false;
   function persist(){
+    try{ auditThmrSaved(localStorage.getItem(THMR_KEY), TH, MR); }catch(e){}
     try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2, tv:3, mv:3 })); }catch(e){}
     try{ if(typeof pushThmrToFirebaseDebounced === 'function') pushThmrToFirebaseDebounced(); }catch(e){}
   }
@@ -12580,7 +13102,7 @@ initAdminNotepad();
      a logged-in account whose session carries role 'moderator' or 'admin' also qualifies (hook for later). */
   window.hsiaCanSeeOthers = function(){
     if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) return true;
-    try{ const u = loadAuthSession(); return !!(u && (u.role === 'moderator' || u.role === 'admin')); }catch(e){ return false; }
+    return false;
   };
   window.hsiaUpdatePrivUI = function(){
     const on = window.hsiaCanSeeOthers();
@@ -12600,12 +13122,11 @@ initAdminNotepad();
     adminToggle.addEventListener('click', ()=>{
       if(window.hsiaCanSeeOthers()){
         if(!confirm('অ্যাডমিন থেকে লগআউট করবেন? Others ট্যাব আবার লুকিয়ে যাবে।')) return;
-        try{ localStorage.removeItem(ADMIN_REMEMBER_KEY); }catch(e){}
-        rosterUnlocked = false;
-        window.hsiaUpdatePrivUI();
+        adminSetState(false);
+        try{ firebase.auth().signOut(); }catch(e){}
         return;
       }
-      if(adminGate(false)) window.hsiaUpdatePrivUI();
+      adminGate(false);
     });
   }
   window.hsiaUpdatePrivUI();
@@ -12779,6 +13300,7 @@ initAdminNotepad();
       vccsData = readVccs();
       try{ localStorage.setItem(VCCS_KEY, JSON.stringify(vccsData)); }catch(e){}
       if(typeof pushVccsToFirebaseDebounced === 'function') pushVccsToFirebaseDebounced();
+      try{ auditLog('vcc-edit', 'VCC table saved'); }catch(e){}
       flashChip('iflowVccSavedChip');
     };
     vccCtl = wireAdminEdit({
@@ -12801,37 +13323,116 @@ initAdminNotepad();
     }
   }
 
-  // Others — alphabetical notes compiled from the notebook pages
+  // Others: staff phone numbers etc. They are NOT in this page any more. They live at hsia_private/others, which only an admin can read (Rules).
   const othersBox = document.getElementById('iflowOthersNotes');
   if(othersBox){
-    const OTHERS_KEY = 'hsia_iflowOthersNotesHtml';
-    // "Aerodrome Assistant Number List" (last section of Others): taken from the shipped HTML so a
-    // previously saved local copy of Others gets it appended too, instead of missing it.
-    let aaHtml = '';
-    (function(){
-      const h = othersBox.querySelector('h4[data-aa]');
-      if(!h) return;
-      for(let n = h; n; n = n.nextElementSibling) aaHtml += n.outerHTML;
-    })();
-    try{
-      const saved = localStorage.getItem(OTHERS_KEY);
-      if(saved){
-        othersBox.innerHTML = saved;
-        if(aaHtml && !othersBox.querySelector('h4[data-aa]')) othersBox.insertAdjacentHTML('beforeend', aaHtml);
-      }
-    }catch(e){}
-    const saveOthers = ()=>{
-      try{ localStorage.setItem(OTHERS_KEY, othersBox.innerHTML); }catch(e){}
-      flashChip('iflowOthersSavedChip');
+    const OTHERS_KEY = 'hsia_iflowOthersNotesHtml';          // old local copy (only used once, to move it to Firebase)
+    const LOCK_HTML = '<p class="iflow-others-lock">\uD83D\uDD12 Admin sign-in required.</p>';
+    let othersCtl = null, listenerOn = false, migrated = false;
+    const refO = ()=> (typeof _fbDb !== 'undefined' && _fbDb) ? _fbDb.ref('hsia_private/others') : null;
+    const who = ()=>{ try{ const u = firebase.auth().currentUser; return (u && u.email) || ''; }catch(e){ return ''; } };
+    const applyHtml = html=>{
+      if(othersCtl && othersCtl.isUnlocked() && othersBox.contains(document.activeElement)) return;     // don't yank the text while the admin types
+      othersBox.innerHTML = html;
+      try{ if(typeof window.hsiaSearchReindex === 'function') window.hsiaSearchReindex(); }catch(e){}
     };
-    const othersCtl = wireAdminEdit({
+    const PENDING_KEY = 'hsia_iflowOthersPending';          // an edit that has not reached Firebase yet (offline / closed too early)
+    const upload = (html, note)=>{
+      try{ localStorage.setItem(PENDING_KEY, html); }catch(e){}
+      const ref = refO(); if(!ref) return Promise.reject(new Error('Firebase not ready \u2014 the edit is kept on this device and will upload on the next admin sign-in.'));
+      return ref.set({ html:html, updatedAt:Date.now(), by:who() }).then(()=>{
+        try{ localStorage.removeItem(PENDING_KEY); }catch(e){}
+        try{ auditLog('others-edit', note || ('Others saved (' + html.length + ' chars)')); }catch(e){}
+      });
+    };
+    const showImport = ()=>{
+      othersBox.innerHTML = '<div class="iflow-others-import"><p>Others is empty. Choose the saved <b>others-seed.html</b> file once to load it:</p><input type="file" id="othersImportFile" accept=".html,.htm,.txt"></div>';
+      const f = document.getElementById('othersImportFile');
+      if(f) f.addEventListener('change', ()=>{
+        const file = f.files && f.files[0]; if(!file) return;
+        const rd = new FileReader();
+        rd.onload = ()=>{ const html = String(rd.result || ''); if(!html.trim()) return alert('The file is empty.'); upload(html, 'Others imported from file').then(()=> alert('Others loaded.')).catch(e=> alert('Upload failed: ' + e.message)); };
+        rd.readAsText(file);
+      });
+    };
+    const migrate = ()=>{
+      if(migrated) return; migrated = true;
+      let local = null; try{ local = localStorage.getItem(OTHERS_KEY); }catch(e){}
+      if(local && local.trim()){
+        upload(local, 'Others moved from this device to Firebase').then(()=>{ try{ localStorage.removeItem(OTHERS_KEY); }catch(e){} }).catch(e=> console.warn('Others upload failed', e));
+        applyHtml(local);
+      } else showImport();
+    };
+    window.hsiaOnAdminReady(()=>{
+      const ref = refO(); if(!ref || listenerOn) return;
+      listenerOn = true;
+      try{ const pend = localStorage.getItem(PENDING_KEY); if(pend && pend.trim()){ applyHtml(pend); upload(pend, 'Others: unsent edit uploaded').catch(()=>{}); migrated = true; } }catch(e){}
+      ref.on('value', snap=>{
+        const v = snap.val();
+        if(v && typeof v.html === 'string') applyHtml(v.html);
+        else migrate();
+      }, err=> console.warn('Others read refused:', err && err.code));
+    });
+    window.hsiaOnAdminLost(()=>{
+      const ref = refO(); if(ref){ try{ ref.off(); }catch(e){} }
+      listenerOn = false; migrated = false;
+      othersBox.innerHTML = LOCK_HTML;
+    });
+    const saveOthers = ()=>{
+      if(!rosterUnlocked){ alert('Admin sign-in required to save.'); return; }
+      upload(othersBox.innerHTML).then(()=> flashChip('iflowOthersSavedChip')).catch(e=> alert('Save failed: ' + e.message));
+    };
+    othersCtl = wireAdminEdit({
       editBtnId: 'iflowOthersEditBtn', saveBtnId: 'iflowOthersSaveBtn', addRowBtnId: null,
       getEditableEls: ()=> [othersBox], save: saveOthers, focusEl: 'iflowOthersNotes'
     });
-    othersBox.addEventListener('blur', ()=>{ if(othersCtl.isUnlocked()) saveOthers(); });
+    othersBox.addEventListener('blur', ()=>{ if(othersCtl.isUnlocked() && !othersBox.querySelector('#othersImportFile') && !othersBox.querySelector('.iflow-others-lock')) saveOthers(); });
   }
 })();
 
+
+/* ---- Date fields: show dd/mm/yyyy everywhere (native <input type=date> follows the phone's language and showed mm/dd/yyyy) ---- */
+(function initDateFormat(){
+  const fmt = v=> /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) : 'dd/mm/yyyy';
+  function enhance(inp){
+    if(!inp || inp._dfL || inp.type !== 'date') return;
+    const cs = getComputedStyle(inp);
+    const wrap = document.createElement('span');
+    wrap.className = 'dfmt';
+    wrap.style.display = (cs.display === 'inline-block' || cs.display === 'inline') ? 'inline-block' : 'block';
+    wrap.style.flex = cs.flex; wrap.style.minWidth = cs.minWidth === 'auto' ? '0' : cs.minWidth;
+    if(cs.width && cs.width !== 'auto') wrap.style.width = cs.width;
+    wrap.style.margin = cs.margin;
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    const lab = document.createElement('span');
+    lab.className = 'dfmt-t';
+    lab.style.fontSize = cs.fontSize; lab.style.fontFamily = cs.fontFamily; lab.style.fontWeight = cs.fontWeight;
+    lab.style.cssText += ';color:' + cs.color + ';padding-left:' + cs.paddingLeft + ';letter-spacing:' + cs.letterSpacing;
+    wrap.appendChild(lab);
+    const upd = ()=>{ const v = inp.value; lab.textContent = fmt(v); lab.classList.toggle('ph', !v); };
+    inp._dfL = upd;
+    inp.addEventListener('input', upd); inp.addEventListener('change', upd);
+    inp.addEventListener('click', ()=>{ try{ if(inp.showPicker) inp.showPicker(); }catch(e){} });
+    upd();
+  }
+  // value set from code (e.g. the Today / arrow buttons) does not fire events: refresh the label from the setter
+  try{
+    const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(HTMLInputElement.prototype, 'value', {
+      configurable:true, enumerable:d.enumerable,
+      get(){ return d.get.call(this); },
+      set(v){ d.set.call(this, v); if(this._dfL) this._dfL(); }
+    });
+  }catch(e){}
+  const all = ()=> document.querySelectorAll('input[type=date]').forEach(enhance);
+  all();
+  new MutationObserver(muts=>{
+    for(const m of muts) for(const n of m.addedNodes){
+      if(n.nodeType === 1 && ((n.matches && n.matches('input[type=date]')) || (n.querySelector && n.querySelector('input[type=date]')))){ all(); return; }
+    }
+  }).observe(document.body, { childList:true, subtree:true });
+})();
 
 initFlightRadar();
 initFlightDb();
