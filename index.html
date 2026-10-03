@@ -3,59 +3,22 @@
 <meta charset="UTF-8">
 <script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs,fedcm_migration_mod" async=""></script><script>
 (function(){
+  /* Service worker (sw.js): network-first pages + offline fallback. It replaces the old "probe + wipe caches + reload with ?_r=" hack,
+     which loaded this whole page twice on every open and gave no real offline mode. */
   try{
-    var FLAG = 'hsia_auto_refresh_v1';
-    if(sessionStorage.getItem(FLAG)) return; // already decided this once in this tab — don't loop
-
-    function markDone(){ try{ sessionStorage.setItem(FLAG, '1'); }catch(e){} }
-
-    function reloadFresh(){
-      var url = location.href.split('#')[0];
-      url += (url.indexOf('?') === -1 ? '?' : '&') + '_r=' + Date.now();
-      location.replace(url);
+    // older versions forced a reload with ?_r=<time>; keep the address bar clean
+    var u = new URL(location.href);
+    if(u.searchParams.has('_r') || u.searchParams.has('_probe')){
+      u.searchParams.delete('_r'); u.searchParams.delete('_probe');
+      history.replaceState(null, '', u.pathname + u.search + u.hash);
     }
-
-    // Clears out any service worker / cache storage left over from a previous version of the
-    // page, then does the actual reload. Only ever called once real connectivity is confirmed
-    // below — this is skipped completely while offline, so the already-loaded page (with its
-    // own, locally-computed "current shift" from the phone's clock) is left exactly as is.
-    function cleanupAndReload(){
-      var pending = 0, started = false;
-      function done(){ if(--pending <= 0) reloadFresh(); }
-      if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
-        pending++; started = true;
-        navigator.serviceWorker.getRegistrations().then(function(regs){
-          if(!regs.length) return done();
-          var left = regs.length;
-          regs.forEach(function(r){
-            r.unregister().then(function(){ if(--left <= 0) done(); }).catch(function(){ if(--left <= 0) done(); });
-          });
-        }).catch(done);
-      }
-      if(window.caches && caches.keys){
-        pending++; started = true;
-        caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }).then(done).catch(done);
-      }
-      if(!started) reloadFresh();
+  }catch(e){}
+  try{
+    if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('sw.js').catch(function(err){ console.warn('Service worker not registered:', err); });
+      });
     }
-
-    // No network interface at all (airplane mode, no SIM/Wi-Fi) — don't even try.
-    if('onLine' in navigator && !navigator.onLine){ markDone(); return; }
-
-    // navigator.onLine can say "true" with no real internet behind it (e.g. Wi-Fi with no
-    // upstream), so confirm with one quick, short-timeout network request before doing
-    // anything that depends on the network actually working. If this fails or times out,
-    // we simply leave the page as it already loaded — no forced reload, no broken access.
-    if(!('fetch' in window)){
-      if('onLine' in navigator && navigator.onLine){ markDone(); cleanupAndReload(); } else { markDone(); }
-      return;
-    }
-    var probeUrl = location.href.split('#')[0].split('?')[0] + '?_probe=' + Date.now();
-    var controller = ('AbortController' in window) ? new AbortController() : null;
-    var timer = setTimeout(function(){ if(controller) controller.abort(); }, 1500);
-    fetch(probeUrl, { method:'HEAD', cache:'no-store', signal: controller ? controller.signal : undefined })
-      .then(function(){ clearTimeout(timer); markDone(); cleanupAndReload(); })
-      .catch(function(){ clearTimeout(timer); markDone(); }); // offline (or too slow) — stay on the page as-is
   }catch(e){}
 })();
 </script>
@@ -1042,13 +1005,12 @@ table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255
 .th-navbtn,.th-today{ border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; font-weight:800; cursor:pointer; }
 .th-navbtn{ width:38px; height:38px; font-size:20px; line-height:1; }
 .th-today{ padding:0 14px; height:38px; font-size:12px; background:var(--gold); color:#1B2130; border-color:var(--gold); }
-/* ---- date fields always show dd/mm/yyyy (the native text is hidden, a label shows the value; the native picker still opens on tap) ---- */
-.dfmt{ position:relative; }
-.dfmt > input[type=date]{ width:100%; margin:0; box-sizing:border-box; }
-.dfmt > input[type=date]::-webkit-datetime-edit{ opacity:0; }
-.dfmt > input[type=date]::-webkit-calendar-picker-indicator{ cursor:pointer; }
-.dfmt-t{ position:absolute; left:0; top:0; bottom:0; display:flex; align-items:center; pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:calc(100% - 34px); }
+/* ---- date fields always show dd/mm/yyyy: the native input is kept invisible on top (it still opens the picker); a look-alike box shows the value ---- */
+.dfmt{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:6px; box-sizing:border-box; overflow:hidden; }
+.dfmt > input[type=date]{ position:absolute !important; left:0; top:0; width:100% !important; height:100% !important; margin:0 !important; padding:0 !important; border:0 !important; opacity:0 !important; cursor:pointer; z-index:2; -webkit-appearance:none; appearance:none; }
+.dfmt-t{ position:relative; z-index:1; flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
 .dfmt-t.ph{ opacity:.55; }
+.dfmt-i{ position:relative; z-index:1; flex:0 0 auto; width:16px; height:16px; opacity:.75; pointer-events:none; }
 .th-date{ flex:1; min-width:0; height:38px; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:0 10px; font-size:14px; color-scheme:dark; }
 
 /* ---- date bar + per-shift duty under A-E (Controllers / Aerodrome Assistant / Communication) ---- */
@@ -13391,6 +13353,71 @@ initAdminNotepad();
 })();
 
 
+/* ---- PWA: "new version" notice, install prompt, offline badge ---- */
+(function initPwaUi(){
+  const st = document.createElement('style');
+  st.textContent = '#pwaBars{ position:fixed; left:12px; right:12px; bottom:calc(env(safe-area-inset-bottom,0px) + 12px); z-index:10020; display:flex; flex-direction:column; gap:8px; pointer-events:none; }' +
+    '.pwa-bar{ pointer-events:auto; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:rgba(20,22,27,.97); border:1px solid rgba(255,255,255,.16); color:#eef1f7; box-shadow:0 8px 28px rgba(0,0,0,.5); font-size:13px; font-weight:600; animation:mehUp .35s cubic-bezier(.2,.8,.2,1) both; }' +
+    '.pwa-bar span{ flex:1 1 auto; line-height:1.35; }' +
+    '.pwa-bar button{ flex:0 0 auto; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#eef1f7; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; }' +
+    '.pwa-bar button.go{ background:linear-gradient(135deg,#9cc0ff,#3fe27f); color:#0d0f14; border-color:transparent; }' +
+    '#pwaOffline{ position:fixed; top:calc(env(safe-area-inset-top,0px) + 6px); left:50%; transform:translateX(-50%); z-index:10021; padding:4px 12px; border-radius:999px; background:rgba(245,181,61,.95); color:#1b1405; font-size:11px; font-weight:800; letter-spacing:.03em; pointer-events:none; display:none; }';
+  document.head.appendChild(st);
+  const holder = document.createElement('div'); holder.id = 'pwaBars'; document.body.appendChild(holder);
+  const off = document.createElement('div'); off.id = 'pwaOffline'; off.textContent = '\uD83D\uDCF4 \u0985\u09AB\u09B2\u09BE\u0987\u09A8 \u2014 \u09B6\u09C7\u09B7 \u09B8\u0982\u09B0\u0995\u09CD\u09B7\u09BF\u09A4 \u09A4\u09A5\u09CD\u09AF'; document.body.appendChild(off);
+  const bar = (id, text, btns)=>{
+    const old = document.getElementById(id); if(old) old.remove();
+    const d = document.createElement('div'); d.className = 'pwa-bar'; d.id = id;
+    d.innerHTML = '<span>' + text + '</span>';
+    btns.forEach(b=>{ const x = document.createElement('button'); x.type = 'button'; x.textContent = b[0]; if(b[2]) x.className = 'go'; x.addEventListener('click', ()=>{ d.remove(); b[1](); }); d.appendChild(x); });
+    holder.appendChild(d);
+  };
+
+  // offline badge
+  const syncOff = ()=>{ off.style.display = navigator.onLine === false ? 'block' : 'none'; };
+  window.addEventListener('online', syncOff); window.addEventListener('offline', syncOff); syncOff();
+
+  // a newer index.html was uploaded while the app is open -> ask before refreshing (no forced reload)
+  let baseTag = null, lastProbe = 0, shownFor = '';
+  const probe = ()=> fetch(location.pathname + location.search, { method:'HEAD', cache:'no-cache' })
+    .then(r=> r.ok ? (r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length')) : null).catch(()=> null);
+  const check = ()=>{
+    if(navigator.onLine === false || Date.now() - lastProbe < 60000) return;
+    lastProbe = Date.now();
+    probe().then(tag=>{
+      if(!tag) return;
+      if(baseTag === null){ baseTag = tag; return; }
+      if(tag !== baseTag && shownFor !== tag){
+        shownFor = tag;
+        bar('pwaUpdate', '\uD83D\uDD04 \u09A8\u09A4\u09C1\u09A8 \u09B8\u0982\u09B8\u09CD\u0995\u09B0\u09A3 \u098F\u09B8\u09C7\u099B\u09C7', [['\u09B0\u09BF\u09AB\u09CD\u09B0\u09C7\u09B6', ()=> location.reload(), true], ['\u09AA\u09B0\u09C7', ()=>{}]]);
+      }
+    });
+  };
+  setTimeout(check, 4000);
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') check(); });
+  window.addEventListener('online', check);
+  setInterval(check, 10 * 60 * 1000);
+
+  // install to home screen
+  const standalone = ()=> (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const dismissed = ()=>{ try{ return Date.now() - Number(localStorage.getItem('hsia_install_dismissed') || 0) < 14 * 86400000; }catch(e){ return false; } };
+  const dismiss = ()=>{ try{ localStorage.setItem('hsia_install_dismissed', String(Date.now())); }catch(e){} };
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault(); deferred = e;
+    if(standalone() || dismissed()) return;
+    setTimeout(()=> bar('pwaInstall', '\uD83D\uDCF2 \u0985\u09CD\u09AF\u09BE\u09AA\u09C7\u09B0 \u09AE\u09A4\u09CB \u09AC\u09CD\u09AF\u09AC\u09B9\u09BE\u09B0 \u0995\u09B0\u09A4\u09C7 \u09B9\u09CB\u09AE \u09B8\u09CD\u0995\u09CD\u09B0\u09BF\u09A8\u09C7 \u09AF\u09CB\u0997 \u0995\u09B0\u09CB', [
+      ['\u0987\u09A8\u09B8\u09CD\u099F\u09B2', ()=>{ if(!deferred) return; deferred.prompt(); deferred.userChoice.finally(()=>{ deferred = null; }); }, true],
+      ['\u09AA\u09B0\u09C7', dismiss]
+    ]), 6000);
+  });
+  window.addEventListener('appinstalled', ()=>{ deferred = null; const x = document.getElementById('pwaInstall'); if(x) x.remove(); });
+  // iPhone / iPad Safari has no install prompt: show the manual steps once in a while
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream && !standalone() && !dismissed()){
+    setTimeout(()=> bar('pwaInstall', '\uD83D\uDCF2 Safari-\u09A4\u09C7 Share \u2192 \u201CAdd to Home Screen\u201D \u099A\u09BE\u09AA\u09B2\u09C7 \u0985\u09CD\u09AF\u09BE\u09AA\u09C7\u09B0 \u09AE\u09A4\u09CB \u0996\u09C1\u09B2\u09AC\u09C7', [['\u09A0\u09BF\u0995 \u0986\u099B\u09C7', dismiss]]), 8000);
+  }
+})();
+
 /* ---- Date fields: show dd/mm/yyyy everywhere (native <input type=date> follows the phone's language and showed mm/dd/yyyy) ---- */
 (function initDateFormat(){
   const fmt = v=> /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) : 'dd/mm/yyyy';
@@ -13399,17 +13426,26 @@ initAdminNotepad();
     const cs = getComputedStyle(inp);
     const wrap = document.createElement('span');
     wrap.className = 'dfmt';
-    wrap.style.display = (cs.display === 'inline-block' || cs.display === 'inline') ? 'inline-block' : 'block';
-    wrap.style.flex = cs.flex; wrap.style.minWidth = cs.minWidth === 'auto' ? '0' : cs.minWidth;
-    if(cs.width && cs.width !== 'auto') wrap.style.width = cs.width;
-    wrap.style.margin = cs.margin;
+    const w = wrap.style;
+    w.display = (cs.display === 'inline-block' || cs.display === 'inline') ? 'inline-flex' : 'flex';
+    w.flex = cs.flex; w.minWidth = cs.minWidth === 'auto' ? '0' : cs.minWidth;
+    if(cs.width && cs.width !== 'auto') w.width = cs.width;
+    w.margin = cs.margin;
+    // copy the look of the original input onto the box
+    w.borderWidth = cs.borderTopWidth; w.borderStyle = cs.borderTopStyle; w.borderColor = cs.borderTopColor; w.borderRadius = cs.borderTopLeftRadius;
+    w.backgroundColor = cs.backgroundColor; w.color = cs.color;
+    w.paddingTop = cs.paddingTop; w.paddingBottom = cs.paddingBottom; w.paddingLeft = cs.paddingLeft; w.paddingRight = cs.paddingRight;
+    if(cs.height && cs.height !== 'auto') w.height = cs.height;
+    w.fontSize = cs.fontSize; w.fontFamily = cs.fontFamily; w.fontWeight = cs.fontWeight; w.letterSpacing = cs.letterSpacing; w.lineHeight = cs.lineHeight === 'normal' ? '1.3' : cs.lineHeight;
     inp.parentNode.insertBefore(wrap, inp);
     wrap.appendChild(inp);
     const lab = document.createElement('span');
     lab.className = 'dfmt-t';
-    lab.style.fontSize = cs.fontSize; lab.style.fontFamily = cs.fontFamily; lab.style.fontWeight = cs.fontWeight;
-    lab.style.cssText += ';color:' + cs.color + ';padding-left:' + cs.paddingLeft + ';letter-spacing:' + cs.letterSpacing;
     wrap.appendChild(lab);
+    const ico = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    ico.setAttribute('class', 'dfmt-i'); ico.setAttribute('viewBox', '0 0 24 24'); ico.setAttribute('fill', 'none'); ico.setAttribute('stroke', 'currentColor'); ico.setAttribute('stroke-width', '2'); ico.setAttribute('stroke-linecap', 'round'); ico.setAttribute('stroke-linejoin', 'round');
+    ico.innerHTML = '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>';
+    wrap.appendChild(ico);
     const upd = ()=>{ const v = inp.value; lab.textContent = fmt(v); lab.classList.toggle('ph', !v); };
     inp._dfL = upd;
     inp.addEventListener('input', upd); inp.addEventListener('change', upd);
