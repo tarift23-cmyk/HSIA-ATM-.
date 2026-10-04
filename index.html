@@ -228,7 +228,7 @@
   .xbtn{ background:transparent !important; color:var(--muted) !important; border:1px solid var(--border) !important; box-shadow:none; transition:background .12s,color .12s,border-color .12s; }
   .xbtn:focus, .xbtn:active, .xbtn.on{ outline:none; }
   .xbtn-ex:focus, .xbtn-ex:active, .xbtn-ex.on{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)) !important; color:#1B2130 !important; border-color:var(--gold) !important; }
-  #exchangeTeam{ display:none !important; }
+  #exchangeTeam, #exchangeNightHalf{ display:none !important; }
   #exchangeModalOverlay .fr-manualform > .xbtn-row{ order:-1; }
   #exchangeConfirmBtn{ flex:0 0 100%; order:1; }
   #exchangeModalOverlay .fr-manualform > #clDataBtn{ order:2; }
@@ -9209,6 +9209,11 @@ function pickExchangeSub(name){
   closeExchangePicker();
   updateExchangeCurrentHint();
   if(window._pendingClAfterPick){ window._pendingClAfterPick = false; if(window._commitCl) window._commitCl(false); }
+  if(window._pendingExAfterPick){
+    window._pendingExAfterPick = false;
+    const ab = document.getElementById('exchangeAddBtn');
+    if(ab){ window._xConfirm = true; try{ ab.click(); } finally { window._xConfirm = false; } }
+  }
 }
 function pickExchangePos(b){
   const tableSel = document.getElementById('exchangeTable');
@@ -9223,6 +9228,7 @@ function pickExchangePos(b){
   } else {
     posSel.value = b.getAttribute('data-pos');
     if(teamSel) teamSel.value = b.getAttribute('data-team');
+    try{ const o = posSel.options[posSel.selectedIndex]; if(o) o.textContent = posSel.value + ' \u00b7 Team ' + 'ABCDE'[+b.getAttribute('data-team')]; }catch(e){}
   }
   updateExchangeCurrentHint();
   try{ posSel.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
@@ -9258,9 +9264,9 @@ function initExchangePicker(){
   const subEl = document.getElementById('exchangeSubName');
   const ov = document.getElementById('exchangePickerOverlay');
   if(!subEl || !ov) return;
-  subEl.addEventListener('click', ()=>{ subEl.blur(); window._pendingClAfterPick = false; openExchangePicker(); });
-  const cl = document.getElementById('exchangePickerClose'); if(cl) cl.addEventListener('click', ()=>{ window._pendingClAfterPick = false; closeExchangePicker(); });
-  ov.addEventListener('click', e=>{ if(e.target === ov){ window._pendingClAfterPick = false; closeExchangePicker(); } });
+  subEl.addEventListener('click', ()=>{ subEl.blur(); window._pendingClAfterPick = false; window._pendingExAfterPick = false; openExchangePicker(); });
+  const cl = document.getElementById('exchangePickerClose'); if(cl) cl.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; closeExchangePicker(); });
+  ov.addEventListener('click', e=>{ if(e.target === ov){ window._pendingClAfterPick = false; window._pendingExAfterPick = false; closeExchangePicker(); } });
   const q = document.getElementById('exchangePickerSearch'); if(q) q.addEventListener('input', renderExchangePicker);
   const mb = document.getElementById('exchangePickerManualBtn');
   const mi = document.getElementById('exchangePickerManual');
@@ -10072,7 +10078,7 @@ function initExchangePanel(){
     posSel.style.cssText = 'flex:1 1 auto;width:100%;min-width:0;';
     const hit = document.createElement('span');
     hit.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;z-index:1;';
-    hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; openExchangePosPicker(); });
+    hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; openExchangePosPicker(); });
     wrap.appendChild(hit);
   }
   initClData();
@@ -10098,7 +10104,7 @@ function initExchangePanel(){
       if(!r){ alert('Please select a date and a position.'); return; }
       if(r.dateKey < today){ alert('Exchange cannot be added for a past date.'); return; }
       const subName = (subInput.value || '').trim();
-      if(!subName){ alert('Please select a substitute.'); return; }
+      if(!subName){ window._pendingExAfterPick = true; openExchangePicker(); return; }
       const hasCl = (EXCHANGES[r.dateKey] || []).some(x=> (x.cl || x.special) && x.table === r.table && x.pos === r.pos && +x.team === +r.team);
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
       const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
