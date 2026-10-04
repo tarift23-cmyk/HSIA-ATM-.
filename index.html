@@ -249,6 +249,10 @@
   .qbm-table th, .qbm-table td{ border:1px solid var(--border); padding:4px 5px; vertical-align:middle; background:transparent; color:var(--text); text-align:left; overflow-wrap:break-word; }
   .qbm-table th{ text-align:center; font-weight:700; text-transform:uppercase; padding:8px 2px; color:var(--muted); font-size:9.5px; }
   .qbm-table td.c{ text-align:center; }
+  .qbm-table td.det{ background:rgba(180,178,169,0.14); }
+  .qbm-table th.det{ background:rgba(180,178,169,0.30); color:var(--text); }
+  .qbm-table td.rel{ background:rgba(239,159,39,0.15); }
+  .qbm-table th.rel{ background:rgba(239,159,39,0.32); color:var(--text); }
   .qbm-table tr.blank td{ height:26px; }
   .qbm-line{ display:flex; gap:6px; align-items:flex-start; }
   .qbm-line + .qbm-line{ margin-top:3px; }
@@ -266,6 +270,10 @@
     body.qbm-printing .qbm-title{ font-size:13pt !important; line-height:15pt; margin:0 0 15pt !important; color:#000 !important; text-decoration:underline; text-underline-offset:2pt; text-decoration-thickness:0.7pt; }
     body.qbm-printing .qbm-table{ width:100% !important; min-width:0 !important; table-layout:fixed; border-collapse:collapse; font-size:11pt !important; color:#000 !important; }
     body.qbm-printing .qbm-table th, body.qbm-printing .qbm-table td{ background:#fff !important; color:#000 !important; border:0.6pt solid #000 !important; padding:4pt !important; line-height:13.4pt; font-size:11pt; letter-spacing:0; }
+    body.qbm-printing .qbm-table td.det{ background:#DAD8CF !important; }
+    body.qbm-printing .qbm-table th.det{ background:#BFBDB3 !important; }
+    body.qbm-printing .qbm-table td.rel{ background:#FAEEDA !important; }
+    body.qbm-printing .qbm-table th.rel{ background:#F5C77E !important; }
     body.qbm-printing .qbm-table th{ font-size:10pt !important; line-height:14pt; text-align:center; font-weight:700; }
     body.qbm-printing .qbm-line{ display:block; }
     body.qbm-printing .qbm-line + .qbm-line{ margin-top:0 !important; }
@@ -9609,8 +9617,8 @@ function renderQbm(){
       const part = P.parts.find(pt=> pt.from === k);
       body += '<tr>' +
         (k === 0 ? '<td class="c" rowspan="' + U + '">' + String(i+1).padStart(2,'0') + '</td>' : '') +
-        '<td>' + _xEsc(u.detailed) + '</td><td class="c">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
-        (k === 0 ? '<td rowspan="' + U + '">' + _xEsc(P.relieved) + '</td>' : '') +
+        '<td class="det">' + _xEsc(u.detailed) + '</td><td class="c">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
+        (k === 0 ? '<td class="rel" rowspan="' + U + '">' + _xEsc(P.relieved) + '</td>' : '') +
         (part ? '<td class="c" rowspan="' + part.n + '">' + _xEsc(part.rmk) + '</td>' : '') +
         '</tr>';
     });
@@ -9619,7 +9627,7 @@ function renderQbm(){
   paper.innerHTML =
     '<div class="qbm-title" contenteditable="true" spellcheck="false">QBM: SATO (' + _xEsc(qbmMonthLabel(items)) + ')' + '' + '</div>' +
     '<table class="qbm-table"><colgroup><col style="width:8%"><col style="width:17%"><col style="width:14%"><col style="width:26%"><col style="width:17%"><col style="width:18%"></colgroup>' +
-    '<thead><tr><th>SL.<br>NO</th><th>PERSON<br>DETAILED</th><th>DUTY<br>PLACE</th><th>DATE &amp; DUTY PERIOD</th><th>PERSON<br>RELIEVED</th><th>RMKS</th></tr></thead>' +
+    '<thead><tr><th>SL.<br>NO</th><th class="det">PERSON<br>DETAILED</th><th>DUTY<br>PLACE</th><th>DATE &amp; DUTY PERIOD</th><th class="rel">PERSON<br>RELIEVED</th><th>RMKS</th></tr></thead>' +
     '<tbody>' + body + '</tbody></table>' +
     '';
   paper.querySelectorAll('.qbm-x').forEach(b=> b.addEventListener('click', ()=> qbmRemoveRun(+b.getAttribute('data-r'))));
@@ -9729,12 +9737,12 @@ function qbmDrawPages(title, rows){
     return lines.length ? lines : [''];
   };
   const text = (x, by, str, bold, size)=>{ font(bold, size); ctx.fillText(str, x * S, by * S); };
-  const rect = (x, top, w, h)=>{ ctx.lineWidth = 0.6 * S; ctx.strokeRect(x * S, top * S, w * S, h * S); };
+  const rect = (x, top, w, h, fill)=>{ if(fill){ ctx.fillStyle = fill; ctx.fillRect(x * S, top * S, w * S, h * S); ctx.fillStyle = '#000'; } ctx.lineWidth = 0.6 * S; ctx.strokeRect(x * S, top * S, w * S, h * S); };
   const header = ()=>{
     const hl = [['SL.','NO'],['PERSON','DETAILED'],['DUTY','PLACE'],['DATE & DUTY PERIOD'],['PERSON','RELIEVED'],['RMKS']];
     const h = 2 * (HS + 4) + 2 * PY;
     hl.forEach((ls, i)=>{
-      rect(cx[i], y, cw[i], h);
+      rect(cx[i], y, cw[i], h, i === 1 ? '#BFBDB3' : i === 4 ? '#F5C77E' : '');
       const blockH = ls.length * (HS + 4), top = y + (h - blockH) / 2;
       ls.forEach((t, k)=>{ text(cx[i] + (cw[i] - tw(t, true, HS)) / 2, top + k * (HS + 4) + (HS + 4) / 2 + 0.33 * HS, t, true, HS); });
     });
@@ -9785,13 +9793,13 @@ function qbmDrawPages(title, rows){
       });
     };
     rect(cx[0], y, cw[0], total); at(0, [String(ri + 1).padStart(2, '0')], y, total, 'c');
-    rect(cx[4], y, cw[4], total); at(4, relL, y, total, 'l');
+    rect(cx[4], y, cw[4], total, '#FAEEDA'); at(4, relL, y, total, 'l');
     let uy = y;
     const tops = [];
     P.units.forEach((u, k)=>{
       tops[k] = uy;
       const h = uh[k];
-      rect(cx[1], uy, cw[1], h); at(1, wrap(u.detailed, false, FS, cw[1] - 2 * PX), uy, h, 'l');
+      rect(cx[1], uy, cw[1], h, '#DAD8CF'); at(1, wrap(u.detailed, false, FS, cw[1] - 2 * PX), uy, h, 'l');
       rect(cx[2], uy, cw[2], h); at(2, wrap(u.place, false, FS, cw[2] - 2 * PX), uy, h, 'c');
       rect(cx[3], uy, cw[3], h); at(3, [].concat.apply([], u.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))), uy, h, 'l');
       uy += h;
