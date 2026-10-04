@@ -1020,6 +1020,7 @@ table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255
 .rd-sub.d-afternoon{ color:var(--afternoon); }
 .rd-sub.d-off{ opacity:.75; }
 .rd-sub.rd-live::before{ content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#F54249; margin-right:4px; vertical-align:1px; }
+.thg-duty.rd-live::before{ content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#F54249; margin-right:4px; vertical-align:1px; }
 .rd-tail{ display:block; width:max-content; max-width:100%; margin:4px auto 0; font-size:9px; font-weight:700; line-height:1.25; letter-spacing:.02em; text-transform:none; color:#633806; background:#FAEEDA; border-radius:6px; padding:2px 6px; }
 table.roster-table.hl-A thead th:nth-child(2) .rd-sub,
 table.roster-table.hl-B thead th:nth-child(3) .rd-sub,
@@ -1081,6 +1082,11 @@ table.thg-table .thg-old{ opacity:.5; text-decoration:line-through; text-decorat
 table.thg-table .thg-sub{ display:block; margin-top:2px; color:#3ddc97; font-size:11px; font-weight:700; }
 table.thg-table .thg-sub.vac{ color:#F54249; }
 table.thg-table small.thg-tm.ot{ color:#f5b53d; }
+table.thg-table small.thg-tm.ot.c-night{ color:var(--night); }
+table.thg-table small.thg-tm.ot.c-morning{ color:var(--morning); }
+table.thg-table small.thg-tm.ot.c-afternoon{ color:var(--afternoon); }
+table.thg-table small.thg-tm .w-morning{ color:var(--morning); }
+table.thg-table small.thg-tm .w-afternoon{ color:var(--afternoon); }
 .thm-edit{ margin-top:14px; display:none; }
 .thm-edit.show{ display:block; }
 .thm-row{ display:flex; align-items:center; gap:6px; margin-bottom:6px; }
@@ -12775,7 +12781,7 @@ function renderRosterNow(){
     const d = thDay(ms), grpOf = kind === 'mr' ? MR : TH;
     return TH_ROW_SLOTS[r].map(sl=>{
       const t = d[TH_SLOT_KEY[sl]];
-      return t < 0 ? null : { tag:'Shift ' + TEAMS[t] + (THS_META[sl].ot ? ' · OT' : ''), ot:THS_META[sl].ot, slot:sl, names:grpOf[t] };
+      return t < 0 ? null : { tag:'Shift ' + TEAMS[t] + (THS_META[sl].ot ? ' · OT' : ''), ot:THS_META[sl].ot, sc:['night','night','morning','afternoon','morning','afternoon'][sl], slot:sl, names:grpOf[t] };
     }).filter(Boolean);
   }
   // exchange / CL entry for one person of one slot on one date column
@@ -12801,30 +12807,35 @@ function renderRosterNow(){
     const d = thDay(sel);
     const regRow = t=> d.night === t ? 0 : d.morning === t ? 1 : d.afternoon === t ? 2 : -1;   // which row (Night/Morning/Afternoon) shift t works regularly
     const liveRow = (fmt(liveMs) === selKey) ? cur.r : -1;
+    /* 00:00-07:30 on today's column: the shift still finishing YESTERDAY's night shows Night + "till 07:30" instead of Off */
+    const carryT = (selKey === todayStr() && cur.prev) ? thDay(sel - 86400000).night : -1;
     const KEYS = ['night','morning','afternoon'];
-    const blockHtml = (kind, bl)=>{
+    const blockHtml = (kind, bl, key)=>{ key = key || selKey;
       const last = bl.names.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1);
-      return '<div class="thg-b"><small class="thg-tm' + (bl.ot ? ' ot' : '') + '">' + bl.tag + '</small>' +
-        bl.names.map((n,pi)=> personHtml(selKey, kind, bl.slot, pi, n, pi >= last)).join('') + '</div>';
+      return '<div class="thg-b"><small class="thg-tm' + (bl.ot ? ' ot c-' + bl.sc : '') + '">' + bl.tag + '</small>' +
+        bl.names.map((n,pi)=> personHtml(key, kind, bl.slot, pi, n, pi >= last)).join('') + '</div>';
     };
     let head = '<tr>', cells = {th:'<tr>', mr:'<tr>'};
     for(let t=0; t<5; t++){
-      const r = regRow(t), live = r >= 0 && r === liveRow;
+      const r = regRow(t), carry = (r < 0 && t === carryT);
+      const live = (r >= 0 && r === liveRow) || carry;
       let sub;
-      if(r >= 0) sub = '<span class="thg-duty d-' + KEYS[r] + '">' + SH[r][1] + '</span>';
+      if(carry) sub = '<span class="thg-duty d-night rd-live">' + SH[0][1] + '</span><span class="rd-tail">\u21A9 till 07:30</span>';
+      else if(r >= 0) sub = '<span class="thg-duty d-' + KEYS[r] + (r === 0 && r === liveRow ? ' rd-live' : '') + '">' + SH[r][1] + '</span>';
       else sub = '<span class="thg-duty d-off">Off</span>';
       head += '<th class="thg-c' + (live ? ' thg-sel' : '') + '"><b>' + TEAMS[t] + '</b><div class="thg-ds">' + sub + '</div></th>';
       ['th','mr'].forEach(k=>{
         let inner;
-        if(r >= 0) inner = thBlocks(sel, r, k).map(bl=> blockHtml(k, bl)).join('');
+        if(carry) inner = thBlocks(sel - 86400000, 0, k).map(bl=> blockHtml(k, bl, fmt(sel - 86400000))).join('');   /* yesterday's night: regular team + Night OT, with that night's exchange / CL */
+        else if(r >= 0) inner = thBlocks(sel, r, k).map(bl=> blockHtml(k, bl)).join('');
         else {
           // off day: just this shift's own people; if they are on overtime today, say which slots
           const nm = (k === 'mr' ? MR : TH)[t] || [], lastO = nm.reduce((m,x,j)=> String(x||'').trim() ? j : m, -1);
           const sl = d.ot === t ? (findEx(selKey, k, 4, 0) || findEx(selKey, k, 4, 1) || findEx(selKey, k, 4, 2) ? 4 : 5) : -1;
-          inner = '<div class="thg-b">' + (d.ot === t ? '<small class="thg-tm ot">OT · Morning + Afternoon</small>' : '') +
+          inner = '<div class="thg-b">' + (d.ot === t ? '<small class="thg-tm ot">OT · <span class="w-morning">Morning</span> + <span class="w-afternoon">Afternoon</span></small>' : '') +
             nm.map((n,pi)=> personHtml(selKey, k, sl, pi, n, pi >= lastO)).join('') + '</div>';
         }
-        cells[k] += '<td class="' + (live ? 'thg-live' : '') + (r < 0 ? ' thg-offc' : '') + '">' + inner + '</td>';
+        cells[k] += '<td class="' + (live ? 'thg-live' : '') + (r < 0 && !carry ? ' thg-offc' : '') + '">' + inner + '</td>';
       });
     }
     head += '</tr>';
