@@ -231,6 +231,7 @@
   .xbtn-row{ display:flex; gap:5px; width:100%; flex:0 0 100%; }
   .xbtn-row .xbtn{ flex:1 1 auto; min-width:0; padding:10px 3px; font-size:11px; letter-spacing:-0.1px; white-space:nowrap; overflow:hidden; text-align:center; }
   .xbtn-row .xbtn-cl{ flex:0 1 auto; }
+  .xbtn-row .xbtn-sp{ flex:0 0 45.5%; white-space:normal; line-height:1.15; padding:5px 4px; font-size:10.5px; display:flex; align-items:center; justify-content:center; }
   .xbtn-sp:focus, .xbtn-sp:active, .xbtn-sp.on{ background:rgba(95,208,197,0.20) !important; color:#5fd0c5 !important; border-color:rgba(95,208,197,0.6) !important; }
   .xbtn-cl:focus, .xbtn-cl:active, .xbtn-cl.on{ background:rgba(245,181,61,0.22) !important; color:#f5b53d !important; border-color:rgba(245,181,61,0.6) !important; }
   .xp-choice{ display:block; width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--border); color:var(--text); font-size:15px; padding:16px 20px; cursor:pointer; font-family:inherit; }
@@ -2467,7 +2468,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <div class="xbtn-row">
           <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
           <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
-          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Festival / EL / Special</button>
+          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / EL</button>
         </div>
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
       </div>
@@ -2539,6 +2540,15 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <button type="button" id="pwCancel" class="fr-dbclear">Cancel</button>
         <button type="button" id="pwOk" class="fr-dbimport">Open</button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="spTypeOverlay" style="z-index:10002;align-items:center;">
+    <div class="modal-box" style="max-width:340px;padding:8px 0;">
+      <button type="button" class="xp-choice" data-sp="Medical">Medical</button>
+      <button type="button" class="xp-choice" data-sp="Festival">Festival</button>
+      <button type="button" class="xp-choice" data-sp="Training">Training</button>
+      <button type="button" class="xp-choice" data-sp="EL">EL</button>
     </div>
   </div>
 
@@ -9376,7 +9386,7 @@ function qbmCollect(from, to){
         detailed: sub || 'Vacant',
         place: ex.pos || '',
         relieved: who,
-        rmk: ex.cl ? 'CL' : ex.special ? 'Special' : 'Exchange',
+        rmk: ex.cl ? 'CL' : ex.special ? (ex.spType || 'Special') : 'Exchange',
         period: qbmPeriod(ex, dk),
         label: qbmShiftLabel(ex, dk)
       });
@@ -9713,7 +9723,7 @@ function exReqApply(q){
     const pe = Object.assign({}, base, { subName:sub, nightHalf:q.nightHalf || '' });
     exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
   } else if(q.kind === 'special'){
-    const pe = Object.assign({}, base, { subName:sub, nightHalf:'', special:true, vacant:!sub });
+    const pe = Object.assign({}, base, { subName:sub, nightHalf:'', special:true, spType:(q.spType || 'EL'), vacant:!sub });
     exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
   } else {
     const days = clDaysForShift(q.shift), year = +dk.slice(0,4), id = clIdFor(dk, q.table, q.pos, q.team);
@@ -9770,7 +9780,7 @@ function exReqSubmit(o){
   const now = Date.now();
   const id = 'r' + now.toString(36) + Math.random().toString(36).slice(2, 6);
   const q = { v:2, id:id, createdAt:now, by:{ id:String(s.identifier), name:String(s.displayName) }, kind:o.kind, dateKey:r.dateKey, table:r.table, pos:r.pos, team:+r.team,
-              who:String(r.who || ''), subName:o.kind === 'exchange' ? sub : '', nightHalf:o.nightHalf || '', shift:r.shift || '', thmr:!!r.thmr,
+              who:String(r.who || ''), spType:o.kind === 'special' ? String(o.spType || '') : '', subName:o.kind === 'exchange' ? sub : '', nightHalf:o.nightHalf || '', shift:r.shift || '', thmr:!!r.thmr,
               status: o.kind === 'exchange' ? 'sub' : 'admin',
               sub: o.kind === 'exchange' ? { status:'pending', at:0 } : null, admin:{ status:'pending', at:0 } };
   EX_REQUESTS[id] = q;
@@ -10027,12 +10037,12 @@ function initExchangePanel(){
           const _days = clDaysForShift(r.shift), _year = +r.dateKey.slice(0,4), _id = clIdFor(r.dateKey, r.table, r.pos, r.team);
           if(clUsedBy(r.who, _year, _id) + _days > CL_LIMIT){ alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for this person. CL not added.'); return; }
         }
-        if(exReqSubmit({ kind: special ? 'special' : 'cl', r:r, subName:sub, vacant:!sub })) subInput.value = '';
+        if(exReqSubmit({ kind: special ? 'special' : 'cl', spType: special ? (window._spType || 'EL') : '', r:r, subName:sub, vacant:!sub })) subInput.value = '';
         return;
       }
       if(special){
         /* Festival / EL / special case: no CL count, no ledger — only somebody is put on the position */
-        { const _pe = { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, vacant:!sub, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
+        { const _pe = { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, spType:(window._spType || 'EL'), vacant:!sub, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
         subInput.value = '';
         afterChange();
         return;
@@ -10074,17 +10084,45 @@ function initExchangePanel(){
       if(win && win.end <= Date.now()){ alert('This shift has already ended.'); return; }
       if(!r.who || r.who === '-'){ alert('No name in this cell, so ' + what + ' cannot be given.'); return; }
       window._clKind = kind;
-      const lab = kind === 'special' ? 'Festival / EL / Special' : 'CL';
+      if(kind === 'special'){
+        /* step 1: pick the type (Medical / Festival / Training / EL) -> shown in QBM remarks; step 2 = substitute / vacant */
+        const spOv = document.getElementById('spTypeOverlay');
+        window._spAfterType = (type)=>{
+          window._spType = type;
+          const lab = type;
+          document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
+          document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
+          if(_m === 'request'){
+            if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
+              exReqSubmit({ kind:'special', spType:type, r:r, subName:'', vacant:true });
+            }
+            return;
+          }
+          if(chooser) chooser.classList.add('show');
+        };
+        if(spOv) spOv.classList.add('show');
+        return;
+      }
+      window._spType = '';
+      const lab = 'CL';
       document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
       document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
       if(_m === 'request'){
         if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
-          exReqSubmit({ kind: kind === 'special' ? 'special' : 'cl', r:r, subName:'', vacant:true });
+          exReqSubmit({ kind:'cl', r:r, subName:'', vacant:true });
         }
         return;
       }
       if(chooser) chooser.classList.add('show');
     };
+    const spTypeOv = document.getElementById('spTypeOverlay');
+    if(spTypeOv){
+      spTypeOv.addEventListener('click', e=>{ if(e.target === spTypeOv) spTypeOv.classList.remove('show'); });
+      spTypeOv.querySelectorAll('[data-sp]').forEach(b=> b.addEventListener('click', ()=>{
+        spTypeOv.classList.remove('show');
+        if(window._spAfterType) window._spAfterType(b.getAttribute('data-sp'));
+      }));
+    }
     clBtn.addEventListener('click', ()=> openChooser('cl'));
     const spBtn = document.getElementById('exchangeSpBtn');
     if(spBtn) spBtn.addEventListener('click', ()=> openChooser('special'));
