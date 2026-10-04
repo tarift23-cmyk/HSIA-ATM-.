@@ -1,6 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" style="--morning: #F6C84C; --afternoon: #00EB55; --night: #F54249; --bg: #120F0D; --text: #F0F1F3; --muted: #8B909B; --panel: #252220; --panel-2: #33312f; --border: #504d4c; --bg-glow: #2e2c2a; --cal-night-text: #F0F1F3;"><head>
+<html lang="en" style="--morning: #F6C84C; --afternoon: #00EB55; --night: #F54249; --bg: #030202; --text: #F0F1F3; --muted: #8B909B; --panel: #171616; --panel-2: #262525; --border: #454444; --bg-glow: #212020; --cal-night-text: #F0F1F3;"><head>
 <meta charset="UTF-8">
+<script>
+/* Colors first: put the saved theme colors on <html> before anything is painted, so a reload never flashes the old default background.
+   Same maths as applyColors() further down (keep the two in step). */
+(function(){
+  var D = { bg:'#030202', morning:'#F6C84C', afternoon:'#00EB55', night:'#F54249' }, c = {}, k;
+  try{ var sv = JSON.parse(localStorage.getItem('dutyBoardColors')) || {}; for(k in D) c[k] = (typeof sv[k] === 'string' && sv[k]) ? sv[k] : D[k]; }catch(e){ c = D; }
+  function rgb(h){ h = String(h || '').replace('#',''); if(h.length === 3) h = h.replace(/./g, function(x){ return x + x; }); var n = parseInt(h, 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function hex(a){ return '#' + a.map(function(v){ return Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0'); }).join(''); }
+  function mix(a, b, t){ var x = rgb(a), y = rgb(b); return hex([x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t, x[2] + (y[2] - x[2]) * t]); }
+  function lum(h){ var x = rgb(h); var f = function(v){ v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(x[0]) + 0.7152 * f(x[1]) + 0.0722 * f(x[2]); }
+  try{
+    var st = document.documentElement.style, light = lum(c.bg) > 0.55, to = light ? '#000000' : '#ffffff';
+    st.setProperty('--morning', c.morning); st.setProperty('--afternoon', c.afternoon); st.setProperty('--night', c.night); st.setProperty('--bg', c.bg);
+    st.setProperty('--text', light ? '#1B2130' : '#F0F1F3'); st.setProperty('--muted', light ? '#5B6272' : '#8B909B');
+    st.setProperty('--panel', mix(c.bg, to, 0.08)); st.setProperty('--panel-2', mix(c.bg, to, 0.14)); st.setProperty('--border', mix(c.bg, to, 0.26));
+    st.setProperty('--bg-glow', mix(c.bg, to, 0.12)); st.setProperty('--cal-night-text', lum(c.night) > 0.55 ? '#1B2130' : '#F0F1F3');
+    window.__hsiaBg = c.bg;
+  }catch(e){}
+})();
+</script>
 <script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs,fedcm_migration_mod" async=""></script><script>
 (function(){
   /* Service worker (sw.js): network-first pages + offline fallback. It replaces the old "probe + wipe caches + reload with ?_r=" hack,
@@ -92,7 +112,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HSIA (ATM) — Live Shift Tracker</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#14161B">
+<meta name="theme-color" content="#030202">
+<script>try{ if(window.__hsiaBg) document.querySelector('meta[name="theme-color"]').setAttribute('content', window.__hsiaBg); }catch(e){}</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -102,11 +123,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#14161B;
-    --bg-glow:#1C1F26;
-    --panel:#1A1C22;
-    --panel-2:#20232B;
-    --border:#2E323C;
+    --bg:#030202;
+    --bg-glow:#212020;
+    --panel:#171616;
+    --panel-2:#262525;
+    --border:#454444;
     --text:#F0F1F3;
     --muted:#8B909B;
     --morning:#A8D8F0;
@@ -2087,15 +2108,15 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <div class="clock-dual">
           <div class="clock-col">
             <div class="clock-tz">GMT+6 · Dhaka</div>
-            <div class="clock" id="clock">2:34<span>:36</span> <span>PM</span></div>
+            <div class="clock" id="clock">--:--<span>:--</span></div>
           </div>
           <div class="clock-divider"></div>
           <div class="clock-col">
             <div class="clock-tz">UTC</div>
-            <div class="clock" id="clockUtc">08:34<span>:36</span></div>
+            <div class="clock" id="clockUtc">--:--<span>:--</span></div>
           </div>
         </div>
-        <div class="datestr" id="datestr">Mon, September 28, 2026</div>
+        <div class="datestr" id="datestr">&nbsp;</div>
       </div>
       <button type="button" class="tc-icon-btn" id="timeConvertIconBtn" title="Time Converter (UTC ⇄ Local)">
         <svg viewBox="0 0 24 24" width="30" height="30" fill="none">
