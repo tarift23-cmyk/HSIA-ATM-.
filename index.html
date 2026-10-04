@@ -268,13 +268,9 @@
     body.qbm-printing .qbm-paper{ background:#fff !important; color:#000 !important; padding:0 !important; margin:0 !important; overflow:visible !important; border-radius:0 !important; font-family:"Times New Roman",Times,"Liberation Serif",serif; }
     body.qbm-printing .qbm-paper, body.qbm-printing .qbm-paper *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; text-rendering:geometricPrecision; }
     body.qbm-printing .qbm-title{ font-size:13pt !important; line-height:15pt; margin:0 0 15pt !important; color:#000 !important; text-decoration:underline; text-underline-offset:2pt; text-decoration-thickness:0.7pt; }
-    body.qbm-printing .qbm-table{ width:100% !important; min-width:0 !important; table-layout:fixed; border-collapse:collapse; font-size:11pt !important; color:#000 !important; }
-    body.qbm-printing .qbm-table th, body.qbm-printing .qbm-table td{ background:#fff !important; color:#000 !important; border:0.6pt solid #000 !important; padding:4pt !important; line-height:13.4pt; font-size:11pt; letter-spacing:0; }
-    body.qbm-printing .qbm-table td.det{ background:#DAD8CF !important; }
-    body.qbm-printing .qbm-table th.det{ background:#BFBDB3 !important; }
-    body.qbm-printing .qbm-table td.rel{ background:#FAEEDA !important; }
-    body.qbm-printing .qbm-table th.rel{ background:#F5C77E !important; }
-    body.qbm-printing .qbm-table th{ font-size:10pt !important; line-height:14pt; text-align:center; font-weight:700; }
+    body.qbm-printing .qbm-table{ width:100% !important; min-width:0 !important; table-layout:fixed; border-collapse:collapse; font-size:calc(11pt * var(--qk, 1)) !important; color:#000 !important; }
+    body.qbm-printing .qbm-table th, body.qbm-printing .qbm-table td{ background:#fff !important; color:#000 !important; border:0.6pt solid #000 !important; padding:calc(4pt * var(--qk, 1)) !important; line-height:calc(13.4pt * var(--qk, 1)); font-size:calc(11pt * var(--qk, 1)); letter-spacing:0; }
+    body.qbm-printing .qbm-table th{ font-size:calc(10pt * var(--qk, 1)) !important; line-height:calc(14pt * var(--qk, 1)); text-align:center; font-weight:700; }
     body.qbm-printing .qbm-line{ display:block; }
     body.qbm-printing .qbm-line + .qbm-line{ margin-top:0 !important; }
     body.qbm-printing .qbm-table tr{ page-break-inside:avoid; }
@@ -9659,8 +9655,11 @@ function printQbm(){
   root.innerHTML = '<div class="qbm-paper">' + paper.innerHTML + '</div>';
   root.querySelectorAll('.qbm-x').forEach(x=> x.remove());
   root.querySelectorAll('[contenteditable]').forEach(x=> x.removeAttribute('contenteditable'));
+  let qk = 1;
+  try{ const tEl = document.querySelector('#qbmPaper .qbm-title'); qk = qbmFitScale((tEl ? tEl.innerText : 'QBM: SATO').trim(), qbmBuild(qbmCollect('', ''))); }catch(e){ qk = 1; }
+  document.body.style.setProperty('--qk', String(qk));
   document.body.classList.add('qbm-printing'); document.documentElement.classList.add('qbm-printing');
-  const done = ()=>{ document.body.classList.remove('qbm-printing'); document.documentElement.classList.remove('qbm-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
+  const done = ()=>{ document.body.style.removeProperty('--qk'); document.body.classList.remove('qbm-printing'); document.documentElement.classList.remove('qbm-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
   setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } }, 60);
 }
@@ -9717,12 +9716,13 @@ async function qbmCanvasToPng(cv){
   const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
   return new Blob([sig, qbmChunk('IHDR', ihdr), qbmChunk('PLTE', plte), qbmChunk('pHYs', phys), qbmChunk('IDAT', idat), qbmChunk('IEND', new Uint8Array(0))], { type:'image/png' });
 }
-function qbmDrawPages(title, rows){
-  const S = QBM_DPI / 72, PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;   /* all layout maths in pt, scaled on draw */
+function qbmDrawPages(title, rows, k, dpi){
+  const K = k || 1;
+  const S = (dpi || QBM_DPI) / 72, PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;   /* all layout maths in pt, scaled on draw */
   const SERIF = '"Times New Roman",Times,"Liberation Serif","Noto Serif","Noto Serif Bengali",serif';
   const pct = [7,18,14,33,16,12], cw = pct.map(x=> TW * x / 100), cx = [];
   cw.reduce((a,w,i)=>{ cx[i] = M + a; return a + w; }, 0);
-  const FS = 11, LD = 13.4, PX = 4, PY = 4, HS = 10;
+  const FS = 11 * K, LD = 13.4 * K, PX = 4 * K, PY = 4 * K, HS = 10 * K;
   const pages = []; let cv, ctx, y = 0;
   const font = (bold, size)=>{ ctx.font = (bold ? 'bold ' : '') + (size * S) + 'px ' + SERIF; };
   const tw = (str, bold, size)=>{ font(bold, size); return ctx.measureText(str).width / S; };
@@ -9740,11 +9740,11 @@ function qbmDrawPages(title, rows){
   const rect = (x, top, w, h, fill)=>{ if(fill){ ctx.fillStyle = fill; ctx.fillRect(x * S, top * S, w * S, h * S); ctx.fillStyle = '#000'; } ctx.lineWidth = 0.6 * S; ctx.strokeRect(x * S, top * S, w * S, h * S); };
   const header = ()=>{
     const hl = [['SL.','NO'],['PERSON','DETAILED'],['DUTY','PLACE'],['DATE & DUTY PERIOD'],['PERSON','RELIEVED'],['RMKS']];
-    const h = 2 * (HS + 4) + 2 * PY;
+    const h = 2 * (HS + 4 * K) + 2 * PY;
     hl.forEach((ls, i)=>{
-      rect(cx[i], y, cw[i], h, i === 1 ? '#BFBDB3' : i === 4 ? '#F5C77E' : '');
-      const blockH = ls.length * (HS + 4), top = y + (h - blockH) / 2;
-      ls.forEach((t, k)=>{ text(cx[i] + (cw[i] - tw(t, true, HS)) / 2, top + k * (HS + 4) + (HS + 4) / 2 + 0.33 * HS, t, true, HS); });
+      rect(cx[i], y, cw[i], h);
+      const blockH = ls.length * (HS + 4 * K), top = y + (h - blockH) / 2;
+      ls.forEach((t, k)=>{ text(cx[i] + (cw[i] - tw(t, true, HS)) / 2, top + k * (HS + 4 * K) + (HS + 4 * K) / 2 + 0.33 * HS, t, true, HS); });
     });
     y += h;
   };
@@ -9793,13 +9793,13 @@ function qbmDrawPages(title, rows){
       });
     };
     rect(cx[0], y, cw[0], total); at(0, [String(ri + 1).padStart(2, '0')], y, total, 'c');
-    rect(cx[4], y, cw[4], total, '#FAEEDA'); at(4, relL, y, total, 'l');
+    rect(cx[4], y, cw[4], total); at(4, relL, y, total, 'l');
     let uy = y;
     const tops = [];
     P.units.forEach((u, k)=>{
       tops[k] = uy;
       const h = uh[k];
-      rect(cx[1], uy, cw[1], h, '#DAD8CF'); at(1, wrap(u.detailed, false, FS, cw[1] - 2 * PX), uy, h, 'l');
+      rect(cx[1], uy, cw[1], h); at(1, wrap(u.detailed, false, FS, cw[1] - 2 * PX), uy, h, 'l');
       rect(cx[2], uy, cw[2], h); at(2, wrap(u.place, false, FS, cw[2] - 2 * PX), uy, h, 'c');
       rect(cx[3], uy, cw[3], h); at(3, [].concat.apply([], u.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))), uy, h, 'l');
       uy += h;
@@ -9813,6 +9813,27 @@ function qbmDrawPages(title, rows){
   });
   return pages;
 }
+/* Try to fit everything on ONE A4 page: shrink the text step by step (down to ~60%); if it still doesn't fit, use normal size and as many pages as needed. */
+const QBM_FIT_STEPS = [1, 0.94, 0.88, 0.82, 0.76, 0.7, 0.65, 0.6];
+function qbmFitScale(title, rows){
+  for(const k of QBM_FIT_STEPS){
+    const pg = qbmDrawPages(title, rows, k, 100), n = pg.length;
+    pg.forEach(c=>{ c.width = c.height = 0; });
+    if(n === 1) return k;
+  }
+  return 1;
+}
+function qbmDrawPagesFit(title, rows){
+  for(const k of QBM_FIT_STEPS){
+    const dry = qbmDrawPages(title, rows, k, 100), n = dry.length;
+    dry.forEach(c=>{ c.width = c.height = 0; });
+    if(n !== 1) continue;
+    const real = qbmDrawPages(title, rows, k);
+    if(real.length === 1) return real;
+    real.forEach(c=>{ c.width = c.height = 0; });
+  }
+  return qbmDrawPages(title, rows, 1);
+}
 async function downloadQbmPng(){
   const btn = document.getElementById('qbmPdfBtn'), old = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = '…'; }
@@ -9821,7 +9842,7 @@ async function downloadQbmPng(){
     const tEl = document.querySelector('#qbmPaper .qbm-title');
     const title = (tEl ? tEl.innerText : 'QBM: SATO').trim();
     try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-    const pages = qbmDrawPages(title, rows);
+    const pages = qbmDrawPagesFit(title, rows);
     const base = title.replace(/[^A-Za-z0-9\-]+/g, '_').replace(/^_+|_+$/g, '') || 'QBM';
     for(let i = 0; i < pages.length; i++){
       const blob = await qbmCanvasToPng(pages[i]);
