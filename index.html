@@ -164,7 +164,7 @@
     body.qbm-printing{ background:#fff !important; }
     body.qbm-printing > *:not(#qbmPrintRoot){ display:none !important; }
     body.qbm-printing #qbmPrintRoot{ display:block !important; }
-    /* Same metrics as the "PDF A4" file: Times, 11pt cells, 10pt bold headers, 13pt title, 12mm margins, 0.6pt lines */
+    /* Same metrics as the "PNG A4" file: Times, 11pt cells, 10pt bold headers, 13pt title, 12mm margins, 0.6pt lines */
     html.qbm-printing, body.qbm-printing{ margin:0 !important; padding:0 !important; background:#fff !important; }
     body.qbm-printing .qbm-paper{ background:#fff !important; color:#000 !important; padding:0 !important; margin:0 !important; overflow:visible !important; border-radius:0 !important; font-family:"Times New Roman",Times,"Liberation Serif",serif; }
     body.qbm-printing .qbm-paper, body.qbm-printing .qbm-paper *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; text-rendering:geometricPrecision; }
@@ -1019,6 +1019,8 @@ table.now-table tbody tr:not(.now-group):nth-child(even) td{ background:rgba(255
 .rd-sub.d-morning{ color:var(--morning); }
 .rd-sub.d-afternoon{ color:var(--afternoon); }
 .rd-sub.d-off{ opacity:.75; }
+.rd-sub.rd-live::before{ content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#F54249; margin-right:4px; vertical-align:1px; }
+.rd-tail{ display:block; width:max-content; max-width:100%; margin:4px auto 0; font-size:9px; font-weight:700; line-height:1.25; letter-spacing:.02em; text-transform:none; color:#633806; background:#FAEEDA; border-radius:6px; padding:2px 6px; }
 table.roster-table.hl-A thead th:nth-child(2) .rd-sub,
 table.roster-table.hl-B thead th:nth-child(3) .rd-sub,
 table.roster-table.hl-C thead th:nth-child(4) .rd-sub,
@@ -2370,8 +2372,8 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="Tap to select substitute" readonly inputmode="none">
         <div class="xbtn-row">
           <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
-          <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">Add CL</button>
-          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">Festival / EL / Special</button>
+          <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
+          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Festival / EL / Special</button>
         </div>
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
       </div>
@@ -2436,7 +2438,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <div class="modal-header">
         <div class="modal-title">QBM</div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button type="button" id="qbmPdfBtn" class="fr-dbimport">⬇ PDF A4</button>
+          <button type="button" id="qbmPdfBtn" class="fr-dbimport">⬇ PNG A4</button>
           <button type="button" id="qbmPrintBtn" class="fr-dbimport">🖨 Print</button>
           <button type="button" class="modal-close" id="qbmClose">✕</button>
         </div>
@@ -9393,136 +9395,156 @@ function printQbm(){
   window.addEventListener('afterprint', done);
   setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } }, 60);
 }
-/* ---- Real A4 vector PDF (no images: text + lines only, so it stays sharp at any zoom / any printer resolution) ---- */
-const _PDF_TR = [250,333,408,500,500,833,778,333,333,333,500,564,250,333,250,278,500,500,500,500,500,500,500,500,500,500,278,278,564,564,564,444,921,722,667,667,722,611,556,722,722,333,389,722,611,889,722,722,556,722,667,556,611,722,722,944,722,722,611,333,278,333,469,500,333,444,500,444,500,444,333,500,500,278,278,500,278,778,500,500,500,500,333,389,278,500,500,722,500,500,444,480,200,480,541];
-const _PDF_TB = [250,333,555,500,500,1000,833,333,333,333,500,570,250,333,250,278,500,500,500,500,500,500,500,500,500,500,333,333,570,570,570,500,930,722,667,722,722,667,611,778,778,389,500,778,667,944,722,778,611,778,722,556,667,722,722,1000,722,722,667,333,278,333,581,500,333,500,556,444,556,444,333,500,556,278,333,556,278,833,556,500,556,556,444,389,333,556,500,722,500,500,444,394,220,394,520];
-function pdfTextW(str, bold, size){
-  const t = bold ? _PDF_TB : _PDF_TR; let w = 0;
-  for(let i = 0; i < str.length; i++){ const c = str.charCodeAt(i) - 32; w += (c >= 0 && c < t.length) ? t[c] : 500; }
-  return w * size / 1000;
+/* ---- A4 PNG (400 dpi, 2-bit grey palette PNG written by hand => very small file, text stays sharp when zoomed) ---- */
+const QBM_DPI = 400;
+function qbmCrcTable(){
+  if(qbmCrcTable.t) return qbmCrcTable.t;
+  const t = new Uint32Array(256);
+  for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+  return (qbmCrcTable.t = t);
 }
-function pdfSafe(str){ return String(str == null ? '' : str).replace(/[^\x20-\x7E]/g, '?'); }
-function pdfEsc(str){ return pdfSafe(str).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)'); }
-function pdfWrap(str, bold, size, maxW){
-  const words = pdfSafe(str).split(/\s+/).filter(Boolean), lines = [];
-  let cur = '';
-  const push = w=>{
-    while(pdfTextW(w, bold, size) > maxW && w.length > 1){          /* a single very long word: split by characters */
-      let k = w.length - 1; while(k > 1 && pdfTextW(w.slice(0,k), bold, size) > maxW) k--;
-      lines.push(w.slice(0,k)); w = w.slice(k);
+function qbmCrc(bytes){
+  const t = qbmCrcTable(); let c = 0xFFFFFFFF;
+  for(let i = 0; i < bytes.length; i++) c = t[(c ^ bytes[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function qbmChunk(type, data){
+  const out = new Uint8Array(12 + data.length), dv = new DataView(out.buffer);
+  dv.setUint32(0, data.length);
+  for(let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  dv.setUint32(8 + data.length, qbmCrc(out.subarray(4, 8 + data.length)));
+  return out;
+}
+async function qbmDeflate(bytes){
+  const cs = new CompressionStream('deflate');
+  const w = cs.writable.getWriter(); w.write(bytes); w.close();
+  return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+}
+/* canvas -> tiny 2-bit grey PNG (4 grey levels keep the anti-aliasing smooth). Falls back to canvas.toBlob if CompressionStream is missing. */
+async function qbmCanvasToPng(cv){
+  const W = cv.width, H = cv.height;
+  if(typeof CompressionStream === 'undefined') return await new Promise(res=> cv.toBlob(res, 'image/png'));
+  const ctx = cv.getContext('2d');
+  const stride = (W + 3) >> 2, raw = new Uint8Array((stride + 1) * H);
+  const STEP = 64;
+  for(let y0 = 0; y0 < H; y0 += STEP){
+    const hh = Math.min(STEP, H - y0), d = ctx.getImageData(0, y0, W, hh).data;
+    for(let yy = 0; yy < hh; yy++){
+      const o = (y0 + yy) * (stride + 1) + 1;     /* filter byte (0) is already 0 */
+      for(let x = 0; x < W; x++){
+        const v = d[(yy * W + x) * 4];             /* red channel = grey */
+        const q = 3 - Math.round(v / 85);          /* 0 white .. 3 black */
+        raw[o + (x >> 2)] |= q << (6 - 2 * (x & 3));
+      }
     }
-    cur = w;
-  };
-  words.forEach(w=>{
-    const t = cur ? cur + ' ' + w : w;
-    if(pdfTextW(t, bold, size) <= maxW) cur = t;
-    else { if(cur) lines.push(cur); push(w); }
-  });
-  if(cur) lines.push(cur);
-  return lines.length ? lines : [''];
+  }
+  const ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, W); dv.setUint32(4, H); ihdr[8] = 2; ihdr[9] = 3;   /* bit depth 2, palette */
+  const plte = new Uint8Array([255,255,255, 170,170,170, 85,85,85, 0,0,0]);
+  const ppm = Math.round(QBM_DPI / 0.0254), phys = new Uint8Array(9), pv = new DataView(phys.buffer);
+  pv.setUint32(0, ppm); pv.setUint32(4, ppm); phys[8] = 1;
+  const idat = await qbmDeflate(raw);
+  const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
+  return new Blob([sig, qbmChunk('IHDR', ihdr), qbmChunk('PLTE', plte), qbmChunk('pHYs', phys), qbmChunk('IDAT', idat), qbmChunk('IEND', new Uint8Array(0))], { type:'image/png' });
 }
-function qbmPdfBytes(title, rows){
-  const PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;
+function qbmDrawPages(title, rows){
+  const S = QBM_DPI / 72, PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;   /* all layout maths in pt, scaled on draw */
+  const SERIF = '"Times New Roman",Times,"Liberation Serif","Noto Serif","Noto Serif Bengali",serif';
   const pct = [7,18,14,33,16,12], cw = pct.map(x=> TW * x / 100), cx = [];
   cw.reduce((a,w,i)=>{ cx[i] = M + a; return a + w; }, 0);
   const FS = 11, LD = 13.4, PX = 4, PY = 4, HS = 10;
-  const pages = []; let ops = null, y = 0;
-  const f = n=> (Math.round(n * 100) / 100).toString();
-  const text = (x, by, str, bold, size)=> ops.push('BT /F' + (bold ? 2 : 1) + ' ' + size + ' Tf ' + f(x) + ' ' + f(by) + ' Td (' + pdfEsc(str) + ') Tj ET');
-  const rect = (x, top, w, h)=> ops.push(f(x) + ' ' + f(top - h) + ' ' + f(w) + ' ' + f(h) + ' re S');
+  const pages = []; let cv, ctx, y = 0;
+  const font = (bold, size)=>{ ctx.font = (bold ? 'bold ' : '') + (size * S) + 'px ' + SERIF; };
+  const tw = (str, bold, size)=>{ font(bold, size); return ctx.measureText(str).width / S; };
+  const wrap = (str, bold, size, maxW)=>{
+    const words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), lines = []; let cur = '';
+    const longWord = w=>{
+      while(tw(w, bold, size) > maxW && w.length > 1){ let k = w.length - 1; while(k > 1 && tw(w.slice(0,k), bold, size) > maxW) k--; lines.push(w.slice(0,k)); w = w.slice(k); }
+      cur = w;
+    };
+    words.forEach(w=>{ const t = cur ? cur + ' ' + w : w; if(tw(t, bold, size) <= maxW) cur = t; else { if(cur) lines.push(cur); longWord(w); } });
+    if(cur) lines.push(cur);
+    return lines.length ? lines : [''];
+  };
+  const text = (x, by, str, bold, size)=>{ font(bold, size); ctx.fillText(str, x * S, by * S); };
+  const rect = (x, top, w, h)=>{ ctx.lineWidth = 0.6 * S; ctx.strokeRect(x * S, top * S, w * S, h * S); };
   const header = ()=>{
     const hl = [['SL.','NO'],['PERSON','DETAILED'],['DUTY','PLACE'],['DATE & DUTY PERIOD'],['PERSON','RELIEVED'],['RMKS']];
     const h = 2 * (HS + 4) + 2 * PY;
     hl.forEach((ls, i)=>{
       rect(cx[i], y, cw[i], h);
-      const blockH = ls.length * (HS + 4), top = y - (h - blockH) / 2;
-      ls.forEach((t, k)=>{ const bl = top - k * (HS + 4) - (HS + 4) / 2 - 0.33 * HS; text(cx[i] + (cw[i] - pdfTextW(t, true, HS)) / 2, bl, t, true, HS); });
+      const blockH = ls.length * (HS + 4), top = y + (h - blockH) / 2;
+      ls.forEach((t, k)=>{ text(cx[i] + (cw[i] - tw(t, true, HS)) / 2, top + k * (HS + 4) + (HS + 4) / 2 + 0.33 * HS, t, true, HS); });
     });
-    y -= h;
+    y += h;
   };
   const newPage = first=>{
-    ops = []; pages.push(ops); ops.push('0.6 w 0 G 0 g'); y = PH - M;
+    cv = document.createElement('canvas'); cv.width = Math.round(PW * S); cv.height = Math.round(PH * S);
+    ctx = cv.getContext('2d'); pages.push(cv);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = '#000'; ctx.strokeStyle = '#000'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    y = M;
     if(first){
-      const t = pdfSafe(title), tw = pdfTextW(t, true, 13);
-      text((PW - tw) / 2, y - 13, t, true, 13);
-      ops.push('0.7 w ' + f((PW - tw) / 2) + ' ' + f(y - 15.5) + ' m ' + f((PW + tw) / 2) + ' ' + f(y - 15.5) + ' l S 0.6 w');
-      y -= 30;
+      const w = tw(title, true, 13), x0 = (PW - w) / 2;
+      text(x0, y + 13, title, true, 13);
+      ctx.lineWidth = 0.7 * S; ctx.beginPath(); ctx.moveTo(x0 * S, (y + 15.5) * S); ctx.lineTo((x0 + w) * S, (y + 15.5) * S); ctx.stroke();
+      y += 30;
     }
     header();
   };
   newPage(true);
   const cellText = (i, lines, rowH, align)=>{
-    const blockH = lines.length * LD, top = y - (rowH - blockH) / 2;
+    const top = y + (rowH - lines.length * LD) / 2;
     lines.forEach((t, k)=>{
-      const bl = top - k * LD - LD / 2 - 0.33 * FS, tw = pdfTextW(t, false, FS);
-      const x = align === 'c' ? cx[i] + (cw[i] - tw) / 2 : cx[i] + PX;
-      text(x, bl, t, false, FS);
+      const bl = top + k * LD + LD / 2 + 0.33 * FS, w = tw(t, false, FS);
+      text(align === 'c' ? cx[i] + (cw[i] - w) / 2 : cx[i] + PX, bl, t, false, FS);
     });
   };
   if(!rows.length){
-    const h = LD + 2 * PY + 6;
-    rect(M, y, TW, h); const t = 'No entries'; text(M + (TW - pdfTextW(t, false, FS)) / 2, y - h / 2 - 0.33 * FS, t, false, FS);
+    const h = LD + 2 * PY + 6; rect(M, y, TW, h);
+    const t = 'No entries'; text(M + (TW - tw(t, false, FS)) / 2, y + h / 2 + 0.33 * FS, t, false, FS);
   }
   rows.forEach((g, ri)=>{
     const c = [
       [String(ri + 1).padStart(2, '0')],
-      pdfWrap(g.detailed, false, FS, cw[1] - 2 * PX),
-      pdfWrap(g.place, false, FS, cw[2] - 2 * PX),
-      [].concat.apply([], g.runs.map(run=> pdfWrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))),
-      pdfWrap(g.relieved, false, FS, cw[4] - 2 * PX),
-      pdfWrap(g.rmk, false, FS, cw[5] - 2 * PX)
+      wrap(g.detailed, false, FS, cw[1] - 2 * PX),
+      wrap(g.place, false, FS, cw[2] - 2 * PX),
+      [].concat.apply([], g.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))),
+      wrap(g.relieved, false, FS, cw[4] - 2 * PX),
+      wrap(g.rmk, false, FS, cw[5] - 2 * PX)
     ];
-    const n = Math.max.apply(null, c.map(x=> x.length));
-    const h = n * LD + 2 * PY;
-    if(y - h < M){ newPage(false); }
+    const h = Math.max.apply(null, c.map(x=> x.length)) * LD + 2 * PY;
+    if(y + h > PH - M) newPage(false);
     const al = ['c','l','c','l','l','c'];
     c.forEach((ls, i)=>{ rect(cx[i], y, cw[i], h); cellText(i, ls, h, al[i]); });
-    y -= h;
+    y += h;
   });
-  /* --- assemble PDF (single-byte string -> bytes) --- */
-  const objs = [];
-  const add = body=> { objs.push(body); return objs.length; };
-  add('<< /Type /Catalog /Pages 2 0 R >>');
-  add('PAGES');
-  add('<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman /Encoding /WinAnsiEncoding >>');
-  add('<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>');
-  const kids = [];
-  pages.forEach(pg=>{
-    const stream = pg.join('\n');
-    const cid = add('<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream');
-    const pid = add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ' + cid + ' 0 R >>');
-    kids.push(pid + ' 0 R');
-  });
-  objs[1] = '<< /Type /Pages /Count ' + kids.length + ' /Kids [' + kids.join(' ') + '] >>';
-  const infoId = add('<< /Title (' + pdfEsc(title) + ') /Producer (HSIA ATM) >>');
-  let out = '%PDF-1.4\n', offs = [];
-  objs.forEach((b, i)=>{ offs.push(out.length); out += (i + 1) + ' 0 obj\n' + b + '\nendobj\n'; });
-  const xr = out.length;
-  out += 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n' + offs.map(o=> String(o).padStart(10, '0') + ' 00000 n \n').join('');
-  out += 'trailer\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R /Info ' + infoId + ' 0 R >>\nstartxref\n' + xr + '\n%%EOF';
-  const bytes = new Uint8Array(out.length);
-  for(let i = 0; i < out.length; i++) bytes[i] = out.charCodeAt(i) & 255;
-  return bytes;
+  return pages;
 }
-function downloadQbmPdf(){
-  const items = qbmCollect('', '');
-  const rows = qbmBuild(items);
-  const tEl = document.querySelector('#qbmPaper .qbm-title');
-  const title = (tEl ? tEl.innerText : 'QBM: SATO').trim();
-  const all = [title].concat.apply([], rows.map(g=> [g.detailed, g.place, g.relieved, g.rmk].concat(g.runs.map(qbmDateText))));
-  if(all.some(t=> /[^\x20-\x7E]/.test(String(t)))){
-    /* the built-in PDF fonts are Latin-only; browser print uses the phone's own fonts (Bengali etc.) and is vector too */
-    alert('Some names use non-English letters, which this PDF cannot hold. Opening Print instead — choose "Save as PDF" (paper size A4).');
-    printQbm();
-    return;
+async function downloadQbmPng(){
+  const btn = document.getElementById('qbmPdfBtn'), old = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '…'; }
+  try{
+    const rows = qbmBuild(qbmCollect('', ''));
+    const tEl = document.querySelector('#qbmPaper .qbm-title');
+    const title = (tEl ? tEl.innerText : 'QBM: SATO').trim();
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    const pages = qbmDrawPages(title, rows);
+    const base = title.replace(/[^A-Za-z0-9\-]+/g, '_').replace(/^_+|_+$/g, '') || 'QBM';
+    for(let i = 0; i < pages.length; i++){
+      const blob = await qbmCanvasToPng(pages[i]);
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = base + (pages.length > 1 ? '_p' + (i + 1) : '') + '.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 60000);
+      pages[i].width = pages[i].height = 0;
+      if(i < pages.length - 1) await new Promise(r=> setTimeout(r, 400));
+    }
+  }catch(e){
+    alert('Could not make the PNG. Use Print instead.');
   }
-  const bytes = qbmPdfBytes(title, rows);
-  const blob = new Blob([bytes], { type:'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = title.replace(/[^A-Za-z0-9\-]+/g, '_') + '.pdf';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=> URL.revokeObjectURL(url), 60000);
+  if(btn){ btn.disabled = false; btn.textContent = old; }
 }
 function initQbm(){
   const ov = document.getElementById('qbmOverlay'), btn = document.getElementById('qbmOpenBtn');
@@ -9531,7 +9553,7 @@ function initQbm(){
   document.getElementById('qbmClose').addEventListener('click', ()=> ov.classList.remove('show'));
   ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('show'); });
   document.getElementById('qbmPrintBtn').addEventListener('click', printQbm);
-  document.getElementById('qbmPdfBtn').addEventListener('click', downloadQbmPdf);
+  document.getElementById('qbmPdfBtn').addEventListener('click', downloadQbmPng);
 }
 
 
@@ -9806,11 +9828,10 @@ function exReqRender(){
   const askMe = all.filter(subAsk);
   const forAdmin = admin ? all.filter(q=> exReqOpen(q) && !subAsk(q)) : [];
   const shown = new Set(askMe.concat(forAdmin).map(q=> q.id));
-  const mine = all.filter(q=> !shown.has(q.id) && (isMineReq(q) || exIsMe(q.subName))).slice(0, 30);
   let h = top;
   if(askMe.length) h += '<div class="exr-h">Waiting for your confirmation</div>' + askMe.map(q=> card(q, true)).join('');
   if(admin) h += '<div class="exr-h">Admin \u00b7 waiting for approval</div>' + (forAdmin.length ? forAdmin.map(q=> card(q, true)).join('') : '<div class="exr-empty">Nothing waiting for approval.</div>');
-  h += '<div class="exr-h">Your requests &amp; history</div>' + (mine.length ? mine.map(q=> card(q, false)).join('') : '<div class="exr-empty">No requests yet.</div>');
+  if(!askMe.length && !admin) h += '<div class="exr-empty">Nothing waiting for you.</div>';
   box.innerHTML = h;
 }
 function exReqAdminLogin(){
@@ -12595,20 +12616,52 @@ function renderRosterNow(){
     bars.push(bar);
   });
   const addDays = (key, n)=>{ const [y,m,d] = key.split('-').map(Number); return exHistDateKey.apply(null, (function(dt){ return [dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()]; })(new Date(Date.UTC(y, m-1, d + n)))); };
-  function render(){
+  /* Live indicator (only when the chosen date is today):
+     - team whose Night is running right now gets a red dot on its label
+     - 00:00-07:30 only: the team still finishing YESTERDAY's night shows "Night" + a "till 07:30" tag instead of "Off"
+     After 07:30 the tag is gone. Any other picked date is shown exactly as before. */
+  function liveState(){
+    const f = nowDhakaFields(), res = { team:-1, carry:false };
+    if(window._rosterSelKey !== todayDateKey()) return res;
+    const nowMs = Date.now();
+    for(let t=0; t<TEAMS.length; t++){
+      const st = getStatus(t, nowMs, f);
+      if(st.onDuty && st.shiftType === 'Night'){
+        res.team = t;
+        res.carry = st.start < dhakaInstant(f.y, f.m, f.day, 0, 0);
+        break;
+      }
+    }
+    return res;
+  }
+  let lastSig = '';
+  function paintHeads(){
     const key = window._rosterSelKey, [y,m,d] = key.split('-').map(Number);
-    bars.forEach(b=>{ const i = b.querySelector('.rd-date'); if(i && i.value !== key) i.value = key; });
+    const lv = liveState();
+    lastSig = key + '|' + lv.team + '|' + lv.carry;
     ['rosterTableCtrl','rosterTable','rosterTableComm'].forEach(id=>{
       const ths = document.querySelectorAll('#' + id + ' thead th');
       for(let t=0; t<5; t++){
         const th = ths[t+1]; if(!th) continue;
-        const st = shiftFor(t, y, m-1, d);
+        let st = shiftFor(t, y, m-1, d);
+        const isLive = lv.team === t;
+        if(isLive && lv.carry) st = 'Night';
         let el = th.querySelector('.rd-sub');
         if(!el){ el = document.createElement('span'); th.appendChild(el); }
-        el.className = 'rd-sub d-' + String(st).toLowerCase();
+        el.className = 'rd-sub d-' + String(st).toLowerCase() + (isLive ? ' rd-live' : '');
         el.textContent = st;
+        let tail = th.querySelector('.rd-tail');
+        if(isLive && lv.carry){
+          if(!tail){ tail = document.createElement('span'); tail.className = 'rd-tail'; th.appendChild(tail); }
+          tail.textContent = '\u21A9 till 07:30';
+        } else if(tail){ tail.remove(); }
       }
     });
+  }
+  function render(){
+    const key = window._rosterSelKey;
+    bars.forEach(b=>{ const i = b.querySelector('.rd-date'); if(i && i.value !== key) i.value = key; });
+    paintHeads();
     try{ renderRoster(); renderRosterCtrl(); renderRosterComm(); }catch(e){}
     try{ updateRosterHighlight(); }catch(e){}
   }
@@ -12624,7 +12677,11 @@ function renderRosterNow(){
     b.querySelector('.rd-date').addEventListener('change', e=> setKey(e.target.value, true));
   });
   // keeps following "today" after midnight until the user picks another date
-  window.hsiaRosterDutyTick = function(){ if(auto && window._rosterSelKey !== todayDateKey()){ window._rosterSelKey = todayDateKey(); render(); } };
+  window.hsiaRosterDutyTick = function(){
+    if(auto && window._rosterSelKey !== todayDateKey()){ window._rosterSelKey = todayDateKey(); render(); return; }
+    const lv = liveState();
+    if(window._rosterSelKey + '|' + lv.team + '|' + lv.carry !== lastSig) paintHeads();
+  };
   render();
 })();
 
