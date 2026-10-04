@@ -228,6 +228,11 @@
   .xbtn{ background:transparent !important; color:var(--muted) !important; border:1px solid var(--border) !important; box-shadow:none; transition:background .12s,color .12s,border-color .12s; }
   .xbtn:focus, .xbtn:active, .xbtn.on{ outline:none; }
   .xbtn-ex:focus, .xbtn-ex:active, .xbtn-ex.on{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)) !important; color:#1B2130 !important; border-color:var(--gold) !important; }
+  #exchangeTeam{ display:none !important; }
+  #exchangeModalOverlay .fr-manualform > .xbtn-row{ order:-1; }
+  #exchangeConfirmBtn{ flex:0 0 100%; order:1; }
+  #exchangeModalOverlay .fr-manualform > #clDataBtn{ order:2; }
+  .xmode-off #exchangeDate, .xmode-off .dfmt, .xmode-off .xpos-wrap, .xmode-off #exchangeNightHalf, .xmode-off #exchangeSubName, .xmode-off #exchangeConfirmBtn, .xmode-nosub #exchangeSubName{ display:none !important; }
   .xbtn-row{ display:flex; gap:5px; width:100%; flex:0 0 100%; }
   .xbtn-row .xbtn{ flex:1 1 auto; min-width:0; padding:10px 3px; font-size:11px; letter-spacing:-0.1px; white-space:nowrap; overflow:hidden; text-align:center; }
   .xbtn-row .xbtn-cl{ flex:0 1 auto; }
@@ -2470,6 +2475,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
           <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
           <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / EL</button>
         </div>
+        <button id="exchangeConfirmBtn" type="button" class="fr-dbimport">✔ Next</button>
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
       </div>
       <div class="fr-dbstatus" id="exchangeCurrentHint"></div>
@@ -10025,6 +10031,38 @@ function initExchangePanel(){
   });
   if(clMode) clMode.addEventListener('change', ()=>{ if(subInput) subInput.style.opacity = clMode.value === 'vacant' ? '.45' : ''; });
   initExchangePicker();
+  /* mode first: tap Add Exchange / Add CL / Medical… -> then date, position (and substitute for Exchange) appear */
+  {
+    const form = document.getElementById('exchangeModalOverlay').querySelector('.fr-manualform');
+    const row = form.querySelector('.xbtn-row');
+    const confirmBtn = document.getElementById('exchangeConfirmBtn');
+    const modeBtn = { ex:addBtnEl(), cl:document.getElementById('exchangeClBtn'), sp:document.getElementById('exchangeSpBtn') };
+    function addBtnEl(){ return document.getElementById('exchangeAddBtn'); }
+    const setMode = (m)=>{
+      window._xMode = m;
+      form.classList.toggle('xmode-off', !m);
+      form.classList.toggle('xmode-nosub', m === 'cl' || m === 'sp');
+      Object.keys(modeBtn).forEach(k=>{ if(modeBtn[k]) modeBtn[k].classList.toggle('on', k === m); });
+      if(m === 'cl' || m === 'sp'){ if(subInput) subInput.value = ''; }
+      if(confirmBtn) confirmBtn.textContent = m === 'ex' ? '✔ Add Exchange' : '✔ Next';
+      try{ updateExchangeCurrentHint(); }catch(e){}
+    };
+    setMode('');
+    row.addEventListener('click', e=>{
+      if(window._xConfirm) return;
+      const b = e.target.closest ? e.target.closest('.xbtn') : null;
+      if(!b) return;
+      e.stopImmediatePropagation(); e.preventDefault();
+      setMode(b === modeBtn.ex ? 'ex' : b === modeBtn.cl ? 'cl' : 'sp');
+    }, true);
+    if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
+      const b = modeBtn[window._xMode]; if(!b) return;
+      window._xConfirm = true;
+      try{ b.click(); } finally { window._xConfirm = false; }
+    });
+    const ovEl = document.getElementById('exchangeModalOverlay');
+    try{ new MutationObserver(()=>{ if(!ovEl.classList.contains('show') && window._xMode) setMode(''); }).observe(ovEl, { attributes:true, attributeFilter:['class'] }); }catch(e){}
+  }
   if(posSel && !posSel.parentNode.classList.contains('xpos-wrap')){
     const wrap = document.createElement('span');
     wrap.className = 'xpos-wrap';
