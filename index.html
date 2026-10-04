@@ -22,6 +22,73 @@
   }catch(e){}
 })();
 </script>
+<script>
+(function(){
+  /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
+     Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
+     fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
+  var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
+  if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
+  function base(){ return location.href.split('#')[0].split('?')[0]; }
+  function bust(){ return base() + '?_probe=' + Date.now(); }   /* sw.js ignores _probe URLs: straight to the network, nothing saved */
+  function hash(t){ var h = 2166136261; for(var i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + ':' + t.length; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+  function save(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} }
+  function headerSig(){
+    var ac = (window.AbortController ? new AbortController() : null);
+    return fetch(bust(), { cache:'no-store', signal: ac ? ac.signal : undefined }).then(function(r){
+      var h = r.headers, tag = h.get('etag') || h.get('last-modified') || '';
+      if(ac) ac.abort();
+      return tag ? [h.get('etag'), h.get('last-modified'), h.get('content-length')].join('|') : '';
+    });
+  }
+  function bodyHash(){ return fetch(bust(), { cache:'no-store' }).then(function(r){ return r.text(); }).then(hash); }
+  function note(){
+    try{
+      var d = document.createElement('div');
+      d.textContent = 'নতুন ভার্সন পাওয়া গেছে — আপডেট হচ্ছে…';
+      d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483647;background:#1B2130;color:#F0F1F3;border:1px solid #504d4c;border-radius:12px;padding:10px 16px;font:600 13px Inter,system-ui,sans-serif;';
+      (document.body || document.documentElement).appendChild(d);
+    }catch(e){}
+  }
+  function forceReload(){
+    try{ sessionStorage.setItem(GUARD, String(Date.now())); }catch(e){}
+    note();
+    var steps = [];
+    /* throw away the service worker's saved copy of the page first: with no saved copy, sw.js cannot fall back to the old one after its 4 s wait */
+    if(window.caches && caches.keys) steps.push(caches.keys().then(function(ks){ return Promise.all(ks.map(function(k){ return caches.delete(k); })); }));
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration) steps.push(navigator.serviceWorker.getRegistration().then(function(g){ return g && g.update(); }));
+    Promise.all(steps.map(function(p){ return p.catch(function(){}); })).then(function(){
+      /* a different address (?_r=) also skips the browser / CDN copy; the line at the top of the page removes it from the address bar again */
+      try{ var u = new URL(location.href); u.searchParams.set('_r', String(Date.now())); location.replace(u.href); }
+      catch(e){ location.reload(); }
+    });
+  }
+  function check(){
+    if(busy) return; busy = true; lastCheck = Date.now();
+    var st = load();
+    headerSig().catch(function(){ return ''; }).then(function(sig){
+      if(sig && st.sig === sig && st.hash) return;                 // same version as last time
+      return bodyHash().then(function(h){
+        var changed = !!st.hash && st.hash !== h;
+        save({ sig:sig, hash:h });
+        if(changed){
+          var at = 0; try{ at = +sessionStorage.getItem(GUARD) || 0; }catch(e){}
+          if(Date.now() - at > 30000) forceReload();               // never loops: at most one forced reload per 30 s
+        }
+      });
+    }).catch(function(){}).then(function(){ busy = false; });
+  }
+  check();
+  // a tab / installed app that stays open for hours: look again when it comes back to the front (not while typing)
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden || Date.now() - lastCheck < 5*60*1000) return;
+    var a = document.activeElement;
+    if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    check();
+  });
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HSIA (ATM) — Live Shift Tracker</title>
 <link rel="manifest" href="manifest.json">
@@ -2386,7 +2453,6 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <div class="fr-dbstatus" id="exchangeCurrentHint"></div>
       <button id="exReqOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">📨 Requests <span class="exreq-badge" style="display:none;"></span></button>
       <button id="qbmOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">QBM</button>
-      <button id="auditOpenBtn" type="button" class="fr-dbimport hsia-priv-only" style="width:100%;margin-top:12px;">🧾 Change log</button>
     </div>
   </div>
 
@@ -2415,16 +2481,6 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <div class="xp-tabs" id="meTabs"></div>
       <input type="text" id="meSearch" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off">
       <div class="xp-wrap"><table class="xp-table" id="meTable"></table></div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="auditOverlay" style="z-index:10006;">
-    <div class="modal-box" style="max-width:560px;">
-      <div class="modal-header">
-        <div class="modal-title">🧾 Change log</div>
-        <button type="button" class="modal-close" id="auditClose">✕</button>
-      </div>
-      <div id="auditBody"></div>
     </div>
   </div>
 
