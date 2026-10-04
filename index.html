@@ -2481,13 +2481,13 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
   <div class="modal-overlay" id="exchangePickerOverlay" style="z-index:10010;">
     <div class="modal-box" style="max-width:760px;">
       <div class="modal-header">
-        <div class="modal-title">👥 Select Substitute</div>
+        <div class="modal-title" id="exchangePickerTitle">👥 Select Substitute</div>
         <button type="button" class="modal-close" id="exchangePickerClose">✕</button>
       </div>
       <div class="xp-tabs" id="exchangePickerTabs"></div>
       <input type="text" id="exchangePickerSearch" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off">
       <div class="xp-wrap"><table class="xp-table" id="exchangePickerTable"></table></div>
-      <div class="xp-manual">
+      <div class="xp-manual" id="exchangePickerManualRow">
         <input type="text" id="exchangePickerManual" class="fr-mfinput" placeholder="Not in roster? Type a name" autocomplete="off">
         <button type="button" id="exchangePickerManualBtn" class="fr-dbimport">Use</button>
       </div>
@@ -9150,9 +9150,11 @@ function renderExchangePicker(){
   const r = exchangeResolve();
   const whoNow = r && r.who ? String(r.who).trim().toLowerCase() : '';
   const match = n => !q || String(n).toLowerCase().indexOf(q) !== -1;
-  const btn = (n, extra) => {
+  const posMode = window._xpMode === 'pos';
+  const posSelEl = document.getElementById('exchangePos');
+  const btn = (n, extra, isSel) => {
     const low = String(n).trim().toLowerCase();
-    return '<button type="button" class="xp-name' + (low === cur ? ' sel' : '') + (low === whoNow ? ' cur' : '') + '" data-name="' + _xEsc(n) + '"' + (extra || '') + '>' + _xEsc(n) + '</button>';
+    return '<button type="button" class="xp-name' + ((posMode ? isSel : low === cur) ? ' sel' : '') + (!posMode && low === whoNow ? ' cur' : '') + '" data-name="' + _xEsc(n) + '"' + (extra || '') + '>' + _xEsc(n) + '</button>';
   };
   let html = '';
   if(_xpTab === 'th' || _xpTab === 'mr'){
@@ -9164,7 +9166,8 @@ function renderExchangePicker(){
       html += '<tr><td class="xp-pos">' + _xEsc(sl.label) + '</td>';
       for(let i=0;i<max;i++){
         const n = sl.people[i];
-        html += '<td>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim())) + '</td>';
+        const _isel = posMode && _xpTab === (document.getElementById('exchangeTable')||{}).value && posSelEl && posSelEl.value === (sl.slot + '|' + i);
+        html += '<td>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim(), ' data-slot="' + sl.slot + '" data-pi="' + i + '"', _isel)) + '</td>';
       }
       html += '</tr>';
     });
@@ -9176,14 +9179,17 @@ function renderExchangePicker(){
       html += '<tr><td class="xp-pos">' + _xEsc(row.pos) + '</td>';
       TEAMS.forEach((t, ci)=>{
         const n = row.names && row.names[ci];
-        html += '<td' + (ci === hlTeam ? ' class="xp-team-hl"' : '') + '>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim())) + '</td>';
+        const _sel = posMode && _xpTab === (document.getElementById('exchangeTable')||{}).value && posSelEl && posSelEl.value === row.pos && ci === hlTeam;
+        html += '<td' + (!posMode && ci === hlTeam ? ' class="xp-team-hl"' : '') + '>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim(), ' data-pos="' + _xEsc(row.pos) + '" data-team="' + ci + '"', _sel)) + '</td>';
       });
       html += '</tr>';
     });
     html += '</tbody>';
   }
   tbl.innerHTML = html;
-  tbl.querySelectorAll('.xp-name').forEach(b => b.addEventListener('click', ()=> pickExchangeSub(b.getAttribute('data-name'))));
+  tbl.querySelectorAll('.xp-name').forEach(b => b.addEventListener('click', ()=>{
+    if(window._xpMode === 'pos') pickExchangePos(b); else pickExchangeSub(b.getAttribute('data-name'));
+  }));
 }
 function pickExchangeSub(name){
   if(window._exReqAssignId){
@@ -9198,6 +9204,30 @@ function pickExchangeSub(name){
   updateExchangeCurrentHint();
   if(window._pendingClAfterPick){ window._pendingClAfterPick = false; if(window._commitCl) window._commitCl(false); }
 }
+function pickExchangePos(b){
+  const tableSel = document.getElementById('exchangeTable');
+  const posSel = document.getElementById('exchangePos');
+  const teamSel = document.getElementById('exchangeTeam');
+  if(!tableSel || !posSel) return;
+  const slot = b.getAttribute('data-slot');
+  closeExchangePicker();
+  if(tableSel.value !== _xpTab){ tableSel.value = _xpTab; populateExchangePositions(); }
+  if(slot !== null){
+    posSel.value = slot + '|' + b.getAttribute('data-pi');
+  } else {
+    posSel.value = b.getAttribute('data-pos');
+    if(teamSel) teamSel.value = b.getAttribute('data-team');
+  }
+  updateExchangeCurrentHint();
+  try{ posSel.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+}
+function openExchangePosPicker(){
+  window._xpMode = 'pos';
+  window._pendingClAfterPick = false;
+  const t = document.getElementById('exchangePickerTitle'); if(t) t.textContent = '📍 Select Position';
+  const m = document.getElementById('exchangePickerManualRow'); if(m) m.style.display = 'none';
+  openExchangePicker();
+}
 function openExchangePicker(){
   const ov = document.getElementById('exchangePickerOverlay');
   if(!ov) return;
@@ -9210,6 +9240,11 @@ function openExchangePicker(){
 }
 function closeExchangePicker(){
   window._exReqAssignId = null; window._exReqAssignDate = null;
+  if(window._xpMode){
+    window._xpMode = '';
+    const t = document.getElementById('exchangePickerTitle'); if(t) t.textContent = '👥 Select Substitute';
+    const m = document.getElementById('exchangePickerManualRow'); if(m) m.style.display = '';
+  }
   const ov = document.getElementById('exchangePickerOverlay');
   if(ov) ov.classList.remove('show');
 }
@@ -9990,6 +10025,18 @@ function initExchangePanel(){
   });
   if(clMode) clMode.addEventListener('change', ()=>{ if(subInput) subInput.style.opacity = clMode.value === 'vacant' ? '.45' : ''; });
   initExchangePicker();
+  if(posSel && !posSel.parentNode.classList.contains('xpos-wrap')){
+    const wrap = document.createElement('span');
+    wrap.className = 'xpos-wrap';
+    wrap.style.cssText = 'position:relative;display:flex;flex:1 1 110px;min-width:90px;';
+    posSel.parentNode.insertBefore(wrap, posSel);
+    wrap.appendChild(posSel);
+    posSel.style.cssText = 'flex:1 1 auto;width:100%;min-width:0;';
+    const hit = document.createElement('span');
+    hit.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;z-index:1;';
+    hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; openExchangePosPicker(); });
+    wrap.appendChild(hit);
+  }
   initClData();
   initQbm();
   document.querySelectorAll('.xbtn').forEach(b=> b.addEventListener('click', ()=>{
