@@ -232,6 +232,7 @@
   #exchangeModalOverlay .fr-manualform > .xbtn-row{ order:-1; }
   #exchangeConfirmBtn{ flex:0 0 100%; order:1; }
   #exchangeModalOverlay .fr-manualform > #clDataBtn{ order:2; }
+  body:not(.hsia-priv) #clDataBtn{ display:none !important; }   /* CL Data: only admin / moderator sessions see it */
   .xmode-off #exchangeDate, .xmode-off .dfmt, .xmode-off .xpos-wrap, .xmode-off #exchangeNightHalf, .xmode-off #exchangeSubName, .xmode-off #exchangeConfirmBtn, .xmode-nosub #exchangeSubName{ display:none !important; }
   .xbtn-row{ display:flex; gap:5px; width:100%; flex:0 0 100%; }
   .xbtn-row .xbtn{ flex:1 1 auto; min-width:0; padding:10px 3px; font-size:11px; letter-spacing:-0.1px; white-space:nowrap; overflow:hidden; text-align:center; }
@@ -1739,6 +1740,11 @@ table.roster-table tbody tr:nth-child(even){
    ignores touches (they land on the cell instead), so the OS can never start a text selection,
    magnifier or callout on it. Unlocking removes the readonly attribute and re-enables normal editing. */
 table.roster-table{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+table.roster-table tr.roster-standby-row td.roster-standby-cell{ background:rgba(120,170,255,0.07) !important; box-shadow:none !important; padding:0; }
+table.roster-table .roster-standby-input{ width:100%; box-sizing:border-box; min-height:42px; background:transparent; border:none; outline:none; resize:none; color:var(--text); font-family:'Inter',sans-serif; font-size:12.5px; text-align:center; padding:12px 8px; line-height:1.5; overflow:hidden; }
+table.roster-table .roster-standby-input:focus{ background:rgba(214,216,220,0.08); box-shadow:inset 0 0 0 1px var(--gold); }
+table.roster-table .roster-standby-input[readonly]{ pointer-events:none; }
+table.roster-table .roster-standby-label{ padding:10px 10px; color:var(--gold-soft); font-weight:800; font-size:13px; font-family:'Space Grotesk',sans-serif; }
 table.roster-table input[readonly]{ pointer-events:none; -webkit-user-select:none; user-select:none; }
 /* feedback while tapping a name 5 times in a row */
 table.roster-table td.roster-tap-hint{ box-shadow:inset 0 0 0 2px var(--gold); background:rgba(246,200,76,0.14); }
@@ -2469,7 +2475,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
           <option value="1">1st Night (8:30 PM–3:00 AM)</option>
           <option value="2">2nd Night (3:00 AM–7:30 AM)</option>
         </select>
-        <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="Tap to select substitute" readonly inputmode="none">
+        <input type="text" id="exchangeSubName" class="fr-mfinput" placeholder="Substitute" readonly inputmode="none">
         <div class="xbtn-row">
           <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
           <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
@@ -2491,6 +2497,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <button type="button" class="modal-close" id="exchangePickerClose">✕</button>
       </div>
       <div class="xp-tabs" id="exchangePickerTabs"></div>
+      <div class="xp-legend" id="exchangePickerLegend" style="display:none;"></div>
       <input type="text" id="exchangePickerSearch" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off">
       <div class="xp-wrap"><table class="xp-table" id="exchangePickerTable"></table></div>
       <div class="xp-manual" id="exchangePickerManualRow">
@@ -6117,7 +6124,7 @@ function requireQuickAuth(){ return adminGate(false); }
 function requireDownloadAuth(){ return adminGate(false); }
 function unlockAllRosterInputs(){
   try{ if(window.hsiaTHMRUnlock) window.hsiaTHMRUnlock(); }catch(e){}
-  document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterTableComm input, #rosterNewPos, #rosterNewPosCtrl, #rosterNewPosComm').forEach(inp=>{
+  document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterTableComm input, #rosterTable textarea, #rosterTableCtrl textarea, #rosterNewPos, #rosterNewPosCtrl, #rosterNewPosComm').forEach(inp=>{
     inp.readOnly = false;
   });
 }
@@ -6914,11 +6921,18 @@ function exPutEntry(dateKey, entry){
 /* Somebody of the SAME shift is sent to another position -> his own position that day stays vacant (nobody is put there) */
 function exVacateMovedCell(dateKey, parent){
   const sub = String(parent.subName || '').trim();
-  const team = +parent.team;
-  if(!sub || !(team >= 0 && team < 100)) return;
+  const team0 = +parent.team;
+  const teamsCheck = [];
+  if(team0 >= 0 && team0 < 100) teamsCheck.push(team0);
+  else if(team0 >= THS_BASE){   /* Traffic Hand / Marshaller duty: same-shift people of the main rosters leave their own position vacant too */
+    const pw = exchangeShiftWindow(dateKey, team0, '');
+    if(pw) for(let ti = 0; ti < TEAMS.length; ti++){ const w = exchangeShiftWindow(dateKey, ti, ''); if(w && w.start === pw.start && w.end === pw.end) teamsCheck.push(ti); }
+  }
+  if(!sub || !teamsCheck.length) return;
   const norm = x=> String(x == null ? '' : x).trim().toLowerCase();
   const key = exMovedKey(dateKey, parent);
   let added = false;
+  teamsCheck.forEach(team=>{
   ['roster','rosterCtrl','rosterComm'].forEach(tbl=>{
     (rosterDataFor(tbl) || []).forEach(row=>{
       const nm = row.names && row.names[team];
@@ -6930,6 +6944,7 @@ function exVacateMovedCell(dateKey, parent){
       EXCHANGES[dateKey] = cur.concat([{ table:tbl, pos:row.pos, team:team, subName:'', vacant:true, moved:true, forKey:key, who:String(nm).trim(), nightHalf:parent.nightHalf || '' }]);
       added = true;
     });
+  });
   });
   if(added) saveExchangesData(EXCHANGES);
 }
@@ -8165,6 +8180,10 @@ function initAuthPanel(){
 /* Generic renderer used for both the Aerodrome Assistant and Controllers tables.
    tableKey ('roster' | 'rosterCtrl') lets it look up today's duty exchanges and
    glow the matching cell — the underlying saved value is never touched. */
+/* Stand-by pool (Aerodrome Assistant + Controllers only): people not tied to any A-E shift; they cover leave first.
+   Kept on the first roster row (data[0].standby) so it travels with the existing roster sync / backup. */
+function standbyOf(data){ return (data && data[0] && Array.isArray(data[0].standby)) ? data[0].standby.filter(x=> String(x || '').trim()) : []; }
+function standbyTableKeys(){ return ['roster','rosterCtrl']; }
 function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const tbody = document.getElementById(tbodyId);
   if(!tbody) return;
@@ -8194,6 +8213,16 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
     return `<tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="${posSafe}" data-ri="${ri}" autocomplete="off" readonly></td>${cells}</tr>`;
   }).join('');
+  if(tableKey && standbyTableKeys().indexOf(tableKey) !== -1 && data.length){
+    const sbTxt = standbyOf(data).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea></td></tr>`;
+    const sbEl = tbody.querySelector('.roster-standby-input');
+    if(sbEl) sbEl.addEventListener('input', ()=>{
+      data[0].standby = sbEl.value.split(/[,\n]/).map(x=> x.trim()).filter(Boolean);
+      sbEl.rows = Math.max(1, Math.ceil(sbEl.value.length / 38));
+      onChange(data);
+    });
+  }
 
   tbody.querySelectorAll('.roster-name-input').forEach(inp=>{
     inp.addEventListener('input', ()=>{
@@ -9139,6 +9168,61 @@ setInterval(()=>{
 let _xpTab = 'roster';
 const _XP_TABS = [['roster','Aerodrome Assistant'],['rosterCtrl','Controllers'],['rosterComm','Communication'],['th','Traffic Hand'],['mr','Marshaller']];
 function _xpBadName(n){ n = String(n == null ? '' : n).trim(); return !n || n === '-' || /^-+$/.test(n); }
+
+/* ---- availability colouring inside the substitute picker (who can cover this duty?) ---- */
+function _xpNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
+function _xpDayKey(dk, delta){ const p = dk.split('-').map(Number); return new Date(Date.UTC(p[0], p[1]-1, p[2]) + delta * 86400000).toISOString().slice(0,10); }
+function _xpOverlap(a, b){ return !!(a && b && a.start < b.end && b.start < a.end); }
+function xpTarget(){
+  try{
+    if(window._exReqAssignId && typeof EX_REQUESTS !== 'undefined' && EX_REQUESTS[window._exReqAssignId]){
+      const q = EX_REQUESTS[window._exReqAssignId];
+      const W = exchangeShiftWindow(q.dateKey, +q.team, q.nightHalf || '');
+      return W ? { dk:q.dateKey, W:W, table:q.table, pos:q.pos, team:+q.team, who:q.who || '', thmr:+q.team >= THS_BASE } : null;
+    }
+    const r = exchangeResolve();
+    if(!r) return null;
+    const W = exchangeShiftWindow(r.dateKey, +r.team, '');
+    return W ? { dk:r.dateKey, W:W, table:r.table, pos:r.pos, team:+r.team, who:r.who || '', thmr:!!r.thmr } : null;
+  }catch(e){ return null; }
+}
+/* -> null (no info) | {st:'same'|'free'|'busy'|'away', msg} */
+function xpStatus(tg, name, cell){
+  const nm = _xpNorm(name);
+  if(!tg || !nm || nm === 'ot' || nm === _xpNorm(tg.who)) return null;
+  const dk = tg.dk, W = tg.W;
+  const kindOf = e=> e.cl ? 'CL' : e.special ? (e.spType || 'Leave') : 'Exchange';
+  /* away: his own duty that day was given away (CL / Medical / Festival / Training / EL / Exchange) */
+  const todays = exHistList(EXCHANGES[dk]);
+  for(const e of todays){
+    if(!e || e.moved || _xpNorm(e.who) !== nm) continue;
+    if(!(e.cl || e.special || String(e.subName || '').trim())) continue;
+    return { st:'away', msg:'is away on ' + dk + ' (' + kindOf(e) + ').' };
+  }
+  /* busy: already assigned somewhere else at an overlapping time */
+  for(const d of [_xpDayKey(dk, -1), dk, _xpDayKey(dk, 1)]){
+    for(const e of exHistList(EXCHANGES[d])){
+      if(!e || e.vacant || _xpNorm(e.subName) !== nm) continue;
+      if(e.table === tg.table && e.pos === tg.pos && +e.team === +tg.team && d === dk) continue;   /* the entry being replaced */
+      const w = exchangeShiftWindow(d, +e.team, e.nightHalf || '');
+      if(_xpOverlap(w, W)) return { st:'busy', msg:'already has duty at that time: ' + (e.pos || '') + ' (' + qbmPeriod(e, d) + ' on ' + d + ', ' + kindOf(e) + ').' };
+    }
+  }
+  if(cell && cell.slot != null){
+    const sw = exchangeShiftWindow(dk, THS_BASE + cell.slot, '');
+    if(_xpOverlap(sw, W)){
+      if(tg.thmr && _xpTab === tg.table && sw.start === W.start && sw.end === W.end) return { st:'same', msg:'' };
+      return { st:'busy', msg:'is already on duty at that time (' + ((THS_META[cell.slot] || {}).label || 'shift') + ').' };
+    }
+    return { st:'free', msg:'' };
+  }
+  if(cell && cell.standby) return { st:'same', msg:'' };
+  if(cell && cell.ci != null){
+    const cw = exchangeShiftWindow(dk, cell.ci, '');
+    if(cw && cw.start === W.start && cw.end === W.end) return { st:'same', msg:'' };
+  }
+  return { st:'free', msg:'' };
+}
 function renderExchangePicker(){
   const tabsEl = document.getElementById('exchangePickerTabs');
   const tbl = document.getElementById('exchangePickerTable');
@@ -9158,9 +9242,15 @@ function renderExchangePicker(){
   const match = n => !q || String(n).toLowerCase().indexOf(q) !== -1;
   const posMode = window._xpMode === 'pos';
   const posSelEl = document.getElementById('exchangePos');
-  const btn = (n, extra, isSel) => {
+  const tg = posMode ? null : xpTarget();
+  const legend = document.getElementById('exchangePickerLegend');
+  if(legend){ legend.style.display = 'none'; legend.innerHTML = ''; }
+  const btn = (n, extra, isSel, cell) => {
     const low = String(n).trim().toLowerCase();
-    return '<button type="button" class="xp-name' + ((posMode ? isSel : low === cur) ? ' sel' : '') + (!posMode && low === whoNow ? ' cur' : '') + '" data-name="' + _xEsc(n) + '"' + (extra || '') + '>' + _xEsc(n) + '</button>';
+    const stt = tg ? xpStatus(tg, n, cell) : null;
+    const stc = '';
+    const sta = stt && (stt.st === 'busy' || stt.st === 'away') ? ' data-st="' + stt.st + '" data-msg="' + _xEsc(stt.msg) + '"' : '';
+    return '<button type="button" class="xp-name' + ((posMode ? isSel : low === cur) ? ' sel' : '') + (!posMode && low === whoNow ? ' cur' : '') + stc + '" data-name="' + _xEsc(n) + '"' + sta + (extra || '') + '>' + _xEsc(n) + '</button>';
   };
   let html = '';
   if(_xpTab === 'th' || _xpTab === 'mr'){
@@ -9173,7 +9263,7 @@ function renderExchangePicker(){
       for(let i=0;i<max;i++){
         const n = sl.people[i];
         const _isel = posMode && _xpTab === (document.getElementById('exchangeTable')||{}).value && posSelEl && posSelEl.value === (sl.slot + '|' + i);
-        html += '<td>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim(), ' data-slot="' + sl.slot + '" data-pi="' + i + '"', _isel)) + '</td>';
+        html += '<td>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim(), ' data-slot="' + sl.slot + '" data-pi="' + i + '"', _isel, { slot:sl.slot })) + '</td>';
       }
       html += '</tr>';
     });
@@ -9186,18 +9276,25 @@ function renderExchangePicker(){
       TEAMS.forEach((t, ci)=>{
         const n = row.names && row.names[ci];
         const _sel = posMode && _xpTab === (document.getElementById('exchangeTable')||{}).value && posSelEl && posSelEl.value === row.pos && ci === hlTeam;
-        html += '<td' + (!posMode && ci === hlTeam ? ' class="xp-team-hl"' : '') + '>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim(), ' data-pos="' + _xEsc(row.pos) + '" data-team="' + ci + '"', _sel)) + '</td>';
+        html += '<td' + (!posMode && ci === hlTeam ? ' class="xp-team-hl"' : '') + '>' + (_xpBadName(n) || !match(n) ? '' : btn(String(n).trim(), ' data-pos="' + _xEsc(row.pos) + '" data-team="' + ci + '"', _sel, { ci:ci })) + '</td>';
       });
       html += '</tr>';
     });
+    if(!posMode && standbyTableKeys().indexOf(_xpTab) !== -1){
+      const sb = standbyOf(data).filter(n=> !_xpBadName(n) && match(n));
+      if(sb.length) html += '<tr><td class="xp-pos">Stand by</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + sb.map(n=> btn(String(n).trim(), ' data-standby="1" style="width:auto;"', false, { standby:true })).join('') + '</div>' + '</td></tr>';
+    }
     html += '</tbody>';
   }
   tbl.innerHTML = html;
   tbl.querySelectorAll('.xp-name').forEach(b => b.addEventListener('click', ()=>{
-    if(window._xpMode === 'pos') pickExchangePos(b); else pickExchangeSub(b.getAttribute('data-name'));
+    if(window._xpMode === 'pos') pickExchangePos(b); else pickExchangeSub(b.getAttribute('data-name'), b.getAttribute('data-st'), b.getAttribute('data-msg'));
   }));
 }
-function pickExchangeSub(name){
+function pickExchangeSub(name, st, msg){
+  if(st === 'busy' || st === 'away'){
+    if(!confirm('\u26A0 ' + String(name || '').trim() + ' ' + (msg || (st === 'away' ? 'is not available.' : 'is busy at that time.')) + '\n\nSelect anyway?')) return;
+  }
   if(window._exReqAssignId){
     const id = window._exReqAssignId, nm = String(name || '').trim();
     closeExchangePicker();
@@ -9251,7 +9348,7 @@ function openExchangePicker(){
   ov.classList.add('show');
 }
 function closeExchangePicker(){
-  window._exReqAssignId = null; window._exReqAssignDate = null;
+  window._exReqAssignId = null; window._exReqAssignDate = null; 
   if(window._xpMode){
     window._xpMode = '';
     const t = document.getElementById('exchangePickerTitle'); if(t) t.textContent = '👥 Select Substitute';
@@ -9363,7 +9460,7 @@ function askPassword(title, onOk){
   if(rosterUnlocked){ onOk(); return; }
   adminGoogleSignIn().then(ok=>{ if(ok) onOk(); });
 }
-function openClData(){ askPassword('Enter password to open CL Data', openClDataNow); }
+function openClData(){ if(!document.body.classList.contains('hsia-priv')) return; askPassword('Enter password to open CL Data', openClDataNow); }
 function openClDataNow(){
   const ov = document.getElementById('clDataOverlay'), ys = document.getElementById('clDataYear');
   if(!ov || !ys) return;
@@ -9469,7 +9566,22 @@ function qbmBuild(items){
     g.first = g.items[0].dk;
     return g;
   }).sort((a,b)=> a.first < b.first ? -1 : a.first > b.first ? 1 : a.detailed.localeCompare(b.detailed));
-  return rows;
+  /* one serial number per person relieved: all his entries (different substitutes / places / kinds) sit in that one box */
+  const byP = {}, order = [];
+  rows.forEach((g, gi)=>{
+    const k = String(g.relieved || '').trim().toLowerCase() || ('blank' + gi);
+    if(!byP[k]){ byP[k] = { relieved:g.relieved, units:[], first:g.first }; order.push(k); }
+    byP[k].units.push(g);
+  });
+  return order.map(k=>{
+    const P = byP[k], kinds = [];
+    P.units.forEach(u=>{ if(kinds.indexOf(u.rmk) === -1) kinds.push(u.rmk); });
+    const units = [];
+    kinds.forEach(kd=> P.units.forEach(u=>{ if(u.rmk === kd) units.push(u); }));   /* same remark side by side so its cell can be one block */
+    const parts = [];
+    units.forEach((u, i)=>{ const last = parts[parts.length - 1]; if(last && last.rmk === u.rmk) last.n++; else parts.push({ rmk:u.rmk, from:i, n:1 }); });
+    return { relieved:P.relieved, units:units, parts:parts, first:P.first };
+  });
 }
 function qbmMonthLabel(items){
   const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -9487,12 +9599,21 @@ function renderQbm(){
   const rows = qbmBuild(items);
   _qbmRuns = [];
   let body = '';
-  rows.forEach((g, i)=>{
-    const lines = g.runs.map(run=>{
-      _qbmRuns.push(run);
-      return '<div class="qbm-line"><button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button><span>' + _xEsc(qbmDateText(run)) + '</span></div>';
-    }).join('');
-    body += '<tr><td class="c">' + String(i+1).padStart(2,'0') + '</td><td>' + _xEsc(g.detailed) + '</td><td class="c">' + _xEsc(g.place) + '</td><td>' + lines + '</td><td>' + _xEsc(g.relieved) + '</td><td class="c">' + _xEsc(g.rmk) + '</td></tr>';
+  rows.forEach((P, i)=>{
+    const U = P.units.length;
+    P.units.forEach((u, k)=>{
+      const lines = u.runs.map(run=>{
+        _qbmRuns.push(run);
+        return '<div class="qbm-line"><button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button><span>' + _xEsc(qbmDateText(run)) + '</span></div>';
+      }).join('');
+      const part = P.parts.find(pt=> pt.from === k);
+      body += '<tr>' +
+        (k === 0 ? '<td class="c" rowspan="' + U + '">' + String(i+1).padStart(2,'0') + '</td>' : '') +
+        '<td>' + _xEsc(u.detailed) + '</td><td class="c">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
+        (k === 0 ? '<td rowspan="' + U + '">' + _xEsc(P.relieved) + '</td>' : '') +
+        (part ? '<td class="c" rowspan="' + part.n + '">' + _xEsc(part.rmk) + '</td>' : '') +
+        '</tr>';
+    });
   });
   if(!rows.length) body = '<tr><td colspan="6" class="c">No entries</td></tr>';
   paper.innerHTML =
@@ -9645,20 +9766,42 @@ function qbmDrawPages(title, rows){
     const h = LD + 2 * PY + 6; rect(M, y, TW, h);
     const t = 'No entries'; text(M + (TW - tw(t, false, FS)) / 2, y + h / 2 + 0.33 * FS, t, false, FS);
   }
-  rows.forEach((g, ri)=>{
-    const c = [
-      [String(ri + 1).padStart(2, '0')],
-      wrap(g.detailed, false, FS, cw[1] - 2 * PX),
-      wrap(g.place, false, FS, cw[2] - 2 * PX),
-      [].concat.apply([], g.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))),
-      wrap(g.relieved, false, FS, cw[4] - 2 * PX),
-      wrap(g.rmk, false, FS, cw[5] - 2 * PX)
-    ];
-    const h = Math.max.apply(null, c.map(x=> x.length)) * LD + 2 * PY;
-    if(y + h > PH - M) newPage(false);
-    const al = ['c','l','c','l','l','c'];
-    c.forEach((ls, i)=>{ rect(cx[i], y, cw[i], h); cellText(i, ls, h, al[i]); });
-    y += h;
+  rows.forEach((P, ri)=>{
+    const uh = P.units.map(u=>{
+      const n = Math.max(wrap(u.detailed, false, FS, cw[1] - 2 * PX).length, wrap(u.place, false, FS, cw[2] - 2 * PX).length,
+        [].concat.apply([], u.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))).length);
+      return n * LD + 2 * PY;
+    });
+    const relL = wrap(P.relieved, false, FS, cw[4] - 2 * PX);
+    let total = uh.reduce((a, b)=> a + b, 0);
+    const needRel = relL.length * LD + 2 * PY;
+    if(total < needRel){ uh[uh.length - 1] += needRel - total; total = needRel; }
+    if(y + total > PH - M) newPage(false);
+    const at = (i, lines, top, h, align)=>{
+      const t0 = top + (h - lines.length * LD) / 2;
+      lines.forEach((t, k)=>{
+        const bl = t0 + k * LD + LD / 2 + 0.33 * FS, w = tw(t, false, FS);
+        text(align === 'c' ? cx[i] + (cw[i] - w) / 2 : cx[i] + PX, bl, t, false, FS);
+      });
+    };
+    rect(cx[0], y, cw[0], total); at(0, [String(ri + 1).padStart(2, '0')], y, total, 'c');
+    rect(cx[4], y, cw[4], total); at(4, relL, y, total, 'l');
+    let uy = y;
+    const tops = [];
+    P.units.forEach((u, k)=>{
+      tops[k] = uy;
+      const h = uh[k];
+      rect(cx[1], uy, cw[1], h); at(1, wrap(u.detailed, false, FS, cw[1] - 2 * PX), uy, h, 'l');
+      rect(cx[2], uy, cw[2], h); at(2, wrap(u.place, false, FS, cw[2] - 2 * PX), uy, h, 'c');
+      rect(cx[3], uy, cw[3], h); at(3, [].concat.apply([], u.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))), uy, h, 'l');
+      uy += h;
+    });
+    P.parts.forEach(pt=>{
+      const top = tops[pt.from];
+      let h = 0; for(let k = pt.from; k < pt.from + pt.n; k++) h += uh[k];
+      rect(cx[5], top, cw[5], h); at(5, wrap(pt.rmk, false, FS, cw[5] - 2 * PX), top, h, 'c');
+    });
+    y += total;
   });
   return pages;
 }
@@ -10054,6 +10197,34 @@ function initExchangePanel(){
       try{ updateExchangeCurrentHint(); }catch(e){}
     };
     setMode('');
+    window._xSetMode = setMode;
+    window._xDone = (msg)=>{
+      try{
+        /* clear the form so the next entry can be added */
+        const tSel = document.getElementById('exchangeTable'), pSel = document.getElementById('exchangePos'), tmSel = document.getElementById('exchangeTeam'), dI = document.getElementById('exchangeDate'), hS = document.getElementById('exchangeNightHalf');
+        if(subInput) subInput.value = '';
+        if(hS) hS.value = '';
+        if(tmSel) tmSel.value = '';
+        if(tSel){ tSel.value = ''; populateExchangePositions(); }
+        if(pSel) pSel.value = '';
+        if(dI){ dI.value = todayDateKey(); }
+        window._spType = '';
+        setMode('');
+        updateExchangeCurrentHint();
+      }catch(e){ console.error(e); }
+      try{
+        let t = document.getElementById('xDoneToast');
+        if(!t){
+          t = document.createElement('div'); t.id = 'xDoneToast';
+          t.style.cssText = 'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:10050;background:#1f7a4d;color:#fff;border-radius:14px;padding:14px 22px;font-size:15px;font-weight:700;box-shadow:0 8px 28px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:86vw;text-align:center;';
+          document.body.appendChild(t);
+        }
+        t.innerHTML = '<span style="font-size:20px;line-height:1">\u2714</span><span></span>';
+        t.lastChild.textContent = msg;
+        t.style.opacity = '1';
+        clearTimeout(t._h); t._h = setTimeout(()=>{ t.style.opacity = '0'; }, 2200);
+      }catch(e){}
+    };
     row.addEventListener('click', e=>{
       if(window._xConfirm) return;
       const b = e.target.closest ? e.target.closest('.xbtn') : null;
@@ -10095,6 +10266,10 @@ function initExchangePanel(){
     checkMyExchangeNotifications();
     updateExchangeCurrentHint();
     try{ const q = document.getElementById('qbmOverlay'); if(q && q.classList.contains('show')) renderQbm(); }catch(e){}
+    try{
+      const m = window._xMode;
+      if(window._xDone) window._xDone(m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? ((window._spType || 'EL') + ' added') : 'Added');
+    }catch(e){}
   };
 
   if(addBtn){
@@ -10109,7 +10284,7 @@ function initExchangePanel(){
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
       const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
       // Same table+pos+team+half combo replaces any earlier entry for it; a 1st-night and a 2nd-night entry can both exist.
-      if(_mode === 'request'){ if(exReqSubmit({ kind:'exchange', r:r, subName:subName, nightHalf:nightHalf })) subInput.value = ''; return; }
+      if(_mode === 'request'){ if(exReqSubmit({ kind:'exchange', r:r, subName:subName, nightHalf:nightHalf })){ subInput.value = ''; if(window._xDone) window._xDone('Request sent'); } return; }
       { const _pe = { table:r.table, pos:r.pos, team:r.team, subName, nightHalf, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
       subInput.value = '';
       afterChange();
@@ -10128,7 +10303,7 @@ function initExchangePanel(){
           const _days = clDaysForShift(r.shift), _year = +r.dateKey.slice(0,4), _id = clIdFor(r.dateKey, r.table, r.pos, r.team);
           if(clUsedBy(r.who, _year, _id) + _days > CL_LIMIT){ alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for this person. CL not added.'); return; }
         }
-        if(exReqSubmit({ kind: special ? 'special' : 'cl', spType: special ? (window._spType || 'EL') : '', r:r, subName:sub, vacant:!sub })) subInput.value = '';
+        if(exReqSubmit({ kind: special ? 'special' : 'cl', spType: special ? (window._spType || 'EL') : '', r:r, subName:sub, vacant:!sub })){ subInput.value = ''; if(window._xDone) window._xDone('Request sent'); }
         return;
       }
       if(special){
@@ -10185,7 +10360,7 @@ function initExchangePanel(){
           document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
           if(_m === 'request'){
             if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
-              exReqSubmit({ kind:'special', spType:type, r:r, subName:'', vacant:true });
+              if(exReqSubmit({ kind:'special', spType:type, r:r, subName:'', vacant:true }) && window._xDone) window._xDone('Request sent');
             }
             return;
           }
@@ -10200,7 +10375,7 @@ function initExchangePanel(){
       document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
       if(_m === 'request'){
         if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
-          exReqSubmit({ kind:'cl', r:r, subName:'', vacant:true });
+          if(exReqSubmit({ kind:'cl', r:r, subName:'', vacant:true }) && window._xDone) window._xDone('Request sent');
         }
         return;
       }
