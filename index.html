@@ -2630,7 +2630,6 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
         <button type="button" class="rp-btn" id="rpPng">⬇ PNG</button>
       </div>
       <div class="rp-status" id="rpStatus"></div>
-      <div class="rp-hint">পেজ সবসময় A4, মার্জিন 10 mm। Landscape/Portrait এখান থেকেই বেছে নিন — টেবিলের ফন্ট ও ঘরের মাপ পেজ অনুযায়ী নিজে থেকে মিলে যাবে। Print ডায়ালগে Scale = 100% / Default রাখুন (Save as PDF করলেও vector কোয়ালিটি থাকে)। PDF/PNG তৈরি হয় 300 DPI-তে। "All" দিয়ে PNG নিলে প্রতিটি রোস্টারের আলাদা ছবি নামবে।</div>
     </div>
   </div>
 
@@ -14738,7 +14737,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       const blob = await new Promise(r=> cv.toBlob(r, 'image/png'));
       rpSave(blob, rpName(rpSlug(pages[i].title), 'png'));
       cv.width = cv.height = 1;
-      await new Promise(r=> setTimeout(r, 500));
+      await new Promise(r=> setTimeout(r, 700));
     }
   }
   function rpStatus(msg){ const s = document.getElementById('rpStatus'); if(s) s.textContent = msg || ''; }
