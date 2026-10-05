@@ -2483,7 +2483,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
         <div class="xbtn-row">
           <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
           <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
-          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / EL</button>
+          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / EL / UFN</button>
         </div>
         <button id="exchangeConfirmBtn" type="button" class="fr-dbimport">✔ Next</button>
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
@@ -2566,6 +2566,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       <button type="button" class="xp-choice" data-sp="Festival">Festival</button>
       <button type="button" class="xp-choice" data-sp="Training">Training</button>
       <button type="button" class="xp-choice" data-sp="EL">EL</button>
+      <button type="button" class="xp-choice" data-sp="UFN">UFN (Until Further Notice)</button>
     </div>
   </div>
 
@@ -6577,7 +6578,7 @@ function archiveExchangesToHistory(obj, syncDeletes){
   Object.keys(obj).forEach(dk=>{
     const cur = EX_HISTORY[dk] = exHistList(EX_HISTORY[dk]);
     exHistList(obj[dk]).forEach(x=>{
-      if(x.vacant) return;
+      if(x.vacant || x.ufn) return;
       const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
       const i = cur.findIndex(h=> exHistKey(h) === exHistKey(rec));
       if(i >= 0){
@@ -6611,7 +6612,7 @@ function exHistDayEntries(dk){
   const have = new Set(out.map(exHistKey));
   try{
     exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
-      if(x.vacant) return;
+      if(x.vacant || x.ufn) return;
       const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
       if(!have.has(exHistKey(rec))){ rec.base = exHistBaseName(rec); out.push(rec); }
     });
@@ -6623,7 +6624,7 @@ function exDayEntriesForView(dk){
   const out = [];
   try{
     exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
-      if(x.vacant) return;
+      if(x.vacant || x.ufn) return;
       out.push({ table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:exHistBaseName(x) });
     });
   }catch(e){}
@@ -6825,7 +6826,7 @@ function exchangeShiftWindow(dateKey, team, half){
 function rosterViewExchanges(tableKey){
   const sel = window._rosterSelKey;
   if(typeof sel !== 'string' || sel === todayDateKey()) return activeExchangesFor(tableKey);
-  const cur = exHistList(EXCHANGES && EXCHANGES[sel]).filter(x=> x && x.table === tableKey);
+  const cur = exHistList(EXCHANGES && EXCHANGES[sel]).filter(x=> x && x.table === tableKey && !x.ufn);
   let hist = [];
   try{ hist = (exDayEntriesForView(sel) || []).filter(h=> h.table === tableKey && !cur.some(c=> exHistKey(c) === exHistKey(h))); }catch(e){}
   return cur.concat(hist);
@@ -6835,7 +6836,7 @@ function activeExchangesFor(tableKey){
   const out = [];
   Object.keys(EXCHANGES).forEach(dateKey=>{
     (EXCHANGES[dateKey] || []).forEach(ex=>{
-      if(ex.table !== tableKey) return;
+      if(ex.table !== tableKey || ex.ufn) return;
       const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
       if(win && now >= win.start && now < win.end) out.push(ex);
     });
@@ -7152,7 +7153,7 @@ function buildMyDutyEvents(daysAhead){
     const myName = session.displayName.trim().toLowerCase();
     Object.keys(EXCHANGES).forEach(dateKey=>{
       (EXCHANGES[dateKey] || []).forEach(ex=>{
-        if(ex.vacant) return;
+        if(ex.vacant || ex.ufn) return;
         if((ex.subName||'').trim().toLowerCase() !== myName) return;
         const win = exchangeShiftWindow(dateKey, +ex.team, ex.nightHalf);
         if(!win || win.end <= now) return;
@@ -7340,6 +7341,7 @@ function checkMyExchangeNotifications(){
   Object.keys(EXCHANGES).sort().forEach(dateKey=>{
     if(dateKey < today) return; // ignore past dates
     (EXCHANGES[dateKey] || []).forEach(ex=>{
+      if(ex.ufn) return;
       if((ex.subName||'').trim() && (ex.subName||'').trim().toLowerCase() === session.displayName.trim().toLowerCase()){
         mine.push({dateKey, ex});
         const uniqueKey = dateKey + '|' + ex.table + '|' + ex.pos + '|' + ex.team;
@@ -9310,6 +9312,7 @@ function pickExchangeSub(name, st, msg){
   closeExchangePicker();
   updateExchangeCurrentHint();
   if(window._pendingClAfterPick){ window._pendingClAfterPick = false; if(window._commitCl) window._commitCl(false); }
+  if(window._pendingUfnAfterPick){ window._pendingUfnAfterPick = false; if(window._commitUfn) window._commitUfn(); }
   if(window._pendingExAfterPick){
     window._pendingExAfterPick = false;
     const ab = document.getElementById('exchangeAddBtn');
@@ -9336,7 +9339,7 @@ function pickExchangePos(b){
 }
 function openExchangePosPicker(){
   window._xpMode = 'pos';
-  window._pendingClAfterPick = false;
+  window._pendingClAfterPick = false; window._pendingUfnAfterPick = false;
   const t = document.getElementById('exchangePickerTitle'); if(t) t.textContent = '📍 Select Position';
   const m = document.getElementById('exchangePickerManualRow'); if(m) m.style.display = 'none';
   openExchangePicker();
@@ -9365,9 +9368,9 @@ function initExchangePicker(){
   const subEl = document.getElementById('exchangeSubName');
   const ov = document.getElementById('exchangePickerOverlay');
   if(!subEl || !ov) return;
-  subEl.addEventListener('click', ()=>{ subEl.blur(); window._pendingClAfterPick = false; window._pendingExAfterPick = false; openExchangePicker(); });
-  const cl = document.getElementById('exchangePickerClose'); if(cl) cl.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; closeExchangePicker(); });
-  ov.addEventListener('click', e=>{ if(e.target === ov){ window._pendingClAfterPick = false; window._pendingExAfterPick = false; closeExchangePicker(); } });
+  subEl.addEventListener('click', ()=>{ subEl.blur(); window._pendingClAfterPick = false; window._pendingExAfterPick = false; window._pendingUfnAfterPick = false; openExchangePicker(); });
+  const cl = document.getElementById('exchangePickerClose'); if(cl) cl.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; window._pendingUfnAfterPick = false; closeExchangePicker(); });
+  ov.addEventListener('click', e=>{ if(e.target === ov){ window._pendingClAfterPick = false; window._pendingExAfterPick = false; window._pendingUfnAfterPick = false; closeExchangePicker(); } });
   const q = document.getElementById('exchangePickerSearch'); if(q) q.addEventListener('input', renderExchangePicker);
   const mb = document.getElementById('exchangePickerManualBtn');
   const mi = document.getElementById('exchangePickerManual');
@@ -10278,7 +10281,7 @@ function initExchangePanel(){
     posSel.style.cssText = 'flex:1 1 auto;width:100%;min-width:0;';
     const hit = document.createElement('span');
     hit.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;z-index:1;';
-    hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; openExchangePosPicker(); });
+    hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; window._pendingUfnAfterPick = false; openExchangePosPicker(); });
     wrap.appendChild(hit);
   }
   initClData();
@@ -10297,7 +10300,7 @@ function initExchangePanel(){
     try{ const q = document.getElementById('qbmOverlay'); if(q && q.classList.contains('show')) renderQbm(); }catch(e){}
     try{
       const m = window._xMode;
-      if(window._xDone) window._xDone(m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? ((window._spType || 'EL') + ' added') : 'Added');
+      if(window._xDone) window._xDone(m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? ((window._spType || 'EL') + (window._spType === 'UFN' ? ' added to QBM' : ' added')) : 'Added');
     }catch(e){}
   };
 
@@ -10367,23 +10370,50 @@ function initExchangePanel(){
         else { window._pendingClAfterPick = true; openExchangePicker(); }
       });
     }
+    /* ---- UFN (Until Further Notice): QBM entry only. The roster table is NOT touched (admin edits it manually). ---- */
+    const _nrm = x=> String(x == null ? '' : x).trim().toLowerCase();
+    window._commitUfn = ()=>{
+      const r = exchangeResolve();
+      if(!r){ alert('Please select a position.'); return; }
+      if(!exIsAdmin()){ requireRosterAuth(); return; }
+      const sub = (subInput.value || '').trim();
+      if(!sub){ alert('Select a substitute first.'); return; }
+      const oldName = String(r.who || '').trim();
+      if(!oldName || oldName === '-'){ alert('No name in this cell.'); return; }
+      if(_nrm(sub) === _nrm(oldName)){ alert('The new person is the same as the current one.'); return; }
+      exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:+r.team, subName:sub, nightHalf:'', special:true, spType:'UFN', ufn:true, vacant:false, who:oldName });
+      subInput.value = '';
+      afterChange();
+    };
     const openChooser = (kind)=>{
       const _m = exAddMode(); if(!_m) return;
       window._exMode = _m;
       const r = exchangeResolve();
       const what = kind === 'special' ? 'Leave' : 'CL';
       if(!r){ alert('Please select a date and a position.'); return; }
-      if(r.dateKey < today){ alert(what + ' cannot be given for a past date.'); return; }
-      if(!r.thmr && r.shift === 'Off'){ alert('This team has no duty on this date.'); return; }
-      const win = exchangeShiftWindow(r.dateKey, r.team, '');
-      if(win && win.end <= Date.now()){ alert('This shift has already ended.'); return; }
+      const dateChecks = ()=>{
+        if(r.dateKey < today){ alert(what + ' cannot be given for a past date.'); return false; }
+        if(!r.thmr && r.shift === 'Off'){ alert('This team has no duty on this date.'); return false; }
+        const win = exchangeShiftWindow(r.dateKey, r.team, '');
+        if(win && win.end <= Date.now()){ alert('This shift has already ended.'); return false; }
+        return true;
+      };
       if(!r.who || r.who === '-'){ alert('No name in this cell, so ' + what + ' cannot be given.'); return; }
       window._clKind = kind;
       if(kind === 'special'){
-        /* step 1: pick the type (Medical / Festival / Training / EL) -> shown in QBM remarks; step 2 = substitute / vacant */
+        /* step 1: pick the type (Medical / Festival / Training / EL / UFN) -> shown in QBM remarks; step 2 = substitute / vacant */
         const spOv = document.getElementById('spTypeOverlay');
         window._spAfterType = (type)=>{
           window._spType = type;
+          if(type === 'UFN'){
+            /* QBM entry: admin only, substitute is required */
+            if(!exIsAdmin()){ alert('UFN can be added only by the admin. Please sign in as admin and try again.'); requireRosterAuth(); return; }
+            if(!dateChecks()) return;
+            if((subInput.value || '').trim()) window._commitUfn();
+            else { window._pendingUfnAfterPick = true; openExchangePicker(); }
+            return;
+          }
+          if(!dateChecks()) return;
           const lab = type;
           document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
           document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
@@ -10398,6 +10428,7 @@ function initExchangePanel(){
         if(spOv) spOv.classList.add('show');
         return;
       }
+      if(!dateChecks()) return;
       window._spType = '';
       const lab = 'CL';
       document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
@@ -12685,7 +12716,7 @@ function renderRosterNow(){
     const ex = [];
     Object.keys(EXCHANGES).forEach(dk=>{
       (EXCHANGES[dk] || []).forEach(x=>{
-        if(x.table !== set[0] || +x.team !== idx) return;
+        if(x.ufn || x.table !== set[0] || +x.team !== idx) return;
         const full = exchangeShiftWindow(dk, idx, '');
         if(!full || !(nowMs >= full.start && nowMs < full.end)) return;
         const w = exchangeShiftWindow(dk, idx, x.nightHalf);
@@ -12846,7 +12877,7 @@ function renderRosterNow(){
   let meFilter = 'all';
   // every exchange / CL record of a day: live ones (with CL / EL flags) first, then archived ones not already covered. Works without any login.
   function entriesFor(dk){
-    const cur = exHistList(EXCHANGES && EXCHANGES[dk]).filter(x=> x && !x.moved);
+    const cur = exHistList(EXCHANGES && EXCHANGES[dk]).filter(x=> x && !x.moved && !x.ufn);
     let hist = [];
     try{ hist = exDayEntriesForView(dk) || []; }catch(e){}
     return cur.concat(hist.filter(h=> !cur.some(c=> exHistKey(c) === exHistKey(h))));
@@ -13199,7 +13230,7 @@ function renderRosterNow(){
     const raw = (typeof EXCHANGES === 'object' && EXCHANGES) ? EXCHANGES[dk] : null;
     const list = Array.isArray(raw) ? raw : Object.values(raw || {});
     const pos = (kind === 'th' ? 'TH-' : 'MR-') + (pi + 1);
-    return list.find(x=> x && x.table === kind && +x.team === THS_BASE + slot && x.pos === pos) || null;
+    return list.find(x=> x && !x.ufn && x.table === kind && +x.team === THS_BASE + slot && x.pos === pos) || null;
   }
   const words = (n, cm)=> '<span class="thg-w">' + esc(String(n).trim()) + (cm ? ',' : '') + '</span>';
   function personHtml(dk, kind, slot, pi, name, last){
