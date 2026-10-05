@@ -2101,7 +2101,57 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 #rosterCardOuter.collapsed .rost-now-btn{ cursor:default; }
 .fr-ovnote{ font-size:11px; letter-spacing:.04em; color:var(--muted); margin:2px 2px 10px; }
 </style>
-<script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs" async=""></script><script src="https://apis.google.com/js/api.js?onload=__iframefcb63634" type="text/javascript" charset="UTF-8" gapi_processed="true"></script></head>
+<script src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.zhTT8Br0Ho8.O/m=gapi_iframes/rt=j/sv=1/d=1/ed=1/rs=AHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A/cb=gapi.loaded_0?le=scs" async=""></script><script src="https://apis.google.com/js/api.js?onload=__iframefcb63634" type="text/javascript" charset="UTF-8" gapi_processed="true"></script>
+<style id="rosterHistPrintCss">
+.rost-titlewrap{ flex-wrap:wrap; row-gap:6px; }
+.rost-hist-btn{ background:#7fd6c2; }
+.rost-print-btn{ background:#d6c6ff; }
+/* History / Print are admin-only: invisible for everybody else */
+#rosterHistBtn, #rosterPrintBtn{ display:none !important; }
+body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-block !important; }
+.rh-note{ font-size:12px; color:var(--muted); margin:2px 0 10px; line-height:1.5; }
+.rh-card{ border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; background:var(--panel); }
+.rh-card.cur{ border-color:#7fd6c2; }
+.rh-hd{ display:flex; align-items:center; gap:10px; padding:11px 12px; cursor:pointer; }
+.rh-hd .rh-t{ flex:1 1 auto; min-width:0; }
+.rh-hd b{ display:block; font-size:14px; }
+.rh-hd small{ display:block; color:var(--muted); font-size:11.5px; margin-top:2px; line-height:1.4; }
+.rh-n{ font-size:11px; font-weight:800; border-radius:999px; padding:3px 9px; background:rgba(245,181,61,.18); color:#f5b53d; white-space:nowrap; }
+.rh-n.none{ background:rgba(255,255,255,.08); color:var(--muted); }
+.rh-chev{ font-size:12px; color:var(--muted); transition:transform .15s; }
+.rh-card.open .rh-chev{ transform:rotate(180deg); }
+.rh-bd{ display:none; padding:0 12px 12px; }
+.rh-card.open .rh-bd{ display:block; }
+.rh-ch{ margin:0 0 10px; padding:8px 10px; border-radius:10px; background:rgba(245,181,61,.08); font-size:12px; line-height:1.6; }
+.rh-ch div{ padding:1px 0; }
+.rh-sub{ font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:10px 0 5px; }
+.rh-tw{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+.rh-t{ border-collapse:collapse; width:100%; min-width:520px; font-size:12px; }
+.rh-t th, .rh-t td{ border-bottom:1px solid var(--border); border-right:1px solid var(--border); padding:6px 8px; text-align:center; }
+.rh-t th:last-child, .rh-t td:last-child{ border-right:0; }
+.rh-t th{ background:rgba(255,255,255,.06); font-size:11px; }
+.rh-t td.p{ text-align:left; font-weight:700; white-space:nowrap; }
+.rh-t td.chg{ background:rgba(245,181,61,.22); font-weight:700; }
+.rh-t .chg-i{ background:rgba(245,181,61,.22); border-radius:4px; padding:0 3px; font-weight:700; }
+#rosterPrintRoot{ display:none; }
+@media print{
+  @page rosterland{ size:A4 landscape; margin:10mm; }
+  html.roster-printing, body.roster-printing{ background:#fff !important; margin:0 !important; padding:0 !important; }
+  body.roster-printing > *:not(#rosterPrintRoot){ display:none !important; }
+  body.roster-printing #rosterPrintRoot{ display:block !important; page:rosterland; color:#000; background:#fff; font-family:Arial,"Noto Sans Bengali",sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .rp-sec{ page-break-after:always; }
+  .rp-sec:last-child{ page-break-after:auto; }
+  .rp-sec h2{ font-size:14pt; margin:0 0 2pt; color:#000; }
+  .rp-sec .rp-d{ font-size:9pt; margin:0 0 8pt; color:#333; }
+  .rp-t{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:11pt; }
+  .rp-t th, .rp-t td{ border:0.6pt solid #000; padding:4pt 5pt; text-align:center; color:#000; background:#fff; word-break:break-word; line-height:1.25; }
+  .rp-t th{ font-weight:700; background:#eee; }
+  .rp-t td.p{ text-align:left; font-weight:700; }
+  .rp-t thead{ display:table-header-group; }
+  .rp-t tr{ page-break-inside:avoid; }
+}
+</style>
+</head>
 <body>
 <div class="viewToggle" id="viewToggle">
   <button type="button" class="vt-btn active" id="modeMobileBtn">📱 Mobile</button>
@@ -2273,7 +2323,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 
   <div class="cardpanel" id="rosterCardOuter">
     <div class="collapse-head" id="rosterHead">
-      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn">Now</button><button type="button" class="rost-now-btn rost-me-btn" id="rosterMeBtn">Me</button></div>
+      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn">Now</button><button type="button" class="rost-now-btn rost-me-btn" id="rosterMeBtn">Me</button><button type="button" class="rost-now-btn rost-hist-btn" id="rosterHistBtn">History</button><button type="button" class="rost-now-btn rost-print-btn" id="rosterPrintBtn">Print</button></div>
       <div class="collapse-toggle" id="rosterToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="rosterBody">
@@ -2531,6 +2581,17 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
       </div>
       <div class="fr-dbstatus" id="exReqNote"></div>
       <div id="exReqBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="rosterHistOverlay" style="z-index:10004;padding:16px 8px;">
+    <div class="modal-box" style="max-width:860px;">
+      <div class="modal-header">
+        <div class="modal-title">📜 Roster History</div>
+        <button type="button" class="modal-close" id="rosterHistClose">✕</button>
+      </div>
+      <div class="rh-note" id="rosterHistNote"></div>
+      <div id="rosterHistBody"></div>
     </div>
   </div>
 
@@ -6128,6 +6189,7 @@ function requireQuickAuth(){ return adminGate(false); }
    requireRosterAuth() above. */
 function requireDownloadAuth(){ return adminGate(false); }
 function unlockAllRosterInputs(){
+  try{ if(typeof rosterHistSeed === 'function') rosterHistSeed(); }catch(e){}
   try{ if(window.hsiaTHMRUnlock) window.hsiaTHMRUnlock(); }catch(e){}
   document.querySelectorAll('#rosterTable input, #rosterTableCtrl input, #rosterTableComm input, #rosterTable textarea, #rosterTableCtrl textarea, #rosterNewPos, #rosterNewPosCtrl, #rosterNewPosComm').forEach(inp=>{
     inp.readOnly = false;
@@ -6492,9 +6554,9 @@ function rosterLabelFor(key){ return key === 'th' ? 'Traffic Hand' : key === 'mr
 try{ if(typeof applyColors === 'function') applyColors(); }catch(e){}
 try{ if(typeof tick === 'function') tick(); }catch(e){}
 
-function saveRoster(r){ saveRosterGeneric(ROSTER_KEY, r); pushRosterToFirebaseDebounced(); }
-function saveRosterCtrl(r){ saveRosterGeneric(ROSTER_CTRL_KEY, r); pushRosterCtrlToFirebaseDebounced(); }
-function saveRosterComm(r){ saveRosterGeneric(ROSTER_COMM_KEY, r); pushRosterCommToFirebaseDebounced(); }
+function saveRoster(r){ saveRosterGeneric(ROSTER_KEY, r); pushRosterToFirebaseDebounced(); try{ rosterHistNote(); }catch(e){} }
+function saveRosterCtrl(r){ saveRosterGeneric(ROSTER_CTRL_KEY, r); pushRosterCtrlToFirebaseDebounced(); try{ rosterHistNote(); }catch(e){} }
+function saveRosterComm(r){ saveRosterGeneric(ROSTER_COMM_KEY, r); pushRosterCommToFirebaseDebounced(); try{ rosterHistNote(); }catch(e){} }
 
 function flashRosterSaved(msg){
   const chip = document.getElementById('rosterSavedChip');
@@ -13168,6 +13230,7 @@ function renderRosterNow(){
   }catch(e){}
   let EDITING = false;
   function persist(){
+    try{ if(typeof rosterHistNote === 'function') rosterHistNote(); }catch(e){}
     try{ auditThmrSaved(localStorage.getItem(THMR_KEY), TH, MR); }catch(e){}
     try{ localStorage.setItem(THMR_KEY, JSON.stringify({ th:TH, mr:MR, v:2, tv:3, mv:3 })); }catch(e){}
     try{ if(typeof pushThmrToFirebaseDebounced === 'function') pushThmrToFirebaseDebounced(); }catch(e){}
@@ -14254,4 +14317,232 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 </script>
 
 
-<iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1789175725516" name="I0_1789175725516" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.zhTT8Br0Ho8.O%2Fd%3D1%2Frs%3DAHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A%2Fm%3D__features__#id=I0_1789175725516&amp;_gfid=I0_1789175725516&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=16069145" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1789801056588" name="I0_1789801056588" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.zhTT8Br0Ho8.O%2Fd%3D1%2Frs%3DAHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A%2Fm%3D__features__#id=I0_1789801056588&amp;_gfid=I0_1789801056588&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=21830338" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1790584313956" name="I0_1790584313956" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.zhTT8Br0Ho8.O%2Fd%3D1%2Frs%3DAHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A%2Fm%3D__features__#id=I0_1790584313956&amp;_gfid=I0_1790584313956&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=11178433" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe></body></html>
+<iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1789175725516" name="I0_1789175725516" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.zhTT8Br0Ho8.O%2Fd%3D1%2Frs%3DAHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A%2Fm%3D__features__#id=I0_1789175725516&amp;_gfid=I0_1789175725516&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=16069145" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1789801056588" name="I0_1789801056588" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.zhTT8Br0Ho8.O%2Fd%3D1%2Frs%3DAHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A%2Fm%3D__features__#id=I0_1789801056588&amp;_gfid=I0_1789801056588&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=21830338" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1790584313956" name="I0_1790584313956" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.zhTT8Br0Ho8.O%2Fd%3D1%2Frs%3DAHpOoo-7LeULGjNQZRvhdu3G71akb6JY6A%2Fm%3D__features__#id=I0_1790584313956&amp;_gfid=I0_1790584313956&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=11178433" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe>
+<script id="rosterHistoryScript">
+/* ================= Duty Roster: History (admin edits log, 1 year) + Print ================= */
+(function(){
+  const RH_KEY = 'HSIA_ROSTER_HISTORY_V1', RH_DAYS = 366;
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const esc = t=> String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const pad = n=> String(n).padStart(2,'0');
+  const dl = dk=>{ const a = String(dk).split('-'); return (+a[2]) + ' ' + MON[+a[1]-1] + ' ' + a[0]; };
+  const tl = t=>{ const d = new Date(t + DHAKA_OFFSET); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); };
+  const who = ()=>{ try{ return auditWho(); }catch(e){ return ''; } };
+  const isAdmin = ()=> { try{ return !!rosterUnlocked; }catch(e){ return false; } };
+
+  /* ---------- storage ---------- */
+  function rhLoad(){
+    try{
+      const o = JSON.parse(localStorage.getItem(RH_KEY));
+      if(o && typeof o === 'object' && !Array.isArray(o)) return { days:(o.days && typeof o.days === 'object') ? o.days : {}, base:o.base || null };
+    }catch(e){}
+    return { days:{}, base:null };
+  }
+  let RH = rhLoad();
+  function rhSave(){ try{ localStorage.setItem(RH_KEY, JSON.stringify(RH)); }catch(e){} }
+  function rhPrune(){
+    const cutoff = new Date(Date.now() - RH_DAYS * 86400000).toISOString().slice(0,10);
+    Object.keys(RH.days).forEach(dk=>{ if(dk < cutoff) delete RH.days[dk]; });
+  }
+  function rhSnap(){
+    const g = (typeof window.hsiaTHMRGroups === 'function') ? window.hsiaTHMRGroups() : { th:[], mr:[] };
+    const cp = r=> (r || []).map(x=>{ const n = []; for(let i=0;i<5;i++) n.push(String((x.names && x.names[i]) == null ? '' : x.names[i]).trim()); return { pos:String(x.pos || '').trim(), names:n }; });
+    const gr = a=> (a || []).map(x=> (x || []).map(n=> String(n == null ? '' : n).trim()));
+    return JSON.stringify({ ctrl:cp(ROSTER_CTRL), asst:cp(ROSTER), comm:cp(ROSTER_COMM), th:gr(g.th), mr:gr(g.mr) });
+  }
+
+  /* ---------- recording ---------- */
+  window.rosterHistSeed = function(){
+    if(!isAdmin()) return;
+    if(RH.base || Object.keys(RH.days).length) return;
+    RH.base = { t:Date.now(), by:who(), s:rhSnap() };
+    rhSave();
+  };
+  function rhNoteNow(){
+    if(!isAdmin()) return;
+    rosterHistSeed();
+    /* same day = one entry: the last edit of the day replaces the earlier ones */
+    RH.days[todayDateKey()] = { t:Date.now(), by:who(), s:rhSnap() };
+    rhPrune(); rhSave();
+    rhSyncDeb();
+  }
+  const rhNoteDeb = debounce(rhNoteNow, 900);
+  window.rosterHistNote = function(){ if(isAdmin()) rhNoteDeb(); };
+
+  /* ---------- Firebase sync (admin only; merges by day, newest edit wins) ---------- */
+  function rhMerge(remote){
+    if(!remote || typeof remote !== 'object') return false;
+    let ch = false;
+    const rd = remote.days || {};
+    Object.keys(rd).forEach(dk=>{
+      const r = rd[dk]; if(!r || !r.s) return;
+      const l = RH.days[dk];
+      if(!l || (r.t || 0) > (l.t || 0)){ RH.days[dk] = r; ch = true; }
+    });
+    if(remote.base && remote.base.s && (!RH.base || (remote.base.t || 0) < (RH.base.t || 0))){ RH.base = remote.base; ch = true; }
+    return ch;
+  }
+  function rhSync(){
+    try{
+      const cfg = (typeof loadFirebaseSyncConfig === 'function') ? loadFirebaseSyncConfig() : null;
+      if(!isAdmin() || typeof _fbDb === 'undefined' || !_fbDb || !cfg) return Promise.resolve(false);
+      return Promise.resolve(window._adminAuthPromise)
+        .then(()=> _fbDb.ref('hsia_sync/' + cfg.roomId + '/rosterHistory').once('value'))
+        .then(snap=>{
+          const ch = rhMerge(snap.val());
+          if(ch){ rhPrune(); rhSave(); }
+          const out = { days:RH.days }; if(RH.base) out.base = RH.base;
+          if(Object.keys(RH.days).length || RH.base) fbSet(cfg.roomId, 'rosterHistory', out);
+          return ch;
+        }).catch(()=> false);
+    }catch(e){ return Promise.resolve(false); }
+  }
+  const rhSyncDeb = debounce(rhSync, 1500);
+
+  /* ---------- versions + diff ---------- */
+  function rhVersions(){
+    const arr = Object.keys(RH.days).sort().reverse().map(dk=> ({ dk:dk, t:RH.days[dk].t, by:RH.days[dk].by, s:RH.days[dk].s }));
+    if(RH.base && RH.base.s) arr.push({ dk:'', base:true, t:RH.base.t, by:RH.base.by, s:RH.base.s });
+    const out = [];
+    for(let i = 0; i < arr.length; i++){ if(arr[i+1] && arr[i+1].s === arr[i].s) continue; out.push(arr[i]); }   /* an edit that changed nothing is not a new version */
+    return out;
+  }
+  const SETS = [['ctrl','Controllers'], ['asst','Aerodrome Assistant'], ['comm','Communication']];
+  function rhDiff(ns, os){
+    const N = JSON.parse(ns), O = os ? JSON.parse(os) : null, ch = [], cells = {};
+    if(!O) return { ch:ch, cells:cells };
+    SETS.forEach(st=>{
+      const k = st[0], lab = st[1], nl = N[k] || [], ol = O[k] || [], om = {}, nm = {};
+      ol.forEach(r=>{ om[r.pos] = r; }); nl.forEach(r=>{ nm[r.pos] = r; });
+      nl.forEach(r=>{
+        const o = om[r.pos];
+        if(!o){ ch.push(lab + ' · position added: ' + r.pos); for(let ci=0;ci<5;ci++) cells[k+'|'+r.pos+'|'+ci] = 1; return; }
+        for(let ci=0;ci<5;ci++){
+          const a = (o.names[ci] || '').trim(), b = (r.names[ci] || '').trim();
+          if(a !== b){ cells[k+'|'+r.pos+'|'+ci] = 1; ch.push(lab + ' · ' + r.pos + ' · Team ' + TEAMS[ci] + ': ' + (a || '—') + ' → ' + (b || '—')); }
+        }
+      });
+      ol.forEach(r=>{ if(!nm[r.pos]) ch.push(lab + ' · position removed: ' + r.pos); });
+    });
+    [['th','Traffic Hand'], ['mr','Marshaller']].forEach(st=>{
+      const k = st[0], nl = N[k] || [], ol = O[k] || [];
+      for(let g=0; g<5; g++){
+        const a = nl[g] || [], b = ol[g] || [], len = Math.max(a.length, b.length);
+        for(let p=0; p<len; p++){
+          const x = (a[p] || '').trim(), y = (b[p] || '').trim();
+          if(x !== y){ cells[k+'|'+g+'|'+p] = 1; ch.push(st[1] + ' · Shift ' + TEAMS[g] + ' #' + (p+1) + ': ' + (y || '—') + ' → ' + (x || '—')); }
+        }
+      }
+    });
+    return { ch:ch, cells:cells };
+  }
+  function rhTables(ns, cells){
+    const N = JSON.parse(ns);
+    let h = '';
+    SETS.forEach(st=>{
+      const k = st[0], rows = N[k] || [];
+      h += '<div class="rh-sub">' + esc(st[1]) + '</div><div class="rh-tw"><table class="rh-t"><thead><tr><th>Position</th>' + TEAMS.map(t=> '<th>' + t + '</th>').join('') + '</tr></thead><tbody>';
+      rows.forEach(r=>{
+        h += '<tr><td class="p">' + esc(r.pos) + '</td>';
+        for(let ci=0;ci<5;ci++) h += '<td' + (cells[k+'|'+r.pos+'|'+ci] ? ' class="chg"' : '') + '>' + esc(r.names[ci] || '') + '</td>';
+        h += '</tr>';
+      });
+      h += '</tbody></table></div>';
+    });
+    h += '<div class="rh-sub">Traffic Hand &amp; Marshaller</div><div class="rh-tw"><table class="rh-t"><thead><tr><th>Shift</th><th>Traffic Hand</th><th>Marshaller</th></tr></thead><tbody>';
+    for(let g=0; g<5; g++){
+      const cell = k=> ((N[k] && N[k][g]) || []).map((n,p)=> n ? '<div>' + (cells[k+'|'+g+'|'+p] ? '<span class="chg-i">' + esc(n) + '</span>' : esc(n)) + '</div>' : '').join('');
+      h += '<tr><td class="p">Shift ' + TEAMS[g] + '</td><td>' + cell('th') + '</td><td>' + cell('mr') + '</td></tr>';
+    }
+    h += '</tbody></table></div>';
+    return h;
+  }
+  function rhRender(){
+    const body = document.getElementById('rosterHistBody'), note = document.getElementById('rosterHistNote');
+    if(!body) return;
+    const v = rhVersions();
+    if(note) note.textContent = 'Every time the admin saves a change in the roster tables, the roster is logged here. If it is edited several times on the same day, only that day\u2019s last edit is kept. Kept for 1 year.';
+    if(!v.length){ body.innerHTML = '<div class="rh-note">No history yet. It starts recording from the admin\u2019s next roster edit.</div>'; return; }
+    body.innerHTML = v.map((it, i)=>{
+      const older = v[i+1], d = rhDiff(it.s, older ? older.s : null);
+      const newer = v[i-1];
+      const label = i === 0 ? 'Current' : i === 1 ? 'Previous' : 'Earlier';
+      let when;
+      if(it.base) when = 'Before history started' + (newer ? ' \u2192 ' + dl(newer.dk) : '');
+      else when = (i === 0 ? 'Running since ' + dl(it.dk) : dl(it.dk) + (newer ? ' \u2192 ' + dl(newer.dk) : ''));
+      const meta = it.base ? '' : ' · edited ' + tl(it.t) + (it.by ? ' · ' + esc(it.by) : '');
+      const badge = it.base ? '' : (older ? (d.ch.length ? '<span class="rh-n">' + d.ch.length + ' change' + (d.ch.length > 1 ? 's' : '') + '</span>' : '<span class="rh-n none">no change</span>') : '');
+      const chHtml = d.ch.length ? '<div class="rh-ch">' + d.ch.map(c=> '<div>' + esc(c) + '</div>').join('') + '</div>' : '';
+      return '<div class="rh-card' + (i === 0 ? ' cur open' : '') + '"><div class="rh-hd"><div class="rh-t"><b>' + label + (it.base ? ' · Initial' : '') + '</b><small>' + esc(when) + meta + '</small></div>' + badge + '<span class="rh-chev">\u25BE</span></div><div class="rh-bd">' + chHtml + rhTables(it.s, d.cells) + '</div></div>';
+    }).join('');
+  }
+  function rhOpen(){
+    if(!isAdmin()){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
+    rosterHistSeed();
+    rhRender();
+    const ov = document.getElementById('rosterHistOverlay'); if(ov) ov.classList.add('show');
+    rhSync().then(ch=>{ if(ch) rhRender(); });
+  }
+
+  /* ---------- Print: all current roster tables ---------- */
+  function rpTable(rows){
+    let h = '<table class="rp-t"><colgroup><col style="width:21%">' + '<col style="width:15.8%">'.repeat(5) + '</colgroup><thead><tr><th>Duty Place</th>' + TEAMS.map(t=> '<th>' + t + '</th>').join('') + '</tr></thead><tbody>';
+    (rows || []).forEach(r=>{
+      h += '<tr><td class="p">' + esc(r.pos) + '</td>';
+      for(let ci=0;ci<5;ci++) h += '<td>' + esc((r.names && r.names[ci]) || '') + '</td>';
+      h += '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+  function printRosterAll(){
+    let root = document.getElementById('rosterPrintRoot');
+    if(!root){ root = document.createElement('div'); root.id = 'rosterPrintRoot'; document.body.appendChild(root); }
+    const f = nowDhakaFields();
+    const stamp = 'Printed: ' + pad(f.day) + '/' + pad(f.m+1) + '/' + f.y;
+    let h = '';
+    [['Controllers', ROSTER_CTRL], ['Aerodrome Assistant (Area)', ROSTER], ['Communication', ROSTER_COMM]].forEach(st=>{
+      h += '<section class="rp-sec"><h2>Duty Roster \u2014 ' + esc(st[0]) + '</h2><div class="rp-d">' + stamp + '</div>' + rpTable(st[1]) + '</section>';
+    });
+    const g = (typeof window.hsiaTHMRGroups === 'function') ? window.hsiaTHMRGroups() : { th:[], mr:[] };
+    h += '<section class="rp-sec"><h2>Duty Roster \u2014 Traffic Hand &amp; Marshaller</h2><div class="rp-d">' + stamp + '</div><table class="rp-t"><colgroup><col style="width:16%"><col style="width:42%"><col style="width:42%"></colgroup><thead><tr><th>Shift</th><th>Traffic Hand</th><th>Marshaller</th></tr></thead><tbody>';
+    for(let i=0;i<5;i++){
+      const cell = a=> ((a && a[i]) || []).map(n=> String(n || '').trim()).filter(Boolean).map(esc).join('<br>');
+      h += '<tr><td class="p">Shift ' + TEAMS[i] + '</td><td>' + cell(g.th) + '</td><td>' + cell(g.mr) + '</td></tr>';
+    }
+    h += '</tbody></table></section>';
+    root.innerHTML = h;
+    document.body.classList.add('roster-printing'); document.documentElement.classList.add('roster-printing');
+    const done = ()=>{ document.body.classList.remove('roster-printing'); document.documentElement.classList.remove('roster-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } }, 60);
+  }
+
+  /* ---------- wiring ---------- */
+  function init(){
+    const hb = document.getElementById('rosterHistBtn'), pb = document.getElementById('rosterPrintBtn');
+    if(hb) hb.addEventListener('click', e=>{ e.stopPropagation(); rhOpen(); });
+    if(pb) pb.addEventListener('click', e=>{ e.stopPropagation(); printRosterAll(); });
+    const ov = document.getElementById('rosterHistOverlay'), cl = document.getElementById('rosterHistClose');
+    if(cl) cl.addEventListener('click', ()=> ov && ov.classList.remove('show'));
+    if(ov) ov.addEventListener('click', e=>{
+      if(e.target === ov){ ov.classList.remove('show'); return; }
+      const hd = e.target.closest && e.target.closest('.rh-hd');
+      if(hd) hd.parentNode.classList.toggle('open');
+    });
+    const sync = ()=>{
+      const on = isAdmin();
+      document.body.classList.toggle('rh-admin', on);
+      if(!on){ const o = document.getElementById('rosterHistOverlay'); if(o) o.classList.remove('show'); }
+    };
+    sync();
+    if(isAdmin()) rosterHistSeed();
+    try{ if(window.hsiaOnAdminReady) window.hsiaOnAdminReady(()=>{ rosterHistSeed(); sync(); }); }catch(e){}
+    try{ if(window.hsiaOnAdminLost) window.hsiaOnAdminLost(sync); }catch(e){}
+    /* admin state changes also go through hsiaUpdatePrivUI -> re-check every time */
+    const prev = window.hsiaUpdatePrivUI;
+    window.hsiaUpdatePrivUI = function(){ let r; try{ if(typeof prev === 'function') r = prev.apply(this, arguments); }catch(e){} sync(); return r; };
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+</body></html>
