@@ -2133,8 +2133,17 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
 .rh-t td.p{ text-align:left; font-weight:700; white-space:nowrap; }
 .rh-t td.chg{ background:rgba(245,181,61,.22); font-weight:700; }
 .rh-t .chg-i{ background:rgba(245,181,61,.22); border-radius:4px; padding:0 3px; font-weight:700; }
+.rp-opt-lbl{ font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:12px 0 6px; }
+.rp-opt-row{ display:flex; flex-wrap:wrap; gap:6px; }
+.rp-actions{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:16px; }
+.rp-btn{ border:0; border-radius:10px; padding:12px 6px; font-weight:800; font-size:13px; cursor:pointer; color:#10141c; font-family:inherit; }
+.rp-btn:active{ filter:brightness(.92); }
+.rp-btn[disabled]{ opacity:.5; pointer-events:none; }
+#rpPrint{ background:#d6c6ff; } #rpPdf{ background:#f5b53d; } #rpPng{ background:#7fd6c2; }
+.rp-hint{ font-size:11.5px; line-height:1.6; color:var(--muted); margin-top:12px; }
+.rp-status{ font-size:12px; color:var(--gold-soft); min-height:16px; margin-top:8px; }
 #rosterPrintRoot{ display:none; }
-#rosterPrintRoot.rp-measure{ display:block; position:absolute; left:-10000px; top:0; width:277mm; visibility:hidden; font-family:Arial,"Noto Sans Bengali",sans-serif; }
+#rosterPrintRoot.rp-measure{ display:block; position:absolute; left:-10000px; top:0; width:var(--rp-w,277mm); visibility:hidden; font-family:Arial,"Noto Sans Bengali",sans-serif; }
 #rosterPrintRoot .rp-sec{ --k:1; box-sizing:border-box; }
 #rosterPrintRoot .rp-sec h2{ font-size:calc(14pt * var(--k)); margin:0 0 2pt; color:#000; }
 #rosterPrintRoot .rp-d{ font-size:calc(9pt * var(--k)); margin:0 0 calc(8pt * var(--k)); color:#333; }
@@ -2145,12 +2154,11 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
 #rosterPrintRoot .rp-t thead{ display:table-header-group; }
 #rosterPrintRoot .rp-t tr{ page-break-inside:avoid; }
 @media print{
-  #rosterPrintRoot .rp-sec{ page-break-after:always; break-after:page; overflow:hidden; height:182mm; }
+  #rosterPrintRoot .rp-sec{ page-break-after:always; break-after:page; overflow:hidden; height:var(--rp-h,182mm); }
   #rosterPrintRoot .rp-sec:last-child{ page-break-after:auto; break-after:auto; }
-  @page rosterland{ size:A4 landscape; margin:10mm; }
   html.roster-printing, body.roster-printing{ background:#fff !important; margin:0 !important; padding:0 !important; }
   body.roster-printing > *:not(#rosterPrintRoot){ display:none !important; }
-  body.roster-printing #rosterPrintRoot{ display:block !important; page:rosterland; color:#000; background:#fff; font-family:Arial,"Noto Sans Bengali",sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body.roster-printing #rosterPrintRoot{ display:block !important; color:#000; background:#fff; font-family:Arial,"Noto Sans Bengali",sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 </style>
 </head>
@@ -2594,6 +2602,35 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
       <div class="rh-note" id="rosterHistNote"></div>
       <div id="rosterHistBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="rosterPrintOverlay" style="z-index:10005;padding:16px 8px;">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <div class="modal-title">🖨️ Print / Download Roster</div>
+        <button type="button" class="modal-close" id="rosterPrintClose">✕</button>
+      </div>
+      <div class="rp-opt-lbl">Roster</div>
+      <div class="rp-opt-row" id="rpSecRow">
+        <button type="button" class="xp-tab active" data-sec="all">All</button>
+        <button type="button" class="xp-tab" data-sec="0">Controllers</button>
+        <button type="button" class="xp-tab" data-sec="1">Aerodrome Asst</button>
+        <button type="button" class="xp-tab" data-sec="2">Communication</button>
+        <button type="button" class="xp-tab" data-sec="3">TH &amp; Marshaller</button>
+      </div>
+      <div class="rp-opt-lbl">A4 Page</div>
+      <div class="rp-opt-row" id="rpOriRow">
+        <button type="button" class="xp-tab active" data-ori="landscape">Landscape</button>
+        <button type="button" class="xp-tab" data-ori="portrait">Portrait</button>
+      </div>
+      <div class="rp-actions">
+        <button type="button" class="rp-btn" id="rpPrint">🖨️ Print</button>
+        <button type="button" class="rp-btn" id="rpPdf">⬇ PDF</button>
+        <button type="button" class="rp-btn" id="rpPng">⬇ PNG</button>
+      </div>
+      <div class="rp-status" id="rpStatus"></div>
+      <div class="rp-hint">পেজ সবসময় A4, মার্জিন 10 mm। Landscape/Portrait এখান থেকেই বেছে নিন — টেবিলের ফন্ট ও ঘরের মাপ পেজ অনুযায়ী নিজে থেকে মিলে যাবে। Print ডায়ালগে Scale = 100% / Default রাখুন (Save as PDF করলেও vector কোয়ালিটি থাকে)। PDF/PNG তৈরি হয় 300 DPI-তে। "All" দিয়ে PNG নিলে প্রতিটি রোস্টারের আলাদা ছবি নামবে।</div>
     </div>
   </div>
 
@@ -14496,26 +14533,43 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     });
     return h + '</tbody></table>';
   }
+  /* ---------- Print / PDF / PNG : A4, landscape by default, portrait on request ---------- */
+  const RP = { ori:'landscape', sec:'all' };
+  const RP_FONT = 'Arial, "Noto Sans Bengali", "Nirmala UI", "Vrinda", "Kalpurush", sans-serif';
+  function rpData(){
+    const g = (typeof window.hsiaTHMRGroups === 'function') ? window.hsiaTHMRGroups() : { th:[], mr:[] };
+    const mk = (title, rows)=> ({
+      title:title, head:['Duty Place'].concat(TEAMS), widths:[21,15.8,15.8,15.8,15.8,15.8],
+      rows:(rows || []).map(r=> [String(r.pos == null ? '' : r.pos)].concat([0,1,2,3,4].map(ci=> String((r.names && r.names[ci]) || ''))))
+    });
+    const out = [mk('Controllers', ROSTER_CTRL), mk('Aerodrome Assistant (Area)', ROSTER), mk('Communication', ROSTER_COMM)];
+    const rows = [];
+    for(let i=0;i<5;i++){
+      const cell = a=> ((a && a[i]) || []).map(n=> String(n || '').trim()).filter(Boolean).join('\n');
+      rows.push(['Shift ' + TEAMS[i], cell(g.th), cell(g.mr)]);
+    }
+    out.push({ title:'Traffic Hand & Marshaller', head:['Shift','Traffic Hand','Marshaller'], widths:[16,42,42], rows:rows });
+    return out;
+  }
+  function rpSelected(){ const d = rpData(); return RP.sec === 'all' ? d : [d[+RP.sec]]; }
+  function rpStamp(){ const f = nowDhakaFields(); return 'Printed: ' + pad(f.day) + '/' + pad(f.m+1) + '/' + f.y; }
+  function rpDims(){ return RP.ori === 'portrait' ? { w:190, secH:270, fitH:266 } : { w:277, secH:182, fitH:178 }; }
+  function rpTableHtml(p){
+    let h = '<table class="rp-t"><colgroup>' + p.widths.map(w=> '<col style="width:' + w + '%">').join('') + '</colgroup><thead><tr>' + p.head.map(t=> '<th>' + esc(t) + '</th>').join('') + '</tr></thead><tbody>';
+    p.rows.forEach(r=>{ h += '<tr>' + r.map((c,i)=> '<td' + (i === 0 ? ' class="p"' : '') + '>' + esc(c).replace(/\n/g,'<br>') + '</td>').join('') + '</tr>'; });
+    return h + '</tbody></table>';
+  }
+
+  /* real printing (vector text): @page size follows the chosen orientation, every roster is shrunk to fit ONE A4 page */
   function printRosterAll(){
+    const d = rpDims(), pages = rpSelected(), stamp = rpStamp();
     let root = document.getElementById('rosterPrintRoot');
     if(!root){ root = document.createElement('div'); root.id = 'rosterPrintRoot'; document.body.appendChild(root); }
-    const f = nowDhakaFields();
-    const stamp = 'Printed: ' + pad(f.day) + '/' + pad(f.m+1) + '/' + f.y;
-    let h = '';
-    [['Controllers', ROSTER_CTRL], ['Aerodrome Assistant (Area)', ROSTER], ['Communication', ROSTER_COMM]].forEach(st=>{
-      h += '<section class="rp-sec"><h2>Duty Roster \u2014 ' + esc(st[0]) + '</h2><div class="rp-d">' + stamp + '</div>' + rpTable(st[1]) + '</section>';
-    });
-    const g = (typeof window.hsiaTHMRGroups === 'function') ? window.hsiaTHMRGroups() : { th:[], mr:[] };
-    h += '<section class="rp-sec"><h2>Duty Roster \u2014 Traffic Hand &amp; Marshaller</h2><div class="rp-d">' + stamp + '</div><table class="rp-t"><colgroup><col style="width:16%"><col style="width:42%"><col style="width:42%"></colgroup><thead><tr><th>Shift</th><th>Traffic Hand</th><th>Marshaller</th></tr></thead><tbody>';
-    for(let i=0;i<5;i++){
-      const cell = a=> ((a && a[i]) || []).map(n=> String(n || '').trim()).filter(Boolean).map(esc).join('<br>');
-      h += '<tr><td class="p">Shift ' + TEAMS[i] + '</td><td>' + cell(g.th) + '</td><td>' + cell(g.mr) + '</td></tr>';
-    }
-    h += '</tbody></table></section>';
-    root.innerHTML = h;
-    /* every roster must stay on ONE page: shrink that table's font / padding until it fits the printable height (A4 landscape, 10 mm margins) */
+    root.style.setProperty('--rp-w', d.w + 'mm');
+    root.style.setProperty('--rp-h', d.secH + 'mm');
+    root.innerHTML = pages.map(p=> '<section class="rp-sec"><h2>Duty Roster \u2014 ' + esc(p.title) + '</h2><div class="rp-d">' + stamp + '</div>' + rpTableHtml(p) + '</section>').join('');
     root.classList.add('rp-measure');
-    const maxPx = 178 * 96 / 25.4;
+    const maxPx = d.fitH * 96 / 25.4;
     root.querySelectorAll('.rp-sec').forEach(sec=>{
       sec.style.height = 'auto';
       let k = 1;
@@ -14524,17 +14578,204 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       sec.style.height = '';
     });
     root.classList.remove('rp-measure');
+    let ps = document.getElementById('rpPageStyle');
+    if(!ps){ ps = document.createElement('style'); ps.id = 'rpPageStyle'; document.head.appendChild(ps); }
+    ps.textContent = '@page{ size:A4 ' + RP.ori + '; margin:10mm; }';
     document.body.classList.add('roster-printing'); document.documentElement.classList.add('roster-printing');
-    const done = ()=>{ document.body.classList.remove('roster-printing'); document.documentElement.classList.remove('roster-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
+    const done = ()=>{ document.body.classList.remove('roster-printing'); document.documentElement.classList.remove('roster-printing'); root.innerHTML = ''; ps.textContent = ''; window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
     setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } }, 60);
+  }
+
+  /* canvas renderer used for PNG / PDF (A4 @ 300 DPI) */
+  function rpWrap(ctx, text, maxW){
+    const out = [];
+    String(text).split('\n').forEach(par=>{
+      const words = par.split(/\s+/).filter(Boolean);
+      if(!words.length){ out.push(''); return; }
+      let line = '';
+      words.forEach(w=>{
+        const t = line ? line + ' ' + w : w;
+        if(ctx.measureText(t).width <= maxW){ line = t; return; }
+        if(line){ out.push(line); line = ''; }
+        if(ctx.measureText(w).width <= maxW){ line = w; return; }
+        let part = '';
+        Array.from(w).forEach(ch=>{
+          if(part && ctx.measureText(part + ch).width > maxW){ out.push(part); part = ch; } else part += ch;
+        });
+        line = part;
+      });
+      if(line) out.push(line);
+    });
+    return out.length ? out : [''];
+  }
+  function rpMeasure(ctx, p, W, S, k){
+    const fs = 11 * k * S, padV = 4 * k * S, padH = 5 * k * S, lh = fs * 1.3;
+    const tot = p.widths.reduce((a,b)=> a + b, 0);
+    const cw = p.widths.map(w=> W * w / tot);
+    const mk = (cells, isHead)=>{
+      const lines = cells.map((c,i)=>{
+        ctx.font = ((isHead || i === 0) ? '700 ' : '400 ') + fs + 'px ' + RP_FONT;
+        return rpWrap(ctx, c, cw[i] - 2 * padH - 1);
+      });
+      const n = Math.max.apply(null, lines.map(l=> l.length));
+      return { lines:lines, h:n * lh + 2 * padV, head:isHead };
+    };
+    const head = mk(p.head, true), body = p.rows.map(r=> mk(r, false));
+    const titleH = 14 * k * S * 1.3 + 2 * k * S, descH = 9 * k * S * 1.3 + 8 * k * S;
+    return { k:k, fs:fs, padH:padH, lh:lh, cw:cw, head:head, body:body, titleH:titleH, descH:descH,
+             total:titleH + descH + head.h + body.reduce((a,r)=> a + r.h, 0) };
+  }
+  function rpRenderPage(p, stamp, dpi){
+    const mm = dpi / 25.4, S = dpi / 72, land = RP.ori === 'landscape';
+    const cw_ = Math.round(mm * (land ? 297 : 210)), ch_ = Math.round(mm * (land ? 210 : 297));
+    const cv = document.createElement('canvas'); cv.width = cw_; cv.height = ch_;
+    const ctx = cv.getContext('2d');
+    if(!ctx) throw new Error('canvas unavailable');
+    const M = 10 * mm, W = cw_ - 2 * M, H = ch_ - 2 * M - 3 * mm;
+    let k = 1, L = rpMeasure(ctx, p, W, S, k);
+    while(L.total > H && k > 0.28){ k = Math.round((k - 0.03) * 100) / 100; L = rpMeasure(ctx, p, W, S, k); }
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw_, ch_);
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#000'; ctx.font = '700 ' + (14 * k * S) + 'px ' + RP_FONT;
+    ctx.fillText('Duty Roster \u2014 ' + p.title, M, M + 14 * k * S * 0.65);
+    ctx.fillStyle = '#333'; ctx.font = '400 ' + (9 * k * S) + 'px ' + RP_FONT;
+    ctx.fillText(stamp, M, M + 14 * k * S * 1.3 + 2 * k * S + 9 * k * S * 0.65);
+    ctx.lineWidth = Math.max(1, 0.6 * k * S); ctx.strokeStyle = '#000';
+    let y = M + L.titleH + L.descH;
+    [L.head].concat(L.body).forEach(row=>{
+      let x = M;
+      row.lines.forEach((lines, i)=>{
+        const w = L.cw[i];
+        ctx.fillStyle = row.head ? '#eee' : '#fff'; ctx.fillRect(x, y, w, row.h);
+        ctx.strokeRect(x, y, w, row.h);
+        ctx.fillStyle = '#000';
+        ctx.font = ((row.head || i === 0) ? '700 ' : '400 ') + L.fs + 'px ' + RP_FONT;
+        const left = (!row.head && i === 0);
+        ctx.textAlign = left ? 'left' : 'center';
+        const tx = left ? x + L.padH : x + w / 2;
+        const top = y + (row.h - lines.length * L.lh) / 2 + L.lh / 2;
+        lines.forEach((ln, li)=> ctx.fillText(ln, tx, top + li * L.lh));
+        x += w;
+      });
+      y += row.h;
+    });
+    return cv;
+  }
+  async function rpRender(p, stamp){
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    try{ return rpRenderPage(p, stamp, 300); }catch(e){ return rpRenderPage(p, stamp, 200); }   /* low-memory phones */
+  }
+
+  /* minimal PDF writer: one full-bleed A4 image per page (lossless gray Flate, JPEG fallback) */
+  async function rpDeflate(u8){
+    const cs = new CompressionStream('deflate'), w = cs.writable.getWriter();
+    w.write(u8); w.close();
+    return new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  }
+  async function rpPdfImage(cv){
+    const w = cv.width, h = cv.height;
+    if(typeof CompressionStream === 'function'){
+      try{
+        const id = cv.getContext('2d').getImageData(0, 0, w, h).data, g = new Uint8Array(w * h);
+        for(let i = 0, j = 0; j < g.length; i += 4, j++) g[j] = id[i];
+        return { w:w, h:h, cs:'DeviceGray', filter:'FlateDecode', data:await rpDeflate(g) };
+      }catch(e){}
+    }
+    const blob = await new Promise(r=> cv.toBlob(r, 'image/jpeg', 1));
+    return { w:w, h:h, cs:'DeviceRGB', filter:'DCTDecode', data:new Uint8Array(await blob.arrayBuffer()) };
+  }
+  function rpBuildPdf(pages, pw, ph){
+    const enc = new TextEncoder(), chunks = [], offs = [];
+    let len = 0;
+    const push = x=>{ const u = (typeof x === 'string') ? enc.encode(x) : x; chunks.push(u); len += u.length; };
+    const obj = (id, fn)=>{ offs[id] = len; push(id + ' 0 obj\n'); fn(); push('\nendobj\n'); };
+    push('%PDF-1.4\n'); push(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+    const n = pages.length;
+    obj(1, ()=> push('<< /Type /Catalog /Pages 2 0 R >>'));
+    obj(2, ()=> push('<< /Type /Pages /Kids [' + pages.map((_,i)=> (3 + 3 * i) + ' 0 R').join(' ') + '] /Count ' + n + ' >>'));
+    pages.forEach((p, i)=>{
+      const id = 3 + 3 * i, cs = 'q ' + pw + ' 0 0 ' + ph + ' 0 0 cm /Im0 Do Q';
+      obj(id, ()=> push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pw + ' ' + ph + '] /Resources << /XObject << /Im0 ' + (id + 2) + ' 0 R >> >> /Contents ' + (id + 1) + ' 0 R >>'));
+      obj(id + 1, ()=> push('<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream'));
+      obj(id + 2, ()=>{
+        push('<< /Type /XObject /Subtype /Image /Width ' + p.w + ' /Height ' + p.h + ' /ColorSpace /' + p.cs + ' /BitsPerComponent 8 /Filter /' + p.filter + ' /Length ' + p.data.length + ' >>\nstream\n');
+        push(p.data); push('\nendstream');
+      });
+    });
+    const total = 3 + 3 * n, xr = len;
+    let x = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+    for(let i = 1; i < total; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+    push(x + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xr + '\n%%EOF');
+    return new Blob(chunks, { type:'application/pdf' });
+  }
+  function rpSave(blob, name){
+    const a = document.createElement('a'), url = URL.createObjectURL(blob);
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); }, 4000);
+  }
+  function rpName(part, ext){
+    const f = nowDhakaFields();
+    return 'Duty-Roster-' + part + '-A4-' + RP.ori + '-' + f.y + '-' + pad(f.m+1) + '-' + pad(f.day) + '.' + ext;
+  }
+  const rpSlug = s=> String(s).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  async function rpDownloadPdf(){
+    const pages = rpSelected(), stamp = rpStamp(), imgs = [];
+    for(let i = 0; i < pages.length; i++){
+      rpStatus('Building PDF… ' + (i + 1) + '/' + pages.length);
+      const cv = await rpRender(pages[i], stamp);
+      imgs.push(await rpPdfImage(cv));
+      cv.width = cv.height = 1;
+    }
+    const land = RP.ori === 'landscape';
+    rpSave(rpBuildPdf(imgs, land ? 841.89 : 595.28, land ? 595.28 : 841.89), rpName(pages.length > 1 ? 'All' : rpSlug(pages[0].title), 'pdf'));
+  }
+  async function rpDownloadPng(){
+    const pages = rpSelected(), stamp = rpStamp();
+    for(let i = 0; i < pages.length; i++){
+      rpStatus('Building PNG… ' + (i + 1) + '/' + pages.length);
+      const cv = await rpRender(pages[i], stamp);
+      const blob = await new Promise(r=> cv.toBlob(r, 'image/png'));
+      rpSave(blob, rpName(rpSlug(pages[i].title), 'png'));
+      cv.width = cv.height = 1;
+      await new Promise(r=> setTimeout(r, 500));
+    }
+  }
+  function rpStatus(msg){ const s = document.getElementById('rpStatus'); if(s) s.textContent = msg || ''; }
+  function rpBusy(on){ ['rpPrint','rpPdf','rpPng'].forEach(id=>{ const b = document.getElementById(id); if(b) b.disabled = !!on; }); }
+  async function rpRun(fn, okMsg){
+    rpBusy(true);
+    try{ await fn(); rpStatus(okMsg || ''); }
+    catch(e){ rpStatus('Failed: ' + (e && e.message ? e.message : e)); }
+    rpBusy(false);
+  }
+  function rpOpen(){ const ov = document.getElementById('rosterPrintOverlay'); if(ov){ rpStatus(''); ov.classList.add('show'); } }
+  function rpWire(){
+    const ov = document.getElementById('rosterPrintOverlay');
+    if(!ov || ov._rpWired) return;
+    ov._rpWired = true;
+    const close = ()=> ov.classList.remove('show');
+    document.getElementById('rosterPrintClose').addEventListener('click', close);
+    ov.addEventListener('click', e=>{ if(e.target === ov) close(); });
+    const chips = (rowId, key, attr)=>{
+      const row = document.getElementById(rowId);
+      row.addEventListener('click', e=>{
+        const b = e.target.closest('[data-' + attr + ']'); if(!b) return;
+        RP[key] = b.getAttribute('data-' + attr);
+        row.querySelectorAll('[data-' + attr + ']').forEach(x=> x.classList.toggle('active', x === b));
+      });
+    };
+    chips('rpSecRow', 'sec', 'sec'); chips('rpOriRow', 'ori', 'ori');
+    document.getElementById('rpPrint').addEventListener('click', ()=> rpRun(async ()=>{ printRosterAll(); }, ''));
+    document.getElementById('rpPdf').addEventListener('click', ()=> rpRun(rpDownloadPdf, 'PDF ready ✓'));
+    document.getElementById('rpPng').addEventListener('click', ()=> rpRun(rpDownloadPng, 'PNG ready ✓'));
   }
 
   /* ---------- wiring ---------- */
   function init(){
     const hb = document.getElementById('rosterHistBtn'), pb = document.getElementById('rosterPrintBtn');
     if(hb) hb.addEventListener('click', e=>{ e.stopPropagation(); rhOpen(); });
-    if(pb) pb.addEventListener('click', e=>{ e.stopPropagation(); printRosterAll(); });
+    rpWire(); if(pb) pb.addEventListener('click', e=>{ e.stopPropagation(); rpOpen(); });
     const ov = document.getElementById('rosterHistOverlay'), cl = document.getElementById('rosterHistClose');
     if(cl) cl.addEventListener('click', ()=> ov && ov.classList.remove('show'));
     if(ov) ov.addEventListener('click', e=>{
