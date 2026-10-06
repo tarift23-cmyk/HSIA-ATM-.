@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261006-031957';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261006-034507';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -67,18 +67,18 @@
   function note(){
     try{
       var d = document.createElement('div');
-      d.textContent = 'নতুন ভার্সন পাওয়া গেছে — আপডেট হচ্ছে…';
-      d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483647;background:#1B2130;color:#F0F1F3;border:1px solid #504d4c;border-radius:12px;padding:10px 16px;font:600 13px Inter,system-ui,sans-serif;';
+      d.textContent = 'New version found \u2014 updating\u2026';
+      d.style.cssText = 'position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:2147483647;background:#F0F1F3;color:#1B2130;border-radius:999px;padding:9px 18px;font:600 13px Inter,system-ui,sans-serif;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.45);';
       (document.body || document.documentElement).appendChild(d);
     }catch(e){}
   }
-  function forceReload(){
+  function forceReload(silent){
     try{ sessionStorage.setItem(GUARD, String(Date.now())); }catch(e){}
-    note();
+    if(!silent) note();
     var steps = [];
     /* throw away the service worker's saved copy of the page first: with no saved copy, sw.js cannot fall back to the old one after its 4 s wait */
     if(window.caches && caches.keys) steps.push(caches.keys().then(function(ks){ return Promise.all(ks.map(function(k){ return caches.delete(k); })); }));
-    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration) steps.push(navigator.serviceWorker.getRegistration().then(function(g){ return g && g.update(); }));
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration) try{ navigator.serviceWorker.getRegistration().then(function(g){ if(g) g.update(); }).catch(function(){}); }catch(e){}   /* fire and forget: never makes the reload wait */
     Promise.all(steps.map(function(p){ return p.catch(function(){}); })).then(function(){
       /* a different address (?_r=) also skips the browser / CDN copy; the line at the top of the page removes it from the address bar again */
       try{ var u = new URL(location.href); u.searchParams.set('_r', String(Date.now())); location.replace(u.href); }
@@ -101,57 +101,78 @@
     }).catch(function(){}).then(function(){ busy = false; });
   }
 
-  /* ---- 🔄 button: keep checking GitHub until the newest uploaded index.html is the one that is running ---- */
-  var RFL = 'HSIA_RFL_V1', RFL_MAX = 3*60*1000, RFL_GAP = 4000, rflTimer = 0;
+  /* ---- 🔄 button: compare the running version with GitHub's. Same -> nothing happens. Older -> keep reloading from GitHub (caches dropped) until the newest one runs ---- */
+  var RFL = 'HSIA_RFL_V1', RFL_MAX = 30*60*1000, rflBusy = false, rflGoing = false;
   function rflGet(){ try{ return JSON.parse(localStorage.getItem(RFL)); }catch(e){ return null; } }
   function rflSet(o){ try{ if(o) localStorage.setItem(RFL, JSON.stringify(o)); else localStorage.removeItem(RFL); }catch(e){} }
   function stampOf(t){ var m = /HSIA_BUILD\s*=\s*'([^']+)'/.exec(t); return m ? m[1] : ''; }
-  function rflToast(msg, keep){
+  function rflToast(msg, ms){
     try{
       var d = document.getElementById('hsiaRflToast');
       if(!d){
         d = document.createElement('div'); d.id = 'hsiaRflToast';
-        d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483647;background:#1B2130;color:#F0F1F3;border:1px solid #504d4c;border-radius:12px;padding:10px 16px;font:600 13px Inter,system-ui,sans-serif;max-width:88vw;text-align:center;pointer-events:none;';
+        d.style.cssText = 'position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:2147483647;background:#F0F1F3;color:#1B2130;border-radius:999px;padding:9px 18px;font:600 13px Inter,system-ui,sans-serif;max-width:88vw;text-align:center;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.45);white-space:nowrap;';
         (document.body || document.documentElement).appendChild(d);
       }
       d.textContent = msg; clearTimeout(d._h);
-      if(!keep) d._h = setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 3200);
+      if(ms !== 0) d._h = setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, ms || 2000);
     }catch(e){}
   }
   function rflIcon(on){ var b = document.getElementById('refreshIconBtn'); if(b) b.classList.toggle('spin', !!on); }
-  function rflStop(msg){ clearTimeout(rflTimer); rflTimer = 0; rflSet(null); rflIcon(false); if(msg) rflToast(msg); else { var d = document.getElementById('hsiaRflToast'); if(d && d.parentNode) d.parentNode.removeChild(d); } }
-  function rflStep(){
-    clearTimeout(rflTimer);
-    var s = rflGet(); if(!s){ rflIcon(false); return; }
-    if(Date.now() > s.until){ rflStop('নতুন ভার্সন পাওয়া যায়নি — আপনি সর্বশেষ ভার্সনেই আছেন'); return; }
-    rflIcon(true);
-    fetch(bust(), { cache:'no-store' }).then(function(r){ if(!r.ok) throw new Error('http'); return r.text(); }).then(function(t){
-      var fresh = stampOf(t), mine = window.HSIA_BUILD || '', h = hash(t), st = load();
-      var differs = fresh ? (fresh !== mine) : (!!st.hash && st.hash !== h);
+  /* reads only the first part of the page (the build stamp sits near the top) and drops the rest: fast even on a slow phone connection */
+  function fetchStamp(){
+    var ac = (window.AbortController ? new AbortController() : null), timer = ac ? setTimeout(function(){ ac.abort(); }, 7000) : 0;
+    return fetch(bust(), { cache:'no-store', signal: ac ? ac.signal : undefined }).then(function(r){
+      if(!r.ok) throw new Error('http');
+      if(!r.body || !r.body.getReader || !window.TextDecoder) return r.text().then(function(t){ clearTimeout(timer); return { stamp:stampOf(t), h:hash(t) }; });
+      var rd = r.body.getReader(), dec = new TextDecoder(), buf = '';
+      function pump(){
+        return rd.read().then(function(x){
+          if(x.done){ clearTimeout(timer); return { stamp:stampOf(buf), h:hash(buf) }; }
+          buf += dec.decode(x.value, { stream:true });
+          var st = stampOf(buf);
+          if(st){ clearTimeout(timer); try{ rd.cancel(); }catch(e){} return { stamp:st, h:'' }; }
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+  /* Silent loop: an old copy -> reload straight from GitHub again and again (no banner, no spinner, no attempt limit) until the newest build runs.
+     Only then 'Version up to date' is shown once and it stops. Tapping while already on the newest build does nothing at all. */
+  function rflCheck(resume){
+    if(rflBusy) return; rflBusy = true; rflGoing = false;
+    var s = rflGet() || { start: Date.now(), n: 0 };
+    var retry = false;
+    fetchStamp().then(function(r){
+      var mine = window.HSIA_BUILD || '', st = load();
+      var differs = r.stamp ? (r.stamp !== mine) : (!!st.hash && st.hash !== r.h);
       if(differs){
-        s.reloaded = true; rflSet(s);
-        save({ sig:'', hash:h });
-        rflToast('নতুন ভার্সন পাওয়া গেছে — আপডেট হচ্ছে…', true);
-        forceReload();                     // the page loads again and this loop carries on there
+        if(Date.now() - s.start > RFL_MAX){ rflSet(null); rflToast("Couldn't load the latest version. Try again."); return; }
+        s.at = Date.now(); s.n = (s.n || 0) + 1; rflSet(s);
+        if(r.h) save({ sig:'', hash:r.h });
+        rflGoing = true;
+        setTimeout(function(){ forceReload(true); }, resume ? Math.min(120 * (s.n - 1), 1200) : 0);   // starts at once; short pauses only if GitHub keeps serving the old copy
         return;
       }
-      if(s.reloaded){ rflStop('✔ সর্বশেষ ভার্সন লোড হয়েছে'); return; }
-      rflToast('নতুন আপলোডের জন্য অপেক্ষা করছি… (আবার চাপলে বন্ধ হবে)', true);
-      rflTimer = setTimeout(rflStep, RFL_GAP);
-    }).catch(function(){ rflTimer = setTimeout(rflStep, RFL_GAP * 2); });
+      var wasUpdating = !!rflGet();
+      rflSet(null);
+      if(resume || wasUpdating) rflToast('Version up to date \u2713');   // newest build reached after updating -> shown once; a plain tap on an up-to-date copy shows nothing
+    }).catch(function(){
+      if(resume && navigator.onLine !== false && Date.now() - s.start <= RFL_MAX){ retry = true; return; }   // short network hiccup while updating: quietly try again
+      rflSet(null);   /* offline / check failed: say nothing, the already loaded version simply stays */
+    }).then(function(){
+      rflBusy = false;
+      if(retry) setTimeout(function(){ rflCheck(true); }, 800);
+    });
   }
-  function rflToggle(){
-    if(rflGet()){ rflStop('রিফ্রেশ বন্ধ করা হয়েছে'); return; }
-    if(navigator.onLine === false){ rflToast('ইন্টারনেট সংযোগ নেই'); return; }
-    rflSet({ until: Date.now() + RFL_MAX, reloaded:false });
-    rflIcon(true); rflToast('সর্বশেষ ভার্সন খোঁজা হচ্ছে…', true);
-    rflStep();
-  }
-  document.addEventListener('click', function(e){ var b = e.target && e.target.closest && e.target.closest('#refreshIconBtn'); if(b){ e.preventDefault(); rflToggle(); } });
+  document.addEventListener('click', function(e){
+    var b = e.target && e.target.closest && e.target.closest('#refreshIconBtn');
+    if(b){ e.preventDefault(); rflSet(null); rflCheck(false); }
+  });
   (function(){ var s = rflGet(); if(!s) return;
-    if(Date.now() > s.until){ rflSet(null); return; }
-    var go = function(){ rflIcon(true); rflTimer = setTimeout(rflStep, 1500); };
-    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+    if(!s.at || Date.now() - s.at > 90000){ rflSet(null); return; }
+    rflCheck(true);
   })();
   check();
   // a tab / installed app that stays open for hours: look again when it comes back to the front (not while typing)
@@ -2608,7 +2629,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
         <div class="xbtn-row">
           <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
           <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
-          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / Leave / EL / UFN</button>
+          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Others</button>
         </div>
         <button id="exchangeConfirmBtn" type="button" class="fr-dbimport">✔ Next</button>
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
@@ -10423,7 +10444,8 @@ function initExchangePanel(){
       { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); if(tw) tw.style.display = (m === 'sp') ? 'flex' : 'none'; if(ti && m !== 'sp') ti.value = ''; }
       Object.keys(modeBtn).forEach(k=>{ if(modeBtn[k]) modeBtn[k].classList.toggle('on', k === m); });
       if(m === 'cl' || m === 'sp'){ if(subInput) subInput.value = ''; }
-      if(confirmBtn) confirmBtn.textContent = m === 'ex' ? '✔ Add Exchange' : '✔ Next';
+      if(m !== 'sp') window._spPreType = '';
+      if(confirmBtn) confirmBtn.textContent = m === 'ex' ? '✔ Add Exchange' : (m === 'sp' && window._spPreType) ? ('✔ Next \u00B7 ' + window._spPreType) : '✔ Next';
       try{ updateExchangeCurrentHint(); }catch(e){}
     };
     setMode('');
@@ -10439,7 +10461,7 @@ function initExchangePanel(){
         if(pSel) pSel.value = '';
         if(dI){ dI.value = todayDateKey(); }
         { const tI = document.getElementById('exchangeDateTo'); if(tI) tI.value = ''; }
-        window._spType = '';
+        window._spType = ''; window._spPreType = '';
         setMode('');
         updateExchangeCurrentHint();
       }catch(e){ console.error(e); }
@@ -10461,6 +10483,11 @@ function initExchangePanel(){
       const b = e.target.closest ? e.target.closest('.xbtn') : null;
       if(!b) return;
       e.stopImmediatePropagation(); e.preventDefault();
+      if(b === modeBtn.sp){
+        /* Others: pick the leave type first; date / position (and substitute) come after */
+        const spOv0 = document.getElementById('spTypeOverlay');
+        if(spOv0){ window._spPicking = true; spOv0.classList.add('show'); return; }
+      }
       setMode(b === modeBtn.ex ? 'ex' : b === modeBtn.cl ? 'cl' : 'sp');
     }, true);
     if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
@@ -10661,6 +10688,7 @@ function initExchangePanel(){
           }
           if(chooser) chooser.classList.add('show');
         };
+        if(window._spPreType){ window._spAfterType(window._spPreType); return; }   /* type was already chosen on the Others button */
         if(spOv) spOv.classList.add('show');
         return;
       }
@@ -10679,9 +10707,15 @@ function initExchangePanel(){
     };
     const spTypeOv = document.getElementById('spTypeOverlay');
     if(spTypeOv){
-      spTypeOv.addEventListener('click', e=>{ if(e.target === spTypeOv) spTypeOv.classList.remove('show'); });
+      spTypeOv.addEventListener('click', e=>{ if(e.target === spTypeOv){ spTypeOv.classList.remove('show'); window._spPicking = false; } });
       spTypeOv.querySelectorAll('[data-sp]').forEach(b=> b.addEventListener('click', ()=>{
         spTypeOv.classList.remove('show');
+        if(window._spPicking){
+          window._spPicking = false;
+          window._spPreType = b.getAttribute('data-sp');
+          if(window._xSetMode) window._xSetMode('sp');   /* type chosen -> date / position fields appear */
+          return;
+        }
         if(window._spAfterType) window._spAfterType(b.getAttribute('data-sp'));
       }));
     }
