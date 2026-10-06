@@ -811,6 +811,12 @@
 
 
 /* ---- Guidelines panel: tabs (Frequency / RT Procedure & Phraseology / AIP) + lazily loaded PDF viewer ---- */
+.mp-pane{ display:none; }
+.gd-view.mp-tileview{ overflow:hidden; touch-action:none; cursor:grab; }
+.mp-tileview canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.mp-img{ display:block; max-width:none; height:auto; margin:0 auto; user-select:none; -webkit-user-drag:none; }
+.gd-view.mp-imgview{ touch-action:pan-x pan-y; }
+.mp-pane.mp-active{ display:block; }
 .gd-pane{ display:none; }
 .gd-pane.gd-active{ display:block; }
 .gd-wrap{ display:flex; flex-direction:column; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel-2); }
@@ -3131,10 +3137,13 @@ Emergency →↓
 
   <div class="cardpanel collapsed" id="mapCardOuter">
     <div class="collapse-head" id="mapHead">
-      <div class="cardpanel-title">FIR Waypoint Chart — Live Search</div>
+      <div class="cardpanel-title">Maps</div>
       <div class="collapse-toggle" id="mapToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="mapBody">
+      <div class="iflow-tabs" id="mapTabs"></div>
+      <div id="mapPanes">
+      <div class="mp-pane" id="mapPaneSvg">
       <div id="mapCard">
 <div id="app">
   <div id="svgWrap">
@@ -3155,6 +3164,8 @@ Emergency →↓
   </div>
   <button id="resetBtn">রিসেট ভিউ</button>
 </div>
+      </div>
+      </div>
       </div>
     </div>
   </div>
@@ -8195,6 +8206,7 @@ function initAuthPanel(){
         POINTS.forEach(p=>{
           add('map', p[0], 'FIR waypoint', ()=>{
             openPanel('mapCardOuter','map');
+            try{ if(window.hsiaShowMapTab) window.hsiaShowMapTab('mapPaneSvg'); }catch(e){}
             try{ if(typeof focusPoint === 'function') focusPoint(p[0]); }catch(e){}
             return ()=> $('mapCard');
           });
@@ -14978,6 +14990,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     if(pane && pane._gd) pane._gd.shown();
   }
   window.gdShowTab = showTab;
+  window.hsiaMakePdfViewer = makeViewer;   // also used by the Maps window
   var gdHead = document.getElementById('freqHead');
   if(gdHead) gdHead.addEventListener('click', function(){ setTimeout(function(){
     var card = document.getElementById('freqCardOuter');
@@ -15154,6 +15167,340 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     }
     return { shown: function(){ if(!started && !pdf) start(); else if(pdf && pages.length && Math.abs(view.clientWidth - lastW) > 20) applyZoom(); } };
   }
+})();
+</script>
+
+<script>
+/* Maps window: tabs. HOW TO ADD A MAP:
+   1) upload the file into the "pdfs" folder on GitHub with the SAME name as the tab's name below, in ANY format: pdf, png, jpg or webp
+      (e.g. pdfs/map4.png or pdfs/map4.pdf; upload only one format per map name)
+   2) add one line like   { label:'Map 4', auto:'pdfs/map4' },   to MAP_TABS below (tabs show in the same order as this list).
+      "auto" = no file ending written: the app finds out by itself what you uploaded and opens the right viewer:
+      a PDF (map1.pdf), an image (map1.png / jpg / webp), or - for HUGE maps - a tiles folder made with make_tiles.py (map1/info.json + level folders).
+      (A line with a fixed file, e.g.  { label:'Map 4', file:'pdfs/map4.png' },  also works.)
+   "Map 2" is the live-search map that is built into this page (pane:'mapPaneSvg'), keep that line as it is.
+   DEFAULT_TAB = the label that is open first. */
+(function(){
+  var MAP_TABS = [
+    { label:'Map 1', auto:'pdfs/map1' },
+    { label:'Map 2', pane:'mapPaneSvg' },
+    { label:'Map 3', auto:'pdfs/map3' }
+  ];
+  var DEFAULT_TAB = 'Map 2';
+
+  /* image viewer (png / jpg / webp): zoom buttons, pinch, Ctrl+wheel, full screen; scroll to move around */
+  var IC = {
+    minus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+    plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    full:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    shrink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
+    ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>'
+  };
+  function makeImgViewer(pane){
+    var url = new URL(pane.getAttribute('data-img'), location.href).href, started = false, zoom = 1, holder = null;
+    pane.innerHTML =
+      '<div class="gd-wrap"><div class="gd-bar">' +
+      '<button type="button" data-a="out" title="Zoom out" aria-label="Zoom out">' + IC.minus + '</button><span class="gd-zv">100%</span>' +
+      '<button type="button" data-a="in" title="Zoom in" aria-label="Zoom in">' + IC.plus + '</button>' +
+      '<button type="button" data-a="fit" title="Fit to width" aria-label="Fit to width" style="width:auto;padding:0 10px;font-size:12px;">Fit</button>' +
+      '<span class="gd-sp"></span>' +
+      '<a class="gd-btn" href="' + url + '" target="_blank" rel="noopener" title="Open image in browser" aria-label="Open image in browser">' + IC.ext + '</a>' +
+      '<button type="button" data-a="full" title="Full screen" aria-label="Full screen">' + IC.full + '</button>' +
+      '</div><div class="gd-view mp-imgview"><div class="gd-msg">Loading…</div></div></div>';
+    var wrap = pane.firstChild, view = wrap.querySelector('.gd-view'), zv = wrap.querySelector('.gd-zv'), fullBtn = wrap.querySelector('[data-a=full]'), img = null;
+
+    function setZoom(z, cx, cy){                       // cx, cy = point (inside the view) that should stay where it is
+      z = Math.max(0.5, Math.min(8, z)); if(!img) { zoom = z; return; }
+      var rx = (view.scrollLeft + cx) / (img.offsetWidth || 1), ry = (view.scrollTop + cy) / (img.offsetHeight || 1);
+      zoom = z; img.style.width = (zoom * 100) + '%'; zv.textContent = Math.round(zoom * 100) + '%';
+      view.scrollLeft = rx * img.offsetWidth - cx; view.scrollTop = ry * img.offsetHeight - cy;
+    }
+    function mid(){ return [view.clientWidth / 2, view.clientHeight / 2]; }
+    wrap.addEventListener('click', function(e){
+      var b = e.target.closest && e.target.closest('[data-a]'); if(!b) return;
+      var a = b.getAttribute('data-a'), m = mid();
+      if(a === 'in') setZoom(zoom * 1.25, m[0], m[1]);
+      else if(a === 'out') setZoom(zoom / 1.25, m[0], m[1]);
+      else if(a === 'fit') setZoom(1, 0, 0);
+      else if(a === 'full') toggleFull();
+    });
+    view.addEventListener('wheel', function(e){
+      if(!e.ctrlKey) return; e.preventDefault();
+      var r = view.getBoundingClientRect(); setZoom(zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX - r.left, e.clientY - r.top);
+    }, { passive:false });
+    var pinch = null;
+    view.addEventListener('touchstart', function(e){
+      if(e.touches.length === 2){ var a = e.touches[0], b = e.touches[1]; pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), z: zoom }; }
+    }, { passive:true });
+    view.addEventListener('touchmove', function(e){
+      if(!pinch || e.touches.length !== 2) return; e.preventDefault();
+      var a = e.touches[0], b = e.touches[1], d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), r = view.getBoundingClientRect();
+      setZoom(pinch.z * d / (pinch.d || 1), (a.clientX + b.clientX) / 2 - r.left, (a.clientY + b.clientY) / 2 - r.top);
+    }, { passive:false });
+    view.addEventListener('touchend', function(e){ if(e.touches.length < 2) pinch = null; }, { passive:true });
+
+    function toggleFull(){
+      var on = !wrap.classList.contains('gd-full');
+      if(on){ holder = document.createComment('mp'); wrap.parentNode.insertBefore(holder, wrap); document.body.appendChild(wrap); }
+      else if(holder && holder.parentNode){ holder.parentNode.insertBefore(wrap, holder); holder.parentNode.removeChild(holder); holder = null; }
+      wrap.classList.toggle('gd-full', on);
+      fullBtn.innerHTML = on ? IC.shrink : IC.full; fullBtn.title = on ? 'Close full screen' : 'Full screen';
+    }
+    function start(){
+      started = true;
+      var im = new Image(); im.className = 'mp-img'; im.alt = ''; im.draggable = false; im.style.width = '100%';
+      im.onload = function(){ view.innerHTML = ''; view.appendChild(im); img = im; };
+      im.onerror = function(){
+        started = false; view.innerHTML = '<div class="gd-msg"></div>';
+        view.firstChild.textContent = navigator.onLine === false ? 'Not downloaded yet, and there is no internet connection.' : 'This image has not been uploaded yet.';
+      };
+      im.src = url;
+    }
+    return { shown: function(){ if(!started && !img) start(); } };
+  }
+
+  /* tiled viewer for HUGE maps (e.g. 13000 x 8000 px): only the small pieces on screen are loaded and drawn, so it never lags.
+     The tiles are made on a PC with make_tiles.py and uploaded as a folder (pdfs/mapN/info.json + level folders). */
+  function makeTileViewer(pane){
+    var base = pane.getAttribute('data-tiles'), started = false, holder = null;
+    pane.innerHTML =
+      '<div class="gd-wrap"><div class="gd-bar">' +
+      '<button type="button" data-a="out" title="Zoom out" aria-label="Zoom out">' + IC.minus + '</button><span class="gd-zv">100%</span>' +
+      '<button type="button" data-a="in" title="Zoom in" aria-label="Zoom in">' + IC.plus + '</button>' +
+      '<button type="button" data-a="fit" title="Fit whole map" aria-label="Fit whole map" style="width:auto;padding:0 10px;font-size:12px;">Fit</button>' +
+      '<span class="gd-sp"></span>' +
+      '<button type="button" data-a="full" title="Full screen" aria-label="Full screen">' + IC.full + '</button>' +
+      '</div><div class="gd-view mp-tileview"><div class="gd-msg">Loading…</div></div></div>';
+    var wrap = pane.firstChild, view = wrap.querySelector('.gd-view'), zv = wrap.querySelector('.gd-zv'), fullBtn = wrap.querySelector('[data-a=full]');
+    var info = null, cv = null, ctx = null, cw = 0, ch = 0, dpr = 1, s = 1, cx = 0, cy = 0, fitS = 1, atFit = true, maxL = 0;
+    var cache = {}, loading = {}, failed = {}, active = 0, MAXC = 28, MAXPAR = 4, raf = 0, tick = 0;   // MAXC is set from the tile size once info.json is read (about 60 megapixels of tiles kept in memory)
+
+    function msg(t){ view.innerHTML = '<div class="gd-msg"></div>'; view.firstChild.textContent = t; cv = null; }
+    function tileUrl(L, x, y){ return base + '/' + L + '/' + x + '_' + y + '.' + info.ext + '?v=' + info.v; }
+    function key(L, x, y){ return L + '/' + x + '_' + y; }
+
+    function loadInfo(){
+      var u = base + '/info.json', store = (window.caches && caches.open) ? caches.open('hsia-map-info') : null;
+      return fetch(u + '?_probe=' + Date.now(), { cache:'no-store' }).then(function(r){
+        if(!r.ok) throw new Error('missing');
+        var c = r.clone();
+        if(store) store.then(function(st){ st.put(u, c); }).catch(function(){});
+        return r.json();
+      }).catch(function(e){
+        if(!store || (e && e.message === 'missing')) throw e;
+        return store.then(function(st){ return st.match(u); }).then(function(r){ if(!r) throw e; return r.json(); });
+      });
+    }
+
+    function fetchTile(L, x, y){
+      var k = key(L, x, y); if(cache[k] || loading[k]) return Promise.resolve();
+      loading[k] = true; active++;
+      return fetch(tileUrl(L, x, y)).then(function(r){ if(!r.ok) throw new Error('http'); return r.blob(); })
+        .then(function(b){ return window.createImageBitmap ? createImageBitmap(b) : new Promise(function(res, rej){ var im = new Image(); im.onload = function(){ res(im); }; im.onerror = rej; im.src = URL.createObjectURL(b); }); })
+        .then(function(bm){ cache[k] = { bm: bm, t: ++tick }; })
+        .catch(function(){ failed[k] = Date.now(); })
+        .then(function(){ delete loading[k]; active--; evict(); draw(); });
+    }
+    function evict(){
+      var keys = Object.keys(cache).filter(function(k){ return k.split('/')[0] != maxL; });
+      if(keys.length <= MAXC) return;
+      keys.sort(function(a, b){ return cache[a].t - cache[b].t; });
+      for(var i = 0; i < keys.length - MAXC; i++){
+        var e = cache[keys[i]]; try{ if(e.bm && e.bm.close) e.bm.close(); }catch(x){}
+        delete cache[keys[i]];
+      }
+    }
+
+    function levelFor(){ var L = Math.floor(Math.log(1 / (s * dpr)) / Math.LN2); return Math.max(0, Math.min(maxL, L)); }
+    function range(L, mx){                       // visible tile index range at level L
+      var f = Math.pow(2, L), T = info.tile * f, lv = info.levels[L];
+      var x0 = (cx - cw / 2 / s) / T - mx, x1 = (cx + cw / 2 / s) / T + mx, y0 = (cy - ch / 2 / s) / T - mx, y1 = (cy + ch / 2 / s) / T + mx;
+      return { x0: Math.max(0, Math.floor(x0)), x1: Math.min(lv.cols - 1, Math.floor(x1)), y0: Math.max(0, Math.floor(y0)), y1: Math.min(lv.rows - 1, Math.floor(y1)), T: T, f: f };
+    }
+    function drawLevel(L){
+      var r = range(L, 0), lv = info.levels[L];
+      for(var y = r.y0; y <= r.y1; y++) for(var x = r.x0; x <= r.x1; x++){
+        var e = cache[key(L, x, y)]; if(!e) continue;
+        e.t = ++tick;
+        var ax = x * r.T, ay = y * r.T, bx = Math.min((x + 1) * info.tile, lv.w) * r.f, by = Math.min((y + 1) * info.tile, lv.h) * r.f;
+        var sx0 = Math.round(((ax - cx) * s + cw / 2) * dpr), sy0 = Math.round(((ay - cy) * s + ch / 2) * dpr);
+        var sx1 = Math.round(((bx - cx) * s + cw / 2) * dpr), sy1 = Math.round(((by - cy) * s + ch / 2) * dpr);
+        ctx.drawImage(e.bm, sx0, sy0, Math.max(1, sx1 - sx0), Math.max(1, sy1 - sy0));
+      }
+    }
+    function draw(){
+      if(raf) return;
+      raf = requestAnimationFrame(function(){
+        raf = 0;
+        if(!info || !cv || !cw) return;
+        ctx.fillStyle = '#1b1b1d'; ctx.fillRect(0, 0, cv.width, cv.height);
+        var L = levelFor();
+        for(var l = maxL; l >= L; l--) drawLevel(l);       // coarse first, sharper tiles on top as they arrive
+        zv.textContent = Math.round(s / fitS * 100) + '%';
+        // ask for the sharp tiles of the visible area (nearest to the centre first) a little beyond the screen edge
+        var r = range(L, 0.35), want = [], now = Date.now();
+        for(var y = r.y0; y <= r.y1; y++) for(var x = r.x0; x <= r.x1; x++){
+          var k = key(L, x, y); if(cache[k] || loading[k] || (failed[k] && now - failed[k] < 8000)) continue;
+          var tx = (x + 0.5) * r.T, ty = (y + 0.5) * r.T; want.push({ x:x, y:y, d:(tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) });
+        }
+        want.sort(function(a, b){ return a.d - b.d; });
+        for(var i = 0; i < want.length && active < MAXPAR; i++) fetchTile(L, want[i].x, want[i].y);
+      });
+    }
+    function clamp(){
+      var minS = fitS * 0.9, maxS = 1;
+      if(s < minS) s = minS; if(s > maxS) s = Math.max(maxS, minS);
+      cx = Math.max(0, Math.min(info.w, cx)); cy = Math.max(0, Math.min(info.h, cy));
+    }
+    function fit(){ s = fitS; cx = info.w / 2; cy = info.h / 2; atFit = true; draw(); }
+    function zoomAt(mx, my, f){
+      var ix = cx + (mx - cw / 2) / s, iy = cy + (my - ch / 2) / s;
+      s *= f; clamp();
+      cx = ix - (mx - cw / 2) / s; cy = iy - (my - ch / 2) / s; clamp(); atFit = Math.abs(s - fitS) < 1e-6; draw();
+    }
+    function resize(){
+      if(!cv) return;
+      var w = view.clientWidth, h = view.clientHeight; if(!w || !h) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 3); cw = w; ch = h;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      fitS = Math.min(cw / info.w, ch / info.h);
+      if(atFit){ s = fitS; cx = info.w / 2; cy = info.h / 2; } else clamp();
+      draw();
+    }
+
+    function bind(){
+      var ptrs = {}, last = null;
+      function pos(e){ var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+      function pts(){ return Object.keys(ptrs).map(function(k){ return ptrs[k]; }); }
+      cv.addEventListener('pointerdown', function(e){
+        try{ cv.setPointerCapture(e.pointerId); }catch(x){}
+        ptrs[e.pointerId] = pos(e); last = null; view.style.cursor = 'grabbing';
+      });
+      cv.addEventListener('pointermove', function(e){
+        if(!ptrs[e.pointerId]) return;
+        var p = pos(e), P = pts();
+        if(P.length === 1){
+          cx -= (p.x - ptrs[e.pointerId].x) / s; cy -= (p.y - ptrs[e.pointerId].y) / s; ptrs[e.pointerId] = p; clamp(); atFit = false; draw();
+        } else if(P.length === 2){
+          var o = ptrs[e.pointerId], other = P[0] === o ? P[1] : P[0], before = { x:(o.x + other.x) / 2, y:(o.y + other.y) / 2, d:Math.hypot(o.x - other.x, o.y - other.y) };
+          ptrs[e.pointerId] = p;
+          var after = { x:(p.x + other.x) / 2, y:(p.y + other.y) / 2, d:Math.hypot(p.x - other.x, p.y - other.y) };
+          cx -= (after.x - before.x) / s; cy -= (after.y - before.y) / s;
+          zoomAt(after.x, after.y, after.d / (before.d || 1));
+        }
+        e.preventDefault();
+      });
+      function up(e){ delete ptrs[e.pointerId]; view.style.cursor = ''; }
+      cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('lostpointercapture', up);
+      cv.addEventListener('wheel', function(e){
+        e.preventDefault(); var p = pos(e); zoomAt(p.x, p.y, e.deltaY < 0 ? 1.2 : 1 / 1.2);
+      }, { passive:false });
+      cv.addEventListener('dblclick', function(e){ var p = pos(e); zoomAt(p.x, p.y, 2); });
+      if(window.ResizeObserver) new ResizeObserver(resize).observe(view); else window.addEventListener('resize', resize);
+    }
+
+    wrap.addEventListener('click', function(e){
+      var b = e.target.closest && e.target.closest('[data-a]'); if(!b || !info) return;
+      var a = b.getAttribute('data-a');
+      if(a === 'in') zoomAt(cw / 2, ch / 2, 1.5);
+      else if(a === 'out') zoomAt(cw / 2, ch / 2, 1 / 1.5);
+      else if(a === 'fit') fit();
+      else if(a === 'full') toggleFull();
+    });
+    function toggleFull(){
+      var on = !wrap.classList.contains('gd-full');
+      if(on){ holder = document.createComment('mp'); wrap.parentNode.insertBefore(holder, wrap); document.body.appendChild(wrap); }
+      else if(holder && holder.parentNode){ holder.parentNode.insertBefore(wrap, holder); holder.parentNode.removeChild(holder); holder = null; }
+      wrap.classList.toggle('gd-full', on);
+      fullBtn.innerHTML = on ? IC.shrink : IC.full; fullBtn.title = on ? 'Close full screen' : 'Full screen';
+      setTimeout(resize, 60);
+    }
+    function start(){
+      started = true;
+      loadInfo().then(function(j){
+        if(!j || !j.levels || !j.levels.length) throw new Error('bad');
+        info = j; maxL = j.levels.length - 1; MAXC = Math.max(8, Math.floor(60e6 / ((j.tile || 1024) * (j.tile || 1024))));
+        return fetchTile(maxL, 0, 0).then(function(){
+          if(!cache[key(maxL, 0, 0)]) throw new Error('tile');
+          view.innerHTML = ''; cv = document.createElement('canvas'); view.appendChild(cv); ctx = cv.getContext('2d');
+          bind(); resize();
+        });
+      }).catch(function(e){
+        started = false; info = null;
+        msg(e && e.message === 'missing' ? 'This map has not been uploaded yet.' : (navigator.onLine === false ? 'Not downloaded yet, and there is no internet connection.' : 'Could not load this map. Try again later.'));
+      });
+    }
+    return { shown: function(){ if(!started && !info) start(); else resize(); } };
+  }
+
+  var tabs = document.getElementById('mapTabs'), box = document.getElementById('mapPanes'); if(!tabs || !box) return;
+  var ids = [];
+  MAP_TABS.forEach(function(t, i){
+    var id = t.pane || ('mapPane' + (i + 1));
+    var el = document.getElementById(id);
+    if(!el){
+      el = document.createElement('div'); el.id = id; el.className = 'mp-pane';
+      var f = t.file || t.pdf || t.img;
+      if(t.auto) el.setAttribute('data-auto', t.auto);
+      if(f) el.setAttribute(/\.(png|jpe?g|webp|gif)$/i.test(f) ? 'data-img' : 'data-pdf', f);
+      if(t.tiles) el.setAttribute('data-tiles', t.tiles);
+    }
+    box.appendChild(el);                      // keeps the panes in the same order as the tabs
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'iflow-tab-btn';
+    b.setAttribute('data-mp', id); b.textContent = t.label; tabs.appendChild(b);
+    ids.push(id);
+  });
+  function openViewer(pane){
+    if(pane._gd){ pane._gd.shown(); return; }
+    if(pane.getAttribute('data-pdf') && window.hsiaMakePdfViewer) pane._gd = window.hsiaMakePdfViewer(pane);
+    else if(pane.getAttribute('data-img')) pane._gd = makeImgViewer(pane);
+    else if(pane.getAttribute('data-tiles')) pane._gd = makeTileViewer(pane);
+    if(pane._gd) pane._gd.shown();
+  }
+  function say(pane, t){ pane.innerHTML = '<div class="gd-wrap"><div class="gd-view" style="height:auto;min-height:0"><div class="gd-msg"></div></div></div>'; pane.querySelector('.gd-msg').textContent = t; }
+  /* "auto" tabs: find which file was uploaded (pdf / png / jpg / webp). The last one found is tried first and remembered. */
+  function resolveAuto(pane, id){
+    var base = pane.getAttribute('data-auto'), KEY = 'hsiaMapExt:' + base, exts = ['tiles', 'pdf', 'png', 'jpg', 'jpeg', 'webp'], mem = '';
+    try{ mem = localStorage.getItem(KEY) || ''; }catch(e){}
+    if(mem && exts.indexOf(mem) > 0){ exts.splice(exts.indexOf(mem), 1); exts.unshift(mem); }
+    pane._busy = true; say(pane, 'Loading…');
+    var offline = false;
+    function next(i){
+      if(i >= exts.length) return Promise.resolve(null);
+      var u = exts[i] === 'tiles' ? base + '/info.json' : base + '.' + exts[i];
+      return fetch(u + '?_probe=' + Date.now(), { method:'HEAD', cache:'no-store' }).then(function(r){
+        return r.ok ? exts[i] : next(i + 1);
+      }, function(){ offline = true; return null; });
+    }
+    next(0).then(function(ext){
+      if(!ext && offline && mem) ext = mem;          // no internet: use what worked last time (the viewers keep their own saved copy)
+      pane._busy = false;
+      if(!ext){ say(pane, offline ? 'Not downloaded yet, and there is no internet connection.' : 'This map has not been uploaded yet.'); return; }
+      try{ localStorage.setItem(KEY, ext); }catch(e){}
+      pane.innerHTML = '';
+      if(ext === 'tiles') pane.setAttribute('data-tiles', base); else pane.setAttribute(ext === 'pdf' ? 'data-pdf' : 'data-img', base + '.' + ext);
+      pane.removeAttribute('data-auto');
+      if(pane.classList.contains('mp-active')) openViewer(pane);
+    });
+  }
+  function show(id){
+    if(ids.indexOf(id) === -1) return;
+    tabs.querySelectorAll('[data-mp]').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mp') === id); });
+    ids.forEach(function(x){ document.getElementById(x).classList.toggle('mp-active', x === id); });
+    var pane = document.getElementById(id);
+    if(pane.getAttribute('data-auto') && !pane._gd && !pane._busy){ resolveAuto(pane, id); return; }
+    openViewer(pane);
+    if(pane._gd) pane._gd.shown();
+  }
+  window.hsiaShowMapTab = show;
+  tabs.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-mp]'); if(b) show(b.getAttribute('data-mp')); });
+  var head = document.getElementById('mapHead');
+  if(head) head.addEventListener('click', function(){ setTimeout(function(){
+    var card = document.getElementById('mapCardOuter'), cur = tabs.querySelector('.active');
+    if(card && !card.classList.contains('collapsed') && cur) show(cur.getAttribute('data-mp'));
+  }, 0); });
+  var first = MAP_TABS.filter(function(t){ return t.label === DEFAULT_TAB; })[0] || MAP_TABS[0];
+  show(first.pane || ('mapPane' + (MAP_TABS.indexOf(first) + 1)));
 })();
 </script>
 
