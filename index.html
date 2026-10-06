@@ -814,6 +814,17 @@
 .mp-pane{ display:none; }
 .gd-view.mp-tileview{ overflow:hidden; touch-action:none; cursor:grab; }
 .mp-tileview canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.mp-sb{ position:absolute; top:8px; left:8px; right:8px; z-index:3; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
+.mp-sb > *{ pointer-events:auto; }
+.mp-sb input{ flex:1 1 auto; min-width:0; height:38px; box-sizing:border-box; padding:0 12px; border-radius:10px; border:1px solid var(--border,#3a3a3e); background:rgba(18,22,28,.92); color:var(--text,#e8e8ea); font-size:14px; font-family:inherit; outline:none; }
+.mp-sb input:focus{ border-color:#22d3ee; }
+.mp-sb button{ width:38px; height:38px; border-radius:10px; border:1px solid var(--border,#3a3a3e); background:rgba(18,22,28,.92); color:var(--muted,#9aa5b1); font-size:14px; cursor:pointer; padding:0; }
+.mp-sug{ flex:0 0 100%; max-height:240px; overflow:auto; border-radius:10px; border:1px solid var(--border,#3a3a3e); background:rgba(18,22,28,.97); display:none; }
+.mp-sug.on{ display:block; }
+.mp-sug div{ padding:10px 12px; font-size:14px; color:var(--text,#e8e8ea); border-bottom:1px solid rgba(255,255,255,.07); cursor:pointer; }
+.mp-sug div:last-child{ border-bottom:0; }
+.mp-sug div:active{ background:rgba(255,255,255,.08); }
+.mp-sug .mp-none{ color:var(--muted,#9aa5b1); cursor:default; }
 .mp-img{ display:block; max-width:none; height:auto; margin:0 auto; user-select:none; -webkit-user-drag:none; }
 .gd-view.mp-imgview{ touch-action:pan-x pan-y; }
 .mp-pane.mp-active{ display:block; }
@@ -15183,10 +15194,13 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 (function(){
   var MAP_TABS = [
     { label:'Map 1', tiles:'pdfs' },
-    { label:'Map 2', pane:'mapPaneSvg' },
-    { label:'Map 3', auto:'pdfs/map3' }
+    { label:'Map 2', pane:'mapPaneSvg' }
   ];
   var DEFAULT_TAB = 'Map 2';
+
+  /* Map 1 search: red-ink point names and their position on the full-size Map 1 image (8277 x 13778 px). Positions are scaled automatically to whatever size the tiles were made at. */
+  var MAP1_REF = { w:8277, h:13778 };
+  var MAP1_POINTS = [["AAT",5326,5640],["ABMJR",2384,6914],["ADMIL",5023,6777],["AGODA",1507,4944],["AGOKO",4544,5919],["AGOTI",3710,6165],["AGSIB",4460,5633],["AGUNO",4212,6715],["AKEVO",3627,6107],["APAGO",7339,8344],["ATEMI",3295,5592],["ATOGA",3461,3412],["AUVIT",2783,1675],["AVDAX",6898,8306],["AVKAS",3768,5204],["AVLED",7020,9190],["AVNAK",1319,4879],["AVNUL",6363,8914],["AVPOP",2111,8187],["BASEX",2313,3410],["BAVAN",3526,6922],["BELKU",2991,4921],["BEMAK",1943,7185],["BIKIK",301,4200],["BIPUL",6222,3573],["BL",3944,7394],["BOGEP",4168,5350],["BOGOP",2931,1440],["BONSI",3825,5610],["BUXIL",4413,5840],["CHILA",7604,8051],["CML",5252,6368],["CTG",6192,8249],["CXB",6406,9514],["DAKID",5593,8173],["DOXAG",5459,5510],["EKVIN",3413,5232],["ELBOM",4506,6434],["ENKUB",4034,6206],["ESDOT",4379,9701],["FIRSI",3965,5497],["FOMING",4313,5630],["GGT",5849,1974],["GIVOX",3587,5830],["GOLIX",4722,6753],["GURKI",4419,5772],["GURSO",4104,6413],["GUSBA",5599,8425],["HORIN",3871,5347],["HS009",3425,6587],["HS015",3321,6400],["HS025",3444,5717],["IBANU",2980,6380],["IBAPA",5675,3548],["IDALO",3849,5782],["IDLOX",2895,5271],["IDRUM",3570,5567],["IGLIP",3888,6277],["IGPEN",3533,6033],["IKIPI",5520,4566],["IKOGU",3033,6464],["IS",2065,5216],["ISGAL",3963,5934],["JSR",2247,6743],["KAKBO",4036,7083],["KANDI",4584,6265],["KAWLA",4259,5577],["KIMUX",3872,6071],["LAGEL",3278,5240],["LALMT",2721,2399],["LATIM",4670,5316],["LOTMI",4324,6831],["LUBNO",4710,6285],["MEGHA",4239,5860],["MEPAR",6305,5460],["MEXIV",3611,5362],["MIGOP",1774,3507],["MUNEM",3877,5837],["NAGAR",6387,4820],["NIKLI",4845,5149],["NIVEL",4490,5224],["NOKAT",2001,7405],["NUPUR",4846,6909],["OBLUX",3225,6240],["OKVEN",3317,5858],["OLROK",4319,6504],["ONEKA",5830,7744],["ONIVU",4811,6531],["OPEXI",4080,6092],["OPLAS",3531,5518],["OPORA",3573,6064],["ORUMI",4022,5232],["PABNA",6656,8872],["PADMA",4175,6034],["PALKI",4290,5939],["PAPLI",5785,4863],["POLOT",5770,2867],["PORUN",6052,4383],["RAJ",1456,4749],["RAJEN",4124,5388],["REDAP",885,4006],["RIDMO",3724,5456],["SDP",1945,2596],["SEKVU",3705,5939],["SETAR",4493,6327],["SUMAG",1872,7724],["SYT",6246,3904],["TANAP",6672,8758],["TEBID",653,4352],["TEGAK",3202,5149],["THAKN",1076,2185],["TUMPA",4395,6067],["TUPLO",5881,4258],["TURAG",4043,5574],["UDIRO",2600,4046],["VANTU",2447,2064],["VINAD",1700,3242],["VINET",5623,8014]];
 
   /* image viewer (png / jpg / webp): zoom buttons, pinch, Ctrl+wheel, full screen; scroll to move around */
   var IC = {
@@ -15336,6 +15350,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
         ctx.fillStyle = '#1b1b1d'; ctx.fillRect(0, 0, cv.width, cv.height);
         var L = levelFor();
         for(var l = maxL; l >= L; l--) drawLevel(l);       // coarse first, sharper tiles on top as they arrive
+        drawHL();
         zv.textContent = Math.round(s / fitS * 100) + '%';
         // ask for the sharp tiles of the visible area (nearest to the centre first) a little beyond the screen edge
         var r = range(L, 0.35), want = [], now = Date.now();
@@ -15415,6 +15430,50 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       fullBtn.innerHTML = on ? IC.shrink : IC.full; fullBtn.title = on ? 'Close full screen' : 'Full screen';
       setTimeout(resize, 60);
     }
+    /* ---- point search (Map 1) ---- */
+    var hl = null, hlTimer = 0, sb = null;
+    function drawHL(){
+      if(!hl) return;
+      var sx = ((hl.x - cx) * s + cw / 2) * dpr, sy = ((hl.y - cy) * s + ch / 2) * dpr;
+      var el = Date.now() - hl.t0, ph = (el % 1100) / 1100, anim = el < 6000;
+      ctx.save(); ctx.lineWidth = 3 * dpr; ctx.strokeStyle = '#fff700'; ctx.fillStyle = 'rgba(255,242,0,0.22)';
+      ctx.beginPath(); ctx.arc(sx, sy, 26 * dpr, 0, 6.2832); ctx.fill(); ctx.stroke();
+      if(anim){ ctx.globalAlpha = 1 - ph; ctx.beginPath(); ctx.arc(sx, sy, (26 + ph * 24) * dpr, 0, 6.2832); ctx.stroke(); }
+      ctx.restore();
+    }
+    function clearHL(){ hl = null; if(hlTimer){ clearInterval(hlTimer); hlTimer = 0; } draw(); }
+    function goTo(p){
+      hl = { x: p[1] * info.w / MAP1_REF.w, y: p[2] * info.h / MAP1_REF.h, t0: Date.now() };
+      s = Math.max(fitS, 0.45); cx = hl.x; cy = hl.y; clamp(); atFit = false;
+      if(hlTimer) clearInterval(hlTimer);
+      hlTimer = setInterval(function(){ draw(); if(!hl || Date.now() - hl.t0 > 6200){ clearInterval(hlTimer); hlTimer = 0; draw(); } }, 60);
+      draw();
+    }
+    function initSearch(){
+      if(sb && sb.parentNode) sb.parentNode.removeChild(sb);
+      sb = document.createElement('div'); sb.className = 'mp-sb';
+      sb.innerHTML = '<input type="text" placeholder="পয়েন্টের নাম লিখুন (DAC, AAT, JSR...)" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" aria-label="Clear">✕</button><div class="mp-sug"></div>';
+      view.appendChild(sb);
+      var inp = sb.querySelector('input'), clr = sb.querySelector('button'), box = sb.querySelector('.mp-sug'), cur = [];
+      function find(q){
+        q = q.trim().toUpperCase(); if(!q) return [];
+        var a = [], b = [];
+        MAP1_POINTS.forEach(function(p){ if(p[0].indexOf(q) === 0) a.push(p); else if(p[0].indexOf(q) > 0) b.push(p); });
+        return a.concat(b).slice(0, 8);
+      }
+      function pick(p){ inp.value = p[0]; box.classList.remove('on'); inp.blur(); goTo(p); }
+      function render(){
+        cur = find(inp.value); box.innerHTML = '';
+        if(!inp.value.trim()){ box.classList.remove('on'); return; }
+        if(!cur.length){ var n = document.createElement('div'); n.className = 'mp-none'; n.textContent = 'পাওয়া যায়নি'; box.appendChild(n); }
+        cur.forEach(function(p, i){ var d = document.createElement('div'); d.textContent = p[0]; d.setAttribute('data-i', i); box.appendChild(d); });
+        box.classList.add('on');
+      }
+      inp.addEventListener('input', render);
+      inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); if(!cur.length) render(); if(cur.length) pick(cur[0]); } });
+      box.addEventListener('click', function(e){ var d = e.target.closest && e.target.closest('[data-i]'); if(d) pick(cur[+d.getAttribute('data-i')]); });
+      clr.addEventListener('click', function(){ inp.value = ''; box.classList.remove('on'); clearHL(); });
+    }
     function start(){
       started = true;
       loadInfo().then(function(j){
@@ -15424,6 +15483,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
           if(!cache[key(maxL, 0, 0)]) throw new Error('tile');
           view.innerHTML = ''; cv = document.createElement('canvas'); view.appendChild(cv); ctx = cv.getContext('2d');
           bind(); resize();
+          initSearch();
         });
       }).catch(function(e){
         started = false; info = null;
