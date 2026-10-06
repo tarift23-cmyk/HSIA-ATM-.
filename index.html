@@ -13056,7 +13056,15 @@ function renderRosterNow(){
   const isClosed = ()=> !outer || outer.classList.contains('collapsed');
   const SETS = [['rosterCtrl','Controllers'], ['roster','Aerodrome Assistant'], ['rosterComm','Communication']];
   // Me works only for a signed-in user (Google or manually registered); the chosen name is stored per account, on this device only
-  const gSession = ()=>{ try{ const x = loadAuthSession(); return (x && x.identifier) ? x : null; }catch(e){ return null; } };
+  const gSession = ()=>{
+    try{ const x = loadAuthSession(); if(x && x.identifier) return x; }catch(e){}
+    // a signed-in admin (Google account verified by the database) counts as signed in too, even without the app's own login on this device
+    try{
+      const u = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+      if(u && !u.isAnonymous && u.email && typeof rosterUnlocked !== 'undefined' && rosterUnlocked) return { identifier:u.email, displayName:(u.displayName || u.email) };
+    }catch(e){}
+    return null;
+  };
   const meKey = ()=>{ const x = gSession(); return x ? ME_KEY + ':' + String(x.identifier).toLowerCase() : null; };
   const loadMe = ()=>{ const k = meKey(); if(!k) return null; try{ const o = JSON.parse(localStorage.getItem(k)); return (o && o.name) ? o : null; }catch(e){ return null; } };
   const saveMe = o=>{ const k = meKey(); if(!k) return; try{ localStorage.setItem(k, JSON.stringify(o)); }catch(e){} };
@@ -13273,6 +13281,7 @@ function renderRosterNow(){
     else if(window._rosterMeOn) renderMe();
   }
   window.hsiaMeAuthRefresh = refreshAuth;
+  try{ if(window.hsiaOnAdminReady) window.hsiaOnAdminReady(refreshAuth); if(window.hsiaOnAdminLost) window.hsiaOnAdminLost(refreshAuth); }catch(e){}
   window.addEventListener('storage', refreshAuth);
   refreshAuth();
   window.hsiaRosterMeOff = function(){ window._rosterMeOn = false; btn.classList.remove('on'); };
