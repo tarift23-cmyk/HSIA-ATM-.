@@ -47,6 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
+  window.HSIA_BUILD='20261006-031957';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -99,6 +100,59 @@
       });
     }).catch(function(){}).then(function(){ busy = false; });
   }
+
+  /* ---- 🔄 button: keep checking GitHub until the newest uploaded index.html is the one that is running ---- */
+  var RFL = 'HSIA_RFL_V1', RFL_MAX = 3*60*1000, RFL_GAP = 4000, rflTimer = 0;
+  function rflGet(){ try{ return JSON.parse(localStorage.getItem(RFL)); }catch(e){ return null; } }
+  function rflSet(o){ try{ if(o) localStorage.setItem(RFL, JSON.stringify(o)); else localStorage.removeItem(RFL); }catch(e){} }
+  function stampOf(t){ var m = /HSIA_BUILD\s*=\s*'([^']+)'/.exec(t); return m ? m[1] : ''; }
+  function rflToast(msg, keep){
+    try{
+      var d = document.getElementById('hsiaRflToast');
+      if(!d){
+        d = document.createElement('div'); d.id = 'hsiaRflToast';
+        d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483647;background:#1B2130;color:#F0F1F3;border:1px solid #504d4c;border-radius:12px;padding:10px 16px;font:600 13px Inter,system-ui,sans-serif;max-width:88vw;text-align:center;pointer-events:none;';
+        (document.body || document.documentElement).appendChild(d);
+      }
+      d.textContent = msg; clearTimeout(d._h);
+      if(!keep) d._h = setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 3200);
+    }catch(e){}
+  }
+  function rflIcon(on){ var b = document.getElementById('refreshIconBtn'); if(b) b.classList.toggle('spin', !!on); }
+  function rflStop(msg){ clearTimeout(rflTimer); rflTimer = 0; rflSet(null); rflIcon(false); if(msg) rflToast(msg); else { var d = document.getElementById('hsiaRflToast'); if(d && d.parentNode) d.parentNode.removeChild(d); } }
+  function rflStep(){
+    clearTimeout(rflTimer);
+    var s = rflGet(); if(!s){ rflIcon(false); return; }
+    if(Date.now() > s.until){ rflStop('নতুন ভার্সন পাওয়া যায়নি — আপনি সর্বশেষ ভার্সনেই আছেন'); return; }
+    rflIcon(true);
+    fetch(bust(), { cache:'no-store' }).then(function(r){ if(!r.ok) throw new Error('http'); return r.text(); }).then(function(t){
+      var fresh = stampOf(t), mine = window.HSIA_BUILD || '', h = hash(t), st = load();
+      var differs = fresh ? (fresh !== mine) : (!!st.hash && st.hash !== h);
+      if(differs){
+        s.reloaded = true; rflSet(s);
+        save({ sig:'', hash:h });
+        rflToast('নতুন ভার্সন পাওয়া গেছে — আপডেট হচ্ছে…', true);
+        forceReload();                     // the page loads again and this loop carries on there
+        return;
+      }
+      if(s.reloaded){ rflStop('✔ সর্বশেষ ভার্সন লোড হয়েছে'); return; }
+      rflToast('নতুন আপলোডের জন্য অপেক্ষা করছি… (আবার চাপলে বন্ধ হবে)', true);
+      rflTimer = setTimeout(rflStep, RFL_GAP);
+    }).catch(function(){ rflTimer = setTimeout(rflStep, RFL_GAP * 2); });
+  }
+  function rflToggle(){
+    if(rflGet()){ rflStop('রিফ্রেশ বন্ধ করা হয়েছে'); return; }
+    if(navigator.onLine === false){ rflToast('ইন্টারনেট সংযোগ নেই'); return; }
+    rflSet({ until: Date.now() + RFL_MAX, reloaded:false });
+    rflIcon(true); rflToast('সর্বশেষ ভার্সন খোঁজা হচ্ছে…', true);
+    rflStep();
+  }
+  document.addEventListener('click', function(e){ var b = e.target && e.target.closest && e.target.closest('#refreshIconBtn'); if(b){ e.preventDefault(); rflToggle(); } });
+  (function(){ var s = rflGet(); if(!s) return;
+    if(Date.now() > s.until){ rflSet(null); return; }
+    var go = function(){ rflIcon(true); rflTimer = setTimeout(rflStep, 1500); };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  })();
   check();
   // a tab / installed app that stays open for hours: look again when it comes back to the front (not while typing)
   document.addEventListener('visibilitychange', function(){
@@ -2144,6 +2198,13 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
 #rpPrint{ background:#d6c6ff; } #rpPdf{ background:#f5b53d; } #rpPng{ background:#7fd6c2; }
 .rp-hint{ font-size:11.5px; line-height:1.6; color:var(--muted); margin-top:12px; }
 .rp-status{ font-size:12px; color:var(--gold-soft); min-height:16px; margin-top:8px; }
+@keyframes rfarrow{ 0%{ transform:translateY(-3px); opacity:0; } 35%{ opacity:1; } 80%{ transform:translateY(3px); opacity:1; } 100%{ transform:translateY(4px); opacity:0; } }
+@keyframes rfcloud{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
+#refreshIconBtn{ border:0 !important; background:transparent !important; box-shadow:none !important; border-radius:8px; color:var(--text); padding:0 !important; width:40px; height:34px; min-width:0; flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; }
+#refreshIconBtn svg{ width:20px; height:20px; display:block; overflow:visible; }
+#refreshIconBtn .rf-arr{ transform-box:fill-box; }
+#refreshIconBtn.spin .rf-cld{ animation:rfcloud 1.1s ease-in-out infinite; }
+#refreshIconBtn.spin .rf-arr{ animation:rfarrow 1.1s ease-in-out infinite; }
 #rosterPrintRoot{ display:none; }
 #rosterPrintRoot.rp-measure{ display:block; position:absolute; left:-10000px; top:0; width:var(--rp-w,277mm); visibility:hidden; font-family:Arial,"Noto Sans Bengali",sans-serif; }
 #rosterPrintRoot .rp-sec{ --k:1; box-sizing:border-box; }
@@ -2168,6 +2229,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
 <div class="viewToggle" id="viewToggle">
   <button type="button" class="vt-btn active" id="modeMobileBtn">📱 Mobile</button>
   <button type="button" class="vt-btn" id="modeDesktopBtn">🖥️ Desktop</button>
+  <button type="button" class="vt-btn vt-icon-btn" id="refreshIconBtn" title="Refresh — latest version"><svg viewBox="0 1.5 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="rf-cld" d="M19 18a3.5 3.5 0 0 0 0-7h-1a5 4.5 0 0 0-11-2a4.6 4.4 0 0 0-2.1 8.4"/><g class="rf-arr"><path d="M12 13v9"/><path d="M9 19l3 3l3-3"/></g></svg></button>
   <button type="button" class="vt-btn vt-icon-btn" id="settingsIconBtn" title="সেটিংস">⚙️<span class="vt-notif-dot" id="authNotifDot"></span></button>
   <button type="button" class="vt-btn vt-icon-btn" id="centralSearchBtn" title="সার্চ">🔍</button>
 </div>
