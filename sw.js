@@ -81,6 +81,7 @@ self.addEventListener('fetch', e=>{
   const url = new URL(req.url);
   if(url.searchParams.has('_probe')) return;
   const same = url.origin === self.location.origin;
+  if(same && /\.pdf$/i.test(url.pathname)) return;   // PDFs are big and the app keeps its own saved copy: never duplicate them here
   if(same && (req.mode === 'navigate' || /\.html?$/.test(url.pathname))){ e.respondWith(pageFirst(e, url)); return; }
   if(same){
     if(req.destination === 'video' || req.destination === 'audio') return;
