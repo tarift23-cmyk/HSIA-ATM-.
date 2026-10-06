@@ -156,7 +156,8 @@
 <meta name="apple-mobile-web-app-title" content="HSIA ATM">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"></noscript>
 <style>
   :root{
     --bg:#030202;
@@ -844,7 +845,28 @@
 .gd-page{ position:relative; width:100%; margin:0 0 6px; background:#fff; aspect-ratio:210/297; }
 .gd-page canvas{ display:block; width:100%; height:100%; }
 .gd-msg{ padding:26px 16px; text-align:center; color:var(--muted); font-size:13px; line-height:1.5; }
-.gd-full{ position:fixed !important; inset:0; z-index:10020; border-radius:0 !important; border:0 !important; background:var(--panel,#111); padding-top:env(safe-area-inset-top,0px); }
+.gd-view{ touch-action:pan-x pan-y; }
+.gd-sr{ display:flex; align-items:center; gap:6px; padding:6px 8px; border-bottom:1px solid var(--border); }
+.gd-sr[hidden], .gd-res[hidden]{ display:none; }
+.gd-sr input{ flex:1 1 auto; min-width:0; height:34px; box-sizing:border-box; padding:0 10px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+.gd-sr input:focus{ border-color:#22d3ee; }
+.gd-sr button{ border:0; background:transparent; color:var(--text); width:32px; height:34px; border-radius:8px; font-size:13px; cursor:pointer; padding:0; }
+.gd-sr button:active{ background:rgba(255,255,255,.1); }
+.gd-sc{ font-size:12px; color:var(--muted); white-space:nowrap; max-width:42%; overflow:hidden; text-overflow:ellipsis; }
+.gd-res{ max-height:170px; overflow:auto; border-bottom:1px solid var(--border); }
+.gd-res div{ padding:8px 12px; font-size:12.5px; color:var(--text); border-bottom:1px solid rgba(255,255,255,.06); cursor:pointer; line-height:1.35; }
+.gd-res div b{ color:#f6c84c; margin-right:6px; }
+.gd-res div:active{ background:rgba(255,255,255,.08); }
+.gd-hl{ position:absolute; inset:0; pointer-events:none; }
+.gd-hit{ position:absolute; background:rgba(255,226,0,.45); border-radius:2px; mix-blend-mode:multiply; }
+.gd-hit.cur{ background:rgba(255,120,0,.6); outline:2px solid #ff7a00; }
+.gd-wrap:fullscreen{ border-radius:0; border:0; background:#111; }
+.gd-wrap:-webkit-full-screen{ border-radius:0; border:0; background:#111; }
+.imp-row{ display:flex; align-items:center; gap:8px; padding:9px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
+.imp-row a.imp-t{ flex:1 1 auto; min-width:0; color:var(--text); text-decoration:none; font-size:14px; overflow-wrap:anywhere; }
+.imp-row a.imp-d{ flex:0 0 auto; width:36px; height:34px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:8px; text-decoration:none; font-size:16px; }
+.imp-note{ font-size:12.5px; color:var(--muted); padding:4px 2px 10px; line-height:1.5; }
+.gd-full{ position:fixed !important; inset:0; height:100dvh; width:100vw; z-index:10020; border-radius:0 !important; border:0 !important; background:var(--panel,#111); padding-top:env(safe-area-inset-top,0px); }
 .gd-full .gd-view{ height:auto; flex:1 1 auto; min-height:0; }
 
 /* ---- Frequency transfer table (dark theme) ---- */
@@ -3440,6 +3462,40 @@ Emergency →↓
         <div class="fr-dbstatus" id="backupStatus">✅ ব্যাকআপ ফাইল ডাউনলোড হয়েছে</div>
       </div>
 
+      <div class="fr-ocrsection-head" id="impPdfHead" style="margin-top:14px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;">
+        <span>📄 Important PDF</span>
+        <button type="button" id="impPdfBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">▾</button>
+      </div>
+      <div id="impPdfList" style="display:none;"></div>
+      <script>
+      (function(){
+        var head = document.getElementById('impPdfHead'), box = document.getElementById('impPdfList'), btn = document.getElementById('impPdfBtn');
+        if(!head || !box) return;
+        var BASE = 'pdfs/important/', KEY = 'hsia_important_pdfs', loaded = false;
+        function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+        function render(list, offline){
+          if(!list || !list.length){ box.innerHTML = '<div class="imp-note">এখনো কোনো PDF যোগ করা হয়নি।</div>'; return; }
+          box.innerHTML = (offline ? '<div class="imp-note">ইন্টারনেট নেই — সর্বশেষ সেভ করা তালিকা দেখানো হচ্ছে।</div>' : '') + list.map(function(it){
+            var f = BASE + encodeURI(it.file), t = it.title || it.file;
+            return '<div class="imp-row"><a class="imp-t" href="' + f + '" target="_blank" rel="noopener">📄 ' + esc(t) + '</a><a class="imp-d" href="' + f + '" download="' + esc(it.file) + '" title="ডাউনলোড">⬇️</a></div>';
+          }).join('');
+        }
+        function load(){
+          box.innerHTML = '<div class="imp-note">লোড হচ্ছে…</div>';
+          fetch(BASE + 'list.json?_=' + Date.now(), { cache:'no-store' }).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){
+            try{ localStorage.setItem(KEY, JSON.stringify(j)); }catch(e){} render(j, false); loaded = true;
+          }).catch(function(){
+            var saved = null; try{ saved = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){}
+            render(saved, !!saved);
+          });
+        }
+        head.addEventListener('click', function(){
+          var on = box.style.display === 'none'; box.style.display = on ? 'block' : 'none'; btn.textContent = on ? '▴' : '▾';
+          if(on) load();
+        });
+      })();
+      </script>
+
       <div class="fr-ocrsection-head" id="settingsTitle" style="margin-bottom:8px; margin-top:14px;">🎨 কালার কাস্টমাইজ করুন</div>
       <div class="target-row" id="targetRow">
         <button class="target-btn active" data-target="bg"><span class="target-dot" id="dotBg" style="background: rgb(18, 15, 13);"></span><span id="labelBg">ব্যাকগ্রাউন্ড</span></button>
@@ -5755,9 +5811,19 @@ T7ACP|GLF6|T7ACP|ZSJN|VIDP|A201|12:04-12:26
 <script>window.HSIA_ICO={"edit": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z\"/></svg>", "save": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z\"/><path d=\"M17 21v-8H7v8\"/><path d=\"M7 3v5h8\"/></svg>", "lock": "<svg class=\"ico\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"11\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/></svg>"};</script>
 <script defer="" src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js"></script>
+<script>
+/* Firebase SDK loads in the background (one after the other, in order). It used to be three blocking <script> tags, so on a slow first visit the
+   whole app stayed frozen until they finished downloading. Now the page works at once; sync connects as soon as the SDK has arrived. */
+window.__hsiaFbLoad = new Promise(function(done){
+  var urls = ['https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js', 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js', 'https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js'], i = 0;
+  (function next(){
+    if(i >= urls.length){ done(true); return; }
+    var sc = document.createElement('script'); sc.src = urls[i++]; sc.async = false;
+    sc.onload = next; sc.onerror = function(){ done(false); };
+    document.head.appendChild(sc);
+  })();
+});
+</script>
 <script>
 const TEAMS = ['A','B','C','D','E'];
 /* Traffic Hand and Marshaller both work the 5 shifts A-E (regular rotation = main roster) plus overtime.
@@ -9104,7 +9170,7 @@ function initFirebaseSync(){
   idInput.value = saved.roomId;
   cfgInput.value = JSON.stringify(saved.config, null, 2);
   setFirebaseSyncStatus('🔄 সংযুক্ত হচ্ছে...');
-  connectFirebaseSync(saved.config, saved.roomId);
+  (window.__hsiaFbLoad && window.__hsiaFbLoad.then ? window.__hsiaFbLoad : Promise.resolve()).then(function(){ connectFirebaseSync(saved.config, saved.roomId); });
 
   // Fields stay read-only until the admin password unlocks the panel
   // via the eye icon (see initAdminGatedSyncToggle).
@@ -14978,6 +15044,25 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 </script>
 
 <script>
+/* True full-screen helper for the PDF / map viewers (falls back to the CSS full-window mode where the browser has no Fullscreen API). */
+window.hsiaFs = function(wrap, on, onExit){
+  var de = document;
+  function active(){ return de.fullscreenElement || de.webkitFullscreenElement; }
+  try{
+    if(on){
+      var f = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+      if(f){ var r = f.call(wrap); if(r && r.catch) r.catch(function(){}); }
+      wrap._fsx = function(){ if(!active()){ de.removeEventListener('fullscreenchange', wrap._fsx); de.removeEventListener('webkitfullscreenchange', wrap._fsx); wrap._fsx = null; onExit(); } };
+      de.addEventListener('fullscreenchange', wrap._fsx); de.addEventListener('webkitfullscreenchange', wrap._fsx);
+    } else {
+      if(wrap._fsx){ de.removeEventListener('fullscreenchange', wrap._fsx); de.removeEventListener('webkitfullscreenchange', wrap._fsx); wrap._fsx = null; }
+      if(active()){ var x = de.exitFullscreen || de.webkitExitFullscreen; if(x){ var r2 = x.call(de); if(r2 && r2.catch) r2.catch(function(){}); } }
+    }
+  }catch(e){}
+};
+</script>
+
+<script>
 /* Guidelines panel: tabs + PDF viewer. PDFs are NOT in this page: they are separate files in the GitHub repo (pdfs/ folder),
    opened only when their tab is tapped, saved on the phone after the first download, and refreshed quietly when the file on GitHub changes.
    Pages are drawn on demand (only what is near the screen), so even a very large PDF does not slow the app. */
@@ -14987,6 +15072,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     full:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
     shrink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
+    search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>',
     ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>'
   };
   var PDFJS_JS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -15039,12 +15125,174 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       '<button type="button" data-a="in" title="Zoom in" aria-label="Zoom in">' + ICON.plus + '</button>' +
       '<span class="gd-pg"><input type="number" min="1" value="1" inputmode="numeric" data-a="pg" aria-label="Page"> / <span data-a="n">–</span></span>' +
       '<span class="gd-sp"></span>' +
+      '<button type="button" data-a="search" title="Search" aria-label="Search">' + ICON.search + '</button>' +
       '<a class="gd-btn" data-a="ext" href="' + url + '" target="_blank" rel="noopener" title="Open PDF in browser" aria-label="Open PDF in browser">' + ICON.ext + '</a>' +
       '<button type="button" data-a="full" title="Full screen" aria-label="Full screen">' + ICON.full + '</button>' +
-      '</div><div class="gd-view"><div class="gd-msg">Loading…</div></div></div>';
+      '</div><div class="gd-sr" hidden><input type="search" data-s="q" placeholder="লেখা সার্চ করুন…" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="gd-sc" data-s="cnt"></span>' +
+      '<button type="button" data-s="prev" aria-label="Previous">▲</button><button type="button" data-s="next" aria-label="Next">▼</button><button type="button" data-s="list" aria-label="Results list">☰</button></div>' +
+      '<div class="gd-res" hidden></div><div class="gd-view"><div class="gd-msg">Loading…</div></div></div>';
     var wrap = pane.firstChild, view = wrap.querySelector('.gd-view'), zv = wrap.querySelector('.gd-zv');
     var pgIn = wrap.querySelector('[data-a=pg]'), nEl = wrap.querySelector('[data-a=n]'), fullBtn = wrap.querySelector('[data-a=full]');
     var pdf = null, pages = [], io = null, zoom = 1, started = false, lastW = 0, holder = null;
+
+    /* ---- pinch / ctrl+wheel zoom inside the viewer (the page itself no longer zooms) ---- */
+    var pinch = null, rfT = 0, curTag = '';
+    function setZoomLive(nz, fx, fy){
+      nz = Math.max(0.5, Math.min(5, nz)); var b = view.querySelector('.gd-pages'); if(!b) return;
+      var r = view.getBoundingClientRect(), cx = fx - r.left, cy = fy - r.top, w0 = b.offsetWidth, h0 = b.offsetHeight; if(!w0 || !h0) return;
+      var ax = (view.scrollLeft + cx) / w0, ay = (view.scrollTop + cy) / h0;
+      zoom = nz; b.style.width = (zoom * 100) + '%'; zv.textContent = Math.round(zoom * 100) + '%';
+      view.scrollLeft = ax * b.offsetWidth - cx; view.scrollTop = ay * b.offsetHeight - cy;
+    }
+    function refreshSharp(){
+      clearTimeout(rfT);
+      rfT = setTimeout(function(){
+        if(!io) return;
+        pages.forEach(function(d){ d._done = false; d._stale = true; });
+        try{ io.disconnect(); }catch(e){}
+        pages.forEach(function(d){ io.observe(d); });
+        lastW = view.clientWidth;
+      }, 250);
+    }
+    function dist(t){ return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+    view.addEventListener('touchstart', function(e){ if(e.touches.length === 2) pinch = { d: dist(e.touches) || 1, z: zoom }; }, { passive:true });
+    view.addEventListener('touchmove', function(e){
+      if(!pinch || e.touches.length !== 2) return;
+      e.preventDefault(); var t = e.touches;
+      setZoomLive(pinch.z * dist(t) / pinch.d, (t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2);
+    }, { passive:false });
+    function pinchEnd(e){ if(pinch && e.touches.length < 2){ pinch = null; refreshSharp(); } }
+    view.addEventListener('touchend', pinchEnd, { passive:true }); view.addEventListener('touchcancel', pinchEnd, { passive:true });
+    view.addEventListener('wheel', function(e){ if(!e.ctrlKey) return; e.preventDefault(); setZoomLive(zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX, e.clientY); refreshSharp(); }, { passive:false });
+
+    /* ---- text search (reads the PDF's own text; the page index is saved on the phone) ---- */
+    var sRow = wrap.querySelector('.gd-sr'), sInp = sRow.querySelector('[data-s=q]'), sCnt = sRow.querySelector('[data-s=cnt]'), sRes = wrap.querySelector('.gd-res');
+    var q = '', hits = [], hitI = -1, idxText = null, idxP = null, rectCache = {}, hitPages = {}, qid = 0;
+    function buildPageText(tc){
+      var text = '', map = [];
+      tc.items.forEach(function(it, ix){
+        var t = (it.str || '').replace(/\s+/g, ' ');
+        if(!t.trim()){ if(it.hasEOL && text && text.slice(-1) !== ' ') text += ' '; return; }
+        if(text && text.slice(-1) !== ' ') text += ' ';
+        var st = text.length; text += t; map.push({ s:st, e:text.length, ix:ix });
+        if(it.hasEOL) text += ' ';
+      });
+      return { text:text, map:map };
+    }
+    function ensureIndex(onProg){
+      if(idxText) return Promise.resolve(idxText);
+      if(idxP) return idxP;
+      var myPdf = pdf;
+      idxP = idbGet(name + '#txt').then(function(rec){
+        if(rec && rec.tag === curTag && curTag && rec.pages && rec.pages.length === myPdf.numPages){ idxText = rec.pages; return idxText; }
+        var out = [], n = myPdf.numPages, i = 0;
+        return new Promise(function(res){
+          (function step(){
+            var t0 = Date.now();
+            (function one(){
+              if(i >= n){ if(myPdf === pdf){ idxText = out; idbSet(name + '#txt', { tag:curTag, pages:out }); } res(out); return; }
+              myPdf.getPage(i + 1).then(function(pg){ return pg.getTextContent(); })
+                .then(function(tc){ out.push(buildPageText(tc).text); }, function(){ out.push(''); })
+                .then(function(){ i++; if(onProg && i % 4 === 0) onProg(i, n); if(Date.now() - t0 > 40) setTimeout(step, 0); else one(); });
+            })();
+          })();
+        });
+      });
+      return idxP;
+    }
+    function pageRects(pn){
+      if(rectCache[pn]) return rectCache[pn];
+      var term = q;
+      return rectCache[pn] = pdf.getPage(pn).then(function(pg){
+        var vp = pg.getViewport({ scale:1 });
+        return pg.getTextContent().then(function(tc){
+          var b = buildPageText(tc), low = b.text.toLowerCase(), occ = [], from = 0, k;
+          while(term && (k = low.indexOf(term, from)) > -1){
+            var e = k + term.length, rects = [];
+            b.map.forEach(function(m){
+              if(m.e <= k || m.s >= e) return;
+              var it = tc.items[m.ix], tx = window.pdfjsLib.Util.transform(vp.transform, it.transform);
+              var len = (m.e - m.s) || 1, a = Math.max(k, m.s) - m.s, z = Math.min(e, m.e) - m.s;
+              var fh = Math.hypot(tx[2], tx[3]), iw = it.width * vp.scale;
+              rects.push({ l:(tx[4] + iw * a / len) / vp.width, t:(tx[5] - fh * 0.95) / vp.height, w:Math.max(iw * (z - a) / len, 2) / vp.width, h:(fh * 1.15) / vp.height });
+            });
+            occ.push(rects); from = e;
+          }
+          return occ;
+        });
+      }).catch(function(){ return []; });
+    }
+    function paintHL(div){
+      var old = div.querySelector('.gd-hl'); if(old) old.parentNode.removeChild(old);
+      var pn = +div.getAttribute('data-i'); if(!q || !hitPages[pn]) return;
+      var my = qid;
+      pageRects(pn).then(function(occ){
+        if(my !== qid) return;
+        var o2 = div.querySelector('.gd-hl'); if(o2) o2.parentNode.removeChild(o2);
+        var box = document.createElement('div'); box.className = 'gd-hl';
+        occ.forEach(function(rs, c){
+          var cur = hits[hitI] && hits[hitI].p === pn && hits[hitI].c === c;
+          rs.forEach(function(r){ var d = document.createElement('div'); d.className = 'gd-hit' + (cur ? ' cur' : ''); d.style.cssText = 'left:' + (r.l * 100) + '%;top:' + (r.t * 100) + '%;width:' + (r.w * 100) + '%;height:' + (r.h * 100) + '%'; box.appendChild(d); });
+        });
+        div.appendChild(box);
+      });
+    }
+    function paintAll(){ pages.forEach(function(d){ if(d._done) paintHL(d); }); }
+    function clearHL(){ pages.forEach(function(d){ var o = d.querySelector('.gd-hl'); if(o) o.parentNode.removeChild(o); }); }
+    function goHit(){
+      var h = hits[hitI]; if(!h) return;
+      sCnt.textContent = (hitI + 1) + ' / ' + hits.length + (hits.length >= 2000 ? '+' : '');
+      var div = pages[h.p - 1]; if(!div) return;
+      var my = qid;
+      pageRects(h.p).then(function(occ){
+        if(my !== qid) return;
+        var r = occ[h.c] && occ[h.c][0];
+        var top = div.offsetTop + (r ? r.t * div.offsetHeight : 0) - view.clientHeight * 0.35;
+        var left = div.offsetLeft + (r ? r.l * div.offsetWidth : 0) - view.clientWidth * 0.3;
+        view.scrollTo({ top:Math.max(0, top), left:Math.max(0, left) });
+        paintAll();
+      });
+    }
+    function renderList(){
+      sRes.innerHTML = '';
+      hits.slice(0, 100).forEach(function(h, i){
+        var t = idxText && idxText[h.p - 1] || '', a = Math.max(0, h.k - 28), sn = (a > 0 ? '…' : '') + t.substring(a, h.k + q.length + 55) + '…';
+        var d = document.createElement('div'); d.setAttribute('data-i', i);
+        var b = document.createElement('b'); b.textContent = 'p.' + h.p; d.appendChild(b); d.appendChild(document.createTextNode(sn)); sRes.appendChild(d);
+      });
+    }
+    function runSearch(){
+      var term = sInp.value.trim().replace(/\s+/g, ' ').toLowerCase();
+      qid++; q = term; hits = []; hitI = -1; hitPages = {}; rectCache = {}; clearHL(); sRes.innerHTML = '';
+      if(term.length < 2){ sCnt.textContent = ''; return; }
+      sCnt.textContent = '…'; var my = qid;
+      ensureIndex(function(i, n){ if(my === qid) sCnt.textContent = 'Indexing ' + i + '/' + n; }).then(function(tx){
+        if(my !== qid) return;
+        var any = 0;
+        for(var p = 0; p < tx.length && hits.length < 2000; p++){
+          var low = tx[p].toLowerCase(), from = 0, k, c = 0; any += low.length;
+          while((k = low.indexOf(term, from)) > -1 && hits.length < 2000){ hits.push({ p:p + 1, k:k, c:c++ }); hitPages[p + 1] = true; from = k + term.length; }
+        }
+        if(!hits.length){ sCnt.textContent = any < 20 ? 'এই PDF এ সার্চযোগ্য লেখা নেই' : 'পাওয়া যায়নি'; return; }
+        hitI = 0; renderList(); goHit();
+      });
+    }
+    function step(d){ if(!hits.length) return; hitI = (hitI + d + hits.length) % hits.length; goHit(); }
+    function toggleSearch(){
+      var on = sRow.hasAttribute('hidden');
+      if(on){ sRow.removeAttribute('hidden'); sInp.focus(); }
+      else { sRow.setAttribute('hidden', ''); sRes.setAttribute('hidden', ''); qid++; q = ''; hits = []; hitPages = {}; clearHL(); }
+      setTimeout(function(){ if(pages.length && Math.abs(view.clientWidth - lastW) > 20) applyZoom(); }, 60);
+    }
+    var sT = 0;
+    sInp.addEventListener('input', function(){ clearTimeout(sT); sT = setTimeout(runSearch, 350); });
+    sInp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); clearTimeout(sT); if(sInp.value.trim().toLowerCase() !== q) runSearch(); else step(e.shiftKey ? -1 : 1); } });
+    sRow.addEventListener('click', function(e){
+      var b = e.target.closest && e.target.closest('[data-s]'); if(!b) return; var a = b.getAttribute('data-s');
+      if(a === 'next') step(1); else if(a === 'prev') step(-1);
+      else if(a === 'list'){ if(sRes.hasAttribute('hidden')) sRes.removeAttribute('hidden'); else sRes.setAttribute('hidden', ''); }
+    });
+    sRes.addEventListener('click', function(e){ var d = e.target.closest && e.target.closest('[data-i]'); if(!d) return; hitI = +d.getAttribute('data-i'); goHit(); sRes.setAttribute('hidden', ''); });
 
     function msg(t){ view.innerHTML = '<div class="gd-msg"></div>'; view.firstChild.textContent = t; }
 
@@ -15053,16 +15301,16 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       div._busy = true;
       pdf.getPage(+div.getAttribute('data-i')).then(function(pg){
         var base = pg.getViewport({ scale:1 }), cssW = div.clientWidth || view.clientWidth || 360;
-        var dpr = Math.min(window.devicePixelRatio || 1, 2), vp = pg.getViewport({ scale: cssW / base.width * dpr });
+        var dpr = Math.min(window.devicePixelRatio || 1, 2), vp = pg.getViewport({ scale: Math.min(cssW / base.width * dpr, 3200 / base.width) });
         div.style.aspectRatio = base.width + ' / ' + base.height;
         var cv = document.createElement('canvas'); cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
         return pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise.then(function(){
-          if(!div._busy || div.querySelector('canvas')){ return; }           // scrolled far away / zoom changed meanwhile
-          div.appendChild(cv); div._done = true;
+          if(!div._busy){ return; }           // scrolled far away / zoom changed meanwhile
+          var oc = div.querySelector('canvas'); if(oc){ oc.width = 0; oc.height = 0; div.removeChild(oc); } div.appendChild(cv); div._stale = false; div._done = true; paintHL(div);
         });
       }).catch(function(){}).then(function(){ div._busy = false; });
     }
-    function dropPage(div){ div._busy = false; div._done = false; var c = div.querySelector('canvas'); if(c){ c.width = 0; c.height = 0; div.removeChild(c); } }
+    function dropPage(div){ div._busy = false; div._done = false; div._stale = false; var c = div.querySelector('canvas'); if(c){ c.width = 0; c.height = 0; div.removeChild(c); } }
 
     function build(keepPage){
       if(!pdf) return;
@@ -15100,8 +15348,9 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     wrap.addEventListener('click', function(e){
       var b = e.target.closest && e.target.closest('[data-a]'); if(!b) return;
       var a = b.getAttribute('data-a');
-      if(a === 'in'){ zoom = Math.min(3, zoom + 0.25); applyZoom(); }
+      if(a === 'in'){ zoom = Math.min(5, zoom + 0.25); applyZoom(); }
       else if(a === 'out'){ zoom = Math.max(0.5, zoom - 0.25); applyZoom(); }
+      else if(a === 'search'){ toggleSearch(); }
       else if(a === 'full'){ toggleFull(); }
     });
     pgIn.addEventListener('change', function(){
@@ -15115,6 +15364,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       if(on){ holder = document.createComment('gd'); wrap.parentNode.insertBefore(holder, wrap); document.body.appendChild(wrap); }
       else if(holder && holder.parentNode){ holder.parentNode.insertBefore(wrap, holder); holder.parentNode.removeChild(holder); holder = null; }
       wrap.classList.toggle('gd-full', on);
+      try{ window.hsiaFs(wrap, on, function(){ if(wrap.classList.contains('gd-full')) toggleFull(); }); }catch(e){}
       fullBtn.innerHTML = on ? ICON.shrink : ICON.full;
       fullBtn.title = on ? 'Close full screen' : 'Full screen';
       setTimeout(function(){ if(pages.length && Math.abs(view.clientWidth - lastW) > 20) applyZoom(); }, 60);
@@ -15147,18 +15397,18 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       return loadPdfJs().then(function(){
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
         return window.pdfjsLib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
-      }).then(function(d){ if(pdf){ try{ pdf.destroy(); }catch(e){} } pdf = d; zoom = zoom || 1; });
+      }).then(function(d){ if(pdf){ try{ pdf.destroy(); }catch(e){} } pdf = d; zoom = zoom || 1; idxText = null; idxP = null; rectCache = {}; });
     }
     function start(){
       started = true; msg('Loading…');
       idbGet(name).then(function(rec){
-        if(rec && rec.buf){
+        if(rec && rec.buf){ curTag = rec.tag;
           openBuf(rec.buf).then(function(){ build(1); }).catch(function(){ msg('Could not open this PDF.'); });
           /* quiet freshness check: only the headers are asked for; a changed file is replaced without any message */
           fetch(url + '?_probe=' + Date.now(), { method:'HEAD', cache:'no-store' }).then(function(r){
             if(!r.ok || tagOf(r) === rec.tag) return;
             return download(false).then(function(n){
-              idbSet(name, { buf:n.buf, tag:n.tag, at:Date.now() });
+              idbSet(name, { buf:n.buf, tag:n.tag, at:Date.now() }); curTag = n.tag;
               var keep = pages.length ? curPage() : 1;
               return openBuf(n.buf).then(function(){ build(keep); });
             });
@@ -15166,7 +15416,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
           return;
         }
         download(true).then(function(n){
-          idbSet(name, { buf:n.buf, tag:n.tag, at:Date.now() });
+          idbSet(name, { buf:n.buf, tag:n.tag, at:Date.now() }); curTag = n.tag;
           return openBuf(n.buf).then(function(){ build(1); });
         }).catch(function(e){
           if(e && e.message === 'missing') msg('This PDF has not been uploaded yet.');
@@ -15196,7 +15446,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     { label:'Map 1', tiles:'pdfs' },
     { label:'Map 2', pane:'mapPaneSvg' }
   ];
-  var DEFAULT_TAB = 'Map 2';
+  var DEFAULT_TAB = 'Map 1';
 
   /* Map 1 search: red-ink point names and their position on the full-size Map 1 image (8277 x 13778 px). Positions are scaled automatically to whatever size the tiles were made at. */
   var MAP1_REF = { w:8277, h:13778 };
@@ -15258,6 +15508,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       if(on){ holder = document.createComment('mp'); wrap.parentNode.insertBefore(holder, wrap); document.body.appendChild(wrap); }
       else if(holder && holder.parentNode){ holder.parentNode.insertBefore(wrap, holder); holder.parentNode.removeChild(holder); holder = null; }
       wrap.classList.toggle('gd-full', on);
+      try{ window.hsiaFs(wrap, on, function(){ if(wrap.classList.contains('gd-full')) toggleFull(); }); }catch(e){}
       fullBtn.innerHTML = on ? IC.shrink : IC.full; fullBtn.title = on ? 'Close full screen' : 'Full screen';
     }
     function start(){
@@ -15427,6 +15678,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       if(on){ holder = document.createComment('mp'); wrap.parentNode.insertBefore(holder, wrap); document.body.appendChild(wrap); }
       else if(holder && holder.parentNode){ holder.parentNode.insertBefore(wrap, holder); holder.parentNode.removeChild(holder); holder = null; }
       wrap.classList.toggle('gd-full', on);
+      try{ window.hsiaFs(wrap, on, function(){ if(wrap.classList.contains('gd-full')) toggleFull(); }); }catch(e){}
       fullBtn.innerHTML = on ? IC.shrink : IC.full; fullBtn.title = on ? 'Close full screen' : 'Full screen';
       setTimeout(resize, 60);
     }
