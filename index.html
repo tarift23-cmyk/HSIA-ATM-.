@@ -15133,46 +15133,22 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 </script>
 
 <script>
-/* Desktop view: windows in equal-width columns that fill the screen (any monitor size). Mobile view puts everything back in one column. */
+/* Desktop view: ONE column, same look as the phone's "desktop site" view, scaled to the monitor.
+   The page is laid out at a fixed reference width (REF) and then zoomed by (screen width / REF), so a bigger monitor shows the very same layout,
+   bigger in width AND height. Mobile view is left alone. */
 (function(){
-  var MIN_COL = 440, MAX_COLS = 4, order = null, grid = null, cols = 0, t = 0;
-  var wrap = document.querySelector('.wrap'); if(!wrap) return;
-  function cards(){
-    if(order) return order;
-    order = [].filter.call(wrap.children, function(el){
-      return el.classList && (el.classList.contains('picker') || el.classList.contains('board') || el.classList.contains('week') ||
-        el.classList.contains('cal') || el.classList.contains('allcal') || el.classList.contains('cardpanel'));
-    });
-    return order;
+  var REF = 860, MIN_Z = 1.15, MAX_Z = 4, t = 0;
+  function apply(){
+    var b = document.body; if(!b) return;
+    if(!b.classList.contains('desktop-mode')){ b.style.zoom = ''; return; }
+    var w = window.innerWidth || document.documentElement.clientWidth || REF;
+    var z = Math.min(MAX_Z, Math.max(MIN_Z, w / REF));
+    b.style.zoom = String(Math.round(z * 1000) / 1000);
   }
-  function undo(){
-    if(!grid) return;
-    cards().forEach(function(el){ wrap.insertBefore(el, grid); });
-    grid.parentNode.removeChild(grid); grid = null; cols = 0;
-  }
-  function layout(){
-    var on = document.body.classList.contains('desktop-mode');
-    if(!on){ undo(); return; }
-    var list = cards(); if(!list.length) return;
-    var w = wrap.clientWidth || 800, n = Math.max(1, Math.min(MAX_COLS, Math.floor((w + 16) / (MIN_COL + 16))));
-    if(grid && n === cols) return;
-    undo();
-    grid = document.createElement('div'); grid.className = 'dk-grid';
-    wrap.insertBefore(grid, list[0]);
-    var cs = [];
-    for(var i = 0; i < n; i++){ var c = document.createElement('div'); c.className = 'dk-col'; grid.appendChild(c); cs.push(c); }
-    cols = n;
-    /* each window goes to the shortest column; the placement then stays fixed, so opening / closing a window never makes the others jump */
-    list.forEach(function(el){
-      var best = cs[0];
-      cs.forEach(function(c){ if(c.offsetHeight < best.offsetHeight) best = c; });
-      best.appendChild(el);
-    });
-  }
-  new MutationObserver(function(){ layout(); }).observe(document.body, { attributes:true, attributeFilter:['class'] });
-  window.addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(layout, 200); });
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', layout); else layout();
-  setTimeout(layout, 0);
+  new MutationObserver(apply).observe(document.body, { attributes:true, attributeFilter:['class'] });
+  window.addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(apply, 100); });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
+  setTimeout(apply, 0);
 })();
 </script>
 </body></html>
