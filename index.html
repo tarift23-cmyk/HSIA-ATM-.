@@ -2519,6 +2519,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
       <div class="fr-manualform">
         <input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-09-28">
+        <div id="exchangeDateToWrap" style="display:none;align-items:center;gap:6px;flex:1 1 150px;min-width:0;"><span style="font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;">To</span><input type="date" id="exchangeDateTo" class="fr-mfinput fr-mfinput-sm" autocomplete="off" style="flex:1 1 auto;min-width:0;"></div>
         <select id="exchangeTable" class="fr-mfinput" style="display:none;">
           <option value="" selected>Table</option>
           <option value="roster">Aerodrome Assistant</option>
@@ -2545,7 +2546,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
         <div class="xbtn-row">
           <button id="exchangeAddBtn" type="button" class="fr-dbimport xbtn xbtn-ex">+ Add Exchange</button>
           <button id="exchangeClBtn" type="button" class="fr-dbimport xbtn xbtn-cl">+ Add CL</button>
-          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / EL / UFN</button>
+          <button id="exchangeSpBtn" type="button" class="fr-dbimport xbtn xbtn-sp">+ Medical / Festival / Training / Leave / EL / UFN</button>
         </div>
         <button id="exchangeConfirmBtn" type="button" class="fr-dbimport">✔ Next</button>
         <button id="clDataBtn" type="button" class="fr-dbclear">🔒 CL Data</button>
@@ -2667,6 +2668,9 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       <button type="button" class="xp-choice" data-sp="Medical">Medical</button>
       <button type="button" class="xp-choice" data-sp="Festival">Festival</button>
       <button type="button" class="xp-choice" data-sp="Training">Training</button>
+      <button type="button" class="xp-choice" data-sp="Maternity">Maternity Leave</button>
+      <button type="button" class="xp-choice" data-sp="Study Leave">Study Leave</button>
+      <button type="button" class="xp-choice" data-sp="Rest and Recreation Leave">Rest and Recreation Leave</button>
       <button type="button" class="xp-choice" data-sp="EL">EL</button>
       <button type="button" class="xp-choice" data-sp="UFN">UFN (Until Further Notice)</button>
     </div>
@@ -7023,6 +7027,7 @@ function exPutEntry(dateKey, entry){
   });
   removed.forEach(x=> exPurgeMoved(dateKey, x));
   EXCHANGES[dateKey].push(entry);
+  if(window._exBatch) return;   /* date-range add: saved + logged once by the caller */
   saveExchangesData(EXCHANGES);
   try{ auditLog(entry.cl ? 'cl-add' : entry.special ? 'el-add' : 'exchange-add', auditExchangeDesc(entry, dateKey)); }catch(e){}
 }
@@ -7054,7 +7059,7 @@ function exVacateMovedCell(dateKey, parent){
     });
   });
   });
-  if(added) saveExchangesData(EXCHANGES);
+  if(added && !window._exBatch) saveExchangesData(EXCHANGES);
 }
 function refreshThmrViews(){
   try{ if(window.hsiaTHMRRender) window.hsiaTHMRRender(); }catch(e){}
@@ -9141,7 +9146,7 @@ function initRoster(){
 function isThMrTable(v){ return v === 'th' || v === 'mr'; }
 function _xEsc(t){ return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 /* what the form currently points at: {thmr, table, pos, team, who, shift, dateKey} */
-function exchangeResolve(){
+function exchangeResolve(forKey){
   const tableSel = document.getElementById('exchangeTable');
   const posSel = document.getElementById('exchangePos');
   const teamSel = document.getElementById('exchangeTeam');
@@ -9150,7 +9155,7 @@ function exchangeResolve(){
   if(!tableSel || !posSel || !dateInput || !dateInput.value) return null;
   if(!tableSel.value || !posSel.value) return null;
   if(!isThMrTable(tableSel.value) && (!teamSel0 || teamSel0.value === '')) return null;
-  const dateKey = dateInput.value;
+  const dateKey = forKey || dateInput.value;
   const parts = dateKey.split('-').map(Number);
   if(!parts[0] || !parts[1] || !parts[2]) return null;
   if(isThMrTable(tableSel.value)){
@@ -10027,8 +10032,11 @@ function exMyNames(){
 function exIsMe(name){ const n = exNormName(name); return !!n && exMyNames().indexOf(n) !== -1; }
 function exIsAdmin(){ return !!rosterUnlocked; }
 function exReqKindLabel(k){ return k === 'cl' ? 'CL' : k === 'special' ? 'EL / Special' : 'Exchange'; }
+function exReqTitle(q){ return (q.kind === 'special' && q.spType) ? q.spType : exReqKindLabel(q.kind); }
+function exReqDates(q){ return String(q.dateKey) + ((q.dateTo && q.dateTo > q.dateKey) ? ' \u2192 ' + q.dateTo : ''); }
+function exRangeDays(a, b){ const A = a.split('-').map(Number), B = b.split('-').map(Number), out = []; for(let t = Date.UTC(A[0], A[1]-1, A[2]), te = Date.UTC(B[0], B[1]-1, B[2]); t <= te; t += 864e5) out.push(new Date(t).toISOString().slice(0,10)); return out; }
 function exReqLine(q){
-  return exReqKindLabel(q.kind) + ' \u00b7 ' + q.dateKey + ' \u00b7 ' + rosterLabelFor(q.table) + ' ' + q.pos + ' (' + exTeamLabel(q) + ') \u00b7 ' + (q.who || '\u2014') + (q.subName ? ' \u2192 ' + q.subName : (q.kind === 'exchange' ? '' : ' \u2192 Vacant'));
+  return exReqTitle(q) + ' \u00b7 ' + exReqDates(q) + ' \u00b7 ' + rosterLabelFor(q.table) + ' ' + q.pos + ' (' + exTeamLabel(q) + ') \u00b7 ' + (q.who || '\u2014') + (q.subName ? ' \u2192 ' + q.subName : (q.kind === 'exchange' ? '' : ' \u2192 Vacant'));
 }
 const exReqOpen = q=> q && (q.status === 'sub' || q.status === 'admin');
 function exAfterApply(){
@@ -10047,6 +10055,27 @@ function exReqApply(q){
   if(q.kind === 'exchange'){
     const pe = Object.assign({}, base, { subName:sub, nightHalf:q.nightHalf || '' });
     exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
+  } else if(q.kind === 'special' && q.dateTo && q.dateTo > dk){
+    let n = 0;
+    window._exBatch = true;
+    try{
+      exRangeDays(dk, q.dateTo).forEach(k=>{
+        let who = String(q.who || '').trim();
+        if(q.thmr){
+          const slot = +q.team - THS_BASE, pi = (parseInt(String(q.pos).split('-')[1], 10) || 1) - 1;
+          who = String((window.hsiaTHMRPerson && window.hsiaTHMRPerson(k, q.table, slot, pi)) || '').trim();
+        } else {
+          const pr = k.split('-').map(Number);
+          if(shiftFor(+q.team, pr[0], pr[1]-1, pr[2]) === 'Off') return;
+        }
+        if(!who || who === '-') return;
+        const pe = Object.assign({}, base, { who:who, subName:sub, nightHalf:'', special:true, spType:(q.spType || 'EL'), vacant:!sub });
+        exPutEntry(k, pe); exVacateMovedCell(k, pe); n++;
+      });
+    } finally { window._exBatch = false; }
+    if(!n){ q.status = 'failed'; q.note = 'No duty day in this period'; exReqPatch(q.id, { status:'failed', note:q.note }); return false; }
+    saveExchangesData(EXCHANGES);
+    try{ auditLog('el-add', (q.spType || 'EL') + ' ' + dk + ' \u2192 ' + q.dateTo + ' (' + n + ' duty days) \u00B7 ' + q.pos + ' \u00B7 ' + (q.who || '') + (sub ? ' \u2192 ' + sub : ' \u00B7 vacant')); }catch(e){}
   } else if(q.kind === 'special'){
     const pe = Object.assign({}, base, { subName:sub, nightHalf:'', special:true, spType:(q.spType || 'EL'), vacant:!sub });
     exPutEntry(dk, pe); exVacateMovedCell(dk, pe);
@@ -10072,7 +10101,7 @@ function exReqPrune(){
   const f = nowDhakaFields(), c = addDays(f.y, f.m, f.day, -7);
   const cutoff = c.y + '-' + String(c.m + 1).padStart(2,'0') + '-' + String(c.day).padStart(2,'0');
   Object.keys(EX_REQUESTS).forEach(id=>{
-    if(String(EX_REQUESTS[id].dateKey) < cutoff){ delete EX_REQUESTS[id]; if(exIsAdmin()){ const ref = exReqRef(id); if(ref){ try{ ref.remove().catch(()=>{}); }catch(e){} } } }
+    if(String(EX_REQUESTS[id].dateTo || EX_REQUESTS[id].dateKey) < cutoff){ delete EX_REQUESTS[id]; if(exIsAdmin()){ const ref = exReqRef(id); if(ref){ try{ ref.remove().catch(()=>{}); }catch(e){} } } }
   });
 }
 function exReqUiRefresh(){ try{ exReqRender(); }catch(e){} try{ checkMyExchangeNotifications(); }catch(e){} try{ exReqNotifyCheck(); }catch(e){} }
@@ -10105,7 +10134,7 @@ function exReqSubmit(o){
   const now = Date.now();
   const id = 'r' + now.toString(36) + Math.random().toString(36).slice(2, 6);
   const q = { v:2, id:id, createdAt:now, by:{ id:String(s.identifier), name:String(s.displayName) }, kind:o.kind, dateKey:r.dateKey, table:r.table, pos:r.pos, team:+r.team,
-              who:String(r.who || ''), spType:o.kind === 'special' ? String(o.spType || '') : '', subName:o.kind === 'exchange' ? sub : '', nightHalf:o.nightHalf || '', shift:r.shift || '', thmr:!!r.thmr,
+              who:String(r.who || ''), dateTo:(o.kind === 'special' && o.dateTo) ? String(o.dateTo) : '', spType:o.kind === 'special' ? String(o.spType || '') : '', subName:o.kind === 'exchange' ? sub : '', nightHalf:o.nightHalf || '', shift:r.shift || '', thmr:!!r.thmr,
               status: o.kind === 'exchange' ? 'sub' : 'admin',
               sub: o.kind === 'exchange' ? { status:'pending', at:0 } : null, admin:{ status:'pending', at:0 } };
   EX_REQUESTS[id] = q;
@@ -10236,7 +10265,7 @@ function exReqRender(){
     if(exReqOpen(q) && (isMineReq(q) || admin)) acts += '<button data-act="cancel" data-id="' + q.id + '">Cancel request</button>';
     const who = q.who ? '<s>' + esc(q.who) + '</s> \u2192 ' : '';
     const to = q.subName ? esc(q.subName) : (q.kind === 'exchange' ? '' : (q.status === 'approved' ? 'Vacant' : 'Admin decides'));
-    return '<div class="exr-card' + (hl ? ' ask' : '') + '"><div class="exr-top"><b>' + exReqKindLabel(q.kind) + '</b><span class="exr-date">' + esc(q.dateKey) + '</span><span class="exr-st ' + q.status + '">' + (EXR_STATUS[q.status] || q.status) + '</span></div>' +
+    return '<div class="exr-card' + (hl ? ' ask' : '') + '"><div class="exr-top"><b>' + esc(exReqTitle(q)) + '</b><span class="exr-date">' + esc(exReqDates(q)) + '</span><span class="exr-st ' + q.status + '">' + (EXR_STATUS[q.status] || q.status) + '</span></div>' +
       '<div class="exr-line">' + esc(rosterLabelFor(q.table)) + ' \u00b7 ' + esc(q.pos) + ' \u00b7 ' + esc(exTeamLabel(q)) + '</div>' +
       '<div class="exr-people">' + who + '<b>' + to + '</b></div>' +
       '<div class="exr-need">' + steps + '</div>' +
@@ -10303,6 +10332,7 @@ function initExchangePanel(){
   if(!dateInput) return;
 
   const today = todayDateKey();
+  const EX_RANGE_TYPES = ['Medical','Festival','Training','Maternity','Study Leave','Rest and Recreation Leave'];
   dateInput.value = today;
   dateInput.min = today;
 
@@ -10312,7 +10342,9 @@ function initExchangePanel(){
   teamSel.addEventListener('change', updateExchangeCurrentHint);
   dateInput.addEventListener('change', ()=>{
     if(isThMrTable(tableSel.value)) populateExchangePositions(); else updateExchangeCurrentHint();
+    { const tI = document.getElementById('exchangeDateTo'); if(tI){ tI.min = dateInput.value || today; if(tI.value && tI.value < dateInput.value) tI.value = ''; } }
   });
+  { const tI = document.getElementById('exchangeDateTo'); if(tI) tI.min = today; }
   if(clMode) clMode.addEventListener('change', ()=>{ if(subInput) subInput.style.opacity = clMode.value === 'vacant' ? '.45' : ''; });
   initExchangePicker();
   /* mode first: tap Add Exchange / Add CL / Medical… -> then date, position (and substitute for Exchange) appear */
@@ -10326,6 +10358,7 @@ function initExchangePanel(){
       window._xMode = m;
       form.classList.toggle('xmode-off', !m);
       form.classList.toggle('xmode-nosub', m === 'cl' || m === 'sp');
+      { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); if(tw) tw.style.display = (m === 'sp') ? 'flex' : 'none'; if(ti && m !== 'sp') ti.value = ''; }
       Object.keys(modeBtn).forEach(k=>{ if(modeBtn[k]) modeBtn[k].classList.toggle('on', k === m); });
       if(m === 'cl' || m === 'sp'){ if(subInput) subInput.value = ''; }
       if(confirmBtn) confirmBtn.textContent = m === 'ex' ? '✔ Add Exchange' : '✔ Next';
@@ -10343,6 +10376,7 @@ function initExchangePanel(){
         if(tSel){ tSel.value = ''; populateExchangePositions(); }
         if(pSel) pSel.value = '';
         if(dI){ dI.value = todayDateKey(); }
+        { const tI = document.getElementById('exchangeDateTo'); if(tI) tI.value = ''; }
         window._spType = '';
         setMode('');
         updateExchangeCurrentHint();
@@ -10403,7 +10437,8 @@ function initExchangePanel(){
     try{ const q = document.getElementById('qbmOverlay'); if(q && q.classList.contains('show')) renderQbm(); }catch(e){}
     try{
       const m = window._xMode;
-      if(window._xDone) window._xDone(m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? ((window._spType || 'EL') + (window._spType === 'UFN' ? ' added to QBM' : ' added')) : 'Added');
+      if(window._xDone) window._xDone(m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? (window._spRangeMsg || ((window._spType || 'EL') + (window._spType === 'UFN' ? ' added to QBM' : ' added'))) : 'Added');
+      window._spRangeMsg = '';
     }catch(e){}
   };
 
@@ -10442,6 +10477,33 @@ function initExchangePanel(){
         return;
       }
       if(special){
+        { /* Medical / Festival / Training / Maternity: optional To date -> every duty day from..to */
+          const toKey = ((document.getElementById('exchangeDateTo') || {}).value || '');
+          if(toKey && toKey > r.dateKey && EX_RANGE_TYPES.indexOf(window._spType) >= 0){
+            const days = [];
+            const a = r.dateKey.split('-').map(Number), b = toKey.split('-').map(Number);
+            for(let t = Date.UTC(a[0], a[1]-1, a[2]), te = Date.UTC(b[0], b[1]-1, b[2]); t <= te; t += 864e5) days.push(new Date(t).toISOString().slice(0,10));
+            if(days.length > 366 && !confirm('This period is ' + days.length + ' days long. Continue?')) return;
+            let n = 0, skip = 0;
+            window._exBatch = true;
+            try{
+              days.forEach(k=>{
+                const rr = exchangeResolve(k);
+                if(!rr || (!rr.thmr && rr.shift === 'Off') || !rr.who || rr.who === '-'){ skip++; return; }
+                if(k === today){ const w = exchangeShiftWindow(k, rr.team, ''); if(w && w.end <= Date.now()){ skip++; return; } }
+                const pe = { table:rr.table, pos:rr.pos, team:rr.team, subName:sub, nightHalf:'', special:true, spType:window._spType, vacant:!sub, who:rr.who };
+                exPutEntry(k, pe); exVacateMovedCell(k, pe); n++;
+              });
+            } finally { window._exBatch = false; }
+            if(!n){ alert('No duty day found in this period for the selected position.'); return; }
+            saveExchangesData(EXCHANGES);
+            try{ auditLog('el-add', window._spType + ' ' + r.dateKey + ' \u2192 ' + toKey + ' (' + n + ' duty days) \u00B7 ' + r.pos + ' \u00B7 ' + (r.who || '') + (sub ? ' \u2192 ' + sub : ' \u00B7 vacant')); }catch(e){}
+            window._spRangeMsg = window._spType + ' added: ' + n + ' duty day' + (n > 1 ? 's' : '') + (skip ? ' (' + skip + ' off-days skipped)' : '');
+            subInput.value = '';
+            afterChange();
+            return;
+          }
+        }
         /* Festival / EL / special case: no CL count, no ledger — only somebody is put on the position */
         { const _pe = { table:r.table, pos:r.pos, team:r.team, subName:sub, nightHalf:'', special:true, spType:(window._spType || 'EL'), vacant:!sub, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
         subInput.value = '';
@@ -10516,13 +10578,22 @@ function initExchangePanel(){
             else { window._pendingUfnAfterPick = true; openExchangePicker(); }
             return;
           }
-          if(!dateChecks()) return;
+          { /* From–To range */
+            const toKey = ((document.getElementById('exchangeDateTo') || {}).value || '');
+            const isRange = toKey && toKey > r.dateKey;
+            if(isRange){
+              if(EX_RANGE_TYPES.indexOf(type) < 0){ alert('From–To dates can be used only with Medical / Festival / Training / leave types. For ' + type + ' clear the "To" date.'); return; }
+              if(r.dateKey < today){ alert('A past date cannot be used.'); return; }
+            } else if(!dateChecks()) return;
+          }
           const lab = type;
           document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
           document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
           if(_m === 'request'){
-            if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
-              if(exReqSubmit({ kind:'special', spType:type, r:r, subName:'', vacant:true }) && window._xDone) window._xDone('Request sent');
+            const _to = ((document.getElementById('exchangeDateTo') || {}).value || '');
+            const _dTo = (_to && _to > r.dateKey) ? _to : '';
+            if(confirm('Send a ' + lab + ' request for ' + r.dateKey + (_dTo ? ' \u2192 ' + _dTo : '') + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
+              if(exReqSubmit({ kind:'special', spType:type, r:r, subName:'', vacant:true, dateTo:_dTo }) && window._xDone) window._xDone('Request sent');
             }
             return;
           }
