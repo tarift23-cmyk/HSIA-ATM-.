@@ -2131,8 +2131,10 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
 .rh-t th:last-child, .rh-t td:last-child{ border-right:0; }
 .rh-t th{ background:rgba(255,255,255,.06); font-size:11px; }
 .rh-t td.p{ text-align:left; font-weight:700; white-space:nowrap; }
-.rh-t td.chg{ background:rgba(245,181,61,.22); font-weight:700; }
-.rh-t .chg-i{ background:rgba(245,181,61,.22); border-radius:4px; padding:0 3px; font-weight:700; }
+.rh-t td.chg{ background:rgba(245,181,61,.5); box-shadow:inset 0 0 0 2px #f5b53d; font-weight:800; color:#fff; }
+.rh-t .chg-i{ background:rgba(245,181,61,.5); box-shadow:0 0 0 2px #f5b53d; border-radius:4px; padding:0 4px; font-weight:800; color:#fff; }
+.rh-legend{ font-size:11.5px; color:var(--muted); margin:0 0 10px; display:flex; align-items:center; gap:6px; }
+.rh-legend i{ display:inline-block; width:14px; height:14px; border-radius:4px; background:rgba(245,181,61,.5); box-shadow:inset 0 0 0 2px #f5b53d; }
 .rp-opt-lbl{ font-size:11.5px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:12px 0 6px; }
 .rp-opt-row{ display:flex; flex-wrap:wrap; gap:6px; }
 .rp-actions{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:16px; }
@@ -2601,6 +2603,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
         <button type="button" class="modal-close" id="rosterHistClose">✕</button>
       </div>
       <div class="rh-note" id="rosterHistNote"></div>
+      <div class="rh-legend"><i></i> Highlighted box = changed from the previous roster</div>
       <div id="rosterHistBody"></div>
     </div>
   </div>
