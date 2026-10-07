@@ -1130,6 +1130,27 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .mec-detail b{ display:block; color:#fff; margin-bottom:2px; }
 .mec-detail small{ color:#8d94a6; font-size:11px; }
 .mec-detail i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; vertical-align:middle; }
+.meh-stats.m4{ grid-template-columns:repeat(4,1fr); gap:6px; }
+.meh-stats.m4 > div{ padding:9px 3px; }
+.meh-stats.m4 b{ font-size:21px; }
+.meh-stats.m4 span{ font-size:7.5px; letter-spacing:.04em; }
+.meh-stats .al b{ background:linear-gradient(180deg,#fff,#f5b53d); -webkit-background-clip:text; background-clip:text; }
+.mec-grid, .mec-grid *{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.mem-ov{ position:fixed; inset:0; z-index:10060; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.62); }
+.mem-ov.show{ display:flex; }
+.mem-box{ width:100%; max-width:360px; max-height:86vh; overflow:auto; padding:14px; border-radius:18px; background:#1b1d24; border:1px solid rgba(255,255,255,.14); color:#eef1f7; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+.mem-t{ font-size:15px; font-weight:800; margin-bottom:8px; }
+.mem-l{ margin:10px 0 5px; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#8d94a6; }
+.mem-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.mem-c{ border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#cfd5e3; border-radius:999px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+.mem-c.on{ color:#0d0f14; background:var(--c,#9cc0ff); border-color:transparent; }
+.mem-in{ width:100%; box-sizing:border-box; padding:9px 11px; border-radius:10px; border:1px solid rgba(255,255,255,.16); background:#101218; color:#fff; font-size:14px; font-family:inherit; outline:none; }
+.mem-act{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+.mem-ok{ background:#9cc0ff !important; color:#0d0f14 !important; border-color:transparent !important; font-weight:800; }
+.mem-it{ display:flex; align-items:center; gap:8px; padding:6px 8px; margin-bottom:4px; border-radius:9px; background:rgba(255,255,255,.05); font-size:12px; }
+.mem-it i{ width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+.mem-it span{ flex:1 1 auto; min-width:0; }
+.mem-it button{ border:0; background:transparent; color:#ff7b80; font-size:14px; cursor:pointer; }
 .meh-stats .by b{ background:linear-gradient(180deg,#fff,#7aa8ff); -webkit-background-clip:text; background-clip:text; }
 .meh-none,.meh-empty{ padding:30px 10px; text-align:center; color:#8d94a6; font-size:13px; }
 .meh-empty .meh-btn{ margin-top:12px; }
@@ -13177,7 +13198,8 @@ function renderRosterNow(){
 function openRosterWindow(){
   const o = document.getElementById('rosterCardOuter');
   if(!o || !o.classList.contains('collapsed')) return;
-  try{ PANEL_STATE.roster = false; savePanelState(PANEL_STATE); applyPanelState(); }catch(e){ o.classList.remove('collapsed'); }
+  try{ PANEL_STATE.roster = false; savePanelState(PANEL_STATE); applyPanelState(); }catch(e){}
+  o.classList.remove('collapsed');
 }
 (function initRosterNow(){
   const btn = document.getElementById('rosterNowBtn');
@@ -13375,30 +13397,54 @@ function openRosterWindow(){
     });
     return led;
   }
-  // what happened on one day to this person (CL ledger first: it is permanent; live / archived exchanges second)
-  function computeDay(me, y, m0, d, dk, L){
-    const rec = { cl:[], by:[], fr:[] }, list = entriesFor(dk), duties = dutiesOf(me, y, m0, d, dk);
-    const inLedger = du=> L.some(r=> String(r.shift || '') === String(du.label) || (r.table === me.table && r.pos === me.pos && +r.team === du.key));
+  // what happened on one day to this person. Same data as QBM: "person relieved" = me -> CL / covered by others,
+  // "person detailed" = me -> I did duty for others. Matched by NAME (a position's holder can change); CL ledger is permanent.
+  function manFor(dk){ const m = loadMan(); return Array.isArray(m[dk]) ? m[dk] : []; }
+  function computeDay(me, y, m0, d, dk, L, man){
+    const rec = { cl:[], by:[], fr:[] }, list = entriesFor(dk), mine = norm(me.name);
+    const labOf = x=>{
+      const t = +x.team;
+      if(t >= THS_BASE) return (THS_META[t - THS_BASE] || {}).label || 'Duty';
+      if(t >= 100) return ['Night 8:30PM-12AM', 'Night 12AM-7:30AM', 'Morning', 'Afternoon'][t - 100] || 'Duty';
+      return shiftFor(t, y, m0, d);
+    };
+    const ledMatch = (x, lab)=> L.some(r=> (String(r.table) === String(x.table) && r.pos === x.pos && +r.team === +x.team) || String(r.shift || '') === String(lab));
     L.forEach(r=>{
-      const du = duties.find(u=> String(r.shift || '') === String(u.label) || (r.table === me.table && r.pos === me.pos && +r.team === u.key));
-      const ex = du && list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key);
-      rec.cl.push({ label:r.shift || (du ? du.label : ''), days:clRecDays(r) || 1, sub:ex ? String(ex.subName || '').trim() : '' });
-    });
-    duties.forEach(du=>{
-      const ex = list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key);
-      if(!ex) return;
-      const sub = String(ex.subName || '').trim();
-      if(inLedger(du)) return;
-      if(ex.cl) rec.cl.push({ label:du.label, days:clDaysForShift(du.label) || 1, sub:sub });
-      else rec.by.push({ label:du.label, sub:sub, tp:ex.special ? (ex.spType || 'EL') : 'Exchange' });
+      const ex = list.find(x=> x && x.cl && String(x.table) === String(r.table) && x.pos === r.pos && +x.team === +r.team);
+      rec.cl.push({ label:r.shift || '', days:clRecDays(r) || 1, sub:ex ? String(ex.subName || '').trim() : '' });
     });
     list.forEach(x=>{
-      if(!x || norm(x.subName) !== norm(me.name)) return;
-      if(x.table === me.table && x.pos === me.pos && duties.some(du=> du.key === +x.team)) return;
-      const lab = (+x.team >= THS_BASE) ? ((THS_META[+x.team - THS_BASE] || {}).label || 'Duty') : shiftFor(+x.team, y, m0, d);
-      rec.fr.push({ label:lab, who:String(x.base || x.who || exHistBaseName(x) || '').trim(), pos:x.pos });
+      if(!x) return;
+      const sub = String(x.subName || '').trim();
+      if(!sub && !x.cl && !x.special) return;
+      const rel = String(x.who || x.base || exHistBaseName(x) || '').trim(), lab = labOf(x);
+      if(rel && norm(rel) === mine){
+        if(x.cl){ if(ledMatch(x, lab)) return; rec.cl.push({ label:lab, days:clDaysForShift(lab) || 1, sub:sub }); }
+        else rec.by.push({ label:lab, sub:sub, tp:x.special ? (x.spType || 'EL') : 'Exchange' });
+      } else if(sub && norm(sub) === mine){
+        rec.fr.push({ label:lab, who:rel, pos:x.pos });
+      }
+    });
+    (man || []).forEach(m=>{
+      const k = m.k; if(!rec[k]) return;
+      if(rec[k].some(z=> String(z.label) === String(m.shift))) return;      // already known from QBM / ledger
+      if(k === 'cl') rec.cl.push({ label:m.shift, days:clDaysForShift(m.shift) || 1, sub:m.name || '', manual:true });
+      else if(k === 'by') rec.by.push({ label:m.shift, sub:m.name || '', tp:'Exchange', manual:true });
+      else rec.fr.push({ label:m.shift, who:m.name || '', pos:'', manual:true });
     });
     return rec;
+  }
+  // my own manual entries (long-press a date): kept on this device per account, 1 year back / 1 year ahead
+  const manKey = ()=>{ const k = meKey(); return k ? k + ':m' : null; };
+  function loadMan(){ try{ const k = manKey(); const o = k && JSON.parse(localStorage.getItem(k)); return (o && typeof o === 'object') ? o : {}; }catch(e){ return {}; } }
+  function saveMan(o){
+    try{
+      const k = manKey(); if(!k) return;
+      const f = nowDhakaFields(), base = Date.UTC(f.y, f.m, f.day), keyOf = ms=>{ const t = new Date(ms); return exHistDateKey(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); };
+      const lo = keyOf(base - 366*86400000), hi = keyOf(base + 366*86400000);
+      Object.keys(o).forEach(dk=>{ if(dk < lo || dk > hi || !Array.isArray(o[dk]) || !o[dk].length) delete o[dk]; });
+      localStorage.setItem(k, JSON.stringify(o));
+    }catch(e){}
   }
   // personal copy of my exchanges (kept 1 year back / 1 year ahead on this device) so they stay visible after the live exchange expires
   const snapKey = ()=>{ const k = meKey(); return k ? k + ':x' : null; };
@@ -13413,7 +13459,7 @@ function openRosterWindow(){
       Object.keys(old).forEach(dk=>{ if(dk >= lo && dk <= hi) next[dk] = old[dk]; });
       for(let i = -1; i <= 366; i++){
         const dt = new Date(base + i*86400000), y = dt.getUTCFullYear(), m0 = dt.getUTCMonth(), d = dt.getUTCDate(), dk = exHistDateKey(y, m0, d);
-        const rec = computeDay(me, y, m0, d, dk, led[dk] || []);
+        const rec = computeDay(me, y, m0, d, dk, led[dk] || [], null);
         if(rec.by.length || rec.fr.length) next[dk] = { by:rec.by, fr:rec.fr }; else if(dk >= tdk) delete next[dk];
       }
       const sNew = JSON.stringify(next);
@@ -13422,12 +13468,12 @@ function openRosterWindow(){
   }
   window.hsiaMeSnap = function(){ clearTimeout(snapT); snapT = setTimeout(snapRun, 700); };
   function yearData(me, year){
-    const led = ledgerFor(me, year), snap = loadSnap(), days = {}, cnt = { cl:0, by:0, fr:0 };
+    const led = ledgerFor(me, year), snap = loadSnap(), man = loadMan(), days = {}, cnt = { cl:0, by:0, fr:0 };
     const base = Date.UTC(year, 0, 1), n = Math.round((Date.UTC(year + 1, 0, 1) - base) / 86400000);
     for(let i = 0; i < n; i++){
       const dt = new Date(base + i*86400000), y = dt.getUTCFullYear(), m0 = dt.getUTCMonth(), d = dt.getUTCDate(), dk = exHistDateKey(y, m0, d);
-      const rec = computeDay(me, y, m0, d, dk, led[dk] || []), sv = snap[dk];
-      if(sv){ if(!rec.by.length && sv.by) rec.by = sv.by; if(!rec.fr.length && sv.fr) rec.fr = sv.fr; }
+      const rec = computeDay(me, y, m0, d, dk, led[dk] || [], man[dk]), sv = snap[dk];
+      if(sv){ ['by','fr'].forEach(k=>{ (sv[k] || []).forEach(z=>{ if(!rec[k].some(q=> String(q.label) === String(z.label))) rec[k].push(z); }); }); }
       if(rec.cl.length || rec.by.length || rec.fr.length){
         days[dk] = rec; rec.cl.forEach(c=> cnt.cl += c.days); cnt.by += rec.by.length; cnt.fr += rec.fr.length;
       }
@@ -13450,7 +13496,7 @@ function openRosterWindow(){
           st = ' style="background:' + (c.length === 1 ? c[0] : c.length === 2 ? 'linear-gradient(135deg,' + c[0] + ' 50%,' + c[1] + ' 50%)' : 'linear-gradient(135deg,' + c[0] + ' 34%,' + c[1] + ' 34% 67%,' + c[2] + ' 67%)') + '"';
         }
         if(dk === tdk) cls += ' td';
-        h += '<i' + (cls ? ' class="' + cls.trim() + '"' : '') + (ks.length ? ' data-dk="' + dk + '"' : '') + st + '>' + d + '</i>';
+        h += '<i' + (cls ? ' class="' + cls.trim() + '"' : '') + ' data-d="' + dk + '"' + (ks.length ? ' data-dk="' + dk + '"' : '') + st + '>' + d + '</i>';
       }
       h += '</div></div>';
     }
@@ -13460,7 +13506,7 @@ function openRosterWindow(){
     const p = dk.split('-').map(Number), show = meSel === 'all' ? ['cl','by','fr'] : [meSel];
     let h = '<b>' + WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0] + '</b>';
     const row = (k, t)=> '<div><i style="background:' + KC[k] + '"></i>' + t + '</div>';
-    if(show.indexOf('cl') >= 0) rec.cl.forEach(c=> h += row('cl', 'CL \u00b7 ' + esc(c.label) + ' \u00b7 ' + c.days + (c.days > 1 ? ' days' : ' day') + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did duty' : ' \u00b7 vacant')));
+    if(show.indexOf('cl') >= 0) rec.cl.forEach(c=> h += row('cl', 'CL \u00b7 ' + esc(c.label) + ' \u00b7 ' + c.days + (c.days > 1 ? ' days' : ' day') + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did duty' : (c.manual ? '' : ' \u00b7 vacant')) + (c.manual ? ' \u00b7 manual' : '')));
     if(show.indexOf('by') >= 0) rec.by.forEach(c=> h += row('by', esc(c.tp || 'Exchange') + ' \u00b7 ' + esc(c.label) + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did my duty' : ' \u00b7 vacant')));
     if(show.indexOf('fr') >= 0) rec.fr.forEach(c=> h += row('fr', 'I did duty \u00b7 ' + esc(c.label) + (c.who ? ' \u00b7 for ' + esc(c.who) : '') + (c.pos ? ' \u00b7 ' + esc(c.pos) : '')));
     return h;
@@ -13488,16 +13534,62 @@ function openRosterWindow(){
         '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
         '<div class="meh-acts"><button type="button" class="meh-btn" id="meChange">Change</button><button type="button" class="meh-btn x" id="meClose">\u2715</button></div></div>' +
       '<div class="meh-next">' + hero + '</div>' +
-      '<div class="meh-stats">' + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl) + card('by', 'by', 'Covered by<br>others', data.cnt.by) + card('fr', 'ex', 'I did duty<br>for others', data.cnt.fr) + '</div>' +
+      '<div class="meh-stats m4">' + card('all', 'al', 'All<br>together', data.cnt.cl + data.cnt.by + data.cnt.fr) + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl) + card('by', 'by', 'Covered by<br>others', data.cnt.by) + card('fr', 'ex', 'I did duty<br>for others', data.cnt.fr) + '</div>' +
       '<div class="mec-yr"><button type="button" class="meh-btn" data-y="-1"' + (meYear <= curY - 1 ? ' disabled' : '') + '>\u2039</button><span>' + meYear + '</span><button type="button" class="meh-btn" data-y="1"' + (meYear >= curY + 1 ? ' disabled' : '') + '>\u203a</button></div>' +
       '<div class="mec-grid">' + calHtml(meYear, data) + '</div>' +
-      '<div class="mec-detail" id="mecDetail"><small>Tap a card to show only that type, tap a coloured date for details.</small></div></div>';
+      '<div class="mec-detail" id="mecDetail"><small>Tap a card to filter, tap a coloured date for details, press and hold a date to add / remove CL or exchange.</small></div></div>';
     v.querySelectorAll('.meh-stats b').forEach(el=>{
       const n = +el.getAttribute('data-n'); if(!n){ el.textContent = '0'; return; }
       const t0 = performance.now();
       const step = t=>{ const p = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if(p < 1) requestAnimationFrame(step); };
       requestAnimationFrame(step);
     });
+  }
+
+
+  // ---- press & hold a date -> set CL / covered by others / I did duty for others by hand ----
+  let lpT = 0, lpFired = false, lpX = 0, lpY = 0, memDk = '', memK = 'cl', memShift = 'Morning';
+  const MK = [['cl','CL'], ['by','Covered by others'], ['fr','I did duty for others']];
+  function memEl(){
+    let ov = document.getElementById('meManOv');
+    if(ov) return ov;
+    ov = document.createElement('div'); ov.id = 'meManOv'; ov.className = 'mem-ov';
+    ov.innerHTML = '<div class="mem-box"><div class="mem-t" id="memT"></div><div id="memList"></div>' +
+      '<div class="mem-l">Type</div><div class="mem-chips" id="memK"></div>' +
+      '<div class="mem-l">Shift</div><div class="mem-chips" id="memS"></div>' +
+      '<div class="mem-l" id="memNL">Other person (optional)</div><input type="text" id="memN" class="mem-in" autocomplete="off" placeholder="Name">' +
+      '<div class="mem-act"><button type="button" class="meh-btn" id="memX">Close</button><button type="button" class="meh-btn mem-ok" id="memOk">Save</button></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e=>{
+      if(e.target === ov || e.target.closest('#memX')){ ov.classList.remove('show'); return; }
+      const k = e.target.closest('[data-mk]'); if(k){ memK = k.getAttribute('data-mk'); memDraw(); return; }
+      const sh = e.target.closest('[data-ms]'); if(sh){ memShift = sh.getAttribute('data-ms'); memDraw(); return; }
+      const rm = e.target.closest('[data-rm]');
+      if(rm){ const m = loadMan(), arr = m[memDk] || []; m[memDk] = arr.filter(z=> z.id !== rm.getAttribute('data-rm')); saveMan(m); memDraw(); renderMe(); return; }
+      if(e.target.closest('#memOk')){
+        const m = loadMan(), arr = m[memDk] = m[memDk] || [];
+        arr.push({ id:Date.now().toString(36) + Math.random().toString(36).slice(2, 5), k:memK, shift:memShift, name:(document.getElementById('memN').value || '').trim() });
+        saveMan(m); document.getElementById('memN').value = ''; memDraw(); renderMe();
+        ov.classList.remove('show');
+      }
+    });
+    return ov;
+  }
+  function memDraw(){
+    const p = memDk.split('-').map(Number);
+    document.getElementById('memT').textContent = WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0];
+    document.getElementById('memK').innerHTML = MK.map(x=> '<button type="button" class="mem-c' + (memK === x[0] ? ' on' : '') + '" data-mk="' + x[0] + '" style="--c:' + KC[x[0]] + '">' + x[1] + '</button>').join('');
+    document.getElementById('memS').innerHTML = ['Morning','Afternoon','Night'].map(x=> '<button type="button" class="mem-c' + (memShift === x ? ' on' : '') + '" data-ms="' + x + '">' + x + (memK === 'cl' ? ' \u00b7 ' + clDaysForShift(x) + 'd' : '') + '</button>').join('');
+    document.getElementById('memNL').textContent = memK === 'cl' ? 'Who did the duty (optional)' : memK === 'by' ? 'Who did my duty (optional)' : 'Whose duty I did (optional)';
+    const cur = (loadMan()[memDk] || []);
+    document.getElementById('memList').innerHTML = cur.length ? '<div class="mem-l">Added by hand</div>' + cur.map(z=> '<div class="mem-it"><i style="background:' + KC[z.k] + '"></i><span>' + esc((MK.find(q=> q[0] === z.k) || [0,''])[1]) + ' \u00b7 ' + esc(z.shift) + (z.name ? ' \u00b7 ' + esc(z.name) : '') + '</span><button type="button" data-rm="' + z.id + '" aria-label="Remove">\u2715</button></div>').join('') : '';
+  }
+  function openManual(dk){
+    const me = resolveMe(); if(!me) return;
+    memDk = dk;
+    const p = dk.split('-').map(Number), st = shiftFor(me.team, p[0], p[1]-1, p[2]);
+    memShift = (st === 'Morning' || st === 'Afternoon' || st === 'Night') ? st : 'Morning';
+    const ov = memEl(); memDraw(); document.getElementById('memN').value = ''; ov.classList.add('show');
   }
 
   function setMe(on){
@@ -13508,13 +13600,30 @@ function openRosterWindow(){
     btn.classList.toggle('on', !!on);
     if(on) renderMe();
   }
+  const _t0 = Date.now();
+  const _hadMe = (function(){ try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.indexOf(ME_KEY + ':') === 0 && !/:[xm]$/.test(k)) return true; } }catch(e){} return false; })();
   function refreshAuth(){
     const ok = !!gSession();
+    if(!ok && _hadMe && Date.now() - _t0 < 8000){ btn.style.display = ''; return; }   /* still loading the sign-in: do not hide the button for a moment */
     btn.style.display = ok ? '' : 'none';
     if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); }
     else { try{ if(window.hsiaMeSnap) window.hsiaMeSnap(); }catch(e){} if(window._rosterMeOn) renderMe(); }
   }
   window.hsiaMeAuthRefresh = refreshAuth;
+  // the sign-in state arrives a moment after the page (Firebase / session load): keep checking for ~40 s and follow every auth change
+  (function(){
+    let n = 0, hooked = false;
+    const iv = setInterval(()=>{
+      n++;
+      try{
+        if(!hooked && typeof firebase !== 'undefined' && firebase.auth){ hooked = true; firebase.auth().onAuthStateChanged(()=> setTimeout(refreshAuth, 400)); }
+      }catch(e){}
+      const ok = !!gSession();
+      if(ok !== (btn.style.display !== 'none')) refreshAuth();
+      if(n > 55) clearInterval(iv);
+    }, 700);
+    ['visibilitychange','focus','pageshow','online'].forEach(t=> window.addEventListener(t, ()=> setTimeout(refreshAuth, 200)));
+  })();
   try{ if(window.hsiaOnAdminReady) window.hsiaOnAdminReady(refreshAuth); if(window.hsiaOnAdminLost) window.hsiaOnAdminLost(refreshAuth); }catch(e){}
   window.addEventListener('storage', refreshAuth);
   refreshAuth();
@@ -13529,15 +13638,27 @@ function openRosterWindow(){
     setMe(true);
   });
   const v0 = view();
+  if(v0){
+    const lpClear = ()=>{ clearTimeout(lpT); lpT = 0; };
+    v0.addEventListener('pointerdown', e=>{
+      const c = e.target.closest && e.target.closest('.mec-w i[data-d]'); if(!c) return;
+      lpFired = false; lpX = e.clientX; lpY = e.clientY; lpClear();
+      lpT = setTimeout(()=>{ lpFired = true; try{ if(navigator.vibrate) navigator.vibrate(15); }catch(x){} openManual(c.getAttribute('data-d')); }, 520);
+    });
+    v0.addEventListener('pointermove', e=>{ if(lpT && (Math.abs(e.clientX - lpX) > 8 || Math.abs(e.clientY - lpY) > 8)) lpClear(); });
+    ['pointerup','pointercancel','pointerleave'].forEach(t=> v0.addEventListener(t, lpClear));
+    v0.addEventListener('contextmenu', e=>{ if(e.target.closest && e.target.closest('.mec-w')) e.preventDefault(); });
+  }
   if(v0) v0.addEventListener('click', e=>{
     if(e.target.closest('#meClose') && window._rosterMeOn) setMe(false);
     else if(e.target.closest('#meChange')) openPicker();
     else {
       const sc = e.target.closest('.meh-stats [data-s]');
-      if(sc){ const k = sc.getAttribute('data-s'); meSel = (meSel === k) ? 'all' : k; renderMe(); return; }
+      if(sc){ const k = sc.getAttribute('data-s'); meSel = (k === 'all' || meSel === k) ? 'all' : k; renderMe(); return; }
       const yb = e.target.closest('.mec-yr [data-y]');
       if(yb){ if(yb.disabled) return; meYear += +yb.getAttribute('data-y'); renderMe(); return; }
       const cell = e.target.closest('.mec-w i[data-dk]');
+      if(lpFired){ lpFired = false; return; }
       if(cell && lastData){
         const dk = cell.getAttribute('data-dk'), rec = lastData.days[dk], box = document.getElementById('mecDetail');
         v0.querySelectorAll('.mec-w i.sel').forEach(x=> x.classList.remove('sel')); cell.classList.add('sel');
