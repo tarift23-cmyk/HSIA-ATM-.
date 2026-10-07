@@ -1112,6 +1112,25 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .meh-tag.ex{ color:#9cc0ff; background:rgba(122,168,255,.14); border-color:rgba(122,168,255,.4); }
 .meh-tag.in{ color:#3fe27f; background:rgba(63,226,127,.12); border-color:rgba(63,226,127,.4); }
 .meh-tag.ot{ color:#f5b53d; background:rgba(245,181,61,.12); border-color:rgba(245,181,61,.4); }
+.meh-stats > div[data-s]{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.meh-stats > div.on{ border-color:rgba(255,255,255,.55); box-shadow:0 0 0 1px rgba(255,255,255,.35), 0 0 18px -4px rgba(143,180,255,.6); }
+.mec-yr{ display:flex; align-items:center; justify-content:center; gap:16px; margin:2px 0 10px; font-weight:800; font-size:14px; letter-spacing:.16em; color:#cfd5e3; }
+.mec-yr .meh-btn{ padding:3px 14px; font-size:16px; line-height:1.2; }
+.mec-yr .meh-btn[disabled]{ opacity:.35; }
+.mec-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:8px; }
+.mec-m{ padding:6px 4px 5px; border-radius:12px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); }
+.mec-mt{ text-align:center; font-size:9.5px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:#8fb4ff; margin-bottom:3px; }
+.mec-w{ display:grid; grid-template-columns:repeat(7,1fr); gap:1px; text-align:center; }
+.mec-w b{ font-size:6.5px; color:#6d7487; font-weight:700; line-height:10px; }
+.mec-w i{ font-style:normal; font-size:8.5px; line-height:14px; height:14px; border-radius:4px; color:#aeb5c6; }
+.mec-w i.hit{ color:#0d0f14; font-weight:800; cursor:pointer; }
+.mec-w i.td{ box-shadow:inset 0 0 0 1.5px #fff; }
+.mec-w i.sel{ outline:2px solid #fff; outline-offset:1px; }
+.mec-detail{ margin-top:10px; padding:9px 11px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); font-size:12px; color:#cfd5e3; line-height:1.55; }
+.mec-detail b{ display:block; color:#fff; margin-bottom:2px; }
+.mec-detail small{ color:#8d94a6; font-size:11px; }
+.mec-detail i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; vertical-align:middle; }
+.meh-stats .by b{ background:linear-gradient(180deg,#fff,#7aa8ff); -webkit-background-clip:text; background-clip:text; }
 .meh-none,.meh-empty{ padding:30px 10px; text-align:center; color:#8d94a6; font-size:13px; }
 .meh-empty .meh-btn{ margin-top:12px; }
 /* ---- Swap suggestions + exchange requests ---- */
@@ -6893,6 +6912,9 @@ function archiveExchangesToHistory(obj, syncDeletes){
     exHistList(obj[dk]).forEach(x=>{
       if(x.vacant || x.ufn) return;
       const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
+      if(x.cl) rec.cl = true;
+      if(x.special){ rec.special = true; rec.spType = String(x.spType || ''); }
+      if(x.who) rec.who = String(x.who);
       const i = cur.findIndex(h=> exHistKey(h) === exHistKey(rec));
       if(i >= 0){
         rec.base = cur[i].base || exHistBaseName(rec);
@@ -6915,7 +6937,9 @@ function archiveExchangesToHistory(obj, syncDeletes){
     });
   }
   const cutoff = new Date(Date.now() - EX_HISTORY_DAYS * 86400000).toISOString().slice(0,10);
-  Object.keys(EX_HISTORY).forEach(dk=>{ if(dk < cutoff){ delete EX_HISTORY[dk]; changed = true; } });
+  /* window kept: 1 year back + 1 year ahead of today (2 years in total); anything outside is dropped */
+  const cutoffF = new Date(Date.now() + EX_HISTORY_DAYS * 86400000).toISOString().slice(0,10);
+  Object.keys(EX_HISTORY).forEach(dk=>{ if(dk < cutoff || dk > cutoffF){ delete EX_HISTORY[dk]; changed = true; } });
   return changed;
 }
 /* history + still-live exchanges for one date-key */
@@ -6927,7 +6951,7 @@ function exHistDayEntries(dk){
     exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
       if(x.vacant || x.ufn) return;
       const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
-      if(!have.has(exHistKey(rec))){ rec.base = exHistBaseName(rec); out.push(rec); }
+      if(!have.has(exHistKey(rec))){ rec.base = exHistBaseName(rec); if(x.cl) rec.cl = true; if(x.special){ rec.special = true; rec.spType = String(x.spType || ''); } out.push(rec); }
     });
   }catch(e){}
   return out;
@@ -6938,7 +6962,7 @@ function exDayEntriesForView(dk){
   try{
     exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
       if(x.vacant || x.ufn) return;
-      out.push({ table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:exHistBaseName(x) });
+      out.push({ table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:exHistBaseName(x), cl:!!x.cl, special:!!x.special, spType:String(x.spType || '') });
     });
   }catch(e){}
   return out;
@@ -7059,7 +7083,7 @@ document.addEventListener('click', e=>{
   const ov = document.getElementById('dayLogModalOverlay');
   if(ov && (t === ov || (t.closest && t.closest('#dayLogClose')))) closeModal('dayLogModalOverlay');
 });
-function saveExchangesData(obj){ try{ if(archiveExchangesToHistory(obj, true)) saveExHistory(); }catch(e){} try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); try{ if(typeof buildCalendar === 'function') buildCalendar(); }catch(e){} try{ refreshThmrViews(); }catch(e){} }
+function saveExchangesData(obj){ try{ if(window.hsiaMeSnap) window.hsiaMeSnap(); }catch(e){} try{ if(archiveExchangesToHistory(obj, true)) saveExHistory(); }catch(e){} try{ localStorage.setItem(EXCHANGES_KEY, JSON.stringify(obj)); }catch(e){} pushExchangesToFirebaseDebounced(); try{ if(typeof buildCalendar === 'function') buildCalendar(); }catch(e){} try{ refreshThmrViews(); }catch(e){} }
 /* Removes exchange entries whose underlying shift has actually ended —
    not just "date-key isn't today anymore". This matters for Night shifts:
    an exchange dated "yesterday" can still be running until 7:30 AM today
@@ -7174,6 +7198,7 @@ let CL_LOG = clLoadLocal();
 function clNorm(n){ return String(n || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 function clIdFor(dateKey, table, pos, team){ return (dateKey + '_' + table + '_' + String(pos).replace(/[^A-Za-z0-9]/g, '') + '_' + team).replace(/[.#$\[\]\/]/g, ''); }
 function clDaysForShift(sh){ return sh === 'Night' ? 2 : (sh === 'Morning' || sh === 'Afternoon') ? 1 : 0; }
+function clRecDays(r){ return clDaysForShift(r && r.shift) || (+(r && r.days) || 0); }   /* Night = 2 days, Morning / Afternoon = 1 */
 function clRecords(){
   return Object.keys(CL_LOG).filter(k=> k !== '_v').map(k=> Object.assign({ _id:k }, CL_LOG[k])).filter(r=> r && r.date);
 }
@@ -7181,7 +7206,7 @@ function clUsedBy(who, year, exceptId){
   const key = clNorm(who); let n = 0;
   clRecords().forEach(r=>{
     if(r._id === exceptId || clNorm(r.who) !== key || String(r.date).slice(0,4) !== String(year)) return;
-    n += (+r.days || 0);
+    n += clRecDays(r);
   });
   return n;
 }
@@ -9715,8 +9740,8 @@ function clBuildPeople(year){
   clRecords().slice().sort((a,b)=> String(a.date) < String(b.date) ? -1 : 1).forEach(r=>{
     if(String(r.date).slice(0,4) !== String(year)) return;
     const pr = add(r.who, r.table); if(!pr) return;
-    pr.used += (+r.days || 0);
-    pr.recs.push({ date:r.date, days:+r.days || 0, shift:r.shift });
+    pr.used += clRecDays(r);
+    pr.recs.push({ date:r.date, days:clRecDays(r), shift:r.shift });
   });
   return Object.keys(by).map(k=> by[k]);
 }
@@ -13149,14 +13174,19 @@ function renderRosterNow(){
     '<div class="now-head-v">Team ' + esc(TEAMS[idx]) + ' · <span>' + esc(st.shiftType) + '</span></div></div>' + closeBtn + '</div>' +
     '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + thmrRows() + '</tbody></table></div>';
 }
+function openRosterWindow(){
+  const o = document.getElementById('rosterCardOuter');
+  if(!o || !o.classList.contains('collapsed')) return;
+  try{ PANEL_STATE.roster = false; savePanelState(PANEL_STATE); applyPanelState(); }catch(e){ o.classList.remove('collapsed'); }
+}
 (function initRosterNow(){
   const btn = document.getElementById('rosterNowBtn');
   const outer = document.getElementById('rosterCardOuter');
   const isClosed = ()=> !outer || outer.classList.contains('collapsed');
   if(btn) btn.addEventListener('click', e=>{
     e.stopPropagation();
-    // Now only works while the Duty Roster window is open
-    if(isClosed()) return;
+    // window closed: open it first, then switch Now on
+    if(isClosed()){ openRosterWindow(); setRosterNow(true); return; }
     setRosterNow(!ROSTER_NOW_ON);
   });
   // closing the Duty Roster window switches Now off automatically
@@ -13174,7 +13204,7 @@ function renderRosterNow(){
 /* ---- Duty Roster "Me" button: pick your own name once, then see all your duties / CL / exchanges ---- */
 (function initRosterMe(){
   const ME_KEY = 'HSIA_ME_V1';
-  const AHEAD = 90, BACK = 90;
+  const AHEAD = 90, BACK = 0;
   const btn = document.getElementById('rosterMeBtn');
   const outer = document.getElementById('rosterCardOuter');
   if(!btn) return;
@@ -13276,7 +13306,6 @@ function renderRosterNow(){
   });
 
   // ---------- the "Me" view ----------
-  let meFilter = 'all';
   // every exchange / CL record of a day: live ones (with CL / EL flags) first, then archived ones not already covered. Works without any login.
   function entriesFor(dk){
     const cur = exHistList(EXCHANGES && EXCHANGES[dk]).filter(x=> x && !x.moved && !x.ufn);
@@ -13319,26 +13348,122 @@ function renderRosterNow(){
     if(ot || /OT$/.test(String(label))) return '#f5b53d';
     try{ return getShiftColor(String(label)) || '#8B909B'; }catch(e){ return '#8B909B'; }
   }
-  const isCl = it=> it.kind === 'gone' && (it.tp === 'CL' || it.tp === 'EL');
-  const isEx = it=> (it.kind === 'gone' && it.tp === 'Exchange') || it.kind === 'take';
   const isDuty = it=> it.kind === 'duty' || it.kind === 'take';
-  const passes = it=> meFilter === 'all' || (meFilter === 'duty' && isDuty(it)) || (meFilter === 'cl' && isCl(it)) || (meFilter === 'ex' && isEx(it));
   function initials(n){
     const w = String(n).replace(/\./g,' ').split(/\s+/).filter(x=> x && !/^(md|mst|mr|mrs|ms)$/i.test(x));
     return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
   }
-  function itemHtml(it){
-    const c = colorOf(it.label, it.ot);
-    let tag = '', sub = '', lab = '<span class="meh-lab">' + esc(it.label) + '</span>';
-    if(it.kind === 'gone'){
-      lab = '<s class="meh-lab cut">' + esc(it.label) + '</s>';
-      tag = '<span class="meh-tag ' + (isCl(it) ? 'cl' : 'ex') + '">' + it.tp + '</span>';
-      sub = '<small>' + (it.sub ? '\uD83D\uDD04 ' + esc(it.sub) + ' will do' : 'Vacant') + '</small>';
-    } else if(it.kind === 'take'){
-      tag = '<span class="meh-tag in">Taking duty</span>';
-      sub = '<small>' + (it.who ? 'for ' + esc(it.who) : '') + (it.pos ? ' \u00b7 ' + esc(it.pos) : '') + '</small>';
-    } else if(it.ot){ tag = '<span class="meh-tag ot">OT</span>'; }
-    return '<div class="meh-it" style="--c:' + c + '"><div class="meh-itt">' + lab + tag + '</div>' + sub + '</div>';
+  /* ---- 12-month year calendar: CL / covered by others / I did duty for others ---- */
+  let meSel = 'all', meYear = 0, lastData = null;
+  const KC = { cl:'#ff5a62', by:'#7aa8ff', fr:'#3fe27f' };
+  function dutiesOf(me, y, m0, d, dk){
+    let duties = [];
+    if(me.table === 'th' || me.table === 'mr'){
+      try{ duties = (window.hsiaTHMRDuty ? window.hsiaTHMRDuty(dk, me.team) : []).map(x=>({ label:x.label, ot:x.ot, key:THS_BASE + x.slot })); }catch(e){}
+    } else {
+      const st = shiftFor(me.team, y, m0, d);
+      if(st !== 'Off') duties = [{ label:st, ot:false, key:me.team }];
+    }
+    return duties;
+  }
+  function ledgerFor(me, year){
+    const led = {};
+    clRecords().forEach(r=>{
+      if(norm(r.who) !== norm(me.name)) return;
+      if(year && String(r.date).slice(0,4) !== String(year)) return;
+      (led[r.date] = led[r.date] || []).push(r);
+    });
+    return led;
+  }
+  // what happened on one day to this person (CL ledger first: it is permanent; live / archived exchanges second)
+  function computeDay(me, y, m0, d, dk, L){
+    const rec = { cl:[], by:[], fr:[] }, list = entriesFor(dk), duties = dutiesOf(me, y, m0, d, dk);
+    const inLedger = du=> L.some(r=> String(r.shift || '') === String(du.label) || (r.table === me.table && r.pos === me.pos && +r.team === du.key));
+    L.forEach(r=>{
+      const du = duties.find(u=> String(r.shift || '') === String(u.label) || (r.table === me.table && r.pos === me.pos && +r.team === u.key));
+      const ex = du && list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key);
+      rec.cl.push({ label:r.shift || (du ? du.label : ''), days:clRecDays(r) || 1, sub:ex ? String(ex.subName || '').trim() : '' });
+    });
+    duties.forEach(du=>{
+      const ex = list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key);
+      if(!ex) return;
+      const sub = String(ex.subName || '').trim();
+      if(inLedger(du)) return;
+      if(ex.cl) rec.cl.push({ label:du.label, days:clDaysForShift(du.label) || 1, sub:sub });
+      else rec.by.push({ label:du.label, sub:sub, tp:ex.special ? (ex.spType || 'EL') : 'Exchange' });
+    });
+    list.forEach(x=>{
+      if(!x || norm(x.subName) !== norm(me.name)) return;
+      if(x.table === me.table && x.pos === me.pos && duties.some(du=> du.key === +x.team)) return;
+      const lab = (+x.team >= THS_BASE) ? ((THS_META[+x.team - THS_BASE] || {}).label || 'Duty') : shiftFor(+x.team, y, m0, d);
+      rec.fr.push({ label:lab, who:String(x.base || x.who || exHistBaseName(x) || '').trim(), pos:x.pos });
+    });
+    return rec;
+  }
+  // personal copy of my exchanges (kept 1 year back / 1 year ahead on this device) so they stay visible after the live exchange expires
+  const snapKey = ()=>{ const k = meKey(); return k ? k + ':x' : null; };
+  function loadSnap(){ try{ const k = snapKey(); const o = k && JSON.parse(localStorage.getItem(k)); return (o && typeof o === 'object') ? o : {}; }catch(e){ return {}; } }
+  let snapT = 0;
+  function snapRun(){
+    try{
+      const me = resolveMe(), k = snapKey(); if(!me || !k) return;
+      const f = nowDhakaFields(), base = Date.UTC(f.y, f.m, f.day), tdk = exHistDateKey(f.y, f.m, f.day);
+      const keyOf = ms=>{ const t = new Date(ms); return exHistDateKey(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); };
+      const lo = keyOf(base - 366*86400000), hi = keyOf(base + 366*86400000), old = loadSnap(), next = {}, led = ledgerFor(me, 0);
+      Object.keys(old).forEach(dk=>{ if(dk >= lo && dk <= hi) next[dk] = old[dk]; });
+      for(let i = -1; i <= 366; i++){
+        const dt = new Date(base + i*86400000), y = dt.getUTCFullYear(), m0 = dt.getUTCMonth(), d = dt.getUTCDate(), dk = exHistDateKey(y, m0, d);
+        const rec = computeDay(me, y, m0, d, dk, led[dk] || []);
+        if(rec.by.length || rec.fr.length) next[dk] = { by:rec.by, fr:rec.fr }; else if(dk >= tdk) delete next[dk];
+      }
+      const sNew = JSON.stringify(next);
+      if(sNew !== JSON.stringify(old)) localStorage.setItem(k, sNew);
+    }catch(e){}
+  }
+  window.hsiaMeSnap = function(){ clearTimeout(snapT); snapT = setTimeout(snapRun, 700); };
+  function yearData(me, year){
+    const led = ledgerFor(me, year), snap = loadSnap(), days = {}, cnt = { cl:0, by:0, fr:0 };
+    const base = Date.UTC(year, 0, 1), n = Math.round((Date.UTC(year + 1, 0, 1) - base) / 86400000);
+    for(let i = 0; i < n; i++){
+      const dt = new Date(base + i*86400000), y = dt.getUTCFullYear(), m0 = dt.getUTCMonth(), d = dt.getUTCDate(), dk = exHistDateKey(y, m0, d);
+      const rec = computeDay(me, y, m0, d, dk, led[dk] || []), sv = snap[dk];
+      if(sv){ if(!rec.by.length && sv.by) rec.by = sv.by; if(!rec.fr.length && sv.fr) rec.fr = sv.fr; }
+      if(rec.cl.length || rec.by.length || rec.fr.length){
+        days[dk] = rec; rec.cl.forEach(c=> cnt.cl += c.days); cnt.by += rec.by.length; cnt.fr += rec.fr.length;
+      }
+    }
+    return { days:days, cnt:cnt };
+  }
+  function calHtml(year, data){
+    const f = nowDhakaFields(), tdk = exHistDateKey(f.y, f.m, f.day), show = meSel === 'all' ? ['cl','by','fr'] : [meSel];
+    let h = '';
+    for(let m = 0; m < 12; m++){
+      const first = new Date(Date.UTC(year, m, 1)).getUTCDay(), dim = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
+      h += '<div class="mec-m"><div class="mec-mt">' + MONTHS[m].slice(0,3) + '</div><div class="mec-w">' + ['S','M','T','W','T','F','S'].map(x=> '<b>' + x + '</b>').join('');
+      for(let k = 0; k < first; k++) h += '<i></i>';
+      for(let d = 1; d <= dim; d++){
+        const dk = exHistDateKey(year, m, d), rec = data.days[dk], ks = rec ? show.filter(k=> rec[k].length) : [];
+        let st = '', cls = '';
+        if(ks.length){
+          const c = ks.map(k=> KC[k]);
+          cls = 'hit';
+          st = ' style="background:' + (c.length === 1 ? c[0] : c.length === 2 ? 'linear-gradient(135deg,' + c[0] + ' 50%,' + c[1] + ' 50%)' : 'linear-gradient(135deg,' + c[0] + ' 34%,' + c[1] + ' 34% 67%,' + c[2] + ' 67%)') + '"';
+        }
+        if(dk === tdk) cls += ' td';
+        h += '<i' + (cls ? ' class="' + cls.trim() + '"' : '') + (ks.length ? ' data-dk="' + dk + '"' : '') + st + '>' + d + '</i>';
+      }
+      h += '</div></div>';
+    }
+    return h;
+  }
+  function detailHtml(dk, rec){
+    const p = dk.split('-').map(Number), show = meSel === 'all' ? ['cl','by','fr'] : [meSel];
+    let h = '<b>' + WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0] + '</b>';
+    const row = (k, t)=> '<div><i style="background:' + KC[k] + '"></i>' + t + '</div>';
+    if(show.indexOf('cl') >= 0) rec.cl.forEach(c=> h += row('cl', 'CL \u00b7 ' + esc(c.label) + ' \u00b7 ' + c.days + (c.days > 1 ? ' days' : ' day') + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did duty' : ' \u00b7 vacant')));
+    if(show.indexOf('by') >= 0) rec.by.forEach(c=> h += row('by', esc(c.tp || 'Exchange') + ' \u00b7 ' + esc(c.label) + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did my duty' : ' \u00b7 vacant')));
+    if(show.indexOf('fr') >= 0) rec.fr.forEach(c=> h += row('fr', 'I did duty \u00b7 ' + esc(c.label) + (c.who ? ' \u00b7 for ' + esc(c.who) : '') + (c.pos ? ' \u00b7 ' + esc(c.pos) : '')));
+    return h;
   }
   function renderMe(){
     const v = view(); if(!v) return;
@@ -13347,10 +13472,9 @@ function renderRosterNow(){
       v.innerHTML = '<div class="meh"><div class="meh-empty">Name not found in the roster<br><button type="button" class="meh-btn" id="meChange">Select your name</button></div></div>';
       return;
     }
-    const all = dayList(me), up = all.filter(r=> r.i >= 0), past = all.filter(r=> r.i < 0).reverse();
-    const cnt = { duty:0, cl:0, ex:0, all:0 };
-    all.forEach(r=> r.items.forEach(it=>{ if(r.i >= 0 && isDuty(it)) cnt.duty++; if(isCl(it)) cnt.cl++; if(isEx(it)) cnt.ex++; }));
-    // next / today duty
+    const up = dayList(me), curY = nowDhakaFields().y;
+    if(!meYear) meYear = curY;
+    const data = yearData(me, meYear); lastData = data;
     let hero = '<span class="meh-dot"></span>No duty in the next ' + AHEAD + ' days';
     const nx = up.find(r=> r.items.some(isDuty));
     if(nx){
@@ -13358,33 +13482,16 @@ function renderRosterNow(){
       const when = nx.i === 0 ? 'Today' : nx.i === 1 ? 'Tomorrow' : 'in ' + nx.i + ' days \u00b7 ' + WEEKDAYS[nx.dow] + ' ' + nx.d + ' ' + MONTHS[nx.m0].slice(0,3);
       hero = '<span class="meh-dot" style="--c:' + colorOf(it.label, it.ot) + '"></span><span><b>' + (nx.i === 0 ? 'ON DUTY TODAY' : 'NEXT DUTY') + '</b> \u00b7 ' + esc(it.label) + ' \u00b7 ' + when + '</span>';
     }
-    const mk = (r, k)=>{
-      const its = r.items.filter(passes);
-      if(!its.length || (r.i < 0 && meFilter === 'duty')) return '';
-      const c = colorOf(its[0].label, its[0].ot);
-      return '<div class="meh-day' + (r.i === 0 ? ' today' : '') + (r.i < 0 ? ' past' : '') + '" style="--i:' + Math.min(k, 14) + ';--c:' + c + '">' +
-        '<div class="meh-date"><b>' + r.d + '</b><span>' + WEEKDAYS[r.dow] + '</span></div><div class="meh-items">' + its.map(itemHtml).join('') + '</div></div>';
-    };
-    let k = 0, lastM = '', body = '';
-    up.forEach(r=>{
-      const h = mk(r, k); if(!h) return; k++;
-      const mm = r.y + '-' + r.m0;
-      if(mm !== lastM){ lastM = mm; body += '<div class="meh-month">' + MONTHS[r.m0] + ' ' + r.y + '</div>'; }
-      body += h;
-    });
-    let pb = '';
-    past.forEach(r=>{ pb += mk(r, 0).replace(/ style="--i:0;/, ' style="--i:0;'); });
-    if(pb && meFilter !== 'duty') body += '<div class="meh-month past">Earlier \u00b7 CL / Exchange</div>' + pb;
-    if(!body) body = '<div class="meh-none">Nothing here yet</div>';
-    const F = [['all','All'],['duty','Duty'],['cl','CL'],['ex','Exchange']];
+    const card = (k, cls, label, n)=> '<div class="' + cls + (meSel === k ? ' on' : '') + '" data-s="' + k + '"><b data-n="' + n + '">0</b><span>' + label + '</span></div>';
     v.innerHTML = '<div class="meh">' +
       '<div class="meh-hero"><div class="meh-av"><span>' + esc(initials(me.name)) + '</span></div>' +
         '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
         '<div class="meh-acts"><button type="button" class="meh-btn" id="meChange">Change</button><button type="button" class="meh-btn x" id="meClose">\u2715</button></div></div>' +
       '<div class="meh-next">' + hero + '</div>' +
-      '<div class="meh-stats"><div><b data-n="' + cnt.duty + '">0</b><span>Duty days<br>next ' + AHEAD + 'd</span></div><div class="cl"><b data-n="' + cnt.cl + '">0</b><span>CL taken</span></div><div class="ex"><b data-n="' + cnt.ex + '">0</b><span>Exchanges</span></div></div>' +
-      '<div class="meh-filters">' + F.map(x=> '<button type="button" class="meh-f' + (meFilter === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
-      '<div class="meh-list">' + body + '</div></div>';
+      '<div class="meh-stats">' + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl) + card('by', 'by', 'Covered by<br>others', data.cnt.by) + card('fr', 'ex', 'I did duty<br>for others', data.cnt.fr) + '</div>' +
+      '<div class="mec-yr"><button type="button" class="meh-btn" data-y="-1"' + (meYear <= curY - 1 ? ' disabled' : '') + '>\u2039</button><span>' + meYear + '</span><button type="button" class="meh-btn" data-y="1"' + (meYear >= curY + 1 ? ' disabled' : '') + '>\u203a</button></div>' +
+      '<div class="mec-grid">' + calHtml(meYear, data) + '</div>' +
+      '<div class="mec-detail" id="mecDetail"><small>Tap a card to show only that type, tap a coloured date for details.</small></div></div>';
     v.querySelectorAll('.meh-stats b').forEach(el=>{
       const n = +el.getAttribute('data-n'); if(!n){ el.textContent = '0'; return; }
       const t0 = performance.now();
@@ -13405,7 +13512,7 @@ function renderRosterNow(){
     const ok = !!gSession();
     btn.style.display = ok ? '' : 'none';
     if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); }
-    else if(window._rosterMeOn) renderMe();
+    else { try{ if(window.hsiaMeSnap) window.hsiaMeSnap(); }catch(e){} if(window._rosterMeOn) renderMe(); }
   }
   window.hsiaMeAuthRefresh = refreshAuth;
   try{ if(window.hsiaOnAdminReady) window.hsiaOnAdminReady(refreshAuth); if(window.hsiaOnAdminLost) window.hsiaOnAdminLost(refreshAuth); }catch(e){}
@@ -13415,8 +13522,8 @@ function renderRosterNow(){
 
   btn.addEventListener('click', e=>{
     e.stopPropagation();
-    if(isClosed()) return;
     if(!gSession()){ refreshAuth(); return; }
+    if(isClosed()) openRosterWindow();
     if(window._rosterMeOn){ setMe(false); return; }
     if(!resolveMe()){ openPicker(); return; }       // first time: choose your name from the roster
     setMe(true);
@@ -13425,11 +13532,23 @@ function renderRosterNow(){
   if(v0) v0.addEventListener('click', e=>{
     if(e.target.closest('#meClose') && window._rosterMeOn) setMe(false);
     else if(e.target.closest('#meChange')) openPicker();
-    else { const f = e.target.closest('.meh-f'); if(f){ meFilter = f.getAttribute('data-f'); renderMe(); } }
+    else {
+      const sc = e.target.closest('.meh-stats [data-s]');
+      if(sc){ const k = sc.getAttribute('data-s'); meSel = (meSel === k) ? 'all' : k; renderMe(); return; }
+      const yb = e.target.closest('.mec-yr [data-y]');
+      if(yb){ if(yb.disabled) return; meYear += +yb.getAttribute('data-y'); renderMe(); return; }
+      const cell = e.target.closest('.mec-w i[data-dk]');
+      if(cell && lastData){
+        const dk = cell.getAttribute('data-dk'), rec = lastData.days[dk], box = document.getElementById('mecDetail');
+        v0.querySelectorAll('.mec-w i.sel').forEach(x=> x.classList.remove('sel')); cell.classList.add('sel');
+        if(rec && box) box.innerHTML = detailHtml(dk, rec);
+      }
+    }
   });
   if(outer) new MutationObserver(()=>{ if(isClosed() && window._rosterMeOn) setMe(false); }).observe(outer, { attributes:true, attributeFilter:['class'] });
   // keep the list fresh when exchanges / roster change
-  window.hsiaRosterMeRefresh = function(){ if(window._rosterMeOn) renderMe(); };
+  window.hsiaRosterMeRefresh = function(){ try{ window.hsiaMeSnap(); }catch(e){} if(window._rosterMeOn) renderMe(); };
+  setTimeout(function(){ try{ window.hsiaMeSnap(); }catch(e){} }, 2500);
 })();
 
 /* ---- Duty Roster: tab switcher ---- */
