@@ -1140,6 +1140,8 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .meh-stats .xc span{ font-size:11px; letter-spacing:.04em; }
 .mec-top.open .meh-stats .xc span{ font-size:8.5px; letter-spacing:0; }
 .mec-l small{ display:block; margin-top:2px; font-size:9px; font-weight:700; letter-spacing:.02em; opacity:.8; white-space:nowrap; }
+.mec-l small i, .mnx i{ font-style:normal; font-weight:800; }
+.mec-sb.on .mec-l small i{ color:#0d0f14 !important; }
 .mnx{ display:block; margin-top:4px; font-size:8.5px; font-weight:700; line-height:1.3; color:#aeb5c6; letter-spacing:0; }
 .mec-top.open .meh-stats .mnx{ font-size:6.5px; margin-top:3px; }
 .mec-arr{ flex:0 0 22px; display:flex; flex-direction:column; justify-content:space-between; padding:14px 0; }
@@ -13550,9 +13552,10 @@ function openRosterWindow(){
       const when = nx.i === 0 ? 'Today' : nx.i === 1 ? 'Tomorrow' : 'in ' + nx.i + ' days \u00b7 ' + WEEKDAYS[nx.dow] + ' ' + nx.d + ' ' + MONTHS[nx.m0].slice(0,3);
       hero = '<span class="meh-dot" style="--c:' + colorOf(it.label, it.ot) + '"></span><span><b>' + (nx.i === 0 ? 'ON DUTY TODAY' : 'NEXT DUTY') + '</b> \u00b7 ' + esc(it.label) + ' \u00b7 ' + when + '</span>';
     }
-    const mnTxt = o=> '<small>M(' + o.M + ') E(' + o.E + ') N(' + o.N + ')</small>';
+    const mnInner = o=> '<i style="color:var(--morning)">M' + o.M + '</i> <i style="color:var(--afternoon)">E' + o.E + '</i> <i style="color:var(--night)">N' + o.N + '</i>';
+    const mnTxt = o=> '<small>' + mnInner(o) + '</small>';
     const sum3 = function(){ const t = { M:0, E:0, N:0 }; for(let i = 0; i < arguments.length; i++){ const o = arguments[i]; t.M += o.M; t.E += o.E; t.N += o.N; } return t; };
-    const card = (k, cls, label, n, mn)=> '<div class="' + cls + (meSel === k ? ' on' : '') + '" data-s="' + k + '"><b data-n="' + n + '">0</b><span>' + label + '</span>' + (mn ? '<small class="mnx">M(' + mn.M + ') E(' + mn.E + ') N(' + mn.N + ')</small>' : '') + '</div>';
+    const card = (k, cls, label, n, mn)=> '<div class="' + cls + (meSel === k ? ' on' : '') + '" data-s="' + k + '"><b data-n="' + n + '">0</b><span>' + label + '</span>' + (mn ? '<small class="mnx">' + mnInner(mn) + '</small>' : '') + '</div>';
     v.innerHTML = '<div class="meh">' +
       '<div class="meh-hero"><div class="meh-av"><span>' + esc(initials(me.name)) + '</span></div>' +
         '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
