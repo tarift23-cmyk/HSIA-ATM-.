@@ -1,8 +1,74 @@
-forms/
-   forms.js
-   forms.css
-   header.png
-pdfs/important/
-   cl-form.pdf
-   exchange-form.pdf
-   list.json
+.xf-sheet{ box-sizing:border-box; background:#fff; color:#000; position:relative; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  font-family:"Noto Sans Bengali","Kalpurush","SolaimanLipi","Siyam Rupali","Nirmala UI","Vrinda","FreeSans",sans-serif; line-height:1.35; }
+.xf-sheet *{ box-sizing:border-box; }
+.xf-sheet img{ display:block; margin:0 auto; }
+.xf-fill{ flex:1 1 0; min-width:0; padding:0 1.2mm; min-height:1.45em; white-space:pre-wrap; overflow-wrap:anywhere; }
+.xf-cl .xf-fill{ border-bottom:1.3px dotted #000; }
+.xf-ex .xf-fill.xf-empty{ border-bottom:1px dotted #888; }
+.xf-b{ font-weight:700; }
+/* ---- CL form: A4 portrait ---- */
+.xf-cl{ width:210mm; height:297mm; padding:8mm 19mm 6mm 19mm; font-size:11pt; }
+.xf-cl .xf-hdr img{ width:70mm; height:auto; }
+.xf-cl .xf-office{ display:flex; justify-content:center; align-items:flex-end; gap:1.5mm; margin-top:0.5mm; font-weight:700; }
+.xf-cl .xf-office .xf-fill{ flex:0 0 74mm; }
+.xf-cl .xf-title{ text-align:center; font-weight:700; font-size:15.5pt; margin:4.5mm 0 8mm; }
+.xf-cl .xf-title span{ border-bottom:1.5px solid #000; padding-bottom:0.3mm; }
+.xf-cl .xf-li{ display:flex; align-items:flex-end; margin-bottom:5.6mm; }
+.xf-cl .xf-li .n{ width:8mm; flex:none; font-weight:700; }
+.xf-cl .xf-li .l{ flex:none; font-weight:700; }
+.xf-cl .xf-sigbox{ margin:7mm 0 0 auto; width:38%; }
+.xf-cl .xf-sigbox .xf-dots{ border-top:1.3px dotted #000; margin-top:13mm; margin-bottom:1mm; }
+.xf-cl .xf-sigbox .xf-sl{ display:flex; align-items:flex-end; font-weight:700; margin-top:0.8mm; }
+.xf-cl .xf-sigbox .xf-sl .xf-fill{ border-bottom:0; }
+.xf-cl .xf-row{ display:flex; align-items:flex-end; margin-top:5.2mm; }
+.xf-cl .xf-row .t{ flex:none; font-weight:700; white-space:nowrap; }
+.xf-cl .xf-ind1{ margin-left:11mm; }
+.xf-cl .xf-ind2{ margin-left:40%; }
+.xf-cl .xf-hr{ border-top:1.4px solid #000; margin-top:8mm; padding-top:1mm; }
+.xf-cl .xf-note{ font-size:10pt; line-height:1.5; }
+.xf-cl .xf-note p{ margin:0 0 0.4mm 0; }
+.xf-cl .xf-note .sub{ margin-left:9mm; text-indent:-8mm; padding-left:8mm; margin-top:0.6mm; }
+/* ---- Exchange form: A4 width x half A4 height ---- */
+.xf-ex{ width:210mm; height:148.5mm; padding:4mm 12mm 3mm 12mm; font-size:10pt; }
+.xf-ex .xf-hdr img{ width:66mm; height:auto; }
+.xf-ex .xf-addr{ text-align:center; font-weight:700; font-size:8.6pt; margin-top:0.6mm; }
+.xf-ex .xf-addr2{ text-align:center; font-weight:700; font-size:9pt; }
+.xf-ex .xf-boxt{ text-align:center; margin:1.6mm 0 2.2mm; }
+.xf-ex .xf-boxt span{ display:inline-block; border:1.3px solid #000; padding:0.4mm 3.5mm; font-weight:700; font-size:11pt; }
+.xf-ex .xf-r{ display:flex; align-items:flex-end; min-height:7.4mm; }
+.xf-ex .xf-r.sg{ min-height:12mm; }
+.xf-ex .xf-r .n{ width:8mm; flex:none; }
+.xf-ex .xf-r .l{ width:55mm; flex:none; }
+.xf-ex .xf-r .c{ width:5mm; flex:none; }
+.xf-ex .xf-r .m{ flex:1 1 0; min-width:0; display:flex; align-items:flex-end; gap:1.5mm; }
+.xf-ex .xf-r .t{ flex:none; white-space:nowrap; }
+.xf-ex .xf-r .gap{ flex:0 0 5mm; }
+.xf-ex .xf-r .w2{ flex:1.25 1 0; }
+.xf-ex .xf-r .w1{ flex:1 1 0; }
+.xf-ex .xf-r .sgn{ flex:1 1 0; white-space:nowrap; padding-left:1.2mm; }
+/* ---- edit screen ---- */
+.xf-ov{ position:fixed; inset:0; z-index:20000; background:#141416; color:#ececf0; display:flex; flex-direction:column; font-family:inherit; }
+.xf-ov[hidden]{ display:none; }
+.xf-top{ display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px; border-bottom:1px solid #34343a; background:#1b1b1f; }
+.xf-top .xf-tt{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.xf-top button{ white-space:nowrap; height:38px; min-width:38px; padding:0 12px; border-radius:10px; border:1px solid #3b3b42; background:#26262b; color:#ececf0; font-size:14px; cursor:pointer; font-family:inherit; }
+.xf-top button.pri{ background:#e8c35a; color:#1a1405; border-color:#e8c35a; font-weight:700; }
+.xf-body{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px)); }
+.xf-grp{ border:1px solid #34343a; border-radius:12px; padding:10px 10px 4px; margin-bottom:10px; background:#1a1a1e; }
+.xf-grp h4{ margin:0 0 8px; font-size:12.5px; color:#a9a9b3; letter-spacing:.3px; font-weight:600; }
+.xf-fld{ margin-bottom:9px; }
+.xf-fld label{ display:block; font-size:12px; color:#b5b5bf; margin-bottom:3px; }
+.xf-fld input, .xf-fld textarea{ box-sizing:border-box; width:100%; border:1px solid #3b3b42; background:#101012; color:#f2f2f5; border-radius:9px; padding:9px 10px; font-size:15px; font-family:inherit; outline:none; }
+.xf-fld input:focus, .xf-fld textarea:focus{ border-color:#22d3ee; }
+.xf-fld textarea{ min-height:62px; resize:vertical; }
+.xf-pvl{ font-size:12px; color:#a9a9b3; margin:14px 2px 6px; }
+.xf-pv{ background:#2a2a2e; border-radius:10px; overflow:hidden; position:relative; }
+.xf-pvin{ transform-origin:0 0; position:absolute; left:0; top:0; }
+.xf-pvin .xf-sheet{ box-shadow:none; }
+#xfPrint{ display:none; }
+@media print{
+  html, body.xf-printing{ background:#fff !important; height:auto !important; min-height:0 !important; overflow:visible !important; margin:0 !important; padding:0 !important; position:static !important; }
+  body.xf-printing > *:not(#xfPrint){ display:none !important; }
+  body.xf-printing #xfPrint{ display:block !important; }
+  #xfPrint .xf-sheet{ margin:0; page-break-inside:avoid; break-inside:avoid; }
+}
