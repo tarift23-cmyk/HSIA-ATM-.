@@ -10,7 +10,7 @@
 .xf-cl{ width:210mm; height:297mm; padding:8mm 19mm 6mm 19mm; font-size:11pt; }
 .xf-cl .xf-hdr img{ width:70mm; height:auto; }
 .xf-cl .xf-office{ display:flex; justify-content:center; align-items:flex-end; gap:1.5mm; margin-top:0.5mm; font-weight:700; }
-.xf-cl .xf-office .xf-fill{ flex:0 0 74mm; }
+.xf-cl .xf-office .xf-fill{ flex:0 0 105mm; }
 .xf-cl .xf-title{ text-align:center; font-weight:700; font-size:15.5pt; margin:4.5mm 0 8mm; }
 .xf-cl .xf-title span{ border-bottom:1.5px solid #000; padding-bottom:0.3mm; }
 .xf-cl .xf-li{ display:flex; align-items:flex-end; margin-bottom:5.6mm; }
@@ -52,6 +52,8 @@
 .xf-top{ display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px; border-bottom:1px solid #34343a; background:#1b1b1f; }
 .xf-top .xf-tt{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .xf-top button{ white-space:nowrap; height:38px; min-width:38px; padding:0 12px; border-radius:10px; border:1px solid #3b3b42; background:#26262b; color:#ececf0; font-size:14px; cursor:pointer; font-family:inherit; }
+.xf-top button.ico{ display:inline-flex; align-items:center; justify-content:center; padding:0 10px; }
+.xf-top button.ico[disabled]{ opacity:.5; }
 .xf-top button.pri{ background:#e8c35a; color:#1a1405; border-color:#e8c35a; font-weight:700; }
 .xf-body{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px)); }
 .xf-grp{ border:1px solid #34343a; border-radius:12px; padding:10px 10px 4px; margin-bottom:10px; background:#1a1a1e; }
