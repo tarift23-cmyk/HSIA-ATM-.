@@ -1139,6 +1139,9 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .mec-top.open .meh-stats span{ font-size:7px; letter-spacing:.03em; }
 .meh-stats .xc span{ font-size:11px; letter-spacing:.04em; }
 .mec-top.open .meh-stats .xc span{ font-size:8.5px; letter-spacing:0; }
+.mec-l small{ display:block; margin-top:2px; font-size:9px; font-weight:700; letter-spacing:.02em; opacity:.8; white-space:nowrap; }
+.mnx{ display:block; margin-top:4px; font-size:8.5px; font-weight:700; line-height:1.3; color:#aeb5c6; letter-spacing:0; }
+.mec-top.open .meh-stats .mnx{ font-size:6.5px; margin-top:3px; }
 .mec-arr{ flex:0 0 22px; display:flex; flex-direction:column; justify-content:space-between; padding:14px 0; }
 .mec-opts{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
 .mec-sb{ flex:1 1 0; display:flex; align-items:center; justify-content:space-between; gap:6px; text-align:left; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#cfd5e3; border-radius:12px; padding:5px 9px; font-size:10.5px; line-height:1.2; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -13428,7 +13431,7 @@ function openRosterWindow(){
     const ledMatch = (x, lab)=> L.some(r=> (String(r.table) === String(x.table) && r.pos === x.pos && +r.team === +x.team) || String(r.shift || '') === String(lab));
     L.forEach(r=>{
       const ex = list.find(x=> x && x.cl && String(x.table) === String(r.table) && x.pos === r.pos && +x.team === +r.team);
-      rec.cl.push({ label:r.shift || '', days:clRecDays(r) || 1, sub:ex ? String(ex.subName || '').trim() : '' });
+      rec.cl.push({ label:(r.shift === 'OT' ? ((THS_META[+r.team - THS_BASE] || {}).label || 'OT') : (r.shift || '')), days:clRecDays(r) || 1, sub:ex ? String(ex.subName || '').trim() : '' });
     });
     list.forEach(x=>{
       if(!x) return;
@@ -13485,14 +13488,16 @@ function openRosterWindow(){
   }
   window.hsiaMeSnap = function(){ clearTimeout(snapT); snapT = setTimeout(snapRun, 700); };
   function yearData(me, year){
-    const led = ledgerFor(me, year), snap = loadSnap(), man = loadMan(), days = {}, cnt = { cl:0, by:0, fr:0 };
+    const led = ledgerFor(me, year), snap = loadSnap(), man = loadMan(), days = {}, cnt = { cl:0, by:0, fr:0, byD:0, frD:0, bdCl:{M:0,E:0,N:0}, bd:{ by:{M:0,E:0,N:0}, fr:{M:0,E:0,N:0} } };
+    const kindOf = l=> /^Night/i.test(String(l || '')) ? 'N' : /^Morning/i.test(String(l || '')) ? 'M' : 'E';
     const base = Date.UTC(year, 0, 1), n = Math.round((Date.UTC(year + 1, 0, 1) - base) / 86400000);
     for(let i = 0; i < n; i++){
       const dt = new Date(base + i*86400000), y = dt.getUTCFullYear(), m0 = dt.getUTCMonth(), d = dt.getUTCDate(), dk = exHistDateKey(y, m0, d);
       const rec = computeDay(me, y, m0, d, dk, led[dk] || [], man[dk]), sv = snap[dk];
       if(sv){ ['by','fr'].forEach(k=>{ (sv[k] || []).forEach(z=>{ if(!rec[k].some(q=> String(q.label) === String(z.label))) rec[k].push(z); }); }); }
       if(rec.cl.length || rec.by.length || rec.fr.length){
-        days[dk] = rec; rec.cl.forEach(c=> cnt.cl += c.days); cnt.by += rec.by.length; cnt.fr += rec.fr.length;
+        days[dk] = rec; rec.cl.forEach(c=>{ cnt.cl += c.days; cnt.bdCl[kindOf(c.label)] += c.days; }); cnt.by += rec.by.length; cnt.fr += rec.fr.length;
+        ['by','fr'].forEach(k=> rec[k].forEach(z=>{ const kd = kindOf(z.label), dd = kd === 'N' ? 2 : 1; cnt.bd[k][kd] += dd; cnt[k + 'D'] += dd; }));
       }
     }
     return { days:days, cnt:cnt };
@@ -13545,15 +13550,17 @@ function openRosterWindow(){
       const when = nx.i === 0 ? 'Today' : nx.i === 1 ? 'Tomorrow' : 'in ' + nx.i + ' days \u00b7 ' + WEEKDAYS[nx.dow] + ' ' + nx.d + ' ' + MONTHS[nx.m0].slice(0,3);
       hero = '<span class="meh-dot" style="--c:' + colorOf(it.label, it.ot) + '"></span><span><b>' + (nx.i === 0 ? 'ON DUTY TODAY' : 'NEXT DUTY') + '</b> \u00b7 ' + esc(it.label) + ' \u00b7 ' + when + '</span>';
     }
-    const card = (k, cls, label, n)=> '<div class="' + cls + (meSel === k ? ' on' : '') + '" data-s="' + k + '"><b data-n="' + n + '">0</b><span>' + label + '</span></div>';
+    const mnTxt = o=> '<small>M(' + o.M + ') E(' + o.E + ') N(' + o.N + ')</small>';
+    const sum3 = function(){ const t = { M:0, E:0, N:0 }; for(let i = 0; i < arguments.length; i++){ const o = arguments[i]; t.M += o.M; t.E += o.E; t.N += o.N; } return t; };
+    const card = (k, cls, label, n, mn)=> '<div class="' + cls + (meSel === k ? ' on' : '') + '" data-s="' + k + '"><b data-n="' + n + '">0</b><span>' + label + '</span>' + (mn ? '<small class="mnx">M(' + mn.M + ') E(' + mn.E + ') N(' + mn.N + ')</small>' : '') + '</div>';
     v.innerHTML = '<div class="meh">' +
       '<div class="meh-hero"><div class="meh-av"><span>' + esc(initials(me.name)) + '</span></div>' +
         '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
         '<div class="meh-acts"><button type="button" class="meh-btn" id="meChange">Change</button><button type="button" class="meh-btn x" id="meClose">\u2715</button></div></div>' +
       '<div class="meh-next">' + hero + '</div>' +
-      '<div class="mec-top' + (meSel === 'ex' ? ' open' : '') + '"><div class="meh-stats">' + card('all', 'al', 'All<br>together', data.cnt.cl + data.cnt.by + data.cnt.fr) + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl) + card('ex', 'xc', 'Exchange', data.cnt.by + data.cnt.fr) + '</div>' +
+      '<div class="mec-top' + (meSel === 'ex' ? ' open' : '') + '"><div class="meh-stats">' + card('all', 'al', 'All<br>together', data.cnt.cl + data.cnt.byD, sum3(data.cnt.bdCl, data.cnt.bd.by)) + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl, sum3(data.cnt.bdCl)) + card('ex', 'xc', 'Exchange', data.cnt.by + data.cnt.fr, sum3(data.cnt.bd.by, data.cnt.bd.fr)) + '</div>' +
       (meSel === 'ex' ? '<div class="mec-arr"><svg viewBox="0 0 22 20" width="22" height="20" fill="none" stroke="' + KC.by + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 17C10 17 10 3 19 3"/><path d="M15 0.5L19.5 3 15.5 6"/></svg><svg viewBox="0 0 22 20" width="22" height="20" fill="none" stroke="' + KC.fr + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3C10 3 10 17 19 17"/><path d="M15 14L19.5 17 15.5 19.5"/></svg></div>' +
-        '<div class="mec-opts"><button type="button" class="mec-sb' + (meSub === 'by' ? ' on' : '') + '" data-sub="by" style="--c:' + KC.by + '">Covered by others<b>' + data.cnt.by + '</b></button><button type="button" class="mec-sb' + (meSub === 'fr' ? ' on' : '') + '" data-sub="fr" style="--c:' + KC.fr + '">I did duty for others<b>' + data.cnt.fr + '</b></button></div>' : '') + '</div>' +
+        '<div class="mec-opts"><button type="button" class="mec-sb' + (meSub === 'by' ? ' on' : '') + '" data-sub="by" style="--c:' + KC.by + '"><span class="mec-l">Covered by others' + mnTxt(data.cnt.bd.by) + '</span><b>' + data.cnt.by + '</b></button><button type="button" class="mec-sb' + (meSub === 'fr' ? ' on' : '') + '" data-sub="fr" style="--c:' + KC.fr + '"><span class="mec-l">I did duty for others' + mnTxt(data.cnt.bd.fr) + '</span><b>' + data.cnt.fr + '</b></button></div>' : '') + '</div>' +
       '<div class="mec-yr"><button type="button" class="meh-btn" data-y="-1"' + (meYear <= curY - 1 ? ' disabled' : '') + '>\u2039</button><span>' + meYear + '</span><button type="button" class="meh-btn" data-y="1"' + (meYear >= curY + 1 ? ' disabled' : '') + '>\u203a</button></div>' +
       '<div class="mec-grid">' + calHtml(meYear, data) + '</div>' +
       '<div class="mec-detail" id="mecDetail"><small>Tap a card to filter (Exchange opens its two options), tap a coloured date for details, press and hold a date to add / remove CL or exchange.</small></div></div>';
