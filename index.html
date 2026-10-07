@@ -1137,6 +1137,8 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .mec-top.open .meh-stats > div{ padding:9px 2px; }
 .mec-top.open .meh-stats b{ font-size:19px; }
 .mec-top.open .meh-stats span{ font-size:7px; letter-spacing:.03em; }
+.meh-stats .xc span{ font-size:11px; letter-spacing:.04em; }
+.mec-top.open .meh-stats .xc span{ font-size:8.5px; letter-spacing:0; }
 .mec-arr{ flex:0 0 22px; display:flex; flex-direction:column; justify-content:space-between; padding:14px 0; }
 .mec-opts{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
 .mec-sb{ flex:1 1 0; display:flex; align-items:center; justify-content:space-between; gap:6px; text-align:left; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#cfd5e3; border-radius:12px; padding:5px 9px; font-size:10.5px; line-height:1.2; font-weight:700; cursor:pointer; font-family:inherit; }
@@ -5922,11 +5924,11 @@ const TEAMS = ['A','B','C','D','E'];
 const THS_BASE = 110;
 const THS_META = [
   { label:'Night',          shift:'Night',     period:'2030-0730', cl:'night',   ot:false },
-  { label:'Night OT',       shift:'OT',        period:'2030-0730', cl:'night',   ot:true  },
+  { label:'Night OT',       shift:'Night',        period:'2030-0730', cl:'night',   ot:true  },
   { label:'Morning',        shift:'Morning',   period:'0730-1400', cl:'morning', ot:false },
   { label:'Afternoon',      shift:'Afternoon', period:'1400-2030', cl:'evening', ot:false },
-  { label:'Morning OT',     shift:'OT',        period:'0730-1400', cl:'morning', ot:true  },
-  { label:'Afternoon OT',   shift:'OT',        period:'1400-2030', cl:'evening', ot:true  }
+  { label:'Morning OT',     shift:'Morning',        period:'0730-1400', cl:'morning', ot:true  },
+  { label:'Afternoon OT',   shift:'Afternoon',        period:'1400-2030', cl:'evening', ot:true  }
 ];
 const BASE = ['Night','Off','Off','Afternoon','Morning'];
 const CAL_CLASS = { 'Morning':'morning', 'Afternoon':'afternoon', 'Night':'night', 'Off':'off' };
@@ -7232,7 +7234,8 @@ let CL_LOG = clLoadLocal();
 function clNorm(n){ return String(n || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
 function clIdFor(dateKey, table, pos, team){ return (dateKey + '_' + table + '_' + String(pos).replace(/[^A-Za-z0-9]/g, '') + '_' + team).replace(/[.#$\[\]\/]/g, ''); }
 function clDaysForShift(sh){ return sh === 'Night' ? 2 : (sh === 'Morning' || sh === 'Afternoon') ? 1 : 0; }
-function clRecDays(r){ return clDaysForShift(r && r.shift) || (+(r && r.days) || 0); }   /* Night = 2 days, Morning / Afternoon = 1 */
+function clDaysForLabel(l){ l = String(l || ''); return /^Night/.test(l) ? 2 : (clDaysForShift(l) || 1); }   /* Me panel: 'Night', 'Night 8:30PM-12AM', 'Night 12AM-7:30AM' = 2 days */
+function clRecDays(r){ if(r && r.shift === 'OT'){ const sl = +r.team - 110; return sl === 1 ? 2 : 1; } return clDaysForShift(r && r.shift) || (+(r && r.days) || 0); }   /* Night = 2 days, Morning / Afternoon = 1 */
 function clRecords(){
   return Object.keys(CL_LOG).filter(k=> k !== '_v').map(k=> Object.assign({ _id:k }, CL_LOG[k])).filter(r=> r && r.date);
 }
@@ -13389,7 +13392,7 @@ function openRosterWindow(){
     return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
   }
   /* ---- 12-month year calendar: CL / covered by others / I did duty for others ---- */
-  let meSel = 'all', meSub = 'both', meYear = 0, lastData = null;
+  let meSel = 'ex', meSub = 'both', meYear = 0, lastData = null;
   const showKinds = ()=> meSel === 'all' ? ['cl','by','fr'] : meSel === 'cl' ? ['cl'] : (meSub === 'by' ? ['by'] : meSub === 'fr' ? ['fr'] : ['by','fr']);
   const KC = { cl:'#ff5a62', by:'#7aa8ff', fr:'#3fe27f' };
   function dutiesOf(me, y, m0, d, dk){
@@ -13433,7 +13436,7 @@ function openRosterWindow(){
       if(!sub && !x.cl && !x.special) return;
       const rel = String(x.who || x.base || exHistBaseName(x) || '').trim(), lab = labOf(x);
       if(rel && norm(rel) === mine){
-        if(x.cl){ if(ledMatch(x, lab)) return; rec.cl.push({ label:lab, days:clDaysForShift(lab) || 1, sub:sub }); }
+        if(x.cl){ if(ledMatch(x, lab)) return; rec.cl.push({ label:lab, days:clDaysForLabel(lab), sub:sub }); }
         else rec.by.push({ label:lab, sub:sub, tp:x.special ? (x.spType || 'EL') : 'Exchange' });
       } else if(sub && norm(sub) === mine){
         rec.fr.push({ label:lab, who:rel, pos:x.pos });
@@ -13442,7 +13445,7 @@ function openRosterWindow(){
     (man || []).forEach(m=>{
       const k = m.k; if(!rec[k]) return;
       if(rec[k].some(z=> String(z.label) === String(m.shift))) return;      // already known from QBM / ledger
-      if(k === 'cl') rec.cl.push({ label:m.shift, days:clDaysForShift(m.shift) || 1, sub:m.name || '', manual:true });
+      if(k === 'cl') rec.cl.push({ label:m.shift, days:clDaysForLabel(m.shift), sub:m.name || '', manual:true });
       else if(k === 'by') rec.by.push({ label:m.shift, sub:m.name || '', tp:'Exchange', manual:true });
       else rec.fr.push({ label:m.shift, who:m.name || '', pos:'', manual:true });
     });
@@ -13614,7 +13617,7 @@ function openRosterWindow(){
     document.getElementById('memPick').textContent = memP ? (memP.name + (memP.pos ? ' \u00b7 ' + memP.pos : '')) : 'Select from roster table';
     document.getElementById('memPClr').style.display = memP ? '' : 'none';
     const sh = memShiftNow();
-    document.getElementById('memSh').textContent = 'Shift (from roster): ' + sh + (memK === 'cl' ? ' \u00b7 ' + (clDaysForShift(sh) || 1) + (((clDaysForShift(sh) || 1) > 1) ? ' days' : ' day') : '');
+    document.getElementById('memSh').textContent = 'Shift (from roster): ' + sh + (memK === 'cl' ? ' \u00b7 ' + clDaysForLabel(sh) + ((clDaysForLabel(sh) > 1) ? ' days' : ' day') : '');
     const cur = (loadMan()[memDk] || []);
     document.getElementById('memList').innerHTML = cur.length ? '<div class="mem-l">Added by hand</div>' + cur.map(z=> '<div class="mem-it"><i style="background:' + KC[z.k] + '"></i><span>' + esc((MK.find(q=> q[0] === z.k) || [0,''])[1]) + ' \u00b7 ' + esc(z.shift) + (z.name ? ' \u00b7 ' + esc(z.name) : '') + '</span><button type="button" data-rm="' + z.id + '" aria-label="Remove">\u2715</button></div>').join('') : '';
   }
@@ -15347,7 +15350,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     catch(e){ rpStatus('Failed: ' + (e && e.message ? e.message : e)); }
     rpBusy(false);
   }
-  function rpOpen(){ const ov = document.getElementById('rosterPrintOverlay'); if(ov){ rpStatus(''); ov.classList.add('show'); } }
+  function rpOpen(){ if(!isAdmin()){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; } const ov = document.getElementById('rosterPrintOverlay'); if(ov){ rpStatus(''); ov.classList.add('show'); } }
   function rpWire(){
     const ov = document.getElementById('rosterPrintOverlay');
     if(!ov || ov._rpWired) return;
