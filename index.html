@@ -13498,8 +13498,8 @@ function openRosterWindow(){
       const rec = computeDay(me, y, m0, d, dk, led[dk] || [], man[dk]), sv = snap[dk];
       if(sv){ ['by','fr'].forEach(k=>{ (sv[k] || []).forEach(z=>{ if(!rec[k].some(q=> String(q.label) === String(z.label))) rec[k].push(z); }); }); }
       if(rec.cl.length || rec.by.length || rec.fr.length){
-        days[dk] = rec; rec.cl.forEach(c=>{ cnt.cl += c.days; cnt.bdCl[kindOf(c.label)] += c.days; }); cnt.by += rec.by.length; cnt.fr += rec.fr.length;
-        ['by','fr'].forEach(k=> rec[k].forEach(z=>{ const kd = kindOf(z.label), dd = kd === 'N' ? 2 : 1; cnt.bd[k][kd] += dd; cnt[k + 'D'] += dd; }));
+        days[dk] = rec; rec.cl.forEach(c=>{ cnt.cl += c.days; cnt.bdCl[kindOf(c.label)] += 1; }); cnt.by += rec.by.length; cnt.fr += rec.fr.length;
+        ['by','fr'].forEach(k=> rec[k].forEach(z=>{ const kd = kindOf(z.label), dd = kd === 'N' ? 2 : 1; cnt.bd[k][kd] += 1; cnt[k + 'D'] += dd; }));
       }
     }
     return { days:days, cnt:cnt };
