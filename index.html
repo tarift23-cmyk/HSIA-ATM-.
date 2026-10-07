@@ -1130,10 +1130,11 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .mec-detail b{ display:block; color:#fff; margin-bottom:2px; }
 .mec-detail small{ color:#8d94a6; font-size:11px; }
 .mec-detail i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; vertical-align:middle; }
-.meh-stats.m4{ grid-template-columns:repeat(4,1fr); gap:6px; }
-.meh-stats.m4 > div{ padding:9px 3px; }
-.meh-stats.m4 b{ font-size:21px; }
-.meh-stats.m4 span{ font-size:7.5px; letter-spacing:.04em; }
+.meh-stats .xc b{ background:linear-gradient(180deg,#fff,#6fd6e8); -webkit-background-clip:text; background-clip:text; }
+.mec-sub{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:-4px 0 10px; }
+.mec-sub span{ font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#8d94a6; }
+.mec-sb{ border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#cfd5e3; border-radius:999px; padding:6px 11px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+.mec-sb.on{ color:#0d0f14; background:var(--c); border-color:transparent; }
 .meh-stats .al b{ background:linear-gradient(180deg,#fff,#f5b53d); -webkit-background-clip:text; background-clip:text; }
 .mec-grid, .mec-grid *{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .mem-ov{ position:fixed; inset:0; z-index:10060; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.62); }
@@ -1144,6 +1145,10 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .mem-chips{ display:flex; flex-wrap:wrap; gap:6px; }
 .mem-c{ border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#cfd5e3; border-radius:999px; padding:6px 11px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
 .mem-c.on{ color:#0d0f14; background:var(--c,#9cc0ff); border-color:transparent; }
+.mem-pick{ display:flex; gap:6px; }
+.mem-pbtn{ flex:1 1 auto; min-width:0; text-align:left; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.16); background:#101218; color:#fff; font-size:13.5px; font-family:inherit; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mem-pclr{ border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#ff7b80; border-radius:10px; padding:0 12px; cursor:pointer; }
+.mem-sh{ margin-top:10px; font-size:12px; color:#9cc0ff; font-weight:700; }
 .mem-in{ width:100%; box-sizing:border-box; padding:9px 11px; border-radius:10px; border:1px solid rgba(255,255,255,.16); background:#101218; color:#fff; font-size:14px; font-family:inherit; outline:none; }
 .mem-act{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
 .mem-ok{ background:#9cc0ff !important; color:#0d0f14 !important; border-color:transparent !important; font-weight:800; }
@@ -13376,7 +13381,8 @@ function openRosterWindow(){
     return ((w[0] || '?')[0] + (w[1] ? w[1][0] : '')).toUpperCase();
   }
   /* ---- 12-month year calendar: CL / covered by others / I did duty for others ---- */
-  let meSel = 'all', meYear = 0, lastData = null;
+  let meSel = 'all', meSub = 'both', meYear = 0, lastData = null;
+  const showKinds = ()=> meSel === 'all' ? ['cl','by','fr'] : meSel === 'cl' ? ['cl'] : (meSub === 'by' ? ['by'] : meSub === 'fr' ? ['fr'] : ['by','fr']);
   const KC = { cl:'#ff5a62', by:'#7aa8ff', fr:'#3fe27f' };
   function dutiesOf(me, y, m0, d, dk){
     let duties = [];
@@ -13481,7 +13487,7 @@ function openRosterWindow(){
     return { days:days, cnt:cnt };
   }
   function calHtml(year, data){
-    const f = nowDhakaFields(), tdk = exHistDateKey(f.y, f.m, f.day), show = meSel === 'all' ? ['cl','by','fr'] : [meSel];
+    const f = nowDhakaFields(), tdk = exHistDateKey(f.y, f.m, f.day), show = showKinds();
     let h = '';
     for(let m = 0; m < 12; m++){
       const first = new Date(Date.UTC(year, m, 1)).getUTCDay(), dim = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
@@ -13503,7 +13509,7 @@ function openRosterWindow(){
     return h;
   }
   function detailHtml(dk, rec){
-    const p = dk.split('-').map(Number), show = meSel === 'all' ? ['cl','by','fr'] : [meSel];
+    const p = dk.split('-').map(Number), show = showKinds();
     let h = '<b>' + WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0] + '</b>';
     const row = (k, t)=> '<div><i style="background:' + KC[k] + '"></i>' + t + '</div>';
     if(show.indexOf('cl') >= 0) rec.cl.forEach(c=> h += row('cl', 'CL \u00b7 ' + esc(c.label) + ' \u00b7 ' + c.days + (c.days > 1 ? ' days' : ' day') + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did duty' : (c.manual ? '' : ' \u00b7 vacant')) + (c.manual ? ' \u00b7 manual' : '')));
@@ -13534,10 +13540,12 @@ function openRosterWindow(){
         '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
         '<div class="meh-acts"><button type="button" class="meh-btn" id="meChange">Change</button><button type="button" class="meh-btn x" id="meClose">\u2715</button></div></div>' +
       '<div class="meh-next">' + hero + '</div>' +
-      '<div class="meh-stats m4">' + card('all', 'al', 'All<br>together', data.cnt.cl + data.cnt.by + data.cnt.fr) + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl) + card('by', 'by', 'Covered by<br>others', data.cnt.by) + card('fr', 'ex', 'I did duty<br>for others', data.cnt.fr) + '</div>' +
+      '<div class="meh-stats">' + card('all', 'al', 'All<br>together', data.cnt.cl + data.cnt.by + data.cnt.fr) + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl) + card('ex', 'xc', 'Exchange', data.cnt.by + data.cnt.fr) + '</div>' +
+      (meSel === 'ex' ? '<div class="mec-sub"><span>Select</span><button type="button" class="mec-sb' + (meSub === 'by' ? ' on' : '') + '" data-sub="by" style="--c:' + KC.by + '">Covered by others \u00b7 ' + data.cnt.by + '</button><button type="button" class="mec-sb' + (meSub === 'fr' ? ' on' : '') + '" data-sub="fr" style="--c:' + KC.fr + '">I did duty for others \u00b7 ' + data.cnt.fr + '</button></div>' : '') +
+      '' +
       '<div class="mec-yr"><button type="button" class="meh-btn" data-y="-1"' + (meYear <= curY - 1 ? ' disabled' : '') + '>\u2039</button><span>' + meYear + '</span><button type="button" class="meh-btn" data-y="1"' + (meYear >= curY + 1 ? ' disabled' : '') + '>\u203a</button></div>' +
       '<div class="mec-grid">' + calHtml(meYear, data) + '</div>' +
-      '<div class="mec-detail" id="mecDetail"><small>Tap a card to filter, tap a coloured date for details, press and hold a date to add / remove CL or exchange.</small></div></div>';
+      '<div class="mec-detail" id="mecDetail"><small>Tap a card to filter (Exchange asks which kind), tap a coloured date for details, press and hold a date to add / remove CL or exchange.</small></div></div>';
     v.querySelectorAll('.meh-stats b').forEach(el=>{
       const n = +el.getAttribute('data-n'); if(!n){ el.textContent = '0'; return; }
       const t0 = performance.now();
@@ -13547,29 +13555,44 @@ function openRosterWindow(){
   }
 
 
-  // ---- press & hold a date -> set CL / covered by others / I did duty for others by hand ----
-  let lpT = 0, lpFired = false, lpX = 0, lpY = 0, memDk = '', memK = 'cl', memShift = 'Morning';
+  // ---- press & hold a date -> set CL / covered by others / I did duty for others by hand (person picked from the roster table) ----
+  let lpT = 0, lpFired = false, lpX = 0, lpY = 0, memDk = '', memK = 'cl', memP = null, pkTab = 'rosterCtrl';
   const MK = [['cl','CL'], ['by','Covered by others'], ['fr','I did duty for others']];
+  function memShiftNow(){
+    // the shift is taken from the roster, nothing to type: CL / covered = my own duty that day, "I did duty" = the duty of the person I covered
+    const me = resolveMe(), p = memDk.split('-').map(Number);
+    if(!me) return 'Morning';
+    try{
+      if(memK === 'fr' && memP){
+        if(memP.table === 'th' || memP.table === 'mr'){ const du = (window.hsiaTHMRDuty ? window.hsiaTHMRDuty(memDk, memP.team) : [])[0]; if(du && du.label) return du.label; }
+        else { const st = shiftFor(memP.team, p[0], p[1]-1, p[2]); if(st && st !== 'Off') return st; }
+      }
+      const du = dutiesOf(me, p[0], p[1]-1, p[2], memDk)[0]; if(du && du.label) return du.label;
+    }catch(e){}
+    return 'Morning';
+  }
   function memEl(){
     let ov = document.getElementById('meManOv');
     if(ov) return ov;
     ov = document.createElement('div'); ov.id = 'meManOv'; ov.className = 'mem-ov';
     ov.innerHTML = '<div class="mem-box"><div class="mem-t" id="memT"></div><div id="memList"></div>' +
       '<div class="mem-l">Type</div><div class="mem-chips" id="memK"></div>' +
-      '<div class="mem-l">Shift</div><div class="mem-chips" id="memS"></div>' +
-      '<div class="mem-l" id="memNL">Other person (optional)</div><input type="text" id="memN" class="mem-in" autocomplete="off" placeholder="Name">' +
+      '<div class="mem-l" id="memNL"></div><div class="mem-pick"><button type="button" class="mem-pbtn" id="memPick"></button><button type="button" class="mem-pclr" id="memPClr" aria-label="Clear">\u2715</button></div>' +
+      '<div class="mem-sh" id="memSh"></div>' +
       '<div class="mem-act"><button type="button" class="meh-btn" id="memX">Close</button><button type="button" class="meh-btn mem-ok" id="memOk">Save</button></div></div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', e=>{
       if(e.target === ov || e.target.closest('#memX')){ ov.classList.remove('show'); return; }
       const k = e.target.closest('[data-mk]'); if(k){ memK = k.getAttribute('data-mk'); memDraw(); return; }
-      const sh = e.target.closest('[data-ms]'); if(sh){ memShift = sh.getAttribute('data-ms'); memDraw(); return; }
+      if(e.target.closest('#memPick')){ pkOpen(); return; }
+      if(e.target.closest('#memPClr')){ memP = null; memDraw(); return; }
       const rm = e.target.closest('[data-rm]');
       if(rm){ const m = loadMan(), arr = m[memDk] || []; m[memDk] = arr.filter(z=> z.id !== rm.getAttribute('data-rm')); saveMan(m); memDraw(); renderMe(); return; }
       if(e.target.closest('#memOk')){
+        if(memK !== 'cl' && !memP){ alert(memK === 'by' ? 'Select who did your duty from the roster table.' : 'Select whose duty you did from the roster table.'); return; }
         const m = loadMan(), arr = m[memDk] = m[memDk] || [];
-        arr.push({ id:Date.now().toString(36) + Math.random().toString(36).slice(2, 5), k:memK, shift:memShift, name:(document.getElementById('memN').value || '').trim() });
-        saveMan(m); document.getElementById('memN').value = ''; memDraw(); renderMe();
+        arr.push({ id:Date.now().toString(36) + Math.random().toString(36).slice(2, 5), k:memK, shift:memShiftNow(), name:memP ? memP.name : '', table:memP ? memP.table : '', pos:memP ? memP.pos : '' });
+        saveMan(m); memP = null; memDraw(); renderMe();
         ov.classList.remove('show');
       }
     });
@@ -13579,17 +13602,61 @@ function openRosterWindow(){
     const p = memDk.split('-').map(Number);
     document.getElementById('memT').textContent = WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0];
     document.getElementById('memK').innerHTML = MK.map(x=> '<button type="button" class="mem-c' + (memK === x[0] ? ' on' : '') + '" data-mk="' + x[0] + '" style="--c:' + KC[x[0]] + '">' + x[1] + '</button>').join('');
-    document.getElementById('memS').innerHTML = ['Morning','Afternoon','Night'].map(x=> '<button type="button" class="mem-c' + (memShift === x ? ' on' : '') + '" data-ms="' + x + '">' + x + (memK === 'cl' ? ' \u00b7 ' + clDaysForShift(x) + 'd' : '') + '</button>').join('');
-    document.getElementById('memNL').textContent = memK === 'cl' ? 'Who did the duty (optional)' : memK === 'by' ? 'Who did my duty (optional)' : 'Whose duty I did (optional)';
+    document.getElementById('memNL').textContent = memK === 'cl' ? 'Who does the duty (optional)' : memK === 'by' ? 'Who did my duty' : 'Whose duty I did';
+    document.getElementById('memPick').textContent = memP ? (memP.name + (memP.pos ? ' \u00b7 ' + memP.pos : '')) : 'Select from roster table';
+    document.getElementById('memPClr').style.display = memP ? '' : 'none';
+    const sh = memShiftNow();
+    document.getElementById('memSh').textContent = 'Shift (from roster): ' + sh + (memK === 'cl' ? ' \u00b7 ' + (clDaysForShift(sh) || 1) + (((clDaysForShift(sh) || 1) > 1) ? ' days' : ' day') : '');
     const cur = (loadMan()[memDk] || []);
     document.getElementById('memList').innerHTML = cur.length ? '<div class="mem-l">Added by hand</div>' + cur.map(z=> '<div class="mem-it"><i style="background:' + KC[z.k] + '"></i><span>' + esc((MK.find(q=> q[0] === z.k) || [0,''])[1]) + ' \u00b7 ' + esc(z.shift) + (z.name ? ' \u00b7 ' + esc(z.name) : '') + '</span><button type="button" data-rm="' + z.id + '" aria-label="Remove">\u2715</button></div>').join('') : '';
   }
+  // roster-table picker for the manual entry (same tables as "Select Your Name")
+  function pkEl(){
+    let ov = document.getElementById('mePkOv');
+    if(ov) return ov;
+    ov = document.createElement('div'); ov.id = 'mePkOv'; ov.className = 'modal-overlay'; ov.style.zIndex = '10070';
+    ov.innerHTML = '<div class="modal-box" style="max-width:760px;"><div class="modal-header"><div class="modal-title">Select person</div><button type="button" class="modal-close" id="mpkX">\u2715</button></div>' +
+      '<div class="xp-tabs" id="mpkTabs"></div><input type="text" id="mpkQ" class="fr-mfinput xp-search" placeholder="Search name..." autocomplete="off"><div class="xp-wrap"><table class="xp-table" id="mpkT"></table></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e=>{
+      if(e.target === ov || e.target.closest('#mpkX')){ ov.classList.remove('show'); return; }
+      const t = e.target.closest('[data-pt]'); if(t){ pkTab = t.getAttribute('data-pt'); pkDraw(); return; }
+      const n = e.target.closest('[data-pn]');
+      if(n){
+        const me = resolveMe(), name = n.getAttribute('data-pn');
+        if(me && norm(name) === norm(me.name)){ alert('Select another person.'); return; }
+        memP = { name:name, table:n.getAttribute('data-ptb'), team:+n.getAttribute('data-ptm'), pos:n.getAttribute('data-ppos') };
+        ov.classList.remove('show'); memDraw();
+      }
+    });
+    ov.querySelector('#mpkQ').addEventListener('input', pkDraw);
+    return ov;
+  }
+  function pkDraw(){
+    const tabsEl = document.getElementById('mpkTabs'), tbl = document.getElementById('mpkT'); if(!tabsEl || !tbl) return;
+    const q = (document.getElementById('mpkQ').value || '').trim().toLowerCase();
+    tabsEl.innerHTML = TABS.map(t=> '<button type="button" class="xp-tab' + (t[0] === pkTab ? ' active' : '') + '" data-pt="' + t[0] + '">' + t[1] + '</button>').join('');
+    let rows;
+    if(pkTab === 'th' || pkTab === 'mr'){
+      const g = window.hsiaTHMRGroups ? window.hsiaTHMRGroups() : { th:[], mr:[] }, grp = g[pkTab] || [];
+      rows = [0,1,2].map(pi=>({ pos:pkTab.toUpperCase() + '-' + (pi+1), names:[0,1,2,3,4].map(t=> (grp[t] || [])[pi]) }));
+    } else rows = rosterDataFor(pkTab) || [];
+    let h = '<thead><tr><th>Position</th>' + TEAMS.map(t=> '<th>Team ' + t + '</th>').join('') + '</tr></thead><tbody>';
+    rows.forEach(row=>{
+      h += '<tr><td class="xp-pos">' + esc(row.pos) + '</td>';
+      TEAMS.forEach((t, ci)=>{
+        const n = row.names && row.names[ci], ok = !bad(n) && (!q || String(n).toLowerCase().indexOf(q) !== -1);
+        h += '<td>' + (ok ? '<button type="button" class="xp-name" data-pn="' + esc(String(n).trim()) + '" data-ptb="' + pkTab + '" data-ptm="' + ci + '" data-ppos="' + esc(row.pos) + '">' + esc(String(n).trim()) + '</button>' : '') + '</td>';
+      });
+      h += '</tr>';
+    });
+    tbl.innerHTML = h + '</tbody>';
+  }
+  function pkOpen(){ const ov = pkEl(); document.getElementById('mpkQ').value = ''; pkDraw(); ov.classList.add('show'); }
   function openManual(dk){
     const me = resolveMe(); if(!me) return;
-    memDk = dk;
-    const p = dk.split('-').map(Number), st = shiftFor(me.team, p[0], p[1]-1, p[2]);
-    memShift = (st === 'Morning' || st === 'Afternoon' || st === 'Night') ? st : 'Morning';
-    const ov = memEl(); memDraw(); document.getElementById('memN').value = ''; ov.classList.add('show');
+    memDk = dk; memP = null; memK = 'cl';
+    const ov = memEl(); memDraw(); ov.classList.add('show');
   }
 
   function setMe(on){
@@ -13654,7 +13721,9 @@ function openRosterWindow(){
     else if(e.target.closest('#meChange')) openPicker();
     else {
       const sc = e.target.closest('.meh-stats [data-s]');
-      if(sc){ const k = sc.getAttribute('data-s'); meSel = (k === 'all' || meSel === k) ? 'all' : k; renderMe(); return; }
+      if(sc){ const k = sc.getAttribute('data-s'); meSel = (k === 'all' || meSel === k) ? 'all' : k; meSub = 'both'; renderMe(); return; }
+      const sb = e.target.closest('.mec-sub [data-sub]');
+      if(sb){ const k = sb.getAttribute('data-sub'); meSub = (meSub === k) ? 'both' : k; renderMe(); return; }
       const yb = e.target.closest('.mec-yr [data-y]');
       if(yb){ if(yb.disabled) return; meYear += +yb.getAttribute('data-y'); renderMe(); return; }
       const cell = e.target.closest('.mec-w i[data-dk]');
