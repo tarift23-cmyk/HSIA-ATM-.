@@ -5,7 +5,7 @@
    - Script / style / font files from the CDNs the app uses: stale-while-revalidate (so Firebase etc. also load offline).
    - Everything else (Firebase data, Google sign-in, flight / weather APIs, video) is never touched.
    Bump VERSION only if you ever want to throw away all saved copies. A normal GitHub upload needs no change here. */
-const VERSION = 'hsia-sw-v20261003';
+const VERSION = 'hsia-sw-v20261007c';
 const SCOPE = self.registration.scope;
 const INDEX = new URL('index.html', SCOPE).href;
 const PRECACHE = [INDEX, new URL('manifest.json', SCOPE).href, new URL('icon-192.png', SCOPE).href,
