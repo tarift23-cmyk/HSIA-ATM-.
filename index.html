@@ -3467,34 +3467,72 @@ Emergency →↓
         <button type="button" id="impPdfBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">▾</button>
       </div>
       <div id="impPdfList" style="display:none;"></div>
+      <style id="impStyle">
+.imp-row{ display:flex; align-items:center; gap:8px; padding:9px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
+.imp-row a.imp-t{ flex:1 1 auto; min-width:0; color:var(--text); text-decoration:none; font-size:14px; overflow-wrap:anywhere; }
+.imp-row a.imp-d{ flex:0 0 auto; width:36px; height:34px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:8px; text-decoration:none; font-size:16px; }
+.imp-note{ font-size:12.5px; color:var(--muted); padding:4px 2px 10px; line-height:1.5; }
+.imp-item{ border:1px solid var(--border); border-radius:10px; margin-bottom:6px; overflow:hidden; }
+.imp-item > button.imp-h{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 12px; background:transparent; border:0; color:var(--text); font-size:14px; font-family:inherit; cursor:pointer; text-align:left; }
+.imp-item .imp-act{ display:none; gap:8px; padding:0 10px 10px; }
+.imp-item.open .imp-act{ display:flex; }
+.imp-item .imp-act a, .imp-item .imp-act button{ flex:1 1 0; display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; border-radius:9px; border:1px solid var(--border); background:rgba(255,255,255,.05); color:var(--text); font-size:14px; font-family:inherit; text-decoration:none; cursor:pointer; }
+</style>
       <script>
-      (function(){
-        var head = document.getElementById('impPdfHead'), box = document.getElementById('impPdfList'), btn = document.getElementById('impPdfBtn');
-        if(!head || !box) return;
-        var BASE = 'pdfs/important/', KEY = 'hsia_important_pdfs', loaded = false;
-        function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
-        function render(list, offline){
-          if(!list || !list.length){ box.innerHTML = '<div class="imp-note">এখনো কোনো PDF যোগ করা হয়নি।</div>'; return; }
-          box.innerHTML = (offline ? '<div class="imp-note">ইন্টারনেট নেই — সর্বশেষ সেভ করা তালিকা দেখানো হচ্ছে।</div>' : '') + list.map(function(it){
-            var f = BASE + encodeURI(it.file), t = it.title || it.file;
-            return '<div class="imp-row"><a class="imp-t" href="' + f + '" target="_blank" rel="noopener">📄 ' + esc(t) + '</a><a class="imp-d" href="' + f + '" download="' + esc(it.file) + '" title="ডাউনলোড">⬇️</a></div>';
-          }).join('');
-        }
-        function load(){
-          box.innerHTML = '<div class="imp-note">লোড হচ্ছে…</div>';
-          fetch(BASE + 'list.json?_=' + Date.now(), { cache:'no-store' }).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){
-            try{ localStorage.setItem(KEY, JSON.stringify(j)); }catch(e){} render(j, false); loaded = true;
-          }).catch(function(){
-            var saved = null; try{ saved = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){}
-            render(saved, !!saved);
-          });
-        }
-        head.addEventListener('click', function(){
-          var on = box.style.display === 'none'; box.style.display = on ? 'block' : 'none'; btn.textContent = on ? '▴' : '▾';
-          if(on) load();
-        });
-      })();
-      </script>
+/* Important PDF list. The CL / Exchange form editor lives in its own files (forms/forms.js + forms/forms.css + forms/header.png)
+   and is only loaded when somebody taps "Edit"; the blank PDFs are pdfs/important/cl-form.pdf and exchange-form.pdf. */
+(function(){
+  var head = document.getElementById('impPdfHead'), box = document.getElementById('impPdfList'), btn = document.getElementById('impPdfBtn');
+  if(!head || !box) return;
+  var BASE = 'pdfs/important/', KEY = 'hsia_important_pdfs';
+  var FORMS = [
+    { key:'cl', title:'CL Form', file:'cl-form.pdf', name:'CL-Form.pdf' },
+    { key:'ex', title:'Exchange Form', file:'exchange-form.pdf', name:'Exchange-Form.pdf' }
+  ];
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function formItem(f){
+    return '<div class="imp-item" data-k="' + f.key + '"><button type="button" class="imp-h"><span>📝 ' + f.title + '</span><span>▾</span></button>'
+      + '<div class="imp-act"><a href="' + BASE + f.file + '" download="' + f.name + '">⬇️ Download</a><button type="button" data-edit="' + f.key + '">✏️ Edit</button></div></div>';
+  }
+  function extra(list){
+    if(!list || !list.length) return '';
+    return '<div class="imp-note" style="margin-top:8px">অন্যান্য PDF</div>' + list.map(function(it){
+      var f = BASE + encodeURI(it.file), t = it.title || it.file;
+      return '<div class="imp-row"><a class="imp-t" href="' + f + '" target="_blank" rel="noopener">📄 ' + esc(t) + '</a><a class="imp-d" href="' + f + '" download="' + esc(it.file) + '" title="ডাউনলোড">⬇️</a></div>';
+    }).join('');
+  }
+  function paint(list){ box.innerHTML = FORMS.map(formItem).join('') + extra(list); }
+  function load(){
+    paint(null);
+    fetch(BASE + 'list.json?_=' + Date.now(), { cache:'no-store' }).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){
+      try{ localStorage.setItem(KEY, JSON.stringify(j)); }catch(e){} paint(j);
+    }).catch(function(){
+      var saved = null; try{ saved = JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){} if(saved) paint(saved);
+    });
+  }
+  var formsState = 0;   // 0 = not loaded, 1 = loading, 2 = ready
+  function withForms(cb){
+    if(window.hsiaOpenForm){ cb(); return; }
+    if(formsState === 1) return;
+    formsState = 1;
+    if(!document.getElementById('hsiaFormsCss')){ var l = document.createElement('link'); l.id = 'hsiaFormsCss'; l.rel = 'stylesheet'; l.href = 'forms/forms.css'; document.head.appendChild(l); }
+    var s = document.createElement('script'); s.src = 'forms/forms.js';
+    s.onload = function(){ formsState = 2; cb(); };
+    s.onerror = function(){ formsState = 0; s.remove(); alert('ফর্ম এডিটর লোড হয়নি।\nইন্টারনেট চেক করুন, আর GitHub এ forms ফোল্ডার (forms.js, forms.css, header.png) আপলোড হয়েছে কিনা দেখুন।'); };
+    document.head.appendChild(s);
+  }
+  box.addEventListener('click', function(e){
+    var ed = e.target.closest && e.target.closest('[data-edit]');
+    if(ed){ var k = ed.getAttribute('data-edit'); withForms(function(){ window.hsiaOpenForm(k); }); return; }
+    var h = e.target.closest && e.target.closest('.imp-h');
+    if(h){ var it = h.parentNode, was = it.classList.contains('open'); box.querySelectorAll('.imp-item.open').forEach(function(x){ x.classList.remove('open'); }); if(!was) it.classList.add('open'); }
+  });
+  head.addEventListener('click', function(){
+    var on = box.style.display === 'none'; box.style.display = on ? 'block' : 'none'; btn.textContent = on ? '▴' : '▾';
+    if(on) load();
+  });
+})();
+</script>
 
       <div class="fr-ocrsection-head" id="settingsTitle" style="margin-bottom:8px; margin-top:14px;">🎨 কালার কাস্টমাইজ করুন</div>
       <div class="target-row" id="targetRow">

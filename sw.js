@@ -8,7 +8,9 @@
 const VERSION = 'hsia-sw-v20261003';
 const SCOPE = self.registration.scope;
 const INDEX = new URL('index.html', SCOPE).href;
-const PRECACHE = [INDEX, new URL('manifest.json', SCOPE).href, new URL('icon-192.png', SCOPE).href];
+const PRECACHE = [INDEX, new URL('manifest.json', SCOPE).href, new URL('icon-192.png', SCOPE).href,
+  // CL / Exchange form editor (Settings > Important PDF > Edit): saved on first visit so it also works offline
+  new URL('forms/forms.js', SCOPE).href, new URL('forms/forms.css', SCOPE).href, new URL('forms/header.png', SCOPE).href];
 const CDN_HOSTS = ['www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
 const PAGE_TIMEOUT = 4000;
 
