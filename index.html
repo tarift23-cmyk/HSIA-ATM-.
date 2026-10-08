@@ -305,7 +305,7 @@
   .xp-name{ display:block; width:100%; text-align:left; background:rgba(255,255,255,0.04); border:1px solid transparent; color:var(--text); border-radius:7px; padding:6px 8px; font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
   .xp-name:hover, .xp-name:active{ background:rgba(245,181,61,0.18); border-color:rgba(245,181,61,0.5); }
   .xp-name.cur{ outline:1px dashed var(--muted); }
-  .xp-name.xp-blocked{ opacity:.32; text-decoration:line-through; cursor:not-allowed; }
+  .xp-name.xp-blocked{ cursor:not-allowed; }
   .xp-name.sel{ background:rgba(245,181,61,0.22); border-color:#f5b53d; }
   .xp-team-hl{ background:rgba(255,255,255,0.03); }
   .xbtn{ background:transparent !important; color:var(--muted) !important; border:1px solid var(--border) !important; box-shadow:none; transition:background .12s,color .12s,border-color .12s; }
@@ -6535,6 +6535,13 @@ function adminGate(unlockInputs){
 function requireRosterAuth(){ return adminGate(true); }
 // quick 1st/2nd-night exchange: same admin check, but leaves the roster cells locked
 function requireQuickAuth(){ return adminGate(false); }
+/* 1st / 2nd night (roster table): any logged-in user OR the admin may set it */
+function requireNightHalfAuth(){
+  if(rosterUnlocked) return true;
+  if(loadAuthSession()) return true;
+  alert('Please log in first (\u2699\uFE0F Settings) to set 1st / 2nd Night.');
+  return false;
+}
 /* Backup download is always gated by the admin password, every single
    time — regardless of whether roster editing is already unlocked in
    this session (rosterUnlocked). This is intentionally separate from
@@ -8899,7 +8906,7 @@ function initQuickExchangeModal(){
   if(saveBtn){
     saveBtn.addEventListener('click', ()=>{
       if(!quickExchangeCtx) return;
-      if(!requireQuickAuth()) return;
+      if(!requireNightHalfAuth()) return;
       // Only the half is assigned — no substitute name. (Save is only reachable for night shifts.)
       if(!quickExchangeCtx.half){ alert('Please choose 1st Night or 2nd Night.'); return; }
       const entry = {
@@ -8913,7 +8920,7 @@ function initQuickExchangeModal(){
   if(removeBtn){
     removeBtn.addEventListener('click', ()=>{
       if(!quickExchangeCtx) return;
-      if(!requireQuickAuth()) return;
+      if(!requireNightHalfAuth()) return;
       removeExchangeEntry(quickExchangeCtx.date, quickExchangeCtx.table, quickExchangeCtx.pos, quickExchangeCtx.team, quickExchangeCtx.isNight ? (quickExchangeCtx.half||'') : '');
       closeModal('quickExchangeModalOverlay');
     });
@@ -9917,12 +9924,6 @@ function renderXDutyCal(){
     const hb = box.querySelector('#xdcHalf'); if(hb) hb.innerHTML = '';
     if(info.st === 'Off' || !info.st){ xdcWarn('\u26A0 No duty on ' + dd + ' (Off day). Please select a duty day.', el); return; }
     if(info.dk < today){ xdcWarn('\u26A0 ' + dd + ' is a past date. Please select today or a future date.', el); return; }
-    if(window._xMode === 'ex' && !ctx.thmr && info.st === 'Night'){
-      /* a Night duty can be exchanged as a full night or only one half */
-      hb.innerHTML = '<div class="xdc-half"><p>' + dd + ' \u00B7 Night \u2014 which part?</p><button type="button" data-h="">Full Night (8:30 PM\u20137:30 AM)</button><button type="button" data-h="1">1st Night (8:30 PM\u20133:00 AM)</button><button type="button" data-h="2">2nd Night (3:00 AM\u20137:30 AM)</button></div>';
-      hb.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=> xdcPick(info, b.getAttribute('data-h'))));
-      return;
-    }
     xdcPick(info, '');
   }));
 }
@@ -11174,7 +11175,7 @@ function initExchangePanel(){
       { const _tg = xpTarget(); if(_tg && xpSameShiftName(_tg, subName)){ alert('\u26D4 ' + subName + '\n\n' + XP_SAME_SHIFT_MSG); subInput.value = ''; return; } }
       const hasCl = (EXCHANGES[r.dateKey] || []).some(x=> (x.cl || x.special) && x.table === r.table && x.pos === r.pos && +x.team === +r.team);
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
-      const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
+      const nightHalf = '';   /* Exchange is always a full night; 1st / 2nd night is set later from the roster table */
       // Same table+pos+team+half combo replaces any earlier entry for it; a 1st-night and a 2nd-night entry can both exist.
       if(_mode === 'request'){ if(exReqSubmit({ kind:'exchange', r:r, subName:subName, nightHalf:nightHalf })){ subInput.value = ''; if(window._xDone) window._xDone('Request sent'); } return; }
       { const _pe = { table:r.table, pos:r.pos, team:r.team, subName, nightHalf, who:r.who }; exPutEntry(r.dateKey, _pe); exVacateMovedCell(r.dateKey, _pe); }
