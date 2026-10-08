@@ -2071,7 +2071,72 @@ td.roster-nosub .roster-name-input{ opacity:1; text-decoration:none; }
 }
 /* Vacant position (exchange added with no substitute): red instead of amber,
    so it reads at a glance as "unstaffed" rather than "swapped to someone". */
-td.roster-vacant-cell{
+td.roster-xch-cell{
+  position:relative;
+  background:rgba(46,204,160,0.14);
+  box-shadow: inset 0 0 0 1.5px #2ecca0, 0 0 10px rgba(46,204,160,0.5);
+  border-radius:6px;
+}
+.roster-xch-cell .roster-name-input{
+  opacity:0.55;
+  text-decoration: line-through;
+  text-decoration-color: rgba(46,204,160,0.85);
+}
+.roster-xch-badge{
+  display:block;
+  margin-top:2px;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px;
+  color:#06241b;
+  background:linear-gradient(135deg, #7be8c6, #2ecca0);
+  border-radius:999px;
+  padding:3px 8px;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow: 0 0 8px rgba(46,204,160,0.65);
+}
+.roster-chain-old{
+  display:block;
+  margin-top:2px;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px;
+  color:#06241b;
+  background:linear-gradient(135deg, #7be8c6, #2ecca0);
+  border-radius:999px;
+  padding:3px 8px;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:0.55;
+  text-decoration:line-through;
+}
+.roster-sp-cell{
+  position:relative;
+  background:rgba(255,122,26,0.16);
+  box-shadow: inset 0 0 0 1.5px #ff7a1a, 0 0 10px rgba(255,122,26,0.55);
+  border-radius:6px;
+}
+.roster-sp-cell .roster-name-input{
+  opacity:0.55;
+  text-decoration: line-through;
+  text-decoration-color: rgba(255,122,26,0.9);
+}
+.roster-sp-badge{
+  display:block;
+  margin-top:2px;
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px;
+  color:#2a1100;
+  background:linear-gradient(135deg, #ffa05c, #ff7a1a);
+  border-radius:999px;
+  padding:3px 8px;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow: 0 0 8px rgba(255,122,26,0.7);
+}
+.roster-vacant-cell{
   position:relative;
   background:rgba(245,66,73,0.14);
   box-shadow: inset 0 0 0 1.5px #F54249, 0 0 10px rgba(245,66,73,0.5);
@@ -7002,6 +7067,7 @@ function archiveExchangesToHistory(obj, syncDeletes){
       if(x.vacant || x.ufn) return;
       const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
       if(x.cl) rec.cl = true;
+      if(x.via) rec.via = String(x.via);
       if(x.special){ rec.special = true; rec.spType = String(x.spType || ''); }
       if(x.who) rec.who = String(x.who);
       const i = cur.findIndex(h=> exHistKey(h) === exHistKey(rec));
@@ -7040,7 +7106,7 @@ function exHistDayEntries(dk){
     exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
       if(x.vacant || x.ufn) return;
       const rec = { table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:'' };
-      if(!have.has(exHistKey(rec))){ rec.base = exHistBaseName(rec); if(x.cl) rec.cl = true; if(x.special){ rec.special = true; rec.spType = String(x.spType || ''); } out.push(rec); }
+      if(!have.has(exHistKey(rec))){ rec.base = exHistBaseName(rec); if(x.cl) rec.cl = true; if(x.via) rec.via = String(x.via); if(x.special){ rec.special = true; rec.spType = String(x.spType || ''); } out.push(rec); }
     });
   }catch(e){}
   return out;
@@ -7051,7 +7117,7 @@ function exDayEntriesForView(dk){
   try{
     exHistList(EXCHANGES && EXCHANGES[dk]).forEach(x=>{
       if(x.vacant || x.ufn) return;
-      out.push({ table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:exHistBaseName(x), cl:!!x.cl, special:!!x.special, spType:String(x.spType || '') });
+      out.push({ table:x.table, pos:x.pos, team:+x.team, subName:String(x.subName || '').trim(), nightHalf:x.nightHalf ? String(x.nightHalf) : '', base:exHistBaseName(x), cl:!!x.cl, special:!!x.special, spType:String(x.spType || ''), via:String(x.via || '') });
     });
   }catch(e){}
   return out;
@@ -7249,14 +7315,32 @@ function exchangeShiftWindow(dateKey, team, half){
 /* Roster tables follow the date picked above them: today = live (mid-shift) behaviour as before; any other date = every
    exchange / CL / special entry of that day (live data first, then the archived history, whose "base" is the person who
    was rostered at that time even if the roster has changed since). */
+/* View-level chain rule (also repairs data saved before the rule existed): a same-shift person who covers someone's CL / leave
+   and then gets an Exchange is replaced THERE (CL cell: original struck -> him struck -> new person), his own cell stays vacant. */
+function exChainFix(list){
+  const out = list.slice();
+  const nm = v=> String(v || '').trim().toLowerCase();
+  list.forEach(E=>{
+    if(!E || E.cl || E.special || E.vacant || E.moved || E.via) return;
+    if(!nm(E.subName)) return;
+    const w = nm(E.who || E.base); if(!w) return;
+    const ci = out.findIndex(C=> C && (C.cl || C.special) && !C.vacant && !C.via && +C.team === +E.team && nm(C.subName) === w && !(C.table === E.table && C.pos === E.pos));
+    if(ci < 0) return;
+    const C = out[ci];
+    out[ci] = Object.assign({}, C, { via: String(C.subName).trim(), subName: E.subName });
+    const ei = out.indexOf(E);
+    if(ei >= 0) out[ei] = { table:E.table, pos:E.pos, team:+E.team, subName:'', vacant:true, moved:true, who:(E.who || E.base || ''), nightHalf:E.nightHalf || '', base:E.base || '' };
+  });
+  return out;
+}
 function rosterViewExchanges(tableKey){
   const sel = window._rosterSelKey;
   const isToday = (typeof sel !== 'string' || sel === todayDateKey());
   const dayKey = isToday ? todayDateKey() : sel;
-  const cur = exHistList(EXCHANGES && EXCHANGES[dayKey]).filter(x=> x && x.table === tableKey && !x.ufn);
+  const cur = exHistList(EXCHANGES && EXCHANGES[dayKey]).filter(x=> x && !x.ufn);
   let hist = [];
-  try{ hist = (exDayEntriesForView(dayKey) || []).filter(h=> h.table === tableKey && !cur.some(c=> exHistKey(c) === exHistKey(h))); }catch(e){}
-  const out = cur.concat(hist);
+  try{ hist = (exDayEntriesForView(dayKey) || []).filter(h=> !cur.some(c=> exHistKey(c) === exHistKey(h))); }catch(e){}
+  const out = exChainFix(cur.concat(hist)).filter(x=> x.table === tableKey);
   if(isToday){
     /* today: show every shift's exchange / CL of the day together (Morning + Afternoon + Night), plus anything still running from yesterday's night */
     activeExchangesFor(tableKey).forEach(a=>{ if(!out.some(c=> c === a || exHistKey(c) === exHistKey(a))) out.push(a); });
@@ -7367,7 +7451,7 @@ function exPutEntry(dateKey, entry){
   const _ch = exChainTarget(dateKey, entry);
   if(_ch){
     const prev = String(_ch.subName || '').trim();
-    EXCHANGES[dateKey] = exHistList(EXCHANGES[dateKey]).map(x=> (x && x.table === _ch.table && x.pos === _ch.pos && +x.team === +_ch.team && !x.moved) ? Object.assign({}, x, { subName: entry.subName }) : x);
+    EXCHANGES[dateKey] = exHistList(EXCHANGES[dateKey]).map(x=> (x && x.table === _ch.table && x.pos === _ch.pos && +x.team === +_ch.team && !x.moved) ? Object.assign({}, x, { subName: entry.subName, via: prev }) : x);
     if(window._exBatch) return;
     saveExchangesData(EXCHANGES);
     try{ auditLog('exchange-add', auditExchangeDesc(Object.assign({}, _ch, { who: prev, subName: entry.subName }), dateKey)); }catch(e){}
@@ -8667,21 +8751,27 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       const ex = activeEx.find(x => x.pos === row.pos && +x.team === ci);
       const val = ((ex && ex.base) || row.names[ci] || '').replace(/"/g,'&quot;');
       const origTitle = ((ex && ex.base) || row.names[ci] || '—').replace(/"/g,'&quot;');
-      const cellClassName = !ex ? '' : ex.vacant ? 'roster-vacant-cell'
+      /* colours: CL / vacant position = red, Special (Others) = orange, Exchange = green */
+      const cellClassName = !ex ? '' : ex.special ? 'roster-sp-cell'
+        : ex.vacant ? 'roster-vacant-cell'
         : ex.nightHalf === '1' ? 'roster-exchange-cell-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-cell-night2'
-        : 'roster-exchange-cell';
+        : ex.cl ? 'roster-vacant-cell'
+        : 'roster-xch-cell';
       // No substitute name (1st/2nd Night marker only): the person is still on duty, so the name stays as normal text.
       const noSub = ex && !ex.cl && !ex.special && !(ex.subName || '').trim();
       const cellClass = cellClassName ? ` class="${cellClassName}${noSub ? ' roster-nosub' : ''}"` : '';
       const halfTag = ex && ex.nightHalf === '1' ? ' (1st Night)' : ex && ex.nightHalf === '2' ? ' (2nd Night)' : '';
-      const badgeClassName = !ex ? '' : ex.vacant ? 'roster-vacant-badge'
+      const badgeClassName = !ex ? '' : ex.special ? 'roster-sp-badge'
+        : ex.vacant ? 'roster-vacant-badge'
         : ex.nightHalf === '1' ? 'roster-exchange-badge-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
-        : 'roster-exchange-badge';
+        : (ex.cl && !ex.via) ? 'roster-vacant-badge'
+        : 'roster-xch-badge';
       const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
-      const badgeText = (ex && ex.vacant) ? (ex.special ? exSpShort(ex.spType) : ex.moved ? 'Vacant' : 'CL · Vacant') : subEsc ? '🔄 ' + subEsc + halfTag + (ex && ex.cl ? ' · CL' : ex && ex.special ? ' · ' + exSpShort(ex.spType) : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
-      const badge = !ex ? '' : `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
+      const badgeText = (ex && ex.vacant) ? (ex.special ? exSpShort(ex.spType) : ex.moved ? 'Vacant' : 'CL · Vacant') : subEsc ? '🔄 ' + subEsc + halfTag + (ex && ex.cl && !ex.via ? ' · CL' : ex && ex.special ? ' · ' + exSpShort(ex.spType) : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
+      const viaEsc = (ex && ex.via) ? String(ex.via).replace(/</g,'&lt;') : '';
+      const badge = !ex ? '' : (viaEsc ? `<div class="roster-chain-old">🔄 ${viaEsc}</div>` : '') + `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
