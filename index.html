@@ -2111,6 +2111,15 @@ td.roster-xch-cell{
   opacity:0.55;
   text-decoration:line-through;
 }
+.roster-has-tag{ text-align:center; }
+.roster-has-tag .roster-name-input{ display:inline-block; width:calc(100% - 40px); vertical-align:middle; }
+.roster-name-tag{
+  display:inline-block; vertical-align:middle;
+  font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:10px;
+  border-radius:999px; padding:2px 6px; margin-left:2px; line-height:1.2;
+}
+.roster-tag-cl{ color:#fff; background:linear-gradient(135deg,#ff4d5e,#c8001a); box-shadow:0 0 8px rgba(255,31,61,0.9); }
+.roster-tag-xch{ color:#1B2130; background:linear-gradient(135deg,#ffcf5c,#ffb020); box-shadow:0 0 8px rgba(255,176,32,0.8); }
 .roster-sp-cell{
   position:relative;
   background:rgba(255,106,0,0.2);
@@ -8768,7 +8777,8 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : 'roster-exchange-cell';
       // No substitute name (1st/2nd Night marker only): the person is still on duty, so the name stays as normal text.
       const noSub = ex && !ex.cl && !ex.special && !(ex.subName || '').trim();
-      const cellClass = cellClassName ? ` class="${cellClassName}${noSub ? ' roster-nosub' : ''}"` : '';
+      const tagHtml = (!ex || ex.vacant || ex.special || ex.nightHalf) ? '' : ex.cl ? '<span class="roster-name-tag roster-tag-cl">CL</span>' : ((ex.subName || '').trim() ? '<span class="roster-name-tag roster-tag-xch">🔄</span>' : '');
+      const cellClass = cellClassName ? ` class="${cellClassName}${noSub ? ' roster-nosub' : ''}${tagHtml ? ' roster-has-tag' : ''}"` : '';
       const halfTag = ex && ex.nightHalf === '1' ? ' (1st Night)' : ex && ex.nightHalf === '2' ? ' (2nd Night)' : '';
       const badgeClassName = !ex ? '' : ex.special ? 'roster-sp-badge'
         : ex.vacant ? 'roster-vacant-badge'
@@ -8777,10 +8787,10 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
         : (ex.cl && !ex.via) ? 'roster-vacant-badge'
         : 'roster-exchange-badge';
       const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
-      const badgeText = (ex && ex.vacant) ? (ex.special ? exSpShort(ex.spType) : ex.moved ? (ex.to ? '➜ ' + String(ex.to).replace(/</g,'&lt;') : 'Vacant') : 'CL · Vacant') : subEsc ? '🔄 ' + subEsc + halfTag + (ex && ex.cl && !ex.via ? ' · CL' : ex && ex.special ? ' · ' + exSpShort(ex.spType) : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
+      const badgeText = (ex && ex.vacant) ? (ex.special ? exSpShort(ex.spType) : ex.moved ? (ex.to ? '➜ ' + String(ex.to).replace(/</g,'&lt;') : 'Vacant') : 'CL · Vacant') : subEsc ? (tagHtml ? '' : '🔄 ') + subEsc + halfTag + (ex && ex.special ? ' · ' + exSpShort(ex.spType) : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
       const viaEsc = (ex && ex.via) ? String(ex.via).replace(/</g,'&lt;') : '';
-      const badge = !ex ? '' : (viaEsc ? `<div class="roster-vacant-badge">CL</div><div class="roster-chain-old">🔄 ${viaEsc}</div>` : '') + `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
-      return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${badge}</td>`;
+      const badge = !ex ? '' : (viaEsc ? `<div class="roster-chain-old">${viaEsc}</div>` : '') + `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
+      return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${tagHtml}${badge}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
     return `<tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="${posSafe}" data-ri="${ri}" autocomplete="off" readonly></td>${cells}</tr>`;
