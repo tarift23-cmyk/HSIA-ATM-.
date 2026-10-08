@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261006-045110';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261008-053743';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -135,6 +135,45 @@
       if(retry) setTimeout(function(){ check(false); }, 15000);
     });
   }
+  /* ---- Fresh start: every time the page is OPENED (new tab / app launch, or coming back after 30+ min away) it reloads itself ONCE
+     straight from the network (browser + service-worker caches dropped), so nobody keeps running an old or half-loaded copy.
+     Skipped when: offline, data-saver / 2G, or the server does not answer within 2.5 s (slow net) -> the page just keeps running as it is.
+     Once per session, so it can never loop. ---- */
+  var FR = 'HSIA_FRESH_OPEN', hiddenAt = 0;
+  function netOk(){
+    if(navigator.onLine === false) return false;
+    var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if(c){
+      if(c.saveData) return false;
+      if(/(^|-)2g$/.test(c.effectiveType || '')) return false;
+      if(typeof c.rtt === 'number' && c.rtt > 1800) return false;
+    }
+    return true;
+  }
+  function fastProbe(ms){
+    var ac = (window.AbortController ? new AbortController() : null), t0 = Date.now(), timer = ac ? setTimeout(function(){ ac.abort(); }, ms) : 0;
+    return fetch(bust(), { cache:'no-store', signal: ac ? ac.signal : undefined }).then(function(r){
+      clearTimeout(timer);
+      var ok = r.ok && (Date.now() - t0) <= ms;
+      try{ if(ac) ac.abort(); }catch(e){}
+      return ok;
+    }).catch(function(){ clearTimeout(timer); return false; });
+  }
+  function freshOpen(resume){
+    if(!resume){ try{ if(sessionStorage.getItem(FR)) return; }catch(e){} }
+    try{ sessionStorage.setItem(FR, String(Date.now())); }catch(e){}
+    if(!netOk()) return;
+    fastProbe(2500).then(function(ok){
+      if(!ok) return;
+      if(resume && !quiet()) return;            /* never throw away something the person is typing */
+      forceReload(true);
+    });
+  }
+  freshOpen(false);
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){ hiddenAt = Date.now(); return; }
+    if(hiddenAt && Date.now() - hiddenAt > 30*60*1000){ hiddenAt = 0; freshOpen(true); }
+  });
   check(true);
   // a tab / installed app that stays open for hours: look again when it comes back to the front
   document.addEventListener('visibilitychange', function(){
@@ -2853,9 +2892,10 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
       <div class="fr-manualform">
         <select id="clDataYear" class="fr-mfinput fr-mfinput-sm"></select>
+        <select id="clDataMonth" class="fr-mfinput fr-mfinput-sm"><option value="0" selected>Whole year</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select>
         <input type="text" id="clDataSearch" class="fr-mfinput" placeholder="Search name..." autocomplete="off">
-        <button type="button" id="clDataOnlyBtn" class="fr-dbclear">With CL only</button>
-        <button type="button" id="clDataCsvBtn" class="fr-dbclear">⬇ CSV</button>
+        <button type="button" id="clDataPdfBtn" class="fr-dbclear">⬇ PDF A4</button>
+        <button type="button" id="clDataPngBtn" class="fr-dbclear">⬇ PNG A4</button>
       </div>
       <div class="fr-dbtablewrap" style="max-height:60vh;overflow:auto;">
         <table class="fr-dbtable" id="clDataTable"></table>
@@ -9718,7 +9758,143 @@ function pickExchangePos(b){
   }
   updateExchangeCurrentHint();
   try{ posSel.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+  if(window._xMode === 'ex' || window._xMode === 'cl'){
+    window._xFlowWho = b.getAttribute('data-name') || '';
+    if(window._xFlowLabel) window._xFlowLabel();
+    setTimeout(()=>{ if(window.openXDutyCal) window.openXDutyCal(); }, 60);
+  }
 }
+/* ---- Add Exchange / Add CL: position -> duty calendar popup (off days blocked) -> substitute table ---- */
+(function(){
+  const st = document.createElement('style');
+  st.textContent =
+    '.xmode-flow #exchangeDate, .xmode-flow .dfmt, .xmode-flow #exchangeSubName, .xmode-flow #exchangeNightHalf, .xmode-flow #exchangeConfirmBtn{ display:none !important; }' +
+    '#xdcOverlay{ position:fixed; inset:0; z-index:10020; background:rgba(0,0,0,.62); display:none; align-items:center; justify-content:center; padding:12px; }' +
+    '#xdcOverlay.show{ display:flex; }' +
+    '.xdc-box{ width:100%; max-width:430px; max-height:94vh; overflow:auto; background:#f4f3f0; color:#1a1a1a; border-radius:26px; padding:14px 14px 16px; box-shadow:0 14px 44px rgba(0,0,0,.55); }' +
+    '.xdc-top{ display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }' +
+    '.xdc-ttl{ flex:1; min-width:0; } .xdc-ttl b{ display:block; font-size:15px; } .xdc-ttl span{ display:block; font-size:12px; color:#6b6a64; font-weight:700; margin-top:1px; }' +
+    '.xdc-x{ flex:0 0 auto; width:34px; height:34px; border-radius:11px; border:1px solid #d9d7cf; background:#fff; font-size:15px; cursor:pointer; color:#333; }' +
+    '.xdc-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0; }' +
+    '.xdc-nav button{ width:42px; height:38px; border-radius:12px; border:1px solid #d9d7cf; background:#fff; font-size:20px; font-weight:800; cursor:pointer; color:#222; } .xdc-nav button:disabled{ opacity:.35; }' +
+    '.xdc-mon{ font-size:19px; font-weight:800; }' +
+    '.xdc-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }' +
+    '.xdc-wd{ text-align:center; font-size:11px; font-weight:800; color:#6b6a64; padding:5px 0; background:#ecebe5; border-radius:7px; }' +
+    '.xdc-d{ min-height:54px; border-radius:9px; border:1px solid #e3e1da; background:#fbfaf8; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:15px; font-weight:800; line-height:1.15; cursor:pointer; padding:2px 1px; text-align:center; color:#1a1a1a; }' +
+    '.xdc-d small{ display:block; font-size:10.5px; font-weight:700; }' +
+    '.xdc-d.blank{ visibility:hidden; cursor:default; }' +
+    '.xdc-d.off{ background:#fbfaf8; color:#8a8982; }' +
+    '.xdc-d.past{ opacity:.38; }' +
+    '.xdc-d.today{ outline:2.5px solid #1a1a1a; outline-offset:-2px; }' +
+    '.xdc-d.shake{ animation:xdcShake .35s; }' +
+    '@keyframes xdcShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }' +
+    '.xdc-warn{ min-height:20px; margin:8px 2px 0; font-size:12.5px; font-weight:800; color:#c0262d; }' +
+    '.xdc-half{ margin-top:8px; padding:8px; border-radius:12px; background:#fff; border:1px solid #e3e1da; } .xdc-half p{ margin:0 0 6px; font-size:12.5px; font-weight:800; }' +
+    '.xdc-half button{ display:block; width:100%; margin:4px 0 0; padding:10px 8px; border-radius:10px; border:1px solid #d9d7cf; background:#f4f3f0; font-size:13px; font-weight:800; cursor:pointer; color:#1a1a1a; }';
+  document.head.appendChild(st);
+})();
+const _xdc = { y:0, m:0, ctx:null, pend:null, warnT:0 };
+function _xdcKey(y, m, d){ return y + '-' + String(m + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+function _xdcNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
+function xdcContext(){
+  const tableSel = document.getElementById('exchangeTable'), posSel = document.getElementById('exchangePos'), teamSel = document.getElementById('exchangeTeam');
+  if(!tableSel || !posSel || !tableSel.value || !posSel.value) return null;
+  if(isThMrTable(tableSel.value)){
+    const v = String(posSel.value).split('|'), slot = +v[0], pi = +v[1];
+    let name = String(window._xFlowWho || '').trim();
+    if(!name && window.hsiaTHMRPerson) name = String(window.hsiaTHMRPerson(todayDateKey(), tableSel.value, slot, pi) || '').trim();
+    if(!name) return null;
+    return { thmr:true, table:tableSel.value, name:name, head:(tableSel.value === 'th' ? 'Traffic Hand' : 'Marshaller') + ' \u00B7 ' + name };
+  }
+  if(!teamSel || teamSel.value === '') return null;
+  const ci = +teamSel.value, row = (rosterDataFor(tableSel.value) || []).find(r=> r.pos === posSel.value);
+  const who = row ? String((row.names && row.names[ci]) || '').trim() : '';
+  return { thmr:false, table:tableSel.value, pos:posSel.value, ci:ci, who:who, head:posSel.value + ' \u00B7 Team ' + TEAMS[ci] + (who ? ' \u00B7 ' + who : '') };
+}
+function xdcDay(ctx, y, m, d){
+  const dk = _xdcKey(y, m, d);
+  if(!ctx.thmr){
+    const sh = shiftFor(ctx.ci, y, m, d);
+    return { dk:dk, st:sh, cls:(sh === 'Morning' ? 'morning' : sh === 'Afternoon' ? 'afternoon' : sh === 'Night' ? 'night' : ''), text:shiftLabel(sh) };
+  }
+  const slots = window.hsiaTHMRPeople ? window.hsiaTHMRPeople(dk, ctx.table) : [];
+  for(const sl of slots){
+    for(let pi = 0; pi < sl.people.length; pi++){
+      if(_xdcNorm(sl.people[pi]) !== _xdcNorm(ctx.name)) continue;
+      const meta = THS_META[sl.slot] || {};
+      return { dk:dk, st:meta.shift || '', cls:(meta.cl === 'evening' ? 'afternoon' : (meta.cl || '')), text:shiftLabel(meta.shift || 'Off') + (meta.ot ? ' OT' : ''), slot:sl.slot, pi:pi };
+    }
+  }
+  return { dk:dk, st:'Off', cls:'', text:shiftLabel('Off') };
+}
+function xdcWarn(msg, el){
+  const w = document.getElementById('xdcWarn'); if(!w) return;
+  w.textContent = msg; clearTimeout(_xdc.warnT); _xdc.warnT = setTimeout(()=>{ w.textContent = ''; }, 3200);
+  if(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+}
+function closeXDutyCal(){ const ov = document.getElementById('xdcOverlay'); if(ov) ov.classList.remove('show'); _xdc.pend = null; }
+function xdcPick(info, half){
+  const dateInput = document.getElementById('exchangeDate'), posSel = document.getElementById('exchangePos'), halfSel = document.getElementById('exchangeNightHalf');
+  if(!dateInput) return;
+  dateInput.value = info.dk;
+  try{ dateInput.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+  if(_xdc.ctx && _xdc.ctx.thmr && info.slot != null && posSel){ posSel.value = info.slot + '|' + info.pi; }
+  if(halfSel){ halfSel.value = half || ''; }
+  closeXDutyCal();
+  try{ updateExchangeCurrentHint(); }catch(e){}
+  if(window._xRunMode) window._xRunMode();
+}
+function renderXDutyCal(){
+  const box = document.getElementById('xdcBox'); if(!box || !_xdc.ctx) return;
+  const ctx = _xdc.ctx, y = _xdc.y, m = _xdc.m, today = todayDateKey();
+  const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const nowP = today.split('-').map(Number);
+  const monthsFromNow = (y - nowP[0]) * 12 + (m - (nowP[1] - 1));
+  const first = new Date(Date.UTC(y, m, 1)).getUTCDay(), n = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  let g = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(w=> '<div class="xdc-wd">' + w + '</div>').join('');
+  for(let i = 0; i < first; i++) g += '<div class="xdc-d blank"></div>';
+  for(let d = 1; d <= n; d++){
+    const info = xdcDay(ctx, y, m, d), past = info.dk < today, off = info.st === 'Off' || !info.st;
+    const bg = off ? '' : ' style="background:var(--' + info.cls + ');border-color:transparent"';
+    g += '<div class="xdc-d' + (off ? ' off' : '') + (past ? ' past' : '') + (info.dk === today ? ' today' : '') + '" data-d="' + d + '"' + bg + '>' + d + '<small>' + _xEsc(info.text) + '</small></div>';
+  }
+  box.innerHTML =
+    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._xMode === 'cl' ? 'CL' : 'Exchange') + ' \u00B7 Select date</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
+    '<div class="xdc-nav"><button type="button" id="xdcPrev"' + (monthsFromNow <= 0 ? ' disabled' : '') + '>\u2039</button><div class="xdc-mon">' + MN[m] + ' ' + y + '</div><button type="button" id="xdcNext"' + (monthsFromNow >= 11 ? ' disabled' : '') + '>\u203A</button></div>' +
+    '<div class="xdc-grid">' + g + '</div><div class="xdc-warn" id="xdcWarn"></div><div id="xdcHalf"></div>';
+  box.querySelector('#xdcClose').addEventListener('click', closeXDutyCal);
+  box.querySelector('#xdcPrev').addEventListener('click', ()=>{ _xdc.m--; if(_xdc.m < 0){ _xdc.m = 11; _xdc.y--; } renderXDutyCal(); });
+  box.querySelector('#xdcNext').addEventListener('click', ()=>{ _xdc.m++; if(_xdc.m > 11){ _xdc.m = 0; _xdc.y++; } renderXDutyCal(); });
+  box.querySelectorAll('.xdc-d[data-d]').forEach(el=> el.addEventListener('click', ()=>{
+    const d = +el.getAttribute('data-d'), info = xdcDay(ctx, y, m, d), dd = String(d).padStart(2,'0') + '/' + String(m + 1).padStart(2,'0');
+    const hb = box.querySelector('#xdcHalf'); if(hb) hb.innerHTML = '';
+    if(info.st === 'Off' || !info.st){ xdcWarn('\u26A0 No duty on ' + dd + ' (Off day). Please select a duty day.', el); return; }
+    if(info.dk < today){ xdcWarn('\u26A0 ' + dd + ' is a past date. Please select today or a future date.', el); return; }
+    if(window._xMode === 'ex' && !ctx.thmr && info.st === 'Night'){
+      /* a Night duty can be exchanged as a full night or only one half */
+      hb.innerHTML = '<div class="xdc-half"><p>' + dd + ' \u00B7 Night \u2014 which part?</p><button type="button" data-h="">Full Night (8:30 PM\u20137:30 AM)</button><button type="button" data-h="1">1st Night (8:30 PM\u20133:00 AM)</button><button type="button" data-h="2">2nd Night (3:00 AM\u20137:30 AM)</button></div>';
+      hb.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=> xdcPick(info, b.getAttribute('data-h'))));
+      return;
+    }
+    xdcPick(info, '');
+  }));
+}
+function openXDutyCal(){
+  const ctx = xdcContext();
+  if(!ctx){ openExchangePosPicker(); return; }
+  _xdc.ctx = ctx;
+  const t = todayDateKey().split('-').map(Number); _xdc.y = t[0]; _xdc.m = t[1] - 1;
+  let ov = document.getElementById('xdcOverlay');
+  if(!ov){
+    ov = document.createElement('div'); ov.id = 'xdcOverlay';
+    ov.innerHTML = '<div class="xdc-box" id="xdcBox"></div>';
+    ov.addEventListener('click', e=>{ if(e.target === ov) closeXDutyCal(); });
+    document.body.appendChild(ov);
+  }
+  renderXDutyCal();
+  ov.classList.add('show');
+}
+window.openXDutyCal = openXDutyCal;
 function openExchangePosPicker(){
   window._xpMode = 'pos';
   window._pendingClAfterPick = false; window._pendingUfnAfterPick = false;
@@ -9767,13 +9943,13 @@ const CL_DESIG_LABEL = { rosterCtrl:'Controller', roster:'Aerodrome Assistant', 
 const CL_DESIG_ORDER = ['rosterCtrl','roster','rosterComm','th','mr'];
 let _cldOnly = false, _cldOpen = {};
 function clRankMap(){ if(!CL_LOG._desig || typeof CL_LOG._desig !== 'object') CL_LOG._desig = {}; return CL_LOG._desig; }
-function clBuildPeople(year){
+function clBuildPeople(year, month){
   const by = {};
   const add = (name, table)=>{
     const n = String(name == null ? '' : name).trim();
     if(!n || /^-+$/.test(n)) return null;
     const k = clNorm(n);
-    if(!by[k]) by[k] = { key:k, name:n, table:table, used:0, recs:[] };
+    if(!by[k]) by[k] = { key:k, name:n, table:table, used:0, per:0, recs:[] };
     return by[k];
   };
   ['rosterCtrl','roster','rosterComm'].forEach(key=>{
@@ -9783,6 +9959,8 @@ function clBuildPeople(year){
     if(String(r.date).slice(0,4) !== String(year)) return;
     const pr = add(r.who, r.table); if(!pr) return;
     pr.used += clRecDays(r);
+    if(month && +String(r.date).slice(5,7) !== +month) return;      /* month view: list / count only that month (the yearly limit still uses the whole year) */
+    pr.per += clRecDays(r);
     pr.recs.push({ date:r.date, days:clRecDays(r), shift:r.shift });
   });
   return Object.keys(by).map(k=> by[k]);
@@ -9794,10 +9972,11 @@ function renderClData(){
   const year = +yearSel.value || new Date().getFullYear();
   const q = ((document.getElementById('clDataSearch') || {}).value || '').trim().toLowerCase();
   const ranks = clRankMap();
-  let people = clBuildPeople(year);
-  if(_cldOnly) people = people.filter(p=> p.used > 0);
+  const month = +((document.getElementById('clDataMonth') || {}).value) || 0;
+  let people = clBuildPeople(year, month);
   if(q) people = people.filter(p=> p.name.toLowerCase().indexOf(q) !== -1);
-  let html = '<thead><tr><th>Name</th><th>Designation</th><th>CL taken</th><th>Left</th></tr></thead><tbody>';
+  const MON3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html = '<thead><tr><th>Name</th><th>Designation</th><th>CL taken' + (month ? ' (' + MON3[month-1] + ')' : '') + '</th><th>Left' + (month ? ' (yr)' : '') + '</th></tr></thead><tbody>';
   let any = false;
   CL_DESIG_ORDER.forEach(t=>{
     const grp = people.filter(p=> p.table === t).sort((a,b)=> a.name.localeCompare(b.name));
@@ -9809,7 +9988,7 @@ function renderClData(){
       const desig = t === 'rosterCtrl'
         ? 'Controller <select class="cld-rank" data-k="' + _xEsc(p.key) + '"><option value="">—</option>' + ['AO','AD','DD'].map(x=> '<option' + (x === rank ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>'
         : CL_DESIG_LABEL[t];
-      html += '<tr class="cld-row' + (_cldOpen[p.key] ? ' open' : '') + '" data-k="' + _xEsc(p.key) + '"><td>' + _xEsc(p.name) + '</td><td>' + desig + '</td><td>' + p.used + ' / ' + CL_LIMIT + '</td><td>' + Math.max(0, CL_LIMIT - p.used) + '</td></tr>';
+      html += '<tr class="cld-row' + (_cldOpen[p.key] ? ' open' : '') + '" data-k="' + _xEsc(p.key) + '"><td>' + _xEsc(p.name) + '</td><td>' + desig + '</td><td>' + (month ? p.per : (p.used + ' / ' + CL_LIMIT)) + '</td><td>' + Math.max(0, CL_LIMIT - p.used) + '</td></tr>';
       if(_cldOpen[p.key]){
         html += '<tr class="cld-detail"><td colspan="4">' + (p.recs.length ? p.recs.map(r=> _xEsc(r.date) + ' (' + _xEsc(r.shift || '') + ', ' + r.days + 'd)').join(' · ') : 'No CL taken') + '</td></tr>';
       }
@@ -9830,19 +10009,204 @@ function renderClData(){
     const k = tr.getAttribute('data-k'); _cldOpen[k] = !_cldOpen[k]; renderClData();
   }));
 }
-function clDataCsv(){
-  const year = +document.getElementById('clDataYear').value;
+/* ---- CL Data export: A4, 400 dpi grey (falls back to 300 / 200 dpi on low-memory phones). PDF = one lossless image per page. ---- */
+function clDataModel(){
+  const year = +document.getElementById('clDataYear').value || new Date().getFullYear();
+  const month = +document.getElementById('clDataMonth').value || 0;
+  const q = ((document.getElementById('clDataSearch') || {}).value || '').trim().toLowerCase();
   const ranks = clRankMap();
-  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
-  const rows = [['Name','Designation','Rank','Year','CL taken','Left','Dates']];
-  clBuildPeople(year).sort((a,b)=> CL_DESIG_ORDER.indexOf(a.table) - CL_DESIG_ORDER.indexOf(b.table) || a.name.localeCompare(b.name)).forEach(p=>{
-    rows.push([p.name, CL_DESIG_LABEL[p.table] || '', p.table === 'rosterCtrl' ? (ranks[p.key] || '') : '', year, p.used, Math.max(0, CL_LIMIT - p.used), p.recs.map(r=> r.date).join(' ')]);
+  let people = clBuildPeople(year, month);
+  if(q) people = people.filter(p=> p.name.toLowerCase().indexOf(q) !== -1);
+  const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dd = d=>{ const p = String(d).split('-'); return p[2] + '/' + p[1]; };
+  const groups = CL_DESIG_ORDER.map(t=>({
+    label: CL_DESIG_LABEL[t],
+    rows: people.filter(p=> p.table === t).sort((a,b)=> a.name.localeCompare(b.name)).map(p=>[
+      p.name,
+      CL_DESIG_LABEL[t] + (t === 'rosterCtrl' && ranks[p.key] ? ' (' + ranks[p.key] + ')' : ''),
+      month ? String(p.per) : (p.used + ' / ' + CL_LIMIT),
+      String(Math.max(0, CL_LIMIT - p.used)),
+      p.recs.map(r=> dd(r.date) + (r.days > 1 ? ' (' + r.days + 'd)' : '')).join(', ')
+    ])
+  })).filter(g=> g.rows.length);
+  return { year:year, month:month, groups:groups, title:'CL Data \u2014 ' + (month ? MN[month-1] + ' ' + year : 'Year ' + year),
+           head:['SL','Name','Designation', month ? 'CL taken (days)' : 'CL taken', month ? 'Left (year)' : 'Left', 'CL dates'],
+           file:'CL-Data-' + year + (month ? '-' + String(month).padStart(2,'0') + '-' + MN[month-1] : '') };
+}
+function clDataLayout(model, mctx){
+  const PW = 595.28, PH = 841.89, M = 34, TW = PW - 2 * M, FS = 9.5, LD = 12, PX = 4, PY = 3.6, TOP = 72, BOT = 26;
+  const SANS = '"Helvetica Neue",Arial,"Liberation Sans","Noto Sans","Noto Sans Bengali",sans-serif';
+  const pct = [6, 23, 22, 11, 9, 29], cw = pct.map(x=> TW * x / 100), cx = [];
+  cw.reduce((a, w, i)=>{ cx[i] = M + a; return a + w; }, 0);
+  const font = (b, sz)=> (b ? 'bold ' : '') + sz + 'px ' + SANS;
+  const wrap = (str, b, maxW)=>{
+    mctx.font = font(b, FS);
+    const words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), lines = []; let cur = '';
+    words.forEach(w=>{
+      while(mctx.measureText(w).width > maxW && w.length > 1){ let k = w.length - 1; while(k > 1 && mctx.measureText(w.slice(0, k)).width > maxW) k--; if(cur){ lines.push(cur); cur = ''; } lines.push(w.slice(0, k)); w = w.slice(k); }
+      const t = cur ? cur + ' ' + w : w;
+      if(cur && mctx.measureText(t).width > maxW){ lines.push(cur); cur = w; } else cur = t;
+    });
+    if(cur) lines.push(cur);
+    return lines.length ? lines : [''];
+  };
+  const items = []; let sl = 0;
+  model.groups.forEach(g=>{
+    items.push({ sec:g.label, h:LD + 2 * PY + 1 });
+    g.rows.forEach(r=>{
+      sl++;
+      const cells = [String(sl)].concat(r), lines = cells.map((c, i)=> wrap(c, false, cw[i] - 2 * PX));
+      items.push({ cells:cells, lines:lines, h:Math.max.apply(null, lines.map(l=> l.length)) * LD + 2 * PY });
+    });
   });
-  const blob = new Blob(['\ufeff' + rows.map(r=> r.map(esc).join(',')).join('\n')], { type:'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'CL-data-' + year + '.csv';
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  const headH = LD + 2 * PY + 1, pages = []; let cur = null, y = 0;
+  const open = ()=>{ cur = []; pages.push(cur); y = TOP + headH; };
+  open();
+  items.forEach(it=>{
+    if(y + it.h > PH - M - BOT){ open(); }
+    cur.push({ it:it, y:y }); y += it.h;
+  });
+  return { PW:PW, PH:PH, M:M, TW:TW, cw:cw, cx:cx, FS:FS, LD:LD, PX:PX, PY:PY, TOP:TOP, headH:headH, pages:pages, font:font };
+}
+function clDataDrawPage(model, L, pi, dpi){
+  const S = dpi / 72, cv = document.createElement('canvas');
+  cv.width = Math.round(L.PW * S); cv.height = Math.round(L.PH * S);
+  const ctx = cv.getContext('2d');
+  if(!ctx) throw new Error('no canvas');
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, L.PW, L.PH);
+  ctx.fillStyle = '#000'; ctx.strokeStyle = '#000'; ctx.textBaseline = 'alphabetic';
+  ctx.font = L.font(true, 15); ctx.fillText(model.title, L.M, L.M + 14);
+  ctx.font = L.font(false, 8.5); ctx.fillStyle = '#444';
+  ctx.fillText('HSIA (ATM) \u00B7 CL limit ' + CL_LIMIT + ' days / year', L.M, L.M + 27);
+  ctx.textAlign = 'right'; ctx.fillText('Page ' + (pi + 1) + ' / ' + L.pages.length, L.PW - L.M, L.M + 27); ctx.textAlign = 'left'; ctx.fillStyle = '#000';
+  const hy = L.TOP;
+  ctx.fillStyle = '#d9d9d9'; ctx.fillRect(L.M, hy, L.TW, L.headH); ctx.fillStyle = '#000';
+  ctx.lineWidth = 0.6; ctx.strokeRect(L.M, hy, L.TW, L.headH);
+  ctx.font = L.font(true, L.FS);
+  model.head.forEach((h, i)=>{ ctx.fillText(h, L.cx[i] + L.PX, hy + L.PY + L.LD * 0.78); if(i) { ctx.beginPath(); ctx.moveTo(L.cx[i], hy); ctx.lineTo(L.cx[i], hy + L.headH); ctx.stroke(); } });
+  L.pages[pi].forEach(p=>{
+    const it = p.it, y = p.y;
+    if(it.sec != null){
+      ctx.fillStyle = '#ececec'; ctx.fillRect(L.M, y, L.TW, it.h); ctx.fillStyle = '#000';
+      ctx.strokeRect(L.M, y, L.TW, it.h);
+      ctx.font = L.font(true, L.FS + 0.5); ctx.fillText(it.sec, L.M + L.PX, y + L.PY + L.LD * 0.78);
+      return;
+    }
+    ctx.strokeRect(L.M, y, L.TW, it.h);
+    ctx.font = L.font(false, L.FS);
+    it.lines.forEach((ls, i)=>{
+      ls.forEach((ln, k)=> ctx.fillText(ln, L.cx[i] + L.PX, y + L.PY + L.LD * 0.78 + k * L.LD));
+      if(i){ ctx.beginPath(); ctx.moveTo(L.cx[i], y); ctx.lineTo(L.cx[i], y + it.h); ctx.stroke(); }
+    });
+  });
+  return cv;
+}
+/* canvas -> 8-bit grey bytes (read in strips to keep memory low) */
+function clDataGrey(cv){
+  const W = cv.width, H = cv.height, ctx = cv.getContext('2d'), out = new Uint8Array(W * H), STEP = 64;
+  for(let y0 = 0; y0 < H; y0 += STEP){
+    const hh = Math.min(STEP, H - y0), d = ctx.getImageData(0, y0, W, hh).data;
+    for(let i = 0, j = y0 * W; i < d.length; i += 4, j++) out[j] = d[i];
+  }
+  return out;
+}
+async function clDataPngBlob(cv, dpi){
+  if(typeof CompressionStream === 'undefined') return await new Promise(res=> cv.toBlob(res, 'image/png'));
+  const W = cv.width, H = cv.height, g = clDataGrey(cv), raw = new Uint8Array((W + 1) * H);
+  for(let y = 0; y < H; y++) raw.set(g.subarray(y * W, (y + 1) * W), y * (W + 1) + 1);   /* filter byte 0 */
+  const ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer);
+  dv.setUint32(0, W); dv.setUint32(4, H); ihdr[8] = 8; ihdr[9] = 0;                          /* 8-bit greyscale */
+  const ppm = Math.round(dpi / 0.0254), phys = new Uint8Array(9), pv = new DataView(phys.buffer);
+  pv.setUint32(0, ppm); pv.setUint32(4, ppm); phys[8] = 1;
+  const idat = await qbmDeflate(raw);
+  const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
+  return new Blob([sig, qbmChunk('IHDR', ihdr), qbmChunk('pHYs', phys), qbmChunk('IDAT', idat), qbmChunk('IEND', new Uint8Array(0))], { type:'image/png' });
+}
+function clDataPdfBlob(imgs, pw, ph){
+  const enc = new TextEncoder(), chunks = [], offs = []; let len = 0;
+  const push = x=>{ const u = (typeof x === 'string') ? enc.encode(x) : x; chunks.push(u); len += u.length; };
+  const obj = (id, fn)=>{ offs[id] = len; push(id + ' 0 obj\n'); fn(); push('\nendobj\n'); };
+  push('%PDF-1.4\n'); push(new Uint8Array([0x25,0xE2,0xE3,0xCF,0xD3,0x0A]));
+  const n = imgs.length;
+  obj(1, ()=> push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2, ()=> push('<< /Type /Pages /Kids [' + imgs.map((_, i)=> (3 + 3 * i) + ' 0 R').join(' ') + '] /Count ' + n + ' >>'));
+  imgs.forEach((p, i)=>{
+    const id = 3 + 3 * i, cs = 'q ' + pw + ' 0 0 ' + ph + ' 0 0 cm /Im0 Do Q';
+    obj(id, ()=> push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pw + ' ' + ph + '] /Resources << /XObject << /Im0 ' + (id + 2) + ' 0 R >> >> /Contents ' + (id + 1) + ' 0 R >>'));
+    obj(id + 1, ()=> push('<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream'));
+    obj(id + 2, ()=>{
+      push('<< /Type /XObject /Subtype /Image /Width ' + p.w + ' /Height ' + p.h + ' /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length ' + p.data.length + ' >>\nstream\n');
+      push(p.data); push('\nendstream');
+    });
+  });
+  const total = 3 + 3 * n, xr = len;
+  let x = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+  for(let i = 1; i < total; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  push(x + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xr + '\n%%EOF');
+  return new Blob(chunks, { type:'application/pdf' });
+}
+/* store-only ZIP (PNG is already compressed): lets every page arrive in ONE download */
+function clDataZip(files){
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  const d = new Date(), dt = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate(), tm = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  files.forEach(f=>{
+    const nm = enc.encode(f.name), crc = qbmCrc(f.data), sz = f.data.length;
+    const lh = new Uint8Array(30), v = new DataView(lh.buffer);
+    v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true); v.setUint16(8, 0, true); v.setUint16(10, tm, true); v.setUint16(12, dt, true);
+    v.setUint32(14, crc, true); v.setUint32(18, sz, true); v.setUint32(22, sz, true); v.setUint16(26, nm.length, true); v.setUint16(28, 0, true);
+    parts.push(lh, nm, f.data);
+    const ch = new Uint8Array(46), c = new DataView(ch.buffer);
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, tm, true); c.setUint16(14, dt, true);
+    c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cen.push(ch, nm);
+    off += 30 + nm.length + sz;
+  });
+  let cl = 0; cen.forEach(x=> cl += x.length);
+  const eo = new Uint8Array(22), e = new DataView(eo.buffer);
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cl, true); e.setUint32(16, off, true);
+  return new Blob(parts.concat(cen, [eo]), { type:'application/zip' });
+}
+function clDataSave(blob, name){
+  const a = document.createElement('a'), url = URL.createObjectURL(blob);
+  a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); }, 8000);
+}
+async function clDataExport(kind){
+  const btn = document.getElementById(kind === 'pdf' ? 'clDataPdfBtn' : 'clDataPngBtn'), old = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '\u2026'; }
+  try{
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    const model = clDataModel();
+    if(!model.groups.length){ alert('No data to export.'); return; }
+    const L = clDataLayout(model, document.createElement('canvas').getContext('2d'));
+    let done = false;
+    for(const dpi of [400, 300, 200]){
+      try{
+        const imgs = [], blobs = [];
+        for(let pi = 0; pi < L.pages.length; pi++){
+          const cv = clDataDrawPage(model, L, pi, dpi);
+          if(kind === 'pdf'){
+            const w = cv.width, h = cv.height, g = clDataGrey(cv);
+            imgs.push({ w:w, h:h, data:await qbmDeflate(g) });
+          } else blobs.push(await clDataPngBlob(cv, dpi));
+          cv.width = cv.height = 0;
+        }
+        if(kind === 'pdf') clDataSave(clDataPdfBlob(imgs, L.PW.toFixed(2), L.PH.toFixed(2)), model.file + '.pdf');
+        else if(blobs.length === 1) clDataSave(blobs[0], model.file + '.png');
+        else {
+          /* several pages: all PNGs in one ZIP so a single tap downloads everything (browsers block many automatic downloads) */
+          const files = [];
+          for(let i = 0; i < blobs.length; i++) files.push({ name:model.file + '_p' + (i + 1) + '.png', data:new Uint8Array(await blobs[i].arrayBuffer()) });
+          clDataSave(clDataZip(files), model.file + '-PNG.zip');
+        }
+        done = true; break;
+      }catch(e){ console.error(e); }
+    }
+    if(!done) alert('Could not make the file on this device (not enough memory).');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = old; }
+  }
 }
 /* In-page password dialog: works everywhere (window.prompt is silently blocked in some apps / PWAs) */
 function askPassword(title, onOk){
@@ -9858,6 +10222,7 @@ function openClDataNow(){
   clRecords().forEach(r=> { const y = +String(r.date).slice(0,4); if(y) years[y] = 1; });
   ys.innerHTML = Object.keys(years).sort().reverse().map(y=> '<option value="' + y + '"' + (+y === cur ? ' selected' : '') + '>' + y + '</option>').join('');
   const q = document.getElementById('clDataSearch'); if(q) q.value = '';
+  { const ms = document.getElementById('clDataMonth'); if(ms) ms.value = '0'; }
   _cldOpen = {};
   renderClData();
   ov.classList.add('show');
@@ -9874,9 +10239,9 @@ function initClData(){
   ov.addEventListener('click', e=>{ if(e.target === ov) closeClData(); });
   document.getElementById('clDataYear').addEventListener('change', renderClData);
   document.getElementById('clDataSearch').addEventListener('input', renderClData);
-  document.getElementById('clDataCsvBtn').addEventListener('click', clDataCsv);
-  const ob = document.getElementById('clDataOnlyBtn');
-  ob.addEventListener('click', ()=>{ _cldOnly = !_cldOnly; ob.style.color = _cldOnly ? '#f5b53d' : ''; renderClData(); });
+  document.getElementById('clDataMonth').addEventListener('change', renderClData);
+  document.getElementById('clDataPdfBtn').addEventListener('click', ()=> clDataExport('pdf'));
+  document.getElementById('clDataPngBtn').addEventListener('click', ()=> clDataExport('png'));
 }
 
 /* ============================================================
@@ -9928,9 +10293,18 @@ function qbmCollect(from, to){
   return items;
 }
 function qbmDateText(run){
-  const a = run.dates[0].split('-'), b = run.dates[run.dates.length-1].split('-');
   const dd = x=> String(x).padStart(2,'0');
-  const txt = run.dates.length === 1 ? dd(a[2]) + '/' + a[1] + '/' + a[0] : dd(a[2]) + '-' + dd(b[2]) + '/' + a[1] + '/' + a[0];
+  /* a duty that runs past midnight (full night / 1st night) covers two calendar days: night of 10th = 10-11 */
+  const pm = /^(\d{4})-(\d{4})$/.exec(run.period || '');
+  const cross = !!(pm && +pm[2] < +pm[1] && pm[2] !== '0000');
+  const lastKey = run.dates[run.dates.length-1];
+  const endKey = cross ? new Date(Date.UTC(+lastKey.slice(0,4), +lastKey.slice(5,7)-1, +lastKey.slice(8,10)) + 864e5).toISOString().slice(0,10) : lastKey;
+  const a = run.dates[0].split('-'), b = endKey.split('-');
+  let txt;
+  if(run.dates[0] === endKey) txt = dd(a[2]) + '/' + a[1] + '/' + a[0];
+  else if(a[0] === b[0] && a[1] === b[1]) txt = dd(a[2]) + '-' + dd(b[2]) + '/' + a[1] + '/' + a[0];
+  else if(a[0] === b[0]) txt = dd(a[2]) + '/' + a[1] + '-' + dd(b[2]) + '/' + b[1] + '/' + a[0];
+  else txt = dd(a[2]) + '/' + a[1] + '/' + a[0] + '-' + dd(b[2]) + '/' + b[1] + '/' + b[0];
   return txt + (run.period ? ' (' + run.period + ')' : '') + (run.label ? ' ' + run.label : '');
 }
 function qbmBuild(items){
@@ -10632,15 +11006,33 @@ function initExchangePanel(){
       window._xMode = m;
       form.classList.toggle('xmode-off', !m);
       form.classList.toggle('xmode-nosub', m === 'cl' || m === 'sp');
+      form.classList.toggle('xmode-flow', m === 'ex' || m === 'cl');
       { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); if(tw) tw.style.display = (m === 'sp') ? 'flex' : 'none'; if(ti && m !== 'sp') ti.value = ''; }
       Object.keys(modeBtn).forEach(k=>{ if(modeBtn[k]) modeBtn[k].classList.toggle('on', k === m); });
       if(m === 'cl' || m === 'sp'){ if(subInput) subInput.value = ''; }
       if(m !== 'sp') window._spPreType = '';
       if(confirmBtn) confirmBtn.textContent = m === 'ex' ? '✔ Add Exchange' : (m === 'sp' && window._spPreType) ? ('✔ Next \u00B7 ' + window._spPreType) : '✔ Next';
+      if((m === 'ex' || m === 'cl') && window._xFlowLabel) window._xFlowLabel();
       try{ updateExchangeCurrentHint(); }catch(e){}
     };
     setMode('');
     window._xSetMode = setMode;
+    /* flow helpers: position first, then the duty calendar, then the substitute table */
+    window._xFlowHasPos = ()=>{ const tS = document.getElementById('exchangeTable'), pS = document.getElementById('exchangePos'), tmS = document.getElementById('exchangeTeam'); return !!(tS && pS && tS.value && pS.value && (isThMrTable(tS.value) || (tmS && tmS.value !== ''))); };
+    window._xFlowLabel = ()=>{ if(confirmBtn && (window._xMode === 'ex' || window._xMode === 'cl')) confirmBtn.textContent = window._xFlowHasPos() ? '\uD83D\uDCC5 Select date' : '\uD83D\uDCCD Select position'; };
+    window._xRunMode = ()=>{ const b = modeBtn[window._xMode]; if(!b) return; window._xConfirm = true; try{ b.click(); } finally { window._xConfirm = false; } };
+    window._xFlowStart = ()=>{
+      try{
+        const tSel = document.getElementById('exchangeTable'), pSel = document.getElementById('exchangePos'), tmSel = document.getElementById('exchangeTeam'), dI = document.getElementById('exchangeDate'), hS = document.getElementById('exchangeNightHalf');
+        if(subInput) subInput.value = ''; if(hS) hS.value = ''; if(tmSel) tmSel.value = '';
+        if(tSel){ tSel.value = ''; populateExchangePositions(); }
+        if(pSel) pSel.value = '';
+        if(dI) dI.value = todayDateKey();
+      }catch(e){ console.error(e); }
+      window._xFlowWho = '';
+      if(window._xFlowLabel) window._xFlowLabel();
+      openExchangePosPicker();
+    };
     window._xDone = (msg)=>{
       try{
         /* clear the form so the next entry can be added */
@@ -10680,9 +11072,11 @@ function initExchangePanel(){
         if(spOv0){ window._spPicking = true; spOv0.classList.add('show'); return; }
       }
       setMode(b === modeBtn.ex ? 'ex' : b === modeBtn.cl ? 'cl' : 'sp');
+      if(window._xMode === 'ex' || window._xMode === 'cl') window._xFlowStart();
     }, true);
     if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
       const b = modeBtn[window._xMode]; if(!b) return;
+      if(window._xMode === 'ex' || window._xMode === 'cl'){ if(window._xFlowHasPos()) openXDutyCal(); else openExchangePosPicker(); return; }
       window._xConfirm = true;
       try{ b.click(); } finally { window._xConfirm = false; }
     });
@@ -10893,6 +11287,10 @@ function initExchangePanel(){
           if(exReqSubmit({ kind:'cl', r:r, subName:'', vacant:true }) && window._xDone) window._xDone('Request sent');
         }
         return;
+      }
+      if(window._xMode === 'cl'){
+        document.getElementById('clChooseSub').textContent = 'CL \u00B7 With substitute';
+        document.getElementById('clChooseVacant').textContent = 'CL \u00B7 Without substitute (duty place vacant)';
       }
       if(chooser) chooser.classList.add('show');
     };
