@@ -305,6 +305,7 @@
   .xp-name{ display:block; width:100%; text-align:left; background:rgba(255,255,255,0.04); border:1px solid transparent; color:var(--text); border-radius:7px; padding:6px 8px; font-size:12.5px; cursor:pointer; font-family:inherit; white-space:nowrap; }
   .xp-name:hover, .xp-name:active{ background:rgba(245,181,61,0.18); border-color:rgba(245,181,61,0.5); }
   .xp-name.cur{ outline:1px dashed var(--muted); }
+  .xp-name.xp-blocked{ opacity:.32; text-decoration:line-through; cursor:not-allowed; }
   .xp-name.sel{ background:rgba(245,181,61,0.22); border-color:#f5b53d; }
   .xp-team-hl{ background:rgba(255,255,255,0.03); }
   .xbtn{ background:transparent !important; color:var(--muted) !important; border:1px solid var(--border) !important; box-shadow:none; transition:background .12s,color .12s,border-color .12s; }
@@ -7243,11 +7244,17 @@ function exchangeShiftWindow(dateKey, team, half){
    was rostered at that time even if the roster has changed since). */
 function rosterViewExchanges(tableKey){
   const sel = window._rosterSelKey;
-  if(typeof sel !== 'string' || sel === todayDateKey()) return activeExchangesFor(tableKey);
-  const cur = exHistList(EXCHANGES && EXCHANGES[sel]).filter(x=> x && x.table === tableKey && !x.ufn);
+  const isToday = (typeof sel !== 'string' || sel === todayDateKey());
+  const dayKey = isToday ? todayDateKey() : sel;
+  const cur = exHistList(EXCHANGES && EXCHANGES[dayKey]).filter(x=> x && x.table === tableKey && !x.ufn);
   let hist = [];
-  try{ hist = (exDayEntriesForView(sel) || []).filter(h=> h.table === tableKey && !cur.some(c=> exHistKey(c) === exHistKey(h))); }catch(e){}
-  return cur.concat(hist);
+  try{ hist = (exDayEntriesForView(dayKey) || []).filter(h=> h.table === tableKey && !cur.some(c=> exHistKey(c) === exHistKey(h))); }catch(e){}
+  const out = cur.concat(hist);
+  if(isToday){
+    /* today: show every shift's exchange / CL of the day together (Morning + Afternoon + Night), plus anything still running from yesterday's night */
+    activeExchangesFor(tableKey).forEach(a=>{ if(!out.some(c=> c === a || exHistKey(c) === exHistKey(a))) out.push(a); });
+  }
+  return out;
 }
 function activeExchangesFor(tableKey){
   const now = Date.now();
@@ -9601,6 +9608,44 @@ function _xpBadName(n){ n = String(n == null ? '' : n).trim(); return !n || n ==
 function _xpNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
 function _xpDayKey(dk, delta){ const p = dk.split('-').map(Number); return new Date(Date.UTC(p[0], p[1]-1, p[2]) + delta * 86400000).toISOString().slice(0,10); }
 function _xpOverlap(a, b){ return !!(a && b && a.start < b.end && b.start < a.end); }
+/* Add Exchange: the substitute must come from a DIFFERENT shift (same-shift people cannot swap with each other) */
+function xpSameShiftCell(tg, cell){
+  try{
+    if(!tg || !tg.W || !cell || cell.standby) return false;
+    const W = tg.W;
+    if(cell.ci != null){ const cw = exchangeShiftWindow(tg.dk, +cell.ci, ''); return !!(cw && cw.start === W.start && cw.end === W.end); }
+    if(cell.slot != null){ const sw = exchangeShiftWindow(tg.dk, THS_BASE + (+cell.slot), ''); return !!(sw && sw.start === W.start && sw.end === W.end); }
+  }catch(e){}
+  return false;
+}
+function xpSameShiftName(tg, name){
+  try{
+    const nm = _xpNorm(name);
+    if(!tg || !tg.W || !nm || nm === 'ot') return false;
+    const W = tg.W;
+    for(const tbl of ['roster','rosterCtrl','rosterComm']){
+      for(const row of (rosterDataFor(tbl) || [])){
+        for(let ci = 0; ci < TEAMS.length; ci++){
+          if(_xpNorm(row.names && row.names[ci]) !== nm) continue;
+          const cw = exchangeShiftWindow(tg.dk, ci, '');
+          if(cw && cw.start === W.start && cw.end === W.end) return true;
+        }
+      }
+    }
+    if(window.hsiaTHMRPeople){
+      for(const t of ['th','mr']){
+        for(const sl of (window.hsiaTHMRPeople(tg.dk, t) || [])){
+          if(!(sl.people || []).some(n=> _xpNorm(n) === nm)) continue;
+          const sw = exchangeShiftWindow(tg.dk, THS_BASE + sl.slot, '');
+          if(sw && sw.start === W.start && sw.end === W.end) return true;
+        }
+      }
+    }
+  }catch(e){}
+  return false;
+}
+function xpExchangeBlockActive(){ return window._xMode === 'ex' && !window._exReqAssignId; }
+const XP_SAME_SHIFT_MSG = 'Same-shift person cannot be the substitute in an Exchange.\n\nPlease select someone from a different shift.';
 function xpTarget(){
   try{
     if(window._exReqAssignId && typeof EX_REQUESTS !== 'undefined' && EX_REQUESTS[window._exReqAssignId]){
@@ -9672,13 +9717,14 @@ function renderExchangePicker(){
   const posSelEl = document.getElementById('exchangePos');
   const tg = posMode ? null : xpTarget();
   const legend = document.getElementById('exchangePickerLegend');
-  if(legend){ legend.style.display = 'none'; legend.innerHTML = ''; }
+  if(legend){ legend.style.display = 'none'; legend.innerHTML = ''; if(tg && xpExchangeBlockActive()){ legend.style.cssText = 'display:block;font-size:12px;color:var(--muted);padding:4px 2px;'; legend.textContent = 'Same-shift names are disabled \u2014 select someone from a different shift.'; } }
   const btn = (n, extra, isSel, cell) => {
     const low = String(n).trim().toLowerCase();
     const stt = tg ? xpStatus(tg, n, cell) : null;
     const stc = '';
     const sta = stt && (stt.st === 'busy' || stt.st === 'away') ? ' data-st="' + stt.st + '" data-msg="' + _xEsc(stt.msg) + '"' : '';
-    return '<button type="button" class="xp-name' + ((posMode ? isSel : low === cur) ? ' sel' : '') + (!posMode && low === whoNow ? ' cur' : '') + stc + '" data-name="' + _xEsc(n) + '"' + sta + (extra || '') + '>' + _xEsc(n) + '</button>';
+    const _blk = (!posMode && tg && xpExchangeBlockActive() && low !== 'ot' && xpSameShiftCell(tg, cell)) ? ' xp-blocked' : '';
+    return '<button type="button" class="xp-name' + _blk + ((posMode ? isSel : low === cur) ? ' sel' : '') + (!posMode && low === whoNow ? ' cur' : '') + stc + '" data-name="' + _xEsc(n) + '"' + sta + (extra || '') + '>' + _xEsc(n) + '</button>';
   };
   let html = '';
   if(_xpTab === 'th' || _xpTab === 'mr'){
@@ -9720,6 +9766,7 @@ function renderExchangePicker(){
   }));
 }
 function pickExchangeSub(name, st, msg){
+  if(xpExchangeBlockActive()){ const _tg = xpTarget(); if(_tg && xpSameShiftName(_tg, name)){ alert('\u26D4 ' + String(name || '').trim() + '\n\n' + XP_SAME_SHIFT_MSG); return; } }
   if(st === 'busy' || st === 'away'){
     if(!confirm('\u26A0 ' + String(name || '').trim() + ' ' + (msg || (st === 'away' ? 'is not available.' : 'is busy at that time.')) + '\n\nSelect anyway?')) return;
   }
@@ -11124,6 +11171,7 @@ function initExchangePanel(){
       if(r.dateKey < today){ alert('Exchange cannot be added for a past date.'); return; }
       const subName = (subInput.value || '').trim();
       if(!subName){ window._pendingExAfterPick = true; openExchangePicker(); return; }
+      { const _tg = xpTarget(); if(_tg && xpSameShiftName(_tg, subName)){ alert('\u26D4 ' + subName + '\n\n' + XP_SAME_SHIFT_MSG); subInput.value = ''; return; } }
       const hasCl = (EXCHANGES[r.dateKey] || []).some(x=> (x.cl || x.special) && x.table === r.table && x.pos === r.pos && +x.team === +r.team);
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
       const nightHalf = (!r.thmr && halfSel && halfSel.style.display !== 'none') ? (halfSel.value || '') : '';
