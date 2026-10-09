@@ -9315,20 +9315,21 @@ function connectFirebaseSync(config, roomId){
       }
     });
 
-    let adminListeners = false;
-    window._attachAdminListeners = ()=>{      // admin-only data (Rules refuse everybody else, so ordinary users never attach it)
-      if(adminListeners) return; adminListeners = true;
-      listen(adminNotepadRef, snap=>{
+    /* Notepad: everybody can read it (editing stays behind the password). Attached for every device; a Rules
+       refusal is ignored quietly so ordinary users never see a sync warning because of it. */
+    {
+      adminNotepadRef.on('value', snap=>{
         const val = snap.val();
         const incoming = (typeof val === 'string') ? (val ? [{ id:'general', name:'General', text: val }] : null) : normalizeNotepadSections(val);
         if(!incoming) return;
         const state = loadNotepadState();
         if(JSON.stringify(incoming) === JSON.stringify(state.sections)) return;
-        if(notepadUnlocked) return; // an admin is actively typing on this device — don't yank the textarea from under them
+        if(notepadUnlocked) return; // someone is actively typing on this device — don't yank the textarea from under them
         try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify({ sections: incoming, activeId: state.activeId })); }catch(e){}
         if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
-      });
-    };
+      }, ()=>{});
+    }
+    window._attachAdminListeners = ()=>{};    // kept so older calls still work; the notepad no longer needs it
     if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked && window._adminReadyDone) window._attachAdminListeners();
 
     listen(exchangesRef, snap=>{
