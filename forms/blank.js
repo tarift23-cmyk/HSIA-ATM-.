@@ -224,11 +224,12 @@
     if(!cfg.key){ cfgDialog(ov, function(){ startScan(ov, ed, update); }); return; }
     var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
     document.body.appendChild(inp);
+    inp.addEventListener('cancel', function(){ inp.remove(); });
     inp.onchange = function(){
       var file = inp.files && inp.files[0]; if(!file){ inp.remove(); return; }
       var d = dlg(ov, '<h3>Reading page…</h3><div class="hint" style="margin:0">This takes a few seconds.</div>');
       function wipe(){ try{ inp.value = ''; }catch(e){} inp.remove(); file = null; }
-      prepImage(file).then(function(b64){ wipe(); return callAi(cfg, b64); }).then(function(txt){
+      prepImage(file).then(function(b64){ wipe(); var p = callAi(cfg, b64); b64 = null; return p; }).then(function(txt){
         var h = clean(String(txt).replace(/```[a-z]*/gi, '').replace(/\s*\n\s*/g, ' ').trim());
         if(!h.trim()) throw new Error('Nothing was read. Try a clearer photo.');
         d.remove();
