@@ -2830,7 +2830,25 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
       <div class="fr-dbstatus" id="exchangeCurrentHint"></div>
       <button id="exReqOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">📨 Requests <span class="exreq-badge" style="display:none;"></span></button>
-      <button id="qbmOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">QBM</button>
+      <style>#qbmScanBtn{display:none !important;} body.rh-admin #qbmScanBtn{display:flex !important;}</style>
+      <div style="display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-top:12px;">
+        <button id="qbmOpenBtn" type="button" class="fr-dbimport" style="width:auto;min-width:130px;padding-left:22px;padding-right:22px;">QBM</button>
+        <button id="qbmScanBtn" type="button" class="fr-dbimport" title="Scan QBM photo" aria-label="Scan QBM photo" style="width:40px;height:40px;min-width:40px;padding:0;display:flex;align-items:center;justify-content:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg>
+        </button>
+      </div>
+      <script>
+      (function(){
+        var b = document.getElementById('qbmScanBtn'); if(!b) return;
+        b.addEventListener('click', function(){
+          if(window.hsiaScanQbm){ window.hsiaScanQbm(); return; }
+          var s = document.createElement('script'); s.src = 'forms/qbmscan.js';
+          s.onload = function(){ window.hsiaScanQbm(); };
+          s.onerror = function(){ s.remove(); alert('QBM scanner did not load.\nCheck your internet, and make sure forms/qbmscan.js is uploaded to GitHub.'); };
+          document.head.appendChild(s);
+        });
+      })();
+      </script>
     </div>
   </div>
 
@@ -3663,10 +3681,13 @@ Emergency →↓
   var BASE = 'pdfs/important/', KEY = 'hsia_important_pdfs';
   var FORMS = [
     { key:'cl', title:'CL Form', file:'cl-form.pdf', name:'CL-Form.pdf' },
-    { key:'ex', title:'Exchange Form', file:'exchange-form.pdf', name:'Exchange-Form.pdf' }
+    { key:'ex', title:'Exchange Form', file:'exchange-form.pdf', name:'Exchange-Form.pdf' },
+    { key:'blank', title:'Blank Page' }
   ];
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function formItem(f){
+    if(f.key === 'blank') return '<div class="imp-item" data-k="blank"><button type="button" class="imp-h"><span>📝 ' + f.title + '</span><span>▾</span></button>'
+      + '<div class="imp-act"><button type="button" data-edit="blank">✏️ Edit</button></div></div>';
     return '<div class="imp-item" data-k="' + f.key + '"><button type="button" class="imp-h"><span>📝 ' + f.title + '</span><span>▾</span></button>'
       + '<div class="imp-act"><a href="' + BASE + f.file + '" download="' + f.name + '">⬇️ Download</a><button type="button" data-edit="' + f.key + '">✏️ Edit</button></div></div>';
   }
@@ -3697,9 +3718,16 @@ Emergency →↓
     s.onerror = function(){ formsState = 0; s.remove(); alert('ফর্ম এডিটর লোড হয়নি।\nইন্টারনেট চেক করুন, আর GitHub এ forms ফোল্ডার (forms.js, forms.css, header.png) আপলোড হয়েছে কিনা দেখুন।'); };
     document.head.appendChild(s);
   }
+  function withBlank(cb){
+    if(window.hsiaOpenBlank){ cb(); return; }
+    var s = document.createElement('script'); s.src = 'forms/blank.js';
+    s.onload = cb;
+    s.onerror = function(){ s.remove(); alert('Blank Page editor did not load.\nCheck your internet, and make sure forms/blank.js is uploaded to GitHub.'); };
+    document.head.appendChild(s);
+  }
   box.addEventListener('click', function(e){
     var ed = e.target.closest && e.target.closest('[data-edit]');
-    if(ed){ var k = ed.getAttribute('data-edit'); withForms(function(){ window.hsiaOpenForm(k); }); return; }
+    if(ed){ var k = ed.getAttribute('data-edit'); if(k === 'blank'){ withBlank(function(){ window.hsiaOpenBlank(); }); return; } withForms(function(){ window.hsiaOpenForm(k); }); return; }
     var h = e.target.closest && e.target.closest('.imp-h');
     if(h){ var it = h.parentNode, was = it.classList.contains('open'); box.querySelectorAll('.imp-item.open').forEach(function(x){ x.classList.remove('open'); }); if(!was) it.classList.add('open'); }
   });
