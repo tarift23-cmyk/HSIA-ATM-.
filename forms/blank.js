@@ -25,9 +25,10 @@
     '#blkOv .bk-body{flex:1 1 auto;overflow:auto;padding:12px;-webkit-overflow-scrolling:touch;}' +
     '#blkOv .bk-l{font-size:13px;color:#9a9aa3;}' +
     '#blkOv .bk-wrap{position:relative;width:100%;max-width:640px;margin:6px auto 14px;background:#fff;border-radius:3px;overflow:hidden;}' +
-    '#blkOv .bk-pg{position:absolute;left:0;top:0;transform-origin:0 0;width:210mm;height:297mm;box-sizing:border-box;padding:' + MARGIN + ';background:#fff;color:#000;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;overflow:hidden;font-family:' + FAMILY + ';}' +
+    '#blkOv .bk-pg{position:absolute;left:0;top:0;transform-origin:0 0;width:210mm;height:297mm;box-sizing:border-box;padding:' + MARGIN + ';background:#fff;color:#000;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;overflow:hidden;font-family:' + FAMILY + ';outline:none;cursor:text;-webkit-user-select:text;user-select:text;}' +
+    '#blkOv .bk-pg:empty:before{content:attr(data-ph);color:#aaa;}' +
     '#blkOv .bk-box{max-width:640px;margin:0 auto;background:#18181d;border:1px solid #2c2c32;border-radius:12px;padding:10px;}' +
-    '#blkOv .bk-tb{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}' +
+    '#blkOv .bk-tb{display:flex;align-items:center;gap:6px;margin:0 auto 8px;flex-wrap:wrap;max-width:640px;position:sticky;top:-12px;z-index:2;background:#0b0b0d;padding:6px 0;}' +
     '#blkOv .bk-tb .sp{flex:1;}' +
     '#blkOv .bk-tb select,#blkOv .bk-tb button{height:36px;background:#0f0f12;color:#eee;border:1px solid #3a3a40;border-radius:8px;font-size:14px;font-family:inherit;padding:0 10px;}' +
     '#blkOv .bk-tb .bold{font-weight:800;min-width:38px;}' +
@@ -83,51 +84,48 @@
   }
   function getCfg(){ try{ return JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; }catch(e){ return {}; } }
 
-  function open(){
+  function lockBoxes(r){ r.querySelectorAll('.ph').forEach(function(x){ x.setAttribute('contenteditable', 'false'); }); }
+  function open(arg){
     if(document.getElementById('blkOv')) return;
     var ov = document.createElement('div'); ov.id = 'blkOv';
     var opts = SIZES.map(function(s){ return '<option value="' + s + '"' + (s === size ? ' selected' : '') + '>' + s + ' pt</option>'; }).join('');
     ov.innerHTML =
       '<div class="bk-top"><button class="bk-b" id="bkX" aria-label="Close">✕</button><div class="bk-t">Blank Page</div>' +
-      '<button class="bk-b" id="bkS" aria-label="Scan page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg></button>' +
       '<button class="bk-b" id="bkD" aria-label="Download">⬇</button><button class="bk-b bk-p" id="bkP">🖨️ প্রিন্ট</button></div>' +
       '<div class="bk-m" id="bkM"><button data-f="pdf">PDF (A4)</button><button data-f="png">PNG (A4)</button></div>' +
-      '<div class="bk-m" id="bkSM"><button data-s="scan">Scan handwritten page</button><button data-s="cfg">Scan settings</button></div>' +
-      '<div class="bk-body"><div class="bk-l">Preview</div><div class="bk-wrap" id="bkW"><div class="bk-pg bkc" id="bkPg"></div></div>' +
-      '<div class="bk-box"><div class="bk-tb"><span class="bk-l">Write / Type here</span><span class="sp"></span>' +
-      '<select id="bkSz" aria-label="Font size">' + opts + '</select><button class="bold" id="bkBold" aria-label="Bold">B</button></div>' +
-      '<div class="bk-tb"><button id="bkPh">+ Photo box</button><button id="bkSg">+ Signature box</button></div>' +
-      '<div class="bk-ed" id="bkT" contenteditable="true" data-ph="Type here…" spellcheck="false"></div></div>' +
+      '<div class="bk-body"><div class="bk-tb"><select id="bkSz" aria-label="Font size">' + opts + '</select><button class="bold" id="bkBold" aria-label="Bold">B</button>' +
+      '<button id="bkPh">+ Photo box</button><button id="bkSg">+ Signature box</button><button id="bkCfg" aria-label="Scan settings">⚙</button></div>' +
+      '<div class="bk-wrap" id="bkW"><div class="bk-pg bkc" id="bkPg" contenteditable="true" spellcheck="false" data-ph="Tap anywhere on the page and type…"></div></div>' +
       '<div class="bk-w" id="bkWarn">Text is longer than one A4 page. The extra part will be cut off.</div></div>';
     document.body.appendChild(ov);
     var $ = function(id){ return document.getElementById(id); };
-    var wrap = $('bkW'), pg = $('bkPg'), ed = $('bkT'), warn = $('bkWarn'), menu = $('bkM'), smenu = $('bkSM');
-    ed.innerHTML = saved;
+    var wrap = $('bkW'), pg = $('bkPg'), ed = pg, warn = $('bkWarn'), menu = $('bkM');
+    pg.innerHTML = saved; lockBoxes(pg);
 
     function fit(){
       var pw = pg.offsetWidth, ph = pg.offsetHeight, s = wrap.clientWidth / pw;
       pg.style.transform = 'scale(' + s + ')';
       wrap.style.height = (ph * s) + 'px';
     }
-    function html(){ return clean(ed.innerHTML); }
+    function html(){ return clean(pg.innerHTML); }
     function update(){
-      saved = ed.innerHTML; pg.style.fontSize = size + 'pt'; pg.innerHTML = html();
+      saved = pg.innerHTML; pg.style.fontSize = size + 'pt';
       warn.style.display = (pg.scrollHeight > pg.clientHeight + 2) ? 'block' : 'none';
     }
-    ed.addEventListener('input', update);
-    ed.addEventListener('paste', function(e){
+    pg.addEventListener('input', update);
+    pg.addEventListener('paste', function(e){
       e.preventDefault();
       var t = (e.clipboardData || window.clipboardData).getData('text/plain');
       document.execCommand('insertText', false, t);
     });
     $('bkSz').onchange = function(){ size = +this.value; update(); };
-    $('bkBold').addEventListener('mousedown', function(e){ e.preventDefault(); });
-    $('bkBold').addEventListener('touchstart', function(e){ e.preventDefault(); }, { passive:false });
-    $('bkBold').onclick = function(){ ed.focus(); document.execCommand('bold'); update(); };
+    ['bkBold', 'bkPh', 'bkSg'].forEach(function(id){ $(id).addEventListener('mousedown', function(e){ e.preventDefault(); }); $(id).addEventListener('touchstart', function(e){ e.preventDefault(); $(id).click(); }, { passive:false }); });
+    $('bkBold').onclick = function(){ pg.focus(); document.execCommand('bold'); update(); };
+    $('bkCfg').onclick = function(){ cfgDialog(ov); };
     function addBox(k, l){
-      ed.focus();
+      pg.focus();
       document.execCommand('insertHTML', false, '<div class="ph" data-k="' + k + '" data-l="' + l + '" contenteditable="false"></div>&nbsp;');
-      update();
+      lockBoxes(pg); update();
     }
     $('bkPh').onclick = function(){ addBox('photo', 'Photo'); };
     $('bkSg').onclick = function(){ addBox('sign', 'Signature'); };
@@ -146,20 +144,14 @@
       setTimeout(function(){ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(function(){ f.remove(); }, 60000); }, 350);
     };
 
-    $('bkD').onclick = function(e){ e.stopPropagation(); smenu.style.display = 'none'; menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; };
-    $('bkS').onclick = function(e){ e.stopPropagation(); menu.style.display = 'none'; smenu.style.display = smenu.style.display === 'block' ? 'none' : 'block'; };
-    ov.addEventListener('click', function(e){ if(!e.target.closest('.bk-m')){ menu.style.display = 'none'; smenu.style.display = 'none'; } });
+    $('bkD').onclick = function(e){ e.stopPropagation(); menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; };
+        ov.addEventListener('click', function(e){ if(!e.target.closest('.bk-m')){ menu.style.display = 'none'; } });
     menu.addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return;
       menu.style.display = 'none';
       render(html(), function(canvas){ b.getAttribute('data-f') === 'png' ? savePng(canvas) : savePdf(canvas); });
     });
-    smenu.addEventListener('click', function(e){
-      var b = e.target.closest('button'); if(!b) return;
-      smenu.style.display = 'none';
-      if(b.getAttribute('data-s') === 'cfg') cfgDialog(ov);
-      else startScan(ov, ed, update);
-    });
+    if(arg && arg.scan) startScan(ov, pg, update);
   }
 
   /* ---------- scan: photo of a handwritten / printed page -> editable text ---------- */
@@ -241,7 +233,7 @@
         if(!h.trim()) throw new Error('Nothing was read. Try a clearer photo.');
         d.remove();
         if(ed.textContent.trim() && !confirm('Replace the current text with the scanned page?')) return;
-        ed.innerHTML = h; update();
+        ed.innerHTML = h; lockBoxes(ed); update();
       }).catch(function(e){
         wipe();
         d = dlg(ov, '<h3>Scan failed</h3><div class="hint" style="margin:0;color:#ff7b7b">' + esc((e && e.message) || 'Could not read the photo.') + '</div><div class="row"><button id="cgC">Close</button><button class="go" id="cgS">Settings</button></div>');
@@ -249,7 +241,11 @@
         d.querySelector('#cgS').onclick = function(){ cfgDialog(ov); };
       });
     };
-    inp.click();
+    if(navigator.userActivation && !navigator.userActivation.isActive){
+      var d0 = dlg(ov, '<h3>Scan page</h3><div class="hint" style="margin:0">Choose a photo of the page (handwritten or printed).</div><div class="row"><button id="cgC">Cancel</button><button class="go" id="cgS">Choose photo</button></div>');
+      d0.querySelector('#cgC').onclick = function(){ d0.remove(); inp.remove(); };
+      d0.querySelector('#cgS').onclick = function(){ d0.remove(); inp.click(); };
+    } else inp.click();
   }
 
   /* ---------- export: same layout engine as the preview, rendered at 300 dpi ---------- */
