@@ -3687,7 +3687,8 @@ Emergency →↓
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function formItem(f){
     if(f.key === 'blank') return '<div class="imp-item" data-k="blank"><button type="button" class="imp-h"><span>📝 ' + f.title + '</span><span>▾</span></button>'
-      + '<div class="imp-act"><button type="button" data-edit="blank">✏️ Edit</button></div></div>';
+      + '<div class="imp-act"><button type="button" data-edit="blank">✏️ Edit</button>'
+      + '<button type="button" data-scan="blank" aria-label="Scan page" title="Scan page" style="flex:0 0 52px;padding:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg></button></div></div>';
     return '<div class="imp-item" data-k="' + f.key + '"><button type="button" class="imp-h"><span>📝 ' + f.title + '</span><span>▾</span></button>'
       + '<div class="imp-act"><a href="' + BASE + f.file + '" download="' + f.name + '">⬇️ Download</a><button type="button" data-edit="' + f.key + '">✏️ Edit</button></div></div>';
   }
@@ -3726,6 +3727,8 @@ Emergency →↓
     document.head.appendChild(s);
   }
   box.addEventListener('click', function(e){
+    var sc = e.target.closest && e.target.closest('[data-scan]');
+    if(sc){ withBlank(function(){ window.hsiaOpenBlank({ scan:true }); }); return; }
     var ed = e.target.closest && e.target.closest('[data-edit]');
     if(ed){ var k = ed.getAttribute('data-edit'); if(k === 'blank'){ withBlank(function(){ window.hsiaOpenBlank(); }); return; } withForms(function(){ window.hsiaOpenForm(k); }); return; }
     var h = e.target.closest && e.target.closest('.imp-h');
