@@ -3731,7 +3731,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
   }
   function withSalary(cb){
     if(window.hsiaOpenSalary){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/salary.js';
+    var s = document.createElement('script'); s.src = 'forms/salary.js?v=20261011b';
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Salary Fixation editor did not load.\nCheck your internet, and make sure forms/salary.js is uploaded to GitHub.'); };
     document.head.appendChild(s);
