@@ -31,7 +31,7 @@
 
   var ROWS = [
     ['০১', 1, 'জাতীয় পরিচয়পত্র নম্বর', '', 'এনআইডি নম্বর'],
-    ['০২', 2, 'ক) কর্মচারীর নাম', '', 'কর্মচারীর নাম', 'name'],
+    ['০২', 2, 'ক) কর্মচারীর নাম', 'তারিফুজ্জামান তারিফ', 'কর্মচারীর নাম', 'name'],
     [0, 0, 'খ) কর্মচারীর পদবি', 'এরোড্রাম সহকারী'],
     ['০৩', 1, 'পদায়নকৃত দপ্তরের নাম', 'নিবার্হী পরিচালকের দপ্তর, এটিএম শাখা, হশাআবি, কুর্মিটোলা, ঢাকা', '', 'sm'],
     ['০৪', 1, 'ই আই এন', '', 'ই আই এন'],
@@ -462,7 +462,8 @@
   }
 
   function fileName(paper){
-    var nm = nameIdx >= 0 && state[nameIdx] ? String(state[nameIdx]).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/[\\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-') : '';
+    var rawNm = nameIdx >= 0 ? (Object.prototype.hasOwnProperty.call(state, nameIdx) ? state[nameIdx] : 'তারিফুজ্জামান তারিফ') : '';
+    var nm = rawNm ? String(rawNm).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/[\\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-') : '';
     return 'Salary-Fixation' + (nm ? '-' + nm : '') + (paper === 'a4' ? '-A4' : '') + '.pdf';
   }
   function saveBlob(blob, name){
