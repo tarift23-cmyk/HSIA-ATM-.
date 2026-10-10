@@ -152,6 +152,21 @@
     }
     return comps.filter(function(c){ return c.u1 - c.u0 >= minSpan && Math.abs(c.a) < 0.12; });
   }
+  /* the four corners of the table (outer ruled lines), or null */
+  function tableQuad(lr, w, h){
+    if(!lr.outer || lr.hl.length < 2) return null;
+    var T = lr.hl[0], B = lr.hl[lr.hl.length - 1];
+    function pt(hz, vt){ var y = (hz.a * vt.b + hz.b) / (1 - hz.a * vt.a); return { x:vt.a * y + vt.b, y:y }; }
+    var q = [pt(T, lr.outer.L), pt(T, lr.outer.R), pt(B, lr.outer.R), pt(B, lr.outer.L)];
+    var cx = (q[0].x + q[1].x + q[2].x + q[3].x) / 4, cy = (q[0].y + q[1].y + q[2].y + q[3].y) / 4;
+    for(var i = 0; i < 4; i++){
+      if(!(q[i].x > -w * 0.05 && q[i].x < w * 1.05 && q[i].y > -h * 0.05 && q[i].y < h * 1.05)) return null;
+      q[i] = { x:q[i].x + (q[i].x - cx) * 0.012, y:q[i].y + (q[i].y - cy) * 0.012 };
+    }
+    var d1 = Math.hypot(q[1].x - q[0].x, q[1].y - q[0].y), d2 = Math.hypot(q[2].x - q[3].x, q[2].y - q[3].y), d3 = Math.hypot(q[3].x - q[0].x, q[3].y - q[0].y), d4 = Math.hypot(q[2].x - q[1].x, q[2].y - q[1].y);
+    if(Math.min(d1, d2) / Math.max(d1, d2) < 0.7 || Math.min(d3, d4) / Math.max(d3, d4) < 0.7 || d1 < w * 0.3 || d3 < h * 0.1) return null;
+    return q;
+  }
   /* erase the table's ruled lines so they cannot be read as "|" or merge with the text; also report where they were */
   function removeLinesGray(g, w, h){
     var thr = otsu(g) * 0.95, soft = Math.min(250, thr + 45), hm = new Uint8Array(w * h), vm = new Uint8Array(w * h), x, y, s, e, gap, k;
@@ -184,7 +199,7 @@
     }
     var hl = fitLines(hm, w, h, false, w * 0.5).sort(function(p, q){ return (p.a * w / 2 + p.b) - (q.a * w / 2 + q.b); });
     var ym = hl.length > 1 ? ((hl[0].a * w / 2 + hl[0].b) + (hl[hl.length - 1].a * w / 2 + hl[hl.length - 1].b)) / 2 : h / 2;
-    var cand = fitLines(vm, w, h, true, h * 0.15).filter(function(c){ var xx = c.a * ym + c.b; return xx > w * 0.02 && xx < w * 0.98; });
+    var cand = fitLines(vm, w, h, true, h * 0.15).filter(function(c){ var xx = c.a * ym + c.b; return xx > w * 0.003 && xx < w * 0.997; });
     var xs = function(c){ return c.a * ym + c.b; };
     var best = null, bs = -1, p1, p2;
     for(p1 = 0; p1 < cand.length; p1++) for(p2 = 0; p2 < cand.length; p2++){
@@ -201,7 +216,7 @@
         vl.push({ a:near.a, b:near.b });
       });
     }
-    return { img:out, hl:hl.map(function(c){ return { a:c.a, b:c.b }; }), vl:vl };
+    return { img:out, hl:hl.map(function(c){ return { a:c.a, b:c.b }; }), vl:vl, outer:best ? { L:{ a:best.L.a, b:best.L.b }, R:{ a:best.R.a, b:best.R.b } } : null };
   }
   function rotate(c, deg){
     if(Math.abs(deg) < 0.2) return c;
@@ -493,6 +508,14 @@
     alert(n + ' duty' + (n === 1 ? '' : 's') + ' added to Exchange / CL and QBM.');
   }
 
+  function loadPrep(){
+    return new Promise(function(res){
+      if(window.hsiaDocPrep){ res(); return; }
+      var s = document.createElement('script'); s.src = 'forms/docprep.js';
+      s.onload = function(){ res(); }; s.onerror = function(){ s.remove(); res(); };
+      document.head.appendChild(s);
+    });
+  }
   function run(file, input){
     var canvas = null, url = null, grid = null;
     function wipe(){
@@ -504,13 +527,22 @@
       file = null;
     }
     progress('Preparing photo…', 5);
-    loadCanvas(file).then(function(c){
+    loadPrep().then(function(){ return loadCanvas(file); }).then(function(c){
       canvas = c; contrast(canvas); progress('Straightening…', 15);
       return new Promise(function(r){ setTimeout(r, 30); });
     }).then(function(){
       putGray(canvas, flattenGray(getGray(canvas), canvas.width, canvas.height));
       canvas = rotate(canvas, skewFromGray(getGray(canvas), canvas.width, canvas.height));
       var lr = removeLinesGray(getGray(canvas), canvas.width, canvas.height);
+      var tq = window.hsiaDocPrep ? tableQuad(lr, canvas.width, canvas.height) : null;
+      if(tq){                                           /* straighten the table's perspective, then look at it again */
+        var wg = window.hsiaDocPrep.warpQuad(getGray(canvas), canvas.width, canvas.height, tq, 2000);
+        if(wg){
+          canvas.width = wg.w; canvas.height = wg.h; putGray(canvas, wg.g);
+          putGray(canvas, window.hsiaDocPrep.stretch(getGray(canvas)));
+          lr = removeLinesGray(getGray(canvas), canvas.width, canvas.height);
+        }
+      }
       grid = { hl:lr.hl, vl:lr.vl };
       putGray(canvas, lr.img);
       progress('Reading text (first time needs internet to download the language file)…', 25);
@@ -530,7 +562,7 @@
     });
   }
 
-  window._qbmT = { flattenGray:flattenGray, BOUNDS_:BOUNDS, skewFromGray:skewFromGray, removeLinesGray:removeLinesGray, buildRows:buildRows, parseDuty:parseDuty };
+  window._qbmT = { tableQuad:tableQuad, flattenGray:flattenGray, BOUNDS_:BOUNDS, skewFromGray:skewFromGray, removeLinesGray:removeLinesGray, buildRows:buildRows, parseDuty:parseDuty };
   window.hsiaScanQbm = function(){
     if(typeof rosterUnlocked === 'undefined' || !rosterUnlocked){ alert('Only admin can scan a QBM.'); return; }
     var inp = document.createElement('input');
