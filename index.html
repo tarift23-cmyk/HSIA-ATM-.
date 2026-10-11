@@ -326,22 +326,6 @@
   .xp-choice{ display:block; width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--border); color:var(--text); font-size:15px; padding:16px 20px; cursor:pointer; font-family:inherit; }
   .xp-choice:last-child{ border-bottom:0; }
   .xp-choice:active{ background:rgba(245,181,61,0.16); }
-  .qbm-filter{ margin:10px 0 2px; display:flex; flex-direction:column; gap:8px; }
-  .qbm-fchips{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .qbm-fchip{ border:1px solid var(--border); background:transparent; color:var(--text); border-radius:999px; padding:6px 13px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .qbm-fchip.on{ background:rgba(139,144,155,.32); border-color:var(--text); }
-  .qbm-fper{ display:flex; gap:8px; align-items:center; }
-  .qbm-fshwrap{ position:relative; flex:0 0 auto; }
-  .qbm-fshbtn{ display:flex; align-items:center; gap:6px; border:1px solid var(--border); background:rgba(139,144,155,.22); color:var(--text); border-radius:10px; padding:8px 11px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; }
-  .qbm-fshbtn.set{ border-color:var(--text); }
-  .qbm-fcar{ font-size:11px; opacity:.7; }
-  .qbm-fmenu{ display:none; position:absolute; left:0; top:calc(100% + 4px); z-index:20; min-width:130px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:4px; box-shadow:0 8px 24px rgba(0,0,0,.45); }
-  .qbm-fmenu.open{ display:block; }
-  .qbm-fopt{ display:block; width:100%; text-align:left; border:0; background:transparent; color:var(--text); padding:9px 12px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .qbm-fopt.on{ background:rgba(139,144,155,.32); }
-  .qbm-fper select{ flex:1 1 0; min-width:0; width:0; background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-size:13px; font-family:inherit; }
-  .qbm-fclr{ border:1px solid var(--border); background:transparent; color:var(--muted); border-radius:10px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .qbm-fcount{ font-size:11.5px; color:var(--muted); min-height:14px; }
   .qbm-paper{ background:transparent; color:var(--text); font-family:"Times New Roman",Times,serif; padding:6px 0 4px; overflow:visible; margin-top:6px; }
   .qbm-title{ text-align:center; font-weight:700; text-decoration:underline; font-size:15px; margin:4px 0 12px; outline:none; color:var(--text); }
   .qbm-table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; color:var(--text); }
@@ -1135,21 +1119,8 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 .meh-btn{ border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:#eef1f7; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; backdrop-filter:blur(6px); font-family:inherit; }
 .meh-btn:active{ background:rgba(255,255,255,.14); }
 .meh-btn.x{ padding:4px 10px; }
-.meh-next{ display:flex; flex-direction:column; align-items:stretch; gap:9px; margin:14px 0 10px; padding:10px 12px; border-radius:14px; font-size:12.5px; color:#cfd5e3;
+.meh-next{ display:flex; align-items:center; gap:10px; margin:14px 0 10px; padding:10px 12px; border-radius:14px; font-size:12.5px; color:#cfd5e3;
   background:linear-gradient(90deg,rgba(255,255,255,.07),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.09); }
-.meh-nx1{ display:flex; align-items:center; gap:10px; }
-.meh-10k{ font-size:9.5px; letter-spacing:.14em; color:#8d94a6; font-weight:800; }
-.meh-10{ display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
-.meh-d{ min-width:0; display:flex; flex-direction:column; gap:1px; padding:5px 3px 6px; border-radius:10px; text-align:center; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); }
-.meh-d.today{ border-color:rgba(255,255,255,.5); }
-.meh-dw{ font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:#8d94a6; font-weight:700; }
-.meh-dn{ font-size:11px; font-weight:800; color:#fff; margin-bottom:1px; }
-.meh-ds{ font-size:9.5px; font-weight:700; color:var(--c,#cfd5e3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.meh-ds.off{ color:#6f7684; font-weight:600; }
-.meh-ds.take{ color:#3fe27f; }
-.meh-ds s{ opacity:.65; }
-.meh-ds em{ font-style:normal; font-weight:800; color:#7aa8ff; margin-left:2px; }
-.meh-ds em.cl{ color:#ff5a62; }
 .meh-next b{ letter-spacing:.1em; color:#fff; font-size:11px; }
 .meh-dot{ flex:0 0 auto; width:10px; height:10px; border-radius:50%; background:var(--c,#8d94a6); box-shadow:0 0 0 0 var(--c,#8d94a6); animation:mehPulse 1.8s ease-out infinite; }
 .meh-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
@@ -2655,7 +2626,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
 
       <div class="rost-col rost-active" id="rosterCtrlCol">
-      <div class="roster-subtitle">Controllers</div>
+      <div class="th-nav"><button type="button" class="th-navbtn rd-prev" aria-label="Previous day">‹</button><span class="dfmt" style="display: flex; flex: 1 1 0%; min-width: 0px; width: 169.506px; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 0px 10px; height: 38px; font-size: 14px; font-family: monospace; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" class="th-date rd-date"><span class="dfmt-t">10/10/2026</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span><button type="button" class="th-navbtn rd-next" aria-label="Next day">›</button><button type="button" class="th-today rd-today">Today</button></div><div class="roster-subtitle">Controllers</div>
       <div class="roster-tablewrap">
         <table class="roster-table hl-A" id="rosterTableCtrl">
           <colgroup>
@@ -2679,7 +2650,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
 
       <div class="rost-col" id="rosterAsstCol">
-      <div class="roster-subtitle">Aerodrome Assistant</div>
+      <div class="th-nav"><button type="button" class="th-navbtn rd-prev" aria-label="Previous day">‹</button><span class="dfmt" style="display: flex; flex: 1 1 0%; min-width: 0px; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 0px 10px; height: 38px; font-size: 14px; font-family: monospace; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" class="th-date rd-date"><span class="dfmt-t">10/10/2026</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span><button type="button" class="th-navbtn rd-next" aria-label="Next day">›</button><button type="button" class="th-today rd-today">Today</button></div><div class="roster-subtitle">Aerodrome Assistant</div>
       <div class="roster-tablewrap">
         <table class="roster-table hl-A" id="rosterTable">
           <colgroup>
@@ -2703,7 +2674,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       </div>
 
       <div class="rost-col" id="rosterCommCol">
-      <div class="roster-subtitle">Communication</div>
+      <div class="th-nav"><button type="button" class="th-navbtn rd-prev" aria-label="Previous day">‹</button><span class="dfmt" style="display: flex; flex: 1 1 0%; min-width: 0px; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 0px 10px; height: 38px; font-size: 14px; font-family: monospace; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" class="th-date rd-date"><span class="dfmt-t">10/10/2026</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span><button type="button" class="th-navbtn rd-next" aria-label="Next day">›</button><button type="button" class="th-today rd-today">Today</button></div><div class="roster-subtitle">Communication</div>
       <div class="roster-tablewrap">
         <table class="roster-table hl-A" id="rosterTableComm">
           <colgroup>
@@ -2728,7 +2699,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       <div class="rost-col" id="rosterTHCol">
         <div class="th-nav">
           <button type="button" class="th-navbtn" id="thPrev" aria-label="Previous day">‹</button>
-          <input type="date" id="thDate" class="th-date">
+          <span class="dfmt" style="display: flex; flex: 1 1 0%; min-width: 0px; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 0px 10px; height: 38px; font-size: 14px; font-family: monospace; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" id="thDate" class="th-date"><span class="dfmt-t">10/10/2026</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
           <button type="button" class="th-navbtn" id="thNext" aria-label="Next day">›</button>
           <button type="button" class="th-today" id="thToday">Today</button>
         </div>
@@ -2824,8 +2795,8 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
         <button type="button" class="modal-close" id="exchangeModalClose">✕</button>
       </div>
       <div class="fr-manualform xmode-off">
-        <input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-10-10">
-        <div id="exchangeDateToWrap" style="display:none;align-items:center;gap:6px;flex:1 1 150px;min-width:0;"><span style="font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;">To</span><input type="date" id="exchangeDateTo" class="fr-mfinput fr-mfinput-sm" autocomplete="off" style="flex:1 1 auto;min-width:0;" min="2026-10-10"></div>
+        <span class="dfmt" style="display: flex; flex: 0 1 80px; min-width: 90px; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 9px 12px; font-size: 12px; font-family: Inter, sans-serif; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" id="exchangeDate" class="fr-mfinput fr-mfinput-sm" autocomplete="off" min="2026-10-10"><span class="dfmt-t">10/10/2026</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
+        <div id="exchangeDateToWrap" style="display:none;align-items:center;gap:6px;flex:1 1 150px;min-width:0;"><span style="font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;">To</span><span class="dfmt" style="display: inline-flex; flex: 1 1 auto; min-width: 0px; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 9px 12px; font-size: 12px; font-family: Inter, sans-serif; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" id="exchangeDateTo" class="fr-mfinput fr-mfinput-sm" autocomplete="off" style="flex:1 1 auto;min-width:0;" min="2026-10-10"><span class="dfmt-t ph">dd/mm/yyyy</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span></div>
         <select id="exchangeTable" class="fr-mfinput" style="display:none;">
           <option value="" selected="">Table</option>
           <option value="roster">Aerodrome Assistant</option>
@@ -2971,17 +2942,6 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
           <button type="button" class="modal-close" id="qbmClose">✕</button>
         </div>
       </div>
-      <div class="qbm-filter" id="qbmFilter">
-        <div class="qbm-fper">
-          <div class="qbm-fshwrap">
-            <button type="button" class="qbm-fshbtn" id="qbmShiftBtn" aria-haspopup="listbox" aria-expanded="false"><span id="qbmShiftLbl">All shifts</span><span class="qbm-fcar">▾</span></button>
-            <div class="qbm-fmenu" id="qbmShiftChips" role="listbox"></div>
-          </div>
-          <select id="qbmPerson" aria-label="Filter by person"></select>
-          <button type="button" class="qbm-fclr" id="qbmFClear">Clear</button>
-        </div>
-        <div class="qbm-fcount" id="qbmFCount"></div>
-      </div>
       <div class="qbm-paper" id="qbmPaper"></div>
     </div>
   </div>
@@ -3091,7 +3051,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       <div class="tc-inputs">
         <div class="tc-field tc-field-date">
           <label class="tc-label" for="tcDate">Date</label>
-          <input type="date" id="tcDate" class="tc-date-input">
+          <span class="dfmt" style="display: flex; flex: 0 1 auto; min-width: 0px; width: 100%; margin: 0px; border-width: 0.727273px; border-style: solid; border-color: rgb(69, 68, 68); border-radius: 10px; background-color: rgb(38, 37, 37); color: rgb(240, 241, 243); padding: 9px 12px; font-size: 13px; font-family: &quot;Space Grotesk&quot;, sans-serif; font-weight: 400; letter-spacing: normal; line-height: 1.3;"><input type="date" id="tcDate" class="tc-date-input"><span class="dfmt-t ph">dd/mm/yyyy</span><svg class="dfmt-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></span>
         </div>
         <div class="tc-field tc-field-time">
           <label class="tc-label">Time <span class="tc-label-sub" id="tcLabelSub">24H</span></label>
@@ -3771,7 +3731,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
   }
   function withSalary(cb){
     if(window.hsiaOpenSalary){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/salary.js?v=20261011e';
+    var s = document.createElement('script'); s.src = 'forms/salary.js?v=20261012a';
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Salary Fixation editor did not load.\nCheck your internet, and make sure forms/salary.js is uploaded to GitHub.'); };
     document.head.appendChild(s);
@@ -10557,34 +10517,6 @@ function initClData(){
    period, Person relieved, Remarks) + print.
    ============================================================ */
 let _qbmRuns = [];
-/* QBM filter (admin convenience): one shift (A-E) and / or one person (detailed or relieved). Applies to the sheet, Print and PNG. */
-let _qbmF = { shift:'', person:'' };
-const _qbmNorm = x=> String(x || '').trim().toLowerCase();
-function qbmShiftOf(it){ const t = +it.ex.team; return (t < 100 && TEAMS[t]) ? TEAMS[t] : ''; }
-function qbmApplyFilter(items){
-  return items.filter(it=>{
-    if(_qbmF.shift && qbmShiftOf(it) !== _qbmF.shift) return false;
-    if(_qbmF.person && _qbmNorm(it.detailed) !== _qbmF.person && _qbmNorm(it.relieved) !== _qbmF.person) return false;
-    return true;
-  });
-}
-function qbmFilterUI(all, shown){
-  const names = {};
-  all.forEach(it=>{ [it.detailed, it.relieved].forEach(n=>{ const k = _qbmNorm(n); if(k && k !== 'vacant' && !names[k]) names[k] = String(n).trim(); }); });
-  if(_qbmF.person && !names[_qbmF.person]) _qbmF.person = '';
-  const sel = document.getElementById('qbmPerson');
-  if(sel){
-    sel.innerHTML = '<option value="">All people</option>' + Object.keys(names).sort((a,b)=> names[a].localeCompare(names[b])).map(k=> '<option value="' + _xEsc(k) + '"' + (k === _qbmF.person ? ' selected' : '') + '>' + _xEsc(names[k]) + '</option>').join('');
-    sel.value = _qbmF.person;
-  }
-  const ch = document.getElementById('qbmShiftChips');
-  if(ch) ch.innerHTML = [''].concat(TEAMS).map(t=> '<button type="button" class="qbm-fopt' + (t === _qbmF.shift ? ' on' : '') + '" data-sh="' + t + '" role="option">' + (t ? t + ' shift' : 'All shifts') + '</button>').join('');
-  const lbl = document.getElementById('qbmShiftLbl'); if(lbl) lbl.textContent = _qbmF.shift ? _qbmF.shift + ' shift' : 'All shifts';
-  const sb = document.getElementById('qbmShiftBtn'); if(sb){ sb.classList.toggle('set', !!_qbmF.shift); sb.setAttribute('aria-expanded','false'); }
-  if(ch) ch.classList.remove('open');
-  const cnt = document.getElementById('qbmFCount');
-  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : '';
-}
 function qbmPeriod(ex, dk){
   const t = +ex.team;
   if(t >= THS_BASE) return (THS_META[t - THS_BASE] || {}).period || '';
@@ -10605,7 +10537,7 @@ function qbmShiftLabel(ex, dk){
   const nm = st === 'Morning' ? 'morning' : st === 'Afternoon' ? 'evening' : st === 'Night' ? 'night' : '';
   return (TEAMS[t] ? TEAMS[t] + '-shift ' : '') + nm;
 }
-function qbmCollect(from, to, raw){
+function qbmCollect(from, to){
   const items = [];
   Object.keys(EXCHANGES || {}).sort().forEach(dk=>{
     if(from && dk < from) return;
@@ -10625,7 +10557,7 @@ function qbmCollect(from, to, raw){
       });
     });
   });
-  return raw ? items : qbmApplyFilter(items);
+  return items;
 }
 function qbmDateText(run){
   const dd = x=> String(x).padStart(2,'0');
@@ -10693,8 +10625,7 @@ function qbmMonthLabel(items){
 function renderQbm(){
   const paper = document.getElementById('qbmPaper');
   if(!paper) return;
-  const allItems = qbmCollect('', '', true), items = qbmApplyFilter(allItems);
-  qbmFilterUI(allItems, items.length);
+  const items = qbmCollect('', '');
   const rows = qbmBuild(items);
   _qbmRuns = [];
   let body = '';
@@ -10956,17 +10887,7 @@ async function downloadQbmPng(){
 function initQbm(){
   const ov = document.getElementById('qbmOverlay'), btn = document.getElementById('qbmOpenBtn');
   if(!ov || !btn) return;
-  btn.addEventListener('click', ()=>{ _qbmF = { shift:'', person:'' }; renderQbm(); ov.classList.add('show'); });
-  const fb = document.getElementById('qbmFilter');
-  if(fb){
-    fb.addEventListener('click', e=>{
-      const c = e.target.closest('.qbm-fopt'); if(c){ _qbmF.shift = c.getAttribute('data-sh') || ''; renderQbm(); return; }
-      if(e.target.closest('#qbmShiftBtn')){ const m = document.getElementById('qbmShiftChips'), b = document.getElementById('qbmShiftBtn'); const o = m.classList.toggle('open'); b.setAttribute('aria-expanded', o ? 'true' : 'false'); return; }
-      if(e.target.closest('#qbmFClear')){ _qbmF = { shift:'', person:'' }; renderQbm(); }
-    });
-    fb.addEventListener('change', e=>{ if(e.target && e.target.id === 'qbmPerson'){ _qbmF.person = e.target.value || ''; renderQbm(); } });
-  }
-  ov.addEventListener('click', e=>{ if(!e.target.closest('.qbm-fshwrap')){ const m = document.getElementById('qbmShiftChips'); if(m) m.classList.remove('open'); } });
+  btn.addEventListener('click', ()=>{ renderQbm(); ov.classList.add('show'); });
   document.getElementById('qbmClose').addEventListener('click', ()=> ov.classList.remove('show'));
   ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('show'); });
   document.getElementById('qbmPrintBtn').addEventListener('click', printQbm);
@@ -12023,35 +11944,20 @@ function buildLamps(){
 
 function buildWeek(){
   const f = nowDhakaFields();
-  const mine = window.hsiaMeWeek ? window.hsiaMeWeek() : null;
-  document.getElementById('weekTitle').textContent = mine ? `Your duty next ${PREVIEW_DAYS} days` : `Your (Team ${TEAMS[YOU_INDEX]}) next ${PREVIEW_DAYS} days`;
+  document.getElementById('weekTitle').textContent = `Your (Team ${TEAMS[YOU_INDEX]}) next ${PREVIEW_DAYS} days`;
   const row = document.getElementById('weekRow');
   row.innerHTML='';
   for(let d=0; d<PREVIEW_DAYS; d++){
     const cd = addDays(f.y,f.m,f.day,d);
+    const st = shiftFor(YOU_INDEX, cd.y, cd.m, cd.day);
     const dt = new Date(Date.UTC(cd.y,cd.m,cd.day));
     const wd = WEEKDAYS[dt.getUTCDay()];
-    let shiftHtml;
-    if(mine){
-      const r = mine.up.find(x=> x.i === d);
-      if(!r) shiftHtml = `<div class="dshift" style="color:${getShiftColor('Off')}">Off</div>`;
-      else shiftHtml = r.items.map(it=>{
-        const lab = _xEsc(it.label), col = mine.colorOf(it.label, it.ot);
-        if(it.kind === 'duty') return `<div class="dshift" style="color:${col}">${lab}</div>`;
-        if(it.kind === 'take') return `<div class="dshift" style="color:#3fe27f" title="${it.who ? 'for ' + _xEsc(it.who) : ''}">+${lab}</div>`;
-        const cl = it.tp === 'CL';
-        return `<div class="dshift" style="color:${col}"><s style="opacity:.65">${lab}</s> <b style="color:${cl ? '#ff5a62' : '#7aa8ff'}">${cl ? 'CL' : it.tp === 'EL' ? 'EL' : 'Ex'}</b></div>`;
-      }).join('');
-    } else {
-      const st = shiftFor(YOU_INDEX, cd.y, cd.m, cd.day);
-      shiftHtml = `<div class="dshift" style="color:${getShiftColor(st)}">${st}</div>`;
-    }
     const div = document.createElement('div');
     div.className = 'day' + (d===0 ? ' today' : '');
     div.innerHTML = `
       <div class="dname">${d===0?'Today':wd}</div>
       <div class="dnum">${cd.day}</div>
-      ${shiftHtml}
+      <div class="dshift" style="color:${getShiftColor(st)}">${st}</div>
     `;
     row.appendChild(div);
   }
@@ -14106,7 +14012,6 @@ function openRosterWindow(){
     saveMe({ name:c.getAttribute('data-name'), table:c.getAttribute('data-table'), team:+c.getAttribute('data-team'), pos:c.getAttribute('data-pos') });
     closePicker();
     setMe(true);
-    redrawWeek();
   });
 
   // ---------- the "Me" view ----------
@@ -14249,10 +14154,7 @@ function openRosterWindow(){
       if(sNew !== JSON.stringify(old)) localStorage.setItem(k, sNew);
     }catch(e){}
   }
-  /* the home "next 15 days" strip: signed in + name chosen in Me -> my own duty (synced from the QBM data), otherwise the whole team */
-  window.hsiaMeWeek = function(){ try{ const me = resolveMe(); return me ? { name:me.name, up:dayList(me), colorOf:colorOf } : null; }catch(e){ return null; } };
-  const redrawWeek = ()=>{ try{ buildWeek(); }catch(e){} };
-  window.hsiaMeSnap = function(){ clearTimeout(snapT); snapT = setTimeout(function(){ snapRun(); try{ if(window._rosterMeOn) renderMe(); }catch(e){} redrawWeek(); }, 700); };
+  window.hsiaMeSnap = function(){ clearTimeout(snapT); snapT = setTimeout(snapRun, 700); };
   function yearData(me, year){
     const led = ledgerFor(me, year), snap = loadSnap(), man = loadMan(), days = {}, cnt = { cl:0, by:0, fr:0, byD:0, frD:0, bdCl:{M:0,E:0,N:0}, bd:{ by:{M:0,E:0,N:0}, fr:{M:0,E:0,N:0} } };
     const kindOf = l=> /^Night/i.test(String(l || '')) ? 'N' : /^Morning/i.test(String(l || '')) ? 'M' : 'E';
@@ -14299,24 +14201,6 @@ function openRosterWindow(){
     if(show.indexOf('fr') >= 0) rec.fr.forEach(c=> h += row('fr', 'I did duty \u00b7 ' + esc(c.label) + (c.who ? ' \u00b7 for ' + esc(c.who) : '') + (c.pos ? ' \u00b7 ' + esc(c.pos) : '')));
     return h;
   }
-  /* next 10 days (today + 9) straight from the same data as the QBM: duty / off / CL or exchange (covered by someone) / duty I took for someone */
-  function next10Html(up){
-    const f = nowDhakaFields(), base = Date.UTC(f.y, f.m, f.day);
-    let h = '';
-    for(let i = 0; i < 10; i++){
-      const dt = new Date(base + i*86400000), row = up.find(r=> r.i === i);
-      let inner = '';
-      if(!row){ inner = '<span class="meh-ds off">Off</span>'; }
-      else row.items.forEach(it=>{
-        const lab = esc(it.label), col = colorOf(it.label, it.ot);
-        if(it.kind === 'duty') inner += '<span class="meh-ds" style="--c:' + col + '" title="' + lab + '">' + lab + '</span>';
-        else if(it.kind === 'take') inner += '<span class="meh-ds take" title="' + lab + (it.who ? ' \u00b7 for ' + esc(it.who) : '') + '">+' + lab + '</span>';
-        else { const cl = it.tp === 'CL'; inner += '<span class="meh-ds" style="--c:' + col + '" title="' + esc(it.tp) + ' \u00b7 ' + lab + (it.sub ? ' \u00b7 ' + esc(it.sub) + ' did duty' : '') + '"><s>' + lab + '</s><em class="' + (cl ? 'cl' : '') + '">' + (cl ? 'CL' : it.tp === 'EL' ? 'EL' : 'Ex') + '</em></span>'; }
-      });
-      h += '<div class="meh-d' + (i === 0 ? ' today' : '') + '"><span class="meh-dw">' + WEEKDAYS[dt.getUTCDay()].slice(0,3) + '</span><span class="meh-dn">' + dt.getUTCDate() + ' ' + MONTHS[dt.getUTCMonth()].slice(0,3) + '</span>' + inner + '</div>';
-    }
-    return '<div class="meh-10k">NEXT 10 DAYS</div><div class="meh-10">' + h + '</div>';
-  }
   function renderMe(){
     const v = view(); if(!v) return;
     const me = resolveMe();
@@ -14342,7 +14226,7 @@ function openRosterWindow(){
       '<div class="meh-hero"><div class="meh-av"><span>' + esc(initials(me.name)) + '</span></div>' +
         '<div class="meh-who"><div class="meh-k">' + esc(me.grp || me.pos) + ' \u00b7 ' + esc(me.pos) + '</div><div class="meh-nm">' + esc(me.name) + '</div><div class="meh-team">TEAM ' + TEAMS[me.team] + '</div></div>' +
         '<div class="meh-acts"><button type="button" class="meh-btn" id="meChange">Change</button><button type="button" class="meh-btn x" id="meClose">\u2715</button></div></div>' +
-      '<div class="meh-next"><div class="meh-nx1">' + hero + '</div>' + next10Html(up) + '</div>' +
+      '<div class="meh-next">' + hero + '</div>' +
       '<div class="mec-top' + (meSel === 'ex' ? ' open' : '') + '"><div class="meh-stats">' + card('all', 'al', 'All<br>together', data.cnt.cl + data.cnt.byD, sum3(data.cnt.bdCl, data.cnt.bd.by)) + card('cl', 'cl', 'CL taken<br>(days)', data.cnt.cl, sum3(data.cnt.bdCl)) + card('ex', 'xc', 'Exchange', data.cnt.by + data.cnt.fr, sum3(data.cnt.bd.by, data.cnt.bd.fr)) + '</div>' +
       (meSel === 'ex' ? '<div class="mec-arr"><svg viewBox="0 0 22 20" width="22" height="20" fill="none" stroke="' + KC.by + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 17C10 17 10 3 19 3"/><path d="M15 0.5L19.5 3 15.5 6"/></svg><svg viewBox="0 0 22 20" width="22" height="20" fill="none" stroke="' + KC.fr + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3C10 3 10 17 19 17"/><path d="M15 14L19.5 17 15.5 19.5"/></svg></div>' +
         '<div class="mec-opts"><button type="button" class="mec-sb' + (meSub === 'by' ? ' on' : '') + '" data-sub="by" style="--c:' + KC.by + '"><span class="mec-l">Covered by others' + mnTxt(data.cnt.bd.by) + '</span><b>' + data.cnt.by + '</b></button><button type="button" class="mec-sb' + (meSub === 'fr' ? ' on' : '') + '" data-sub="fr" style="--c:' + KC.fr + '"><span class="mec-l">I did duty for others' + mnTxt(data.cnt.bd.fr) + '</span><b>' + data.cnt.fr + '</b></button></div>' : '') + '</div>' +
@@ -14476,7 +14360,7 @@ function openRosterWindow(){
     const ok = !!gSession();
     if(!ok && _hadMe && Date.now() - _t0 < 8000){ btn.style.display = ''; return; }   /* still loading the sign-in: do not hide the button for a moment */
     btn.style.display = ok ? '' : 'none';
-    if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); redrawWeek(); }
+    if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); }
     else { try{ if(window.hsiaMeSnap) window.hsiaMeSnap(); }catch(e){} if(window._rosterMeOn) renderMe(); }
   }
   window.hsiaMeAuthRefresh = refreshAuth;
@@ -14569,8 +14453,6 @@ function openRosterWindow(){
   COLS.forEach(id=>{
     const col = document.getElementById(id); if(!col) return;
     const sub = col.querySelector('.roster-subtitle'); if(!sub) return;
-    /* never stack two date bars: drop any date bar already in this column (e.g. one saved into the HTML from a live page) */
-    col.querySelectorAll('.th-nav').forEach(n=>{ if(n.querySelector('.rd-date')) n.remove(); });
     const bar = document.createElement('div');
     bar.className = 'th-nav';
     bar.innerHTML = '<button type="button" class="th-navbtn rd-prev" aria-label="Previous day">&#8249;</button>' +
@@ -15429,9 +15311,6 @@ initAdminNotepad();
   const fmt = v=> /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) : 'dd/mm/yyyy';
   function enhance(inp){
     if(!inp || inp._dfL || inp.type !== 'date') return;
-    /* already inside a wrapper (saved into the HTML): unwrap first so the box + calendar icon are never doubled */
-    const old = inp.parentNode;
-    if(old && old.classList && old.classList.contains('dfmt') && old.parentNode){ old.parentNode.insertBefore(inp, old); old.remove(); }
     const cs = getComputedStyle(inp);
     const wrap = document.createElement('span');
     wrap.className = 'dfmt';
