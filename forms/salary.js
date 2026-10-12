@@ -5737,7 +5737,8 @@
     '.sfp *{box-sizing:border-box;} .sfp .a{position:absolute;} .sfp img.a{display:block;}' +
     '.sfp .e{outline:none;min-height:14pt;} .sfp .ib{display:inline-block;min-width:60pt;} .sfp .il{display:inline;min-height:0;}' +
     ".sfp .bj{font-family:" + FORM + ";} .sfp .uni{font-family:'Nikosh','Noto Sans Bengali',sans-serif !important;}" +
-    '.sfp .bl{display:inline-block;min-width:30pt;border-bottom:0.75pt dotted #000;text-align:center;white-space:pre;outline:none;line-height:13pt;font-size:inherit;}' +
+    '.sfp .bl{display:inline-block;min-width:30pt;border-bottom:0.75pt solid transparent;text-align:center;white-space:pre;outline:none;line-height:13pt;font-size:inherit;background-image:radial-gradient(circle at 0.75pt 1pt,#000 0.55pt,rgba(0,0,0,0) 0.63pt),radial-gradient(circle at 4.87pt 1pt,#000 0.55pt,rgba(0,0,0,0) 0.63pt),radial-gradient(circle at 8.99pt 1pt,#000 0.55pt,rgba(0,0,0,0) 0.63pt);background-size:13.12pt 2pt;background-repeat:repeat-x;background-position:1.85pt 7.1pt;}' +
+    '.sfp .bl:not(:empty){background-image:none;border-bottom:0.75pt dotted #000;}' +
     '.sfp .bl:before{content:"\\200b";}' +
     '.sfp table.tb{position:absolute;left:41.16pt;top:94.44pt;width:529.78pt;border-collapse:collapse;table-layout:fixed;}' +
     '.sfp .tb td{border:0.48pt solid #000;padding:0;height:17.043pt;line-height:14pt;vertical-align:top;overflow:hidden;white-space:nowrap;position:relative;}' +
@@ -5747,7 +5748,7 @@
     '.sfp .sg{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;}' +
     '.sfp .bd{font-weight:700;}' +
     '.sfp .fl{display:flex;align-items:baseline;white-space:nowrap;width:526pt;line-height:13pt;} .sfp .fl>*{flex:none;} .sfp .fl .il{white-space:pre;overflow:visible;}' +
-    '.sfp .bl.nb{border-bottom-color:transparent;} .sfp .sb{display:block;min-width:0;line-height:14.2pt;min-height:14.2pt;}' +
+    '.sfp .bl.nb,.sfp .bl.nb:not(:empty){background-image:none;border-bottom-color:transparent;} .sfp .sb{display:block;min-width:0;line-height:14.2pt;min-height:14.2pt;}' +
     '.sfp .sgi{display:block;width:100%;height:100%;object-fit:contain;}' +
     '@media print{.sfp{height:1006pt;}}';
 
@@ -5817,6 +5818,8 @@
   }
 
   /* ---------- build the page; edit=true makes every cell an editable box ---------- */
+  var FORMMODE = false;   /* true while the background of the editable PDF is made: value boxes and blanks stay empty (they become PDF fields) */
+  function plainBj(h){ return toBijoy(unesc(String(h == null ? '' : h).replace(/<[^>]*>/g, ''))); }
   function build(edit){
     var n = 0;
     function val(i, d){ return Object.prototype.hasOwnProperty.call(state, i) ? state[i] : d; }
@@ -5825,11 +5828,11 @@
        While a box is focused it shows what you type (Unicode / Avro is fine); when you leave it, it turns into Bijoy again. */
     function ed(tag, cls, d, ph, keep, sty){
       var i = n++, st_ = (fitC[i] ? 'font-size:' + fitC[i] + 'pt;' : '') + (sty || ''), fs = st_ ? ' style="' + st_ + '"' : '';
-      return '<' + tag + ' class="e ' + (cls || '') + ' bj"' + fs + (edit ? ' contenteditable="true" spellcheck="false" data-i="' + i + '"' + (keep ? ' data-k="1"' : '') + ' data-bj="1" data-d="' + esc(d) + '" data-ph="' + esc(toBijoy(ph || '')) + '"' : '') + '>' + bjHtml(val(i, d)) + '</' + tag + '>';
+      return '<' + tag + ' class="e ' + (cls || '') + ' bj"' + fs + (edit ? ' contenteditable="true" spellcheck="false" data-i="' + i + '"' + (keep ? ' data-k="1"' : '') + ' data-bj="1" data-d="' + esc(d) + '" data-ph="' + esc(toBijoy(ph || '')) + '"' : '') + (FORMMODE && cls === 'v' ? ' data-fi="' + i + '" data-bt="' + esc(plainBj(val(i, d))) + '">' : '>' + bjHtml(val(i, d))) + (FORMMODE && cls === 'v' ? '' : '') + '</' + tag + '>';
     }
     function bl(w, ph, g, cls, dflt){
       var i = n++;
-      return '<span class="bl bj' + (cls ? ' ' + cls : '') + '" style="' + (g ? 'flex:' + g + ' 0 auto;' : '') + 'min-width:' + w + 'pt"' + (edit ? ' contenteditable="true" spellcheck="false" data-i="' + i + '" data-bj="1" data-d="' + esc(dflt || '') + '" title="' + esc(ph || '') + '"' : '') + '>' + bjHtml(val(i, dflt || '')) + '</span>';
+      return '<span class="bl bj' + (cls ? ' ' + cls : '') + '" style="' + (g ? 'flex:' + g + ' 0 auto;' : '') + 'min-width:' + w + 'pt"' + (edit ? ' contenteditable="true" spellcheck="false" data-i="' + i + '" data-bj="1" data-d="' + esc(dflt || '') + '" title="' + esc(ph || '') + '"' : '') + (FORMMODE ? ' data-fi="' + i + '" data-bt="' + esc(plainBj(val(i, dflt || ''))) + '">' : '>' + bjHtml(val(i, dflt || ''))) + '</span>';
     }
     function ab(st, inner){ return '<div class="a" style="' + st + '">' + inner + '</div>'; }
 
@@ -5900,7 +5903,7 @@
     '#salOv .sl-pg{position:absolute;left:0;top:0;transform-origin:0 0;width:612pt;height:1008pt;}' +
     '#salOv .sl-hint{max-width:760px;margin:0 auto 8px;font-size:12px;color:#8d8d96;line-height:1.5;text-align:center;}' +
     '#salOv .e:empty{background:rgba(47,125,246,.10);} #salOv .e:empty:before{content:attr(data-ph);color:#8aa0c8;}' +
-    '#salOv .e:focus,#salOv .bl:focus{background:rgba(47,125,246,.16);} #salOv .bl{background:rgba(47,125,246,.06);}' +
+    '#salOv .e:focus,#salOv .bl:focus{background-color:rgba(47,125,246,.16);} #salOv .bl{background-color:rgba(47,125,246,.06);}' +
     '#salOv .sl-m{position:absolute;right:12px;top:60px;background:#18181d;border:1px solid #3a3a40;border-radius:10px;padding:6px;display:none;z-index:6;}' +
     '#salOv .sl-m button{display:block;width:100%;min-width:200px;margin:0;padding:11px 12px;background:none;border:0;color:#eee;font-size:15px;text-align:left;font-family:inherit;cursor:pointer;white-space:nowrap;}' +
     '#salOv .sl-dlg{position:absolute;inset:0;z-index:7;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:14px;}' +
@@ -5927,7 +5930,7 @@
       '<div class="sl-top"><button class="sl-b" id="slX" aria-label="Close">✕</button><div class="sl-t">Salary Fixation</div>' +
       '<button class="sl-b" id="slZm" aria-label="Zoom out">−</button><div class="sl-z" id="slZ">100%</div><button class="sl-b" id="slZp" aria-label="Zoom in">＋</button>' +
       '<button class="sl-b" id="slM" aria-label="Menu">⋯</button><button class="sl-b sl-p" id="slP">🖨️ Print</button></div>' +
-      '<div class="sl-m" id="slMenu"><button data-a="pdf">💾 PDF সেভ (Legal · 600 dpi)</button><button data-a="pdfa4">💾 PDF সেভ (A4 · সর্বোচ্চ রেজোলিউশন)</button><button data-a="reset">⟲ সব মুছে নতুন ফর্ম</button></div>' +
+      '<div class="sl-m" id="slMenu"><button data-a="pdf">💾 PDF সেভ (Legal · 600 dpi)</button><button data-a="pdfa4">💾 PDF সেভ (A4 · সর্বোচ্চ রেজোলিউশন)</button><button data-a="pdfedit">✏️ Editable PDF (A4 · 300 dpi · বিজয়)</button><button data-a="reset">⟲ সব মুছে নতুন ফর্ম</button></div>' +
       '<div class="sl-body" id="slBody"><div class="sl-hint">যেকোনো ঘরে ট্যাপ করে লিখুন (অভ্র/Unicode বা বিজয় — দুটোই চলবে) · ঘর ছাড়লে লেখা বিজয় (SutonnyMJ) হয়ে যাবে · Enter = পরের ঘরে · স্বয়ংক্রিয়ভাবে সেভ হয় · Legal size</div>' +
       '<div class="sl-wrap" id="slWrap"><div class="sl-pg" id="slPg"></div></div></div>';
     document.body.appendChild(ov);
@@ -5999,6 +6002,7 @@
       var b = e.target.closest('button'); if(!b) return; menu.style.display = 'none';
       if(b.getAttribute('data-a') === 'pdf') pdfFlow(ov, false);
       else if(b.getAttribute('data-a') === 'pdfa4') pdfFlow(ov, false, 'a4');
+      else if(b.getAttribute('data-a') === 'pdfedit') pdfFlow(ov, false, 'a4edit');
       else if(confirm('সব ঘর মুছে ফর্মটি আবার নতুনের মতো করা হবে। ঠিক আছে?')){
         state = {}; fitC = {}; try{ localStorage.removeItem(KEY); }catch(x){} pg.innerHTML = build(true); fitAll(pg);
       }
@@ -6187,7 +6191,7 @@
   function pdfFlow(ov, thenPrint, paper){
     var d = dlg(ov, '<h3>💾 PDF তৈরি হচ্ছে…</h3><div class="hint" id="sdMsg">Legal size · 600 dpi — একটু সময় লাগবে, অপেক্ষা করুন।</div><div class="sl-bar"><i id="sdBar"></i></div>');
     var msg = d.querySelector('#sdMsg'), bar = d.querySelector('#sdBar');
-    exportPdf(function(i, n, dpi){ bar.style.width = Math.round(i / n * 100) + '%'; msg.textContent = (paper === 'a4' ? 'A4 size · ' : 'Legal size · ') + dpi + ' dpi — ' + i + '/' + n; },
+    exportPdf(function(i, n, dpi){ bar.style.width = Math.round(i / n * 100) + '%'; msg.textContent = (paper === 'a4edit' ? 'A4 Editable · ' : paper === 'a4' ? 'A4 size · ' : 'Legal size · ') + (paper === 'a4edit' ? '300' : dpi) + ' dpi — ' + i + '/' + n; },
       function(blob){
         saveBlob(blob, fileName(paper));
         if(thenPrint){ d.querySelector('h3').textContent = '✅ PDF সেভ হয়েছে'; msg.textContent = 'এখন প্রিন্ট ডায়ালগ খুলছে…'; setTimeout(function(){ d.remove(); doPrint(); }, 1000); }
@@ -6217,7 +6221,7 @@
   function fileName(paper){
     var rawNm = nameIdx >= 0 ? state[nameIdx] : '';
     var nm = rawNm ? String(rawNm).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/[\\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-') : '';
-    return 'Salary-Fixation' + (nm ? '-' + nm : '') + (paper === 'a4' ? '-A4' : '') + '.pdf';
+    return 'Salary-Fixation' + (nm ? '-' + nm : '') + (paper === 'a4edit' ? '-A4-Editable' : paper === 'a4' ? '-A4' : '') + '.pdf';
   }
   function saveBlob(blob, name){
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
@@ -6226,11 +6230,38 @@
 
   /* ---------- PDF: the same layout rendered in 2-inch bands (so even 600 dpi never needs a giant canvas), JPEG quality 100 ---------- */
   function exportPdf(prog, done, fail, paper){
-    var ladder = paper === 'a4' ? [1200, 900, 600, 450, 300] : [600, 450, 300], li = 0;
-    (function attempt(){
-      var dpi = ladder[li];
-      renderBands(dpi, prog, function(bands, dim){ done(buildPdf(bands, dim, paper)); }, function(){ if(++li < ladder.length) attempt(); else fail(); });
-    })();
+    var edt = paper === 'a4edit', ladder = edt ? [360, 300] : paper === 'a4' ? [1200, 900, 600, 450, 300] : [600, 450, 300], li = 0, fields = null;
+    function go(){
+      (function attempt(){
+        var dpi = ladder[li];
+        FORMMODE = edt;
+        try{ renderBands(dpi, prog, function(bands, dim){ done(buildPdf(bands, dim, paper, fields)); }, function(){ if(++li < ladder.length) attempt(); else fail(); }); }
+        finally{ FORMMODE = false; }
+      })();
+    }
+    if(edt) collectFields(function(f){ fields = f; go(); }, fail); else go();
+  }
+  /* measure every value box and blank of the form (empty layout = exactly the background's layout) -> PDF fields */
+  function collectFields(ok, bad){
+    try{
+      FORMMODE = true; var html = build(false); FORMMODE = false;
+      var host = document.createElement('div'); host.style.cssText = 'position:fixed;left:-20000px;top:0;width:' + PW + 'px;height:' + PH + 'px;overflow:hidden;';
+      host.innerHTML = '<style>' + PAGE_CSS + '</style>' + html; document.body.appendChild(host);
+      var fd = document.fonts, go = function(){
+        try{
+          var root = host.querySelector('.sfp').getBoundingClientRect(), out = [];
+          host.querySelectorAll('[data-fi]').forEach(function(el){
+            var r = el.getBoundingClientRect(), cs = getComputedStyle(el), cell = el.closest('td.vv'), top = r.top, bot = r.bottom;
+            if(cell){ var cr = cell.getBoundingClientRect(); top = cr.top + 0.5; bot = cr.bottom - 0.5; }
+            else { var mid = (r.top + r.bottom) / 2; top = mid - 8; bot = mid + 8; }
+            out.push({ id: el.getAttribute('data-fi'), t: el.getAttribute('data-bt') || '', x: (r.left - root.left) * 0.75, y: (top - root.top) * 0.75, w: r.width * 0.75, h: (bot - top) * 0.75,
+              fs: parseFloat(cs.fontSize) * 0.75, q: cs.textAlign === 'center' ? 1 : 0, bl: el.classList.contains('bl') });
+          });
+          host.remove(); ok(out);
+        }catch(e){ host.remove(); bad(); }
+      };
+      if(fd && fd.load) Promise.all([fd.load('10pt SMJ', 'Avwg'), fd.load('10pt SMJ', '(: )')]).then(function(){ setTimeout(go, 200); }, function(){ setTimeout(go, 200); }); else setTimeout(go, 800);
+    }catch(e){ FORMMODE = false; bad(); }
   }
   function renderBands(dpi, prog, ok, bad){
     var scale = dpi / 96, BAND = 192, OVL = 4, N = Math.ceil(PH / BAND);
@@ -6264,17 +6295,27 @@
     }
     one(0);
   }
-  function buildPdf(bands, m, paper){
+  var SMJ_W = [269, 295, 347, 500, 384, 751, 1, 153, 333, 333, 500, 564, 250, 333, 250, 278, 501, 438, 479, 508, 497, 501, 483, 504, 517, 482, 278, 278, 564, 564, 564, 413, 819, 601, 469, 513, 521, 577, 605, 580, 619, 540, 635, 571, 486, 495, 471, 457, 408, 452, 592, 568, 772, 424, 405, 523, 415, 450, 570, 198, 399, 223, 1, 477, 478, 433, 448, 535, 593, 444, 532, 472, 445, 430, 516, 521, 449, 509, 441, 524, 421, 450, 357, 301, 313, 1, 202, 190, 202, 1, 1, 480, 511, 480, 1, 0, 0, 0, 1, 114, 1, 1, 298, 295, 263, 289, 219, 100, 100, 0, 0, 0, 0, 1, 1, 199, 268, 270, 1, 3, 289, 493, 543, 193, 1, 0, 0, 335, 384, 1, 1, 1, 456, 120, 1, 170, 241, 1, 1, 1, 1, 1, 444, 532, 569, 441, 664, 662, 569, 697, 665, 663, 512, 485, 765, 581, 521, 513, 768, 1, 599, 672, 626, 546, 554, 772, 443, 887, 600, 512, 453, 509, 528, 3, 499, 561, 333, 487, 400, 400, 220, 220, 1, 559, 392, 486, 464, 552, 550, 536, 700, 490, 535, 650, 619, 558, 555, 524, 199, 656, 1, 585, 497, 690, 618, 524, 680, 497, 635, 702, 690, 440, 479, 644, 560, 760, 1, 715, 406, 442, 522, 595, 639, 665];   /* SutonnyMJ advance widths, codes 32..255 (1/1000 em) */
+  var CP1252 = { 8364:128, 8218:130, 402:131, 8222:132, 8230:133, 8224:134, 8225:135, 710:136, 8240:137, 352:138, 8249:139, 338:140, 381:142, 8216:145, 8217:146, 8220:147, 8221:148, 8226:149, 8211:150, 8212:151, 732:152, 8482:153, 353:154, 8250:155, 339:156, 382:158, 376:159 };
+  function toBytes(str){ var o = []; for(var i = 0; i < str.length; i++){ var c = str.charCodeAt(i); if(c < 256) o.push(c); else if(CP1252[c]) o.push(CP1252[c]); } return o; }
+  function strW(bytes, fs){ var w = 0; bytes.forEach(function(c){ w += (c >= 32 ? SMJ_W[c - 32] : 0) || 0; }); return w * fs / 1000; }
+  function pdfStr(bytes){ return '(' + bytes.map(function(c){ return (c === 40 || c === 41 || c === 92) ? '\\' + String.fromCharCode(c) : (c < 32 || c > 126) ? '\\' + ('00' + c.toString(8)).slice(-3) : String.fromCharCode(c); }).join('') + ')'; }
+  function utf16hex(str){ var h = 'FEFF'; for(var i = 0; i < str.length; i++) h += ('0000' + str.charCodeAt(i).toString(16)).slice(-4); return '<' + h + '>'; }
+  function fontBytes(){ var b = atob(SUTONNY.split(',')[1]), u = new Uint8Array(b.length); for(var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+
+  function buildPdf(bands, m, paper, fields){
     var enc = new TextEncoder(), parts = [], off = 0, xr = [], N = bands.length;
     function add(x){ var u = typeof x === 'string' ? enc.encode(x) : x; parts.push(u); off += u.length; }
     function obj(n, b){ xr[n] = off; add(n + ' 0 obj\n'); add(b); add('\nendobj\n'); }
-    var A4 = paper === 'a4', K = A4 ? 841.89 / 1008 : 1, PWp = A4 ? 595.28 : 612, PHp = A4 ? 841.89 : 1008;
-    var hPt = m.Hd / m.W * 612 * K, xo = '';
-    for(var i = 0; i < N; i++) xo += '/Im' + i + ' ' + (4 + i) + ' 0 R ';
+    var A4 = paper === 'a4' || paper === 'a4edit', K = A4 ? 841.89 / 1008 : 1, PWp = A4 ? 595.28 : 612, PHp = A4 ? 841.89 : 1008;
+    var hPt = m.Hd / m.W * 612 * K, xo = '', i;
+    for(i = 0; i < N; i++) xo += '/Im' + i + ' ' + (4 + i) + ' 0 R ';
+    var F = fields || [], fF = 5 + N, fD = 6 + N, fO = 7 + N, w0 = 8 + N, annots = '', names = '';
+    F.forEach(function(f, j){ annots += (w0 + 2 * j) + ' 0 R '; });
     add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
-    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(1, '<< /Type /Catalog /Pages 2 0 R' + (F.length ? ' /AcroForm << /Fields [' + annots + '] /DA (/SMJ 10 Tf 0 g) /DR << /Font << /SMJ ' + fO + ' 0 R >> >> /NeedAppearances true >>' : '') + ' >>');
     obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-    obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PWp + ' ' + PHp + '] /Resources << /XObject << ' + xo + '>> >> /Contents ' + (4 + N) + ' 0 R >>');
+    obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PWp + ' ' + PHp + '] /Resources << /XObject << ' + xo + '>> >> /Contents ' + (4 + N) + ' 0 R' + (F.length ? ' /Annots [' + annots + ']' : '') + ' >>');
     for(i = 0; i < N; i++){
       xr[4 + i] = off;
       add((4 + i) + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + m.W + ' /Height ' + m.Hd + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + bands[i].length + ' >>\nstream\n');
@@ -6283,7 +6324,26 @@
     var cs = '';
     for(i = 0; i < N; i++) cs += 'q ' + (612 * K).toFixed(4) + ' 0 0 ' + hPt.toFixed(4) + ' ' + ((PWp - 612 * K) / 2).toFixed(4) + ' ' + (PHp - i * m.BAND * 0.75 * K - hPt).toFixed(4) + ' cm /Im' + i + ' Do Q\n';
     obj(4 + N, '<< /Length ' + cs.length + ' >>\nstream\n' + cs + 'endstream');
-    var xs = off, cnt = 5 + N;
+    var cnt = 5 + N;
+    if(F.length){
+      var fb = fontBytes();
+      xr[fF] = off; add(fF + ' 0 obj\n<< /Length ' + fb.length + ' /Length1 ' + fb.length + ' >>\nstream\n'); add(fb); add('\nendstream\nendobj\n');
+      obj(fD, '<< /Type /FontDescriptor /FontName /SutonnyMJ /Flags 32 /FontBBox [-200 -400 1400 1100] /ItalicAngle 0 /Ascent 863 /Descent -315 /CapHeight 700 /StemV 80 /FontFile2 ' + fF + ' 0 R >>');
+      obj(fO, '<< /Type /Font /Subtype /TrueType /BaseFont /SutonnyMJ /FirstChar 32 /LastChar 255 /Widths [' + SMJ_W.join(' ') + '] /Encoding /WinAnsiEncoding /FontDescriptor ' + fD + ' 0 R >>');
+      var xoff = (PWp - 612 * K) / 2;
+      F.forEach(function(f, j){
+        var wid = w0 + 2 * j, ap = wid + 1, bytes = toBytes(f.t), fs = Math.max(5, f.fs * K), W_ = f.w * K, H_ = f.h * K, tw = strW(bytes, fs);
+        if(tw > W_ - 2) fs = Math.max(5, fs * (W_ - 2) / tw);
+        tw = strW(bytes, fs);
+        var x = f.q ? Math.max(1, (W_ - tw) / 2) : 1.5, y = (H_ - 1.178 * fs) / 2 + 0.315 * fs;
+        var x0 = xoff + f.x * K, y1 = PHp - f.y * K, rect = [x0, y1 - H_, x0 + W_, y1].map(function(v){ return v.toFixed(2); }).join(' ');
+        var st = bytes.length ? '/Tx BMC q ' + (f.bl ? '1 1 1 rg 0 0 ' + W_.toFixed(2) + ' ' + H_.toFixed(2) + ' re f ' : '') + 'BT /SMJ ' + fs.toFixed(2) + ' Tf 0 g ' + x.toFixed(2) + ' ' + y.toFixed(2) + ' Td ' + pdfStr(bytes) + ' Tj ET Q EMC' : '';
+        obj(wid, '<< /Type /Annot /Subtype /Widget /FT /Tx /T (f' + f.id + ') /F 4 /Q ' + f.q + ' /Rect [' + rect + '] /DA (/SMJ ' + fs.toFixed(2) + ' Tf 0 g) /MK << >> /BS << /W 0 >>' + (bytes.length ? ' /V ' + utf16hex(f.t) : '') + ' /AP << /N ' + ap + ' 0 R >> /P 3 0 R >>');
+        obj(ap, '<< /Type /XObject /Subtype /Form /BBox [0 0 ' + W_.toFixed(2) + ' ' + H_.toFixed(2) + '] /Resources << /Font << /SMJ ' + fO + ' 0 R >> >> /Length ' + st.length + ' >>\nstream\n' + st + '\nendstream');
+      });
+      cnt = w0 + 2 * F.length;
+    }
+    var xs = off;
     add('xref\n0 ' + cnt + '\n0000000000 65535 f \n');
     for(i = 1; i < cnt; i++) add(('0000000000' + xr[i]).slice(-10) + ' 00000 n \n');
     add('trailer\n<< /Size ' + cnt + ' /Root 1 0 R >>\nstartxref\n' + xs + '\n%%EOF');
