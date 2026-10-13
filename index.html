@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261013-214500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261014-000500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -3766,15 +3766,15 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
     if(window.hsiaOpenForm){ cb(); return; }
     if(formsState === 1) return;
     formsState = 1;
-    if(!document.getElementById('hsiaFormsCss')){ var l = document.createElement('link'); l.id = 'hsiaFormsCss'; l.rel = 'stylesheet'; l.href = 'forms/forms.css'; document.head.appendChild(l); }
-    var s = document.createElement('script'); s.src = 'forms/forms.js';
+    if(!document.getElementById('hsiaFormsCss')){ var l = document.createElement('link'); l.id = 'hsiaFormsCss'; l.rel = 'stylesheet'; l.href = 'forms/forms.css?v=smj1'; document.head.appendChild(l); }
+    var s = document.createElement('script'); s.src = 'forms/forms.js?v=smj1';
     s.onload = function(){ formsState = 2; cb(); };
     s.onerror = function(){ formsState = 0; s.remove(); alert('ফর্ম এডিটর লোড হয়নি।\nইন্টারনেট চেক করুন, আর GitHub এ forms ফোল্ডার (forms.js, forms.css, header.png) আপলোড হয়েছে কিনা দেখুন।'); };
     document.head.appendChild(s);
   }
   function withBlank(cb){
     if(window.hsiaOpenBlank){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/blank.js';
+    var s = document.createElement('script'); s.src = 'forms/blank.js?v=smj1';
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Blank Page editor did not load.\nCheck your internet, and make sure forms/blank.js is uploaded to GitHub.'); };
     document.head.appendChild(s);
