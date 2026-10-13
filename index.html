@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261008-053743';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261013-190500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -170,14 +170,22 @@
     });
   }
   freshOpen(false);
+  /* Back from another app / page (away for more than ~10 s, so a notification pull-down or a file picker does not trigger it):
+     refresh ONCE right away. Same safety as the fresh open: skipped when offline / slow, and never while something is being typed. */
+  var AWAY_MS = 10*1000;
+  function comeBack(){
+    if(hiddenAt && Date.now() - hiddenAt > AWAY_MS){ hiddenAt = 0; freshOpen(true); }
+  }
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){ hiddenAt = Date.now(); return; }
-    if(hiddenAt && Date.now() - hiddenAt > 30*60*1000){ hiddenAt = 0; freshOpen(true); }
+    comeBack();
   });
+  window.addEventListener('pagehide', function(){ hiddenAt = Date.now(); });
+  window.addEventListener('pageshow', function(e){ if(e && e.persisted){ if(!hiddenAt) hiddenAt = Date.now() - AWAY_MS - 1; comeBack(); } });
   check(true);
-  // a tab / installed app that stays open for hours: look again when it comes back to the front
+  // coming back to the front: look for a newer uploaded version right away (quietly retried until the newest runs)
   document.addEventListener('visibilitychange', function(){
-    if(document.hidden || Date.now() - lastCheck < 2*60*1000) return;
+    if(document.hidden || Date.now() - lastCheck < 15*1000) return;
     check(false);
   });
   window.addEventListener('online', function(){ if(Date.now() - lastCheck > 30000) check(false); });
@@ -7468,6 +7476,57 @@ function exChainFix(list){
   });
   return out;
 }
+/* ---- UFN (Until Further Notice) -> roster table ----
+   A UFN entry (saved with the QBM) changes the standing roster from its date onward:
+     cell (table, pos, team)  : name `who`  ->  `subName`
+   1) Until it is written into the real table, the table / exchange form show the new name for every date >= the UFN date
+      (so 14/10 still shows the old name and 17/10 the new one).
+   2) On/after that date an admin session writes it into the roster itself (ufnApplyDue) and marks the entry `ufnApplied`. */
+function ufnNameOn(tableKey, pos, team, dateKey){
+  try{
+    let best = null, bestDk = '';
+    Object.keys(EXCHANGES || {}).forEach(dk=>{
+      if(dk > dateKey || dk < bestDk) return;
+      exHistList(EXCHANGES[dk]).forEach(x=>{
+        if(x && x.ufn && !x.ufnApplied && x.table === tableKey && x.pos === pos && +x.team === +team && String(x.subName || '').trim()){ best = String(x.subName).trim(); bestDk = dk; }
+      });
+    });
+    return best;
+  }catch(e){ return null; }
+}
+function rosterNameOn(tableKey, row, ci, dateKey){
+  const base = String((row && row.names && row.names[ci]) || '');
+  if(!tableKey || !row) return base;
+  const u = ufnNameOn(tableKey, row.pos, ci, dateKey || todayDateKey());
+  return u == null ? base : u;
+}
+function ufnApplyDue(){
+  try{
+    if(!exIsAdmin()) return;
+    const today = todayDateKey();
+    const norm = x=> String(x == null ? '' : x).trim().toLowerCase();
+    const saver = { roster:saveRoster, rosterCtrl:saveRosterCtrl, rosterComm:saveRosterComm };
+    let exChanged = false; const rosterChanged = {};
+    Object.keys(EXCHANGES || {}).sort().forEach(dk=>{
+      if(dk > today) return;
+      exHistList(EXCHANGES[dk]).forEach(x=>{
+        if(!x || !x.ufn || x.ufnApplied || !saver[x.table]) return;
+        const row = (rosterDataFor(x.table) || []).find(r=> r.pos === x.pos);
+        const ci = +x.team, sub = String(x.subName || '').trim();
+        if(!row || !row.names || !sub || ci < 0 || ci > 4) return;
+        if(norm(row.names[ci]) === norm(x.who)){ row.names[ci] = sub; rosterChanged[x.table] = true; }
+        x.ufnApplied = true; exChanged = true;   /* (if the cell was already edited by hand, it is left alone) */
+      });
+    });
+    Object.keys(rosterChanged).forEach(t=> saver[t](rosterDataFor(t)));
+    if(exChanged) saveExchangesData(EXCHANGES);
+    if(exChanged || Object.keys(rosterChanged).length){
+      try{ renderRoster(); }catch(e){} try{ renderRosterCtrl(); }catch(e){} try{ renderRosterComm(); }catch(e){}
+    }
+  }catch(e){}
+}
+setTimeout(ufnApplyDue, 4000);
+setInterval(ufnApplyDue, 60000);
 function rosterViewExchanges(tableKey){
   const sel = window._rosterSelKey;
   const isToday = (typeof sel !== 'string' || sel === todayDateKey());
@@ -8911,6 +8970,8 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const tbody = document.getElementById(tbodyId);
   if(!tbody) return;
   const activeEx = tableKey ? rosterViewExchanges(tableKey) : [];
+  const _vSel = window._rosterSelKey;
+  const _vDay = (typeof _vSel === 'string' && _vSel) ? _vSel : todayDateKey();
   tbody.innerHTML = data.map((row, ri)=>{
     if(isPoolRow(row, tableKey)){
       const pTxt = poolOf(row).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -8919,8 +8980,9 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
     }
     const cells = TEAMS.map((t, ci)=>{
       const ex = activeEx.find(x => x.pos === row.pos && +x.team === ci);
-      const val = ((ex && ex.base) || row.names[ci] || '').replace(/"/g,'&quot;');
-      const origTitle = ((ex && ex.base) || row.names[ci] || '—').replace(/"/g,'&quot;');
+      const _nm = tableKey ? rosterNameOn(tableKey, row, ci, _vDay) : (row.names[ci] || '');
+      const val = ((ex && ex.base) || _nm || '').replace(/"/g,'&quot;');
+      const origTitle = ((ex && ex.base) || _nm || '—').replace(/"/g,'&quot;');
       /* colours: CL / vacant position = deep red, Exchange = golden amber, Special (Others) = orange */
       const cellClassName = !ex ? '' : ex.special ? 'roster-sp-cell'
         : ex.vacant ? 'roster-vacant-cell'
@@ -9801,7 +9863,7 @@ function exchangeResolve(forKey){
   const row = data.find(r => r.pos === posSel.value);
   const ci = +teamSel.value;
   return { thmr:false, table:tableSel.value, pos:posSel.value, team:ci,
-           who: row ? String((row.names && row.names[ci]) || '').trim() : '',
+           who: row ? String(rosterNameOn(tableSel.value, row, ci, dateKey) || '').trim() : '',
            shift: shiftFor(ci, parts[0], parts[1]-1, parts[2]), dateKey };
 }
 
@@ -11600,7 +11662,7 @@ function initExchangePanel(){
         else { window._pendingClAfterPick = true; openExchangePicker(); }
       });
     }
-    /* ---- UFN (Until Further Notice): QBM entry only. The roster table is NOT touched (admin edits it manually). ---- */
+    /* ---- UFN (Until Further Notice): QBM entry + the roster table changes from that date onward (see ufnNameOn / ufnApplyDue). ---- */
     const _nrm = x=> String(x == null ? '' : x).trim().toLowerCase();
     window._commitUfn = ()=>{
       const r = exchangeResolve();
@@ -11613,6 +11675,7 @@ function initExchangePanel(){
       if(_nrm(sub) === _nrm(oldName)){ alert('The new person is the same as the current one.'); return; }
       exPutEntry(r.dateKey, { table:r.table, pos:r.pos, team:+r.team, subName:sub, nightHalf:'', special:true, spType:'UFN', ufn:true, vacant:false, who:oldName });
       subInput.value = '';
+      try{ ufnApplyDue(); }catch(e){}
       afterChange();
     };
     const openChooser = (kind)=>{
