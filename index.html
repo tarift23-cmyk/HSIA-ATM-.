@@ -3391,10 +3391,10 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
       <div class="collapse-toggle" id="mapToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="mapBody">
-      <div class="iflow-tabs" id="mapTabs"><button type="button" class="iflow-tab-btn active" data-mp="mapPane1">Map 1</button><button type="button" class="iflow-tab-btn" data-mp="mapPaneSvg">Map 2</button></div>
+      <div class="iflow-tabs" id="mapTabs"></div>
       <div id="mapPanes">
       
-      <div id="mapPane1" class="mp-pane mp-active" data-tiles="pdfs"><div class="gd-wrap"><div class="gd-bar"><button type="button" data-a="out" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg></button><span class="gd-zv">90%</span><button type="button" data-a="in" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button><button type="button" data-a="fit" title="Fit whole map" aria-label="Fit whole map" style="width:auto;padding:0 10px;font-size:12px;">Fit</button><span class="gd-sp"></span><button type="button" data-a="full" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button></div><div class="gd-view mp-tileview" style=""><canvas width="908" height="1609"></canvas><div class="mp-sb"><input type="text" placeholder="পয়েন্টের নাম লিখুন (DAC, AAT, JSR...)" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" aria-label="Clear">✕</button><div class="mp-sug"><div data-i="0">TANAP</div><div data-i="1">TEBID</div><div data-i="2">TEGAK</div><div data-i="3">THAKN</div><div data-i="4">TUMPA</div><div data-i="5">TUPLO</div><div data-i="6">TURAG</div><div data-i="7">AAT</div></div></div></div></div></div><div class="mp-pane" id="mapPaneSvg">
+      <div class="mp-pane" id="mapPaneSvg">
       <div id="mapCard">
 <div id="app">
   <div id="svgWrap">
@@ -3757,7 +3757,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
   }
   function withSalary(cb){
     if(window.hsiaOpenSalary){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/salary.js?v=20261011e';
+    var s = document.createElement('script'); s.src = 'forms/salary.js?v=20261013a';
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Salary Fixation editor did not load.\nCheck your internet, and make sure forms/salary.js is uploaded to GitHub.'); };
     document.head.appendChild(s);
@@ -16883,9 +16883,11 @@ window.hsiaFs = function(wrap, on, onExit){
 
   var tabs = document.getElementById('mapTabs'), box = document.getElementById('mapPanes'); if(!tabs || !box) return;
   var ids = [];
+  tabs.innerHTML = '';                         /* never keep tab buttons that were saved into the HTML: they are made here */
   MAP_TABS.forEach(function(t, i){
     var id = t.pane || ('mapPane' + (i + 1));
     var el = document.getElementById(id);
+    if(el && !t.pane){ el.innerHTML = ''; el.classList.remove('mp-active'); }   /* viewer panes are rebuilt, never reused from saved HTML */
     if(!el){
       el = document.createElement('div'); el.id = id; el.className = 'mp-pane';
       var f = t.file || t.pdf || t.img;
