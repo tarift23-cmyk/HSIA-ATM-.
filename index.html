@@ -1565,6 +1565,20 @@ body:not(.hsia-priv) #iflowOthersColumn{ display:none !important; }
   font-size:15px; cursor:pointer; transition:all .2s ease;
 }
 .np-chip-rename:active{ background:rgba(255,255,255,0.08); }
+/* ---- Notepad sub-sections (toggle tags → separate note per combination) ---- */
+.np-sub-bar{ display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin:0 0 8px; }
+.np-sub-chip{
+  display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--muted);
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; cursor:pointer;
+  transition:all .2s ease; max-width:100%; box-sizing:border-box;
+}
+.np-sub-chip.has::before{ content:''; width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.65; flex:0 0 auto; }
+.np-sub-chip.on{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130; border-color:var(--gold); }
+.np-sub-chip .np-sub-x{ font-size:12px; padding:0 2px; opacity:.9; }
+.np-sub-add, .np-sub-manage, .np-sub-clear{ border-style:dashed; background:transparent; }
+.np-sub-label{ font-size:12px; color:var(--muted); margin:0 0 8px; min-height:0; word-break:break-word; }
+.np-sub-label:empty{ display:none; }
 @media (max-width:480px){
   .air-col{ min-width:200px; }
   .air-notepad-col{ min-width:170px; }
@@ -3368,6 +3382,8 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
           <button id="npAddBtn" type="button" class="fr-dbimport">+ নতুন সেকশন</button>
           <span id="notepadStatus" class="fr-dbstatus" style="display:none;"></span>
         </div>
+        <div class="np-sub-bar" id="npSubBar"></div>
+        <div class="np-sub-label" id="npSubLabel"></div>
         <div class="air-notepad-wrap">
           <textarea id="adminNotepad" class="air-notepad-textarea" placeholder="এই সেকশনের নোট লিখুন (শুধু পাসওয়ার্ড দিয়ে এডিট করা যাবে)..." readonly=""></textarea>
         </div>
@@ -8579,8 +8595,25 @@ function initAuthPanel(){
               openPanel('infoflowCardOuter','infoflow');
               clickTab('iflowTabs','iflowNotepadColumn');
               if(typeof setActiveNotepadSection === 'function') setActiveNotepadSection(sec.id);
+              if(typeof setActiveTagIds === 'function') setActiveTagIds(sec.id, []);
               if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
               return ()=> document.getElementById('adminNotepad');
+            });
+          });
+          // sub-section notes (tag combinations) are searchable too
+          Object.keys(sec.subs || {}).forEach(key=>{
+            const ids = key.split('+');
+            const label = sec.name + ' › ' + ids.map(i=>{ const t = (sec.tags||[]).find(x=> x.id === i); return t ? t.name : '?'; }).join(' + ');
+            (sec.subs[key] || '').split(/\r?\n/).forEach(line=>{
+              if(!line.trim()) return;
+              add('notepad', label, line.trim(), ()=>{
+                openPanel('infoflowCardOuter','infoflow');
+                clickTab('iflowTabs','iflowNotepadColumn');
+                if(typeof setActiveNotepadSection === 'function') setActiveNotepadSection(sec.id);
+                if(typeof setActiveTagIds === 'function') setActiveTagIds(sec.id, ids);
+                if(typeof window._renderNotepadUI === 'function') window._renderNotepadUI();
+                return ()=> document.getElementById('adminNotepad');
+              });
             });
           });
         });
@@ -12769,7 +12802,9 @@ function normalizeNotepadSections(list){
   const out = list.filter(x=> x && typeof x === 'object').map(x=>({
     id: String(x.id || '').trim() || ('s' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
     name: String(x.name || '').trim() || 'Untitled',
-    text: typeof x.text === 'string' ? x.text : ''
+    text: typeof x.text === 'string' ? x.text : '',
+    tags: (Array.isArray(x.tags) ? x.tags : []).filter(t=> t && typeof t === 'object' && t.id).map(t=>({ id:String(t.id), name:String(t.name || '').trim() || 'Tag' })),
+    subs: (function(o){ const r = {}; if(o && typeof o === 'object') Object.keys(o).forEach(k=>{ if(typeof o[k] === 'string' && o[k]) r[k] = o[k]; }); return r; })(x.subs)
   }));
   return out.length ? out : null;
 }
@@ -12796,6 +12831,23 @@ function saveNotepadSections(sections, activeId){
   try{ localStorage.setItem(NOTEPAD_KEY, JSON.stringify(state)); }catch(e){}
   pushAdminNotepadToFirebaseDebounced();
 }
+// Which sub-section tags are switched ON per section — a per-device view setting (like activeId),
+// stored locally only and never pushed to Firebase.
+const NP_ACTIVE_TAGS_KEY = 'HSIA_NOTEPAD_ACTIVE_TAGS_V1';
+function loadActiveTagMap(){ try{ const o = JSON.parse(localStorage.getItem(NP_ACTIVE_TAGS_KEY)); if(o && typeof o === 'object') return o; }catch(e){} return {}; }
+function getActiveTagIds(sec){
+  if(!sec) return [];
+  const ids = loadActiveTagMap()[sec.id];
+  if(!Array.isArray(ids)) return [];
+  const valid = new Set((sec.tags || []).map(t=> t.id));
+  return ids.filter(id=> valid.has(id));
+}
+function setActiveTagIds(secId, ids){
+  const m = loadActiveTagMap(); m[secId] = ids;
+  try{ localStorage.setItem(NP_ACTIVE_TAGS_KEY, JSON.stringify(m)); }catch(e){}
+}
+// A combination of tags always maps to the same key no matter which order they were tapped in.
+function npSubKey(ids){ return ids.slice().sort().join('+'); }
 function setActiveNotepadSection(id){
   const state = loadNotepadState();
   if(!state.sections.some(s=> s.id === id)) return;
@@ -12808,6 +12860,9 @@ function initAdminNotepad(){
   const editBtn = document.getElementById('notepadEditBtn');
   const addBtn = document.getElementById('npAddBtn');
   const statusEl = document.getElementById('notepadStatus');
+  const subBar = document.getElementById('npSubBar');
+  const subLabel = document.getElementById('npSubLabel');
+  let manageTags = false;
   if(!ta || !tabsWrap) return;
   const escHtml = t=> String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -12822,7 +12877,32 @@ function initAdminNotepad(){
       '</div>'
     ).join('');
     const active = state.sections.find(sec=> sec.id === state.activeId);
-    ta.value = active ? active.text : '';
+    const ids = getActiveTagIds(active);
+    const key = npSubKey(ids);
+    ta.value = active ? (ids.length ? (active.subs[key] || '') : active.text) : '';
+    ta.placeholder = ids.length ? 'এই কম্বিনেশনের নোট লিখুন (পাসওয়ার্ড দিয়ে এডিট করা যাবে)...' : 'এই সেকশনের নোট লিখুন (শুধু পাসওয়ার্ড দিয়ে এডিট করা যাবে)...';
+    renderSubBar(active, ids);
+  }
+  function renderSubBar(active, ids){
+    if(!subBar) return;
+    if(!active){ subBar.innerHTML = ''; if(subLabel) subLabel.textContent = ''; return; }
+    const usedIds = new Set();
+    Object.keys(active.subs).forEach(k=> k.split('+').forEach(i=> usedIds.add(i)));
+    let h = active.tags.map(t=>
+      '<button type="button" class="np-sub-chip' + (ids.indexOf(t.id) >= 0 ? ' on' : '') + (usedIds.has(t.id) ? ' has' : '') + '" data-tid="' + t.id + '">' +
+        escHtml(t.name) +
+        (manageTags ? '<span class="np-sub-x" data-act="rename" data-tid="' + t.id + '" title="নাম বদলান">✏️</span><span class="np-sub-x" data-act="del" data-tid="' + t.id + '" title="মুছুন">✕</span>' : '') +
+      '</button>'
+    ).join('');
+    h += '<button type="button" class="np-sub-chip np-sub-add" data-act="add">+ সাবসেকশন</button>';
+    if(active.tags.length) h += '<button type="button" class="np-sub-chip np-sub-manage" data-act="manage">' + (manageTags ? '✔ শেষ' : '✎ এডিট') + '</button>';
+    if(ids.length) h += '<button type="button" class="np-sub-chip np-sub-clear" data-act="clear">⟲ সব বন্ধ</button>';
+    subBar.innerHTML = h;
+    if(subLabel){
+      subLabel.textContent = ids.length
+        ? '📍 ' + active.name + ' › ' + active.tags.filter(t=> ids.indexOf(t.id) >= 0).map(t=> t.name).join(' + ')
+        : '';
+    }
   }
   // Re-render when a remote update arrives (Firebase listener) or central search jumps to a section.
   window._renderNotepadUI = render;
@@ -12848,8 +12928,64 @@ function initAdminNotepad(){
     const chip = e.target.closest('.np-chip');
     if(!chip) return;
     setActiveNotepadSection(chip.getAttribute('data-id'));
+    manageTags = false;
     render();
   });
+
+  if(subBar){
+    subBar.addEventListener('click', (e)=>{
+      const state = loadNotepadState();
+      const active = state.sections.find(sec=> sec.id === state.activeId);
+      if(!active) return;
+      const actEl = e.target.closest('[data-act]');
+      const act = actEl && actEl.getAttribute('data-act');
+      const tid = actEl && actEl.getAttribute('data-tid');
+      if(act === 'manage'){ manageTags = !manageTags; render(); return; }
+      if(act === 'clear'){ setActiveTagIds(active.id, []); render(); return; }
+      if(act === 'add'){
+        if(!requireQuickAuth()) return;
+        const name = window.prompt('সাবসেকশনের নাম দিন (যেমন: Runway 14, VGD14, International):');
+        if(name === null) return;
+        const trimmed = name.trim();
+        if(!trimmed) return;
+        const id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+        active.tags.push({ id, name: trimmed });
+        saveNotepadSections(state.sections, state.activeId);
+        render();
+        return;
+      }
+      if(act === 'rename'){
+        if(!requireQuickAuth()) return;
+        const t = active.tags.find(x=> x.id === tid);
+        if(!t) return;
+        const name = window.prompt('সাবসেকশনের নতুন নাম দিন:', t.name);
+        if(name === null || !name.trim()) return;
+        t.name = name.trim();
+        saveNotepadSections(state.sections, state.activeId);
+        render();
+        return;
+      }
+      if(act === 'del'){
+        if(!requireQuickAuth()) return;
+        const t = active.tags.find(x=> x.id === tid);
+        if(!t) return;
+        const affected = Object.keys(active.subs).filter(k=> k.split('+').indexOf(tid) >= 0);
+        if(!window.confirm('"' + t.name + '" মুছবেন?' + (affected.length ? '\nএই ট্যাগ জড়িত ' + affected.length + 'টি সাবনোটও মুছে যাবে।' : ''))) return;
+        active.tags = active.tags.filter(x=> x.id !== tid);
+        affected.forEach(k=>{ delete active.subs[k]; });
+        setActiveTagIds(active.id, getActiveTagIds(active).filter(i=> i !== tid));
+        saveNotepadSections(state.sections, state.activeId);
+        render();
+        return;
+      }
+      const chip = e.target.closest('.np-sub-chip[data-tid]');
+      if(!chip) return;
+      const id = chip.getAttribute('data-tid');
+      const cur = getActiveTagIds(active);
+      setActiveTagIds(active.id, cur.indexOf(id) >= 0 ? cur.filter(i=> i !== id) : cur.concat(id));
+      render();
+    });
+  }
 
   if(editBtn){
     editBtn.addEventListener('click', ()=>{
@@ -12876,7 +13012,7 @@ function initAdminNotepad(){
       if(!trimmed) return;
       const state = loadNotepadState();
       const id = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-      state.sections.push({ id, name: trimmed, text:'' });
+      state.sections.push({ id, name: trimmed, text:'', tags:[], subs:{} });
       saveNotepadSections(state.sections, id);
       render();
     });
@@ -12886,7 +13022,13 @@ function initAdminNotepad(){
     const state = loadNotepadState();
     const active = state.sections.find(sec=> sec.id === state.activeId);
     if(!active) return;
-    active.text = ta.value;
+    const ids = getActiveTagIds(active);
+    if(ids.length){
+      const key = npSubKey(ids);
+      if(ta.value) active.subs[key] = ta.value; else delete active.subs[key];
+    } else {
+      active.text = ta.value;
+    }
     saveNotepadSections(state.sections, state.activeId);
     if(statusEl){
       statusEl.style.display = 'inline';
