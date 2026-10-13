@@ -1860,7 +1860,9 @@
 
   function unesc(t){ return String(t).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&'); }
   function esc(t){ return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  function bj(t){ return toBijoy(String(t == null ? '' : t)); }
+  /* UNI = true: Unicode Bangla (Bengali digits) - shows correctly on every phone / PC. UNI = false: Bijoy (SutonnyMJ) - needs that font installed. */
+  var UNI = true;
+  function bj(t){ t = String(t == null ? '' : t); return UNI ? t.replace(/[0-9]/g, function(d){ return '০১২৩৪৫৬৭৮৯'.charAt(+d); }) : toBijoy(t); }
 
   /* ---------- ছোট সহায়ক ---------- */
   var BN = '০১২৩৪৫৬৭৮৯';
@@ -1974,7 +1976,7 @@
 
   function buildXlsx(M){
     var cells = {}, merges = [], rowH = {}, fonts = [], fontIx = {}, xfs = [], xfIx = {}, borders = ['<border><left/><right/><top/><bottom/><diagonal/></border>'], bIx = { '': 0 };
-    function fontId(b, sz){ var k = (b ? 'b' : 'n') + sz; if(fontIx[k] == null){ fontIx[k] = fonts.length; fonts.push('<font>' + (b ? '<b/>' : '') + '<sz val="' + sz + '"/><name val="SutonnyMJ"/><family val="2"/></font>'); } return fontIx[k]; }
+    function fontId(b, sz){ var k = (b ? 'b' : 'n') + sz; if(fontIx[k] == null){ fontIx[k] = fonts.length; fonts.push('<font>' + (b ? '<b/>' : '') + '<sz val="' + sz + '"/><name val="' + (UNI ? 'Nikosh' : 'SutonnyMJ') + '"/><family val="2"/></font>'); } return fontIx[k]; }
     function borderId(bd){ if(bIx[bd] == null){ bIx[bd] = borders.length; var t = function(ch, tag){ return bd.indexOf(ch) >= 0 ? '<' + tag + ' style="thin"><color auto="1"/></' + tag + '>' : '<' + tag + '/>'; }; borders.push('<border>' + t('L', 'left') + t('R', 'right') + t('T', 'top') + t('B', 'bottom') + '<diagonal/></border>'); } return bIx[bd]; }
     function xf(o){
       o = o || {}; var k = JSON.stringify([!!o.b, o.sz || 12, o.h || '', o.v || 'center', o.bd || '', o.nf || 0, !!o.shrink, !!o.wrap]);
@@ -2018,7 +2020,8 @@
         merge(r, 1, 5, 0, bj(w.b), { h: 'left', bd: B, shrink: 1 });
         put('G' + r, ':', { h: 'center', bd: B });
         put('H' + r, bj('টাকা'), { h: 'center', bd: B, shrink: 1 });
-        put('I' + r, +w.v, { h: 'right', bd: B, nf: 164 });
+        if(UNI) put('I' + r, bj(fmtMoney(w.v)), { h: 'right', bd: B, shrink: 1 });
+        else put('I' + r, +w.v, { h: 'right', bd: B, nf: 164 });
       }
     });
     /* স্বাক্ষর */
@@ -2071,9 +2074,9 @@
 
   /* ---------- UI ---------- */
   var LS = 'hsiaSalaryXlsx.v1';
-  var DEF = { ein: '', nid: '', name: '', dob: '', joinDate: '', curDate: '', joinGrade: 9, joinDesig: '', joinOffice: '', grade: 9, desig: '', office: '', perm: 'No', pay: '', pp: 0 };
+  var DEF = { ein: '', nid: '', name: '', dob: '', joinDate: '', curDate: '', joinGrade: 9, joinDesig: '', joinOffice: '', grade: 9, desig: '', office: '', perm: 'No', pay: '', pp: 0, enc: 'uni' };
   var S = null, ov = null;
-  function load(){ var o = {}; try{ o = JSON.parse(localStorage.getItem(LS) || '{}'); }catch(e){} S = {}; Object.keys(DEF).forEach(function(k){ S[k] = (o && o[k] != null) ? o[k] : DEF[k]; }); }
+  function load(){ var o = {}; try{ o = JSON.parse(localStorage.getItem(LS) || '{}'); }catch(e){} S = {}; Object.keys(DEF).forEach(function(k){ S[k] = (o && o[k] != null) ? o[k] : DEF[k]; }); UNI = S.enc !== 'bijoy'; }
   function save(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
 
   var CSS = "@font-face{font-family:'SMJ';src:url(" + SMJ_DATA + ") format('truetype');font-weight:400;font-style:normal;}" +
@@ -2093,6 +2096,7 @@
     "#salOv .warn{max-width:760px;margin:0 auto 10px;background:#3a2b10;color:#ffd48a;border-radius:10px;padding:8px 10px;font-size:13px;}" +
     "#salOv .pv{max-width:760px;margin:0 auto;background:#fff;color:#000;border-radius:6px;padding:8px;font-family:'SMJ',sans-serif;font-size:15px;line-height:1.35;overflow-x:auto;}" +
     "#salOv .pv table{border-collapse:collapse;width:100%;} #salOv .pv td{border:1px solid #000;padding:2px 5px;vertical-align:middle;}" +
+    "#salOv .pv.uni{font-family:'Nikosh','Noto Sans Bengali','Hind Siliguri',sans-serif;font-size:14px;}" +
     "#salOv .pv .a{width:26px;text-align:center;} #salOv .pv .v{text-align:right;white-space:nowrap;} #salOv .pv .c{text-align:center;} #salOv .pv .hd{text-align:center;font-weight:700;border:0;}" +
     "#salOv .pv .narr{margin:10px 2px;}";
   function opt(v, t, sel){ return '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(t) + '</option>'; }
@@ -2108,7 +2112,7 @@
       else if(w.k === 'desig') h += '<tr>' + a + '<td>' + b + ' ' + esc(bj(w.f)) + '</td><td class="c">:</td><td class="v">' + esc(bj(w.v)) + '</td></tr>';
       else if(w.k === 'head') h += '<tr>' + a + '<td colspan="3"><b>' + b + '</b></td></tr>';
       else if(w.k === 'scale') h += '<tr>' + a + '<td>' + b + ' ' + esc(bj(w.f)) + '</td><td class="c">:</td><td class="v">' + esc(bj(w.v)) + '</td></tr>';
-      else h += '<tr>' + a + '<td>' + b + '</td><td class="c">:</td><td class="v">' + esc(bj('টাকা')) + ' ' + esc(fmtMoney(w.v)) + '</td></tr>';
+      else h += '<tr>' + a + '<td>' + b + '</td><td class="c">:</td><td class="v">' + esc(bj('টাকা')) + ' ' + esc(bj(fmtMoney(w.v))) + '</td></tr>';
     });
     h += '</table><div class="narr">' + esc(bj(M.n1)) + '</div><div class="narr">' + esc(bj(M.n2)) + '</div>';
     return h;
@@ -2116,7 +2120,8 @@
 
   function render(){
     var M = model(S), el = ov.querySelector('#slPv'), wn = ov.querySelector('#slWarn');
-    el.innerHTML = previewHtml(M);
+    el.className = 'pv' + (UNI ? ' uni' : ''); el.innerHTML = previewHtml(M);
+    var pl = ov.querySelector('#slPvL'); if(pl) pl.textContent = UNI ? 'প্রিভিউ (Unicode)' : 'প্রিভিউ (বিজয় - SutonnyMJ)';
     wn.innerHTML = M.c.warn.map(function(t){ return '<div class="warn">⚠️ ' + esc(t) + '</div>'; }).join('') + (M.c.retire ? '<div class="warn">ℹ️ ০১-০৭-২০২৬ থেকে ৩০-০৬-২০২৭ এর মধ্যে অবসর - ২০ নং ঘর ১০০% ধরে হিসাব হয়েছে।</div>' : '');
   }
   function fileName(){ var n = (S.name || '').trim().replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, '-'); return 'Salary-Fixation' + (n ? '-' + n : '') + '-Legal.xlsx'; }
@@ -2135,7 +2140,8 @@
     var pays = (D.t15[S.grade] || []).map(function(v){ return '<option value="' + v + '">'; }).join('');
     ov.innerHTML =
       '<div class="sl-top"><button class="sl-b" id="slX" title="বন্ধ">←</button><div class="sl-t">বেতন নির্ধারণী (Excel)</div><button class="sl-b" id="slR" title="নতুন ফর্ম">⟳</button><button class="sl-b sl-p" id="slD">📊 Excel সেভ</button></div>' +
-      '<div class="sl-body"><div class="hint">বাংলা (অভ্র/Unicode) যেভাবেই লিখুন, নিচের ফর্ম ও Excel ফাইলে সব লেখা বিজয় (SutonnyMJ) হয়ে যাবে। Excel Legal কাগজে প্রিন্টের জন্য সেট করা।</div>' +
+      '<div class="sl-body"><div class="hint">বাংলা (অভ্র/Unicode) যেভাবেই লিখুন, Excel Legal কাগজে প্রিন্টের জন্য সেট করা। ফোনে ঠিকভাবে দেখাতে "Unicode" রাখুন; বিজয় ফন্ট (SutonnyMJ) ইনস্টল থাকা পিসিতে চাইলে "বিজয়" বেছে নিন।</div>' +
+      '<div class="card"><h3>আউটপুট ফন্ট</h3><div class="g">' + field('f_enc', 'লেখার ধরন', '<select id="f_enc" data-k="enc">' + opt('uni', 'Unicode (ফোন/পিসি সবখানে ঠিক দেখায়)', S.enc !== 'bijoy') + opt('bijoy', 'বিজয় (SutonnyMJ ইনস্টল থাকলে)', S.enc === 'bijoy') + '</select>', 1) + '</div></div>' +
       '<div class="card"><h3>কর্মকর্তা/কর্মচারীর তথ্য</h3><div class="g">' +
         field('f_name', 'নাম', '<input id="f_name" data-k="name" autocomplete="off">', 1) +
         field('f_ein', 'ই আই এন', '<input id="f_ein" data-k="ein" inputmode="numeric" autocomplete="off">') +
@@ -2158,7 +2164,7 @@
         field('f_pp', 'ব্যক্তিগত বেতন (যদি থাকে)', '<input id="f_pp" data-k="pp" type="number" inputmode="numeric" autocomplete="off">') +
       '</div></div>' +
       '<datalist id="dl_off">' + D.off.map(function(x){ return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>' +
-      '<div id="slWarn"></div><div class="hint">প্রিভিউ (বিজয় - SutonnyMJ)</div><div class="pv" id="slPv"></div><div style="height:30px"></div></div>';
+      '<div id="slWarn"></div><div class="hint" id="slPvL">প্রিভিউ</div><div class="pv" id="slPv"></div><div style="height:30px"></div></div>';
     document.body.appendChild(ov);
     Object.keys(DEF).forEach(function(k){ var el = ov.querySelector('[data-k="' + k + '"]'); if(el && el.tagName !== 'SELECT') el.value = S[k] == null ? '' : S[k]; });
     ov.addEventListener('input', onChange); ov.addEventListener('change', onChange);
@@ -2170,7 +2176,7 @@
   function onChange(e){
     var el = e.target, k = el && el.getAttribute && el.getAttribute('data-k'); if(!k) return;
     var v = el.value; if(el.getAttribute('data-n') === '1' || k === 'pay' || k === 'pp') v = v === '' ? '' : +v;
-    S[k] = v; save();
+    S[k] = v; if(k === 'enc') UNI = v !== 'bijoy'; save();
     if(k === 'grade'){ var dl = ov.querySelector('#dl_pay'); dl.innerHTML = (D.t15[S.grade] || []).map(function(x){ return '<option value="' + x + '">'; }).join(''); ov.querySelector('#dl_d').innerHTML = desigList(S.grade); }
     if(k === 'joinGrade') ov.querySelector('#dl_jd').innerHTML = desigList(S.joinGrade);
     render();
