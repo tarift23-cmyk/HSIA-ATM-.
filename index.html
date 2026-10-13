@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261013-190500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261013-193000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -11699,7 +11699,8 @@ function initExchangePanel(){
         window._spAfterType = (type)=>{
           window._spType = type;
           if(type === 'UFN'){
-            /* QBM entry: admin only, substitute is required */
+            /* QBM entry: admin only, substitute is required. Works like Add Exchange / Add CL: position + ONE date + substitute (no From–To) */
+            { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); if(ti) ti.value = ''; if(tw) tw.style.display = 'none'; }
             if(!exIsAdmin()){ alert('UFN can be added only by the admin. Please sign in as admin and try again.'); requireRosterAuth(); return; }
             if(!dateChecks()) return;
             if((subInput.value || '').trim()) window._commitUfn();
