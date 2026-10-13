@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261013-212000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261013-214500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -3733,7 +3733,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
     { key:'cl', title:'CL Form', file:'cl-form.pdf', name:'CL-Form.pdf' },
     { key:'ex', title:'Exchange Form', file:'exchange-form.pdf', name:'Exchange-Form.pdf' },
     { key:'blank', title:'Blank Page' },
-    { key:'others', title:'Others', folder:true, items:[ { key:'salary', title:'Salary Fixation' } ] }
+    { key:'others', title:'Others', folder:true, items:[] }
   ];
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function formItem(f){
