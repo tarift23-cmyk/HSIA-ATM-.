@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261013-193000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261013-204500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -11546,6 +11546,20 @@ function initExchangePanel(){
     hit.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;z-index:1;';
     hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; window._pendingUfnAfterPick = false; openExchangePosPicker(); });
     wrap.appendChild(hit);
+  } else if(posSel && posSel.parentNode){
+    /* The wrapper + invisible tap-area already exist in the page markup (saved HTML), so the branch above is skipped and the
+       tap-area never got its click handler -> tapping "Position" did nothing. Attach it here (once). */
+    const wrap = posSel.parentNode;
+    let hit = Array.prototype.find.call(wrap.children, c=> c !== posSel && /absolute/.test((c.style && c.style.position) || ''));
+    if(!hit){
+      hit = document.createElement('span');
+      hit.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;cursor:pointer;z-index:1;';
+      wrap.appendChild(hit);
+    }
+    if(!hit._xposBound){
+      hit._xposBound = true;
+      hit.addEventListener('click', ()=>{ window._pendingClAfterPick = false; window._pendingExAfterPick = false; window._pendingUfnAfterPick = false; openExchangePosPicker(); });
+    }
   }
   initClData();
   initQbm();
@@ -12915,7 +12929,7 @@ function loadNotepadState(){
   }catch(e){}
   let legacy = '';
   try{ legacy = localStorage.getItem(ADMIN_NOTEPAD_KEY) || ''; }catch(e){}
-  const sections = [{ id:'general', name:'General', text: legacy }];
+  const sections = [{ id:'general', name:'General', text: legacy, tags:[], subs:{} }];
   return { sections, activeId:'general' };
 }
 // activeId (which section is showing) is a per-device view setting — it is saved locally but
@@ -12973,12 +12987,13 @@ function initAdminNotepad(){
     const active = state.sections.find(sec=> sec.id === state.activeId);
     const ids = getActiveTagIds(active);
     const key = npSubKey(ids);
-    ta.value = active ? (ids.length ? (active.subs[key] || '') : active.text) : '';
+    ta.value = active ? (ids.length ? (((active.subs || {})[key]) || '') : active.text) : '';
     ta.placeholder = ids.length ? 'এই কম্বিনেশনের নোট লিখুন (পাসওয়ার্ড দিয়ে এডিট করা যাবে)...' : 'এই সেকশনের নোট লিখুন (শুধু পাসওয়ার্ড দিয়ে এডিট করা যাবে)...';
     renderSubBar(active, ids);
   }
   function renderSubBar(active, ids){
     if(!subBar) return;
+    if(active){ if(!Array.isArray(active.tags)) active.tags = []; if(!active.subs || typeof active.subs !== 'object') active.subs = {}; }
     if(!active){ subBar.innerHTML = ''; if(subLabel) subLabel.textContent = ''; return; }
     const usedIds = new Set();
     Object.keys(active.subs).forEach(k=> k.split('+').forEach(i=> usedIds.add(i)));
@@ -13031,6 +13046,8 @@ function initAdminNotepad(){
       const state = loadNotepadState();
       const active = state.sections.find(sec=> sec.id === state.activeId);
       if(!active) return;
+      if(!Array.isArray(active.tags)) active.tags = [];
+      if(!active.subs || typeof active.subs !== 'object') active.subs = {};
       const actEl = e.target.closest('[data-act]');
       const act = actEl && actEl.getAttribute('data-act');
       const tid = actEl && actEl.getAttribute('data-tid');
@@ -13117,6 +13134,7 @@ function initAdminNotepad(){
     const active = state.sections.find(sec=> sec.id === state.activeId);
     if(!active) return;
     const ids = getActiveTagIds(active);
+    if(!active.subs || typeof active.subs !== 'object') active.subs = {};
     if(ids.length){
       const key = npSubKey(ids);
       if(ta.value) active.subs[key] = ta.value; else delete active.subs[key];
