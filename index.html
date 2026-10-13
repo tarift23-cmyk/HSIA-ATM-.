@@ -8951,7 +8951,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   if(tableKey && standbyTableKeys().indexOf(tableKey) !== -1 && data.length){
     const sbTxt = standbyOf(data).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
     tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea></td></tr>`;
-    const sbEl = tbody.querySelector('.roster-standby-input');
+    const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input)');   /* NOT the OJTI box (it shares the class and sits above) */
     if(sbEl) sbEl.addEventListener('input', ()=>{
       data[0].standby = sbEl.value.split(/[,\n]/).map(x=> x.trim()).filter(Boolean);
       sbEl.rows = Math.max(1, Math.ceil(sbEl.value.length / 38));
