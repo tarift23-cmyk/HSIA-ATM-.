@@ -7427,17 +7427,23 @@ function exchangeShiftWindow(dateKey, team, half){
 function exChainFix(list){
   const out = list.slice();
   const nm = v=> String(v || '').trim().toLowerCase();
-  list.forEach(E=>{
-    if(!E || E.cl || E.special || E.vacant || E.moved || E.via) return;
-    if(!nm(E.subName)) return;
-    const w = nm(E.who || E.base); if(!w) return;
-    const ci = out.findIndex(C=> C && (C.cl || C.special) && !C.vacant && !C.via && +C.team === +E.team && nm(C.subName) === w && !(C.table === E.table && C.pos === E.pos));
-    if(ci < 0) return;
+  /* FIX: an Exchange placed on someone's OWN (vacated) cell now stays on that cell. Old behaviour pushed it onto the
+     CL cell he was covering (CL -> him struck -> new person) and left his own cell empty. Data already saved that way
+     (CL cell with `via` + a vacated "moved" cell of the same person) is turned back here so it shows correctly:
+       own cell        : original struck -> new person
+       CL cell         : original (CL) struck -> the person who covers it */
+  for(let ci = 0; ci < out.length; ci++){
     const C = out[ci];
-    out[ci] = Object.assign({}, C, { via: String(C.subName).trim(), subName: E.subName });
-    const ei = out.indexOf(E);
-    if(ei >= 0) out[ei] = { table:E.table, pos:E.pos, team:+E.team, subName:'', vacant:true, moved:true, to:String(C.pos || ''), who:(E.who || E.base || ''), nightHalf:E.nightHalf || '', base:E.base || '' };
-  });
+    if(!C || !C.via || C.vacant || !(C.cl || C.special)) continue;
+    const mi = out.findIndex(M=> M && M.moved && +M.team === +C.team && nm(M.who || M.base) === nm(C.via) && !(M.table === C.table && M.pos === C.pos));
+    if(mi < 0) continue;
+    const M = out[mi];
+    if(out.some(X=> X && X !== M && !X.moved && X.table === M.table && X.pos === M.pos && +X.team === +M.team)) continue;
+    out[mi] = { table:M.table, pos:M.pos, team:+M.team, subName:String(C.subName || '').trim(), nightHalf:M.nightHalf || '', who:(M.who || M.base || ''), base:(M.who || M.base || '') };
+    const fixed = Object.assign({}, C, { subName: String(C.via).trim() });
+    delete fixed.via;
+    out[ci] = fixed;
+  }
   /* vacant "moved" cells: point (arrow) to the position where that person is working now */
   out.forEach((M, mi)=>{
     if(!M || !M.moved || M.to) return;
@@ -7551,6 +7557,7 @@ function exSpShort(t){
 /* A same-shift person who is already covering another position that day (CL / special substitute) and then gets an Exchange:
    the exchange replaces him THERE (that position), and his own position stays vacant. */
 function exChainTarget(dateKey, entry){
+  return null;   /* disabled: the exchange stays on the cell it was made for (see exChainFix) */
   try{
     if(!entry || entry.cl || entry.special || entry.vacant || entry.moved) return null;
     const list = exHistList(EXCHANGES[dateKey]);
