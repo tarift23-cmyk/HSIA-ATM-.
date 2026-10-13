@@ -7424,6 +7424,21 @@ function exchangeShiftWindow(dateKey, team, half){
    was rostered at that time even if the roster has changed since). */
 /* View-level chain rule (also repairs data saved before the rule existed): a same-shift person who covers someone's CL / leave
    and then gets an Exchange is replaced THERE (CL cell: original struck -> him struck -> new person), his own cell stays vacant. */
+/* "Change" = the admin only moved someone to another position of the SAME shift that day (he is at work: no CL, no shift
+   exchange). Detected by: the relieved person is also working as a substitute in another cell of the same team.
+   Such an entry is shown / printed as "Change" and is NOT counted as an Exchange or CL in the database / Me panel. */
+function exIsPositionChange(x, list){
+  try{
+    if(!x || x.special || x.moved || x.ufn) return false;
+    const nm = v=> String(v || '').trim().toLowerCase();
+    const w = nm(x.who || x.base || exHistBaseName(x));
+    if(!w) return false;
+    const half = v=> String(v || '');
+    return exHistList(list).some(C=> C && C !== x && !C.moved && !C.vacant && !C.ufn && +C.team === +x.team
+      && nm(C.subName) === w && !(C.table === x.table && C.pos === x.pos)
+      && (!half(C.nightHalf) || !half(x.nightHalf) || half(C.nightHalf) === half(x.nightHalf)));
+  }catch(e){ return false; }
+}
 function exChainFix(list){
   const out = list.slice();
   const nm = v=> String(v || '').trim().toLowerCase();
@@ -7499,8 +7514,16 @@ function clIdFor(dateKey, table, pos, team){ return (dateKey + '_' + table + '_'
 function clDaysForShift(sh){ return sh === 'Night' ? 2 : (sh === 'Morning' || sh === 'Afternoon') ? 1 : 0; }
 function clDaysForLabel(l){ l = String(l || ''); return /^Night/.test(l) ? 2 : (clDaysForShift(l) || 1); }   /* Me panel: 'Night', 'Night 8:30PM-12AM', 'Night 12AM-7:30AM' = 2 days */
 function clRecDays(r){ if(r && r.shift === 'OT'){ const sl = +r.team - 110; return sl === 1 ? 2 : 1; } return clDaysForShift(r && r.shift) || (+(r && r.days) || 0); }   /* Night = 2 days, Morning / Afternoon = 1 */
+function clIsPositionChangeRec(r){
+  try{
+    const d = r.date;
+    const list = exHistList(typeof EXCHANGES !== 'undefined' && EXCHANGES && EXCHANGES[d]).concat(exHistList(typeof EX_HISTORY !== 'undefined' && EX_HISTORY && EX_HISTORY[d]));
+    const x = list.find(e=> e && e.cl && e.table === r.table && e.pos === r.pos && +e.team === +r.team);
+    return !!x && exIsPositionChange(x, list);
+  }catch(e){ return false; }
+}
 function clRecords(){
-  return Object.keys(CL_LOG).filter(k=> k !== '_v').map(k=> Object.assign({ _id:k }, CL_LOG[k])).filter(r=> r && r.date);
+  return Object.keys(CL_LOG).filter(k=> k !== '_v').map(k=> Object.assign({ _id:k }, CL_LOG[k])).filter(r=> r && r.date && !clIsPositionChangeRec(r));
 }
 function clUsedBy(who, year, exceptId){
   const key = clNorm(who); let n = 0;
@@ -10642,7 +10665,7 @@ function qbmCollect(from, to, raw){
         detailed: sub || 'Vacant',
         place: ex.pos || '',
         relieved: who,
-        rmk: ex.cl ? 'CL' : ex.special ? (ex.spType || 'Special') : 'Exchange',
+        rmk: ex.special ? (ex.spType || 'Special') : exIsPositionChange(ex, exHistList(EXCHANGES[dk])) ? 'Change' : ex.cl ? 'CL' : 'Exchange',
         period: qbmPeriod(ex, dk),
         label: qbmShiftLabel(ex, dk)
       });
@@ -14331,6 +14354,7 @@ function openRosterWindow(){
       const sub = String(x.subName || '').trim();
       if(!sub && !x.cl && !x.special) return;
       const rel = String(x.who || x.base || exHistBaseName(x) || '').trim(), lab = labOf(x);
+      if(!x.special && exIsPositionChange(x, list)) return;   /* same-shift position change by admin: not a CL, not an Exchange */
       if(rel && norm(rel) === mine){
         if(x.cl){ if(ledMatch(x, lab)) return; rec.cl.push({ label:lab, days:clDaysForLabel(lab), sub:sub }); }
         else rec.by.push({ label:lab, sub:sub, tp:x.special ? (x.spType || 'EL') : 'Exchange' });
