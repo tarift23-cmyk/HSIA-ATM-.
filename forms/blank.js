@@ -577,6 +577,10 @@
     return doc.body.innerHTML;
   }
 
+  /* shared with the CL / Exchange forms (forms/forms.js): the SutonnyMJ font faces + the Unicode -> Bijoy converter */
+  window.hsiaSMJ = { toBijoy: toBijoy, faceCss:
+    "@font-face{font-family:'SutonnyMJ';src:url(" + SMJ_DATA + ") format('truetype');font-weight:400;font-style:normal;}" +
+    "@font-face{font-family:'SutonnyMJ';src:url(" + NIKP_DATA + ") format('truetype');font-weight:400;font-style:normal;unicode-range:U+0020,U+0025,U+0028-0029,U+002B-002F,U+003A;}" };
   var CONTENT_CSS =
     "@font-face{font-family:'SutonnyMJ';src:url(" + SMJ_DATA + ") format('truetype');font-weight:400;font-style:normal;}" +
     "@font-face{font-family:'SutonnyMJ';src:url(" + NIKP_DATA + ") format('truetype');font-weight:400;font-style:normal;unicode-range:U+0020,U+0025,U+0028-0029,U+002B-002F,U+003A;}" +
