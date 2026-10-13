@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261013-204500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261013-212000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -10182,7 +10182,7 @@ function pickExchangePos(b){
   }
   updateExchangeCurrentHint();
   try{ posSel.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
-  if(window._xMode === 'ex' || window._xMode === 'cl'){
+  if(window._xMode === 'ex' || window._xMode === 'cl' || (window._xMode === 'sp' && window._spPreType === 'UFN')){
     window._xFlowWho = b.getAttribute('data-name') || '';
     if(window._xFlowLabel) window._xFlowLabel();
     setTimeout(()=>{ if(window.openXDutyCal) window.openXDutyCal(); }, 60);
@@ -10283,7 +10283,7 @@ function renderXDutyCal(){
     g += '<div class="xdc-d' + (off ? ' off' : '') + (past ? ' past' : '') + (info.dk === today ? ' today' : '') + '" data-d="' + d + '"' + bg + '>' + d + '<small>' + _xEsc(info.text) + '</small></div>';
   }
   box.innerHTML =
-    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._xMode === 'cl' ? 'CL' : 'Exchange') + ' \u00B7 Select date</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
+    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._xMode === 'cl' ? 'CL' : (window._xMode === 'sp' && window._spPreType === 'UFN') ? 'UFN' : 'Exchange') + ' \u00B7 Select date</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
     '<div class="xdc-nav"><button type="button" id="xdcPrev"' + (monthsFromNow <= 0 ? ' disabled' : '') + '>\u2039</button><div class="xdc-mon">' + MN[m] + ' ' + y + '</div><button type="button" id="xdcNext"' + (monthsFromNow >= 11 ? ' disabled' : '') + '>\u203A</button></div>' +
     '<div class="xdc-grid">' + g + '</div><div class="xdc-warn" id="xdcWarn"></div><div id="xdcHalf"></div>';
   box.querySelector('#xdcClose').addEventListener('click', closeXDutyCal);
@@ -11458,20 +11458,22 @@ function initExchangePanel(){
       window._xMode = m;
       form.classList.toggle('xmode-off', !m);
       form.classList.toggle('xmode-nosub', m === 'cl' || m === 'sp');
-      form.classList.toggle('xmode-flow', m === 'ex' || m === 'cl');
-      { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); if(tw) tw.style.display = (m === 'sp') ? 'flex' : 'none'; if(ti && m !== 'sp') ti.value = ''; }
+      const _ufnFlow = (m === 'sp' && window._spPreType === 'UFN');   /* UFN: position -> date popup -> substitute (like CL / Exchange) */
+      form.classList.toggle('xmode-flow', m === 'ex' || m === 'cl' || _ufnFlow);
+      { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); const showTo = (m === 'sp' && !_ufnFlow); if(tw) tw.style.display = showTo ? 'flex' : 'none'; if(ti && !showTo) ti.value = ''; }
       Object.keys(modeBtn).forEach(k=>{ if(modeBtn[k]) modeBtn[k].classList.toggle('on', k === m); });
       if(m === 'cl' || m === 'sp'){ if(subInput) subInput.value = ''; }
       if(m !== 'sp') window._spPreType = '';
       if(confirmBtn) confirmBtn.textContent = m === 'ex' ? '✔ Add Exchange' : (m === 'sp' && window._spPreType) ? ('✔ Next \u00B7 ' + window._spPreType) : '✔ Next';
-      if((m === 'ex' || m === 'cl') && window._xFlowLabel) window._xFlowLabel();
+      if((m === 'ex' || m === 'cl' || _ufnFlow) && window._xFlowLabel) window._xFlowLabel();
       try{ updateExchangeCurrentHint(); }catch(e){}
     };
     setMode('');
     window._xSetMode = setMode;
     /* flow helpers: position first, then the duty calendar, then the substitute table */
     window._xFlowHasPos = ()=>{ const tS = document.getElementById('exchangeTable'), pS = document.getElementById('exchangePos'), tmS = document.getElementById('exchangeTeam'); return !!(tS && pS && tS.value && pS.value && (isThMrTable(tS.value) || (tmS && tmS.value !== ''))); };
-    window._xFlowLabel = ()=>{ if(confirmBtn && (window._xMode === 'ex' || window._xMode === 'cl')) confirmBtn.textContent = window._xFlowHasPos() ? '\uD83D\uDCC5 Select date' : '\uD83D\uDCCD Select position'; };
+    window._xIsUfnFlow = ()=> window._xMode === 'sp' && window._spPreType === 'UFN';
+    window._xFlowLabel = ()=>{ if(confirmBtn && (window._xMode === 'ex' || window._xMode === 'cl' || window._xIsUfnFlow())) confirmBtn.textContent = window._xFlowHasPos() ? '\uD83D\uDCC5 Select date' : '\uD83D\uDCCD Select position'; };
     window._xRunMode = ()=>{ const b = modeBtn[window._xMode]; if(!b) return; window._xConfirm = true; try{ b.click(); } finally { window._xConfirm = false; } };
     window._xFlowStart = ()=>{
       try{
@@ -11528,7 +11530,7 @@ function initExchangePanel(){
     }, true);
     if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
       const b = modeBtn[window._xMode]; if(!b) return;
-      if(window._xMode === 'ex' || window._xMode === 'cl'){ if(window._xFlowHasPos()) openXDutyCal(); else openExchangePosPicker(); return; }
+      if(window._xMode === 'ex' || window._xMode === 'cl' || window._xIsUfnFlow()){ if(window._xFlowHasPos()) openXDutyCal(); else openExchangePosPicker(); return; }
       window._xConfirm = true;
       try{ b.click(); } finally { window._xConfirm = false; }
     });
@@ -11772,6 +11774,7 @@ function initExchangePanel(){
           window._spPicking = false;
           window._spPreType = b.getAttribute('data-sp');
           if(window._xSetMode) window._xSetMode('sp');   /* type chosen -> date / position fields appear */
+          if(window._spPreType === 'UFN' && window._xFlowStart) window._xFlowStart();   /* UFN: position -> date popup -> substitute */
           return;
         }
         if(window._spAfterType) window._spAfterType(b.getAttribute('data-sp'));
