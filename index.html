@@ -10183,7 +10183,7 @@ function pickExchangePos(b){
   }
   updateExchangeCurrentHint();
   try{ posSel.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
-  if(window._xMode === 'ex' || window._xMode === 'cl' || (window._xMode === 'sp' && window._spPreType === 'UFN')){
+  if(window._xMode === 'ex' || window._xMode === 'cl' || (window._xIsUfnFlow && window._xIsUfnFlow())){
     window._xFlowWho = b.getAttribute('data-name') || '';
     if(window._xFlowLabel) window._xFlowLabel();
     setTimeout(()=>{ if(window.openXDutyCal) window.openXDutyCal(); }, 60);
@@ -10218,7 +10218,20 @@ function pickExchangePos(b){
     '.xdc-half button{ display:block; width:100%; margin:4px 0 0; padding:10px 8px; border-radius:10px; border:1px solid #d9d7cf; background:#f4f3f0; font-size:13px; font-weight:800; cursor:pointer; color:#1a1a1a; }';
   document.head.appendChild(st);
 })();
-const _xdc = { y:0, m:0, ctx:null, pend:null, warnT:0 };
+(function(){
+  const st = document.createElement('style');
+  st.textContent =
+    '.xdc-d.sel{ outline:3px solid #1f7a4d; outline-offset:-3px; box-shadow:inset 0 0 0 100px rgba(31,122,77,.22); position:relative; }' +
+    '.xdc-d.sel::after{ content:"\\2713"; position:absolute; top:1px; right:4px; font-size:12px; font-weight:900; color:#1f7a4d; }' +
+    '.xdc-multi{ display:flex; align-items:center; gap:8px; margin-top:10px; }' +
+    '.xdc-multi span{ flex:1; font-size:13px; font-weight:800; color:#444; }' +
+    '.xdc-multi button{ border:0; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:800; cursor:pointer; }' +
+    '#xdcClear{ background:#ecebe5; color:#333; } #xdcDone{ background:#1f7a4d; color:#fff; }' +
+    '.xdc-hint{ font-size:11.5px; color:#6b6a64; font-weight:700; margin:6px 2px 0; }';
+  document.head.appendChild(st);
+})();
+const _xdc = { y:0, m:0, ctx:null, pend:null, warnT:0, sel:new Set() };
+function _xdcMulti(){ return window._xMode === 'sp' && window._spPreType === 'Festival' && exIsAdmin(); }   /* several days at once: Festival, admin */
 function _xdcKey(y, m, d){ return y + '-' + String(m + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
 function _xdcNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
 function xdcContext(){
@@ -10271,7 +10284,7 @@ function xdcPick(info, half){
 }
 function renderXDutyCal(){
   const box = document.getElementById('xdcBox'); if(!box || !_xdc.ctx) return;
-  const ctx = _xdc.ctx, y = _xdc.y, m = _xdc.m, today = todayDateKey();
+  const ctx = _xdc.ctx, y = _xdc.y, m = _xdc.m, today = todayDateKey(), multi = _xdcMulti();
   const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const nowP = today.split('-').map(Number);
   const monthsFromNow = (y - nowP[0]) * 12 + (m - (nowP[1] - 1));
@@ -10281,12 +10294,13 @@ function renderXDutyCal(){
   for(let d = 1; d <= n; d++){
     const info = xdcDay(ctx, y, m, d), past = info.dk < today, off = info.st === 'Off' || !info.st;
     const bg = off ? '' : ' style="background:var(--' + info.cls + ');border-color:transparent"';
-    g += '<div class="xdc-d' + (off ? ' off' : '') + (past ? ' past' : '') + (info.dk === today ? ' today' : '') + '" data-d="' + d + '"' + bg + '>' + d + '<small>' + _xEsc(info.text) + '</small></div>';
+    g += '<div class="xdc-d' + (off ? ' off' : '') + (past ? ' past' : '') + (info.dk === today ? ' today' : '') + (multi && _xdc.sel.has(info.dk) ? ' sel' : '') + '" data-d="' + d + '"' + bg + '>' + d + '<small>' + _xEsc(info.text) + '</small></div>';
   }
   box.innerHTML =
-    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._xMode === 'cl' ? 'CL' : (window._xMode === 'sp' && window._spPreType === 'UFN') ? 'UFN' : 'Exchange') + ' \u00B7 Select date</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
+    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._xMode === 'cl' ? 'CL' : (window._xMode === 'sp' && window._spPreType === 'UFN') ? 'UFN' : (window._xMode === 'sp' && window._spPreType === 'Festival') ? 'Festival' : 'Exchange') + ' \u00B7 ' + (multi ? 'Select days' : 'Select date') + '</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
     '<div class="xdc-nav"><button type="button" id="xdcPrev"' + (monthsFromNow <= 0 ? ' disabled' : '') + '>\u2039</button><div class="xdc-mon">' + MN[m] + ' ' + y + '</div><button type="button" id="xdcNext"' + (monthsFromNow >= 11 ? ' disabled' : '') + '>\u203A</button></div>' +
-    '<div class="xdc-grid">' + g + '</div><div class="xdc-warn" id="xdcWarn"></div><div id="xdcHalf"></div>';
+    '<div class="xdc-grid">' + g + '</div><div class="xdc-warn" id="xdcWarn"></div><div id="xdcHalf"></div>' +
+    (multi ? '<div class="xdc-hint">Tap the duty days to select / unselect (you can go to other months too).</div><div class="xdc-multi"><span id="xdcCnt">' + _xdc.sel.size + ' day' + (_xdc.sel.size === 1 ? '' : 's') + ' selected</span><button type="button" id="xdcClear">Clear</button><button type="button" id="xdcDone">Done \u2714</button></div>' : '');
   box.querySelector('#xdcClose').addEventListener('click', closeXDutyCal);
   box.querySelector('#xdcPrev').addEventListener('click', ()=>{ _xdc.m--; if(_xdc.m < 0){ _xdc.m = 11; _xdc.y--; } renderXDutyCal(); });
   box.querySelector('#xdcNext').addEventListener('click', ()=>{ _xdc.m++; if(_xdc.m > 11){ _xdc.m = 0; _xdc.y++; } renderXDutyCal(); });
@@ -10295,13 +10309,28 @@ function renderXDutyCal(){
     const hb = box.querySelector('#xdcHalf'); if(hb) hb.innerHTML = '';
     if(info.st === 'Off' || !info.st){ xdcWarn('\u26A0 No duty on ' + dd + ' (Off day). Please select a duty day.', el); return; }
     if(info.dk < today){ xdcWarn('\u26A0 ' + dd + ' is a past date. Please select today or a future date.', el); return; }
+    if(multi){
+      if(_xdc.sel.has(info.dk)) _xdc.sel.delete(info.dk); else _xdc.sel.add(info.dk);
+      renderXDutyCal();
+      return;
+    }
+    window._festDays = [];
     xdcPick(info, '');
   }));
+  if(multi){
+    box.querySelector('#xdcClear').addEventListener('click', ()=>{ _xdc.sel.clear(); renderXDutyCal(); });
+    box.querySelector('#xdcDone').addEventListener('click', ()=>{
+      if(!_xdc.sel.size){ xdcWarn('\u26A0 Select at least one duty day.'); return; }
+      const days = Array.from(_xdc.sel).sort(), p = days[0].split('-').map(Number);
+      window._festDays = days.length > 1 ? days : [];
+      xdcPick(xdcDay(ctx, p[0], p[1] - 1, p[2]), '');
+    });
+  }
 }
 function openXDutyCal(){
   const ctx = xdcContext();
   if(!ctx){ openExchangePosPicker(); return; }
-  _xdc.ctx = ctx;
+  _xdc.ctx = ctx; _xdc.sel = new Set();
   const t = todayDateKey().split('-').map(Number); _xdc.y = t[0]; _xdc.m = t[1] - 1;
   let ov = document.getElementById('xdcOverlay');
   if(!ov){
@@ -11459,7 +11488,7 @@ function initExchangePanel(){
       window._xMode = m;
       form.classList.toggle('xmode-off', !m);
       form.classList.toggle('xmode-nosub', m === 'cl' || m === 'sp');
-      const _ufnFlow = (m === 'sp' && window._spPreType === 'UFN');   /* UFN: position -> date popup -> substitute (like CL / Exchange) */
+      const _ufnFlow = (m === 'sp' && (window._spPreType === 'UFN' || window._spPreType === 'Festival'));   /* UFN: position -> date popup -> substitute (like CL / Exchange) */
       form.classList.toggle('xmode-flow', m === 'ex' || m === 'cl' || _ufnFlow);
       { const tw = document.getElementById('exchangeDateToWrap'), ti = document.getElementById('exchangeDateTo'); const showTo = (m === 'sp' && !_ufnFlow); if(tw) tw.style.display = showTo ? 'flex' : 'none'; if(ti && !showTo) ti.value = ''; }
       Object.keys(modeBtn).forEach(k=>{ if(modeBtn[k]) modeBtn[k].classList.toggle('on', k === m); });
@@ -11473,7 +11502,7 @@ function initExchangePanel(){
     window._xSetMode = setMode;
     /* flow helpers: position first, then the duty calendar, then the substitute table */
     window._xFlowHasPos = ()=>{ const tS = document.getElementById('exchangeTable'), pS = document.getElementById('exchangePos'), tmS = document.getElementById('exchangeTeam'); return !!(tS && pS && tS.value && pS.value && (isThMrTable(tS.value) || (tmS && tmS.value !== ''))); };
-    window._xIsUfnFlow = ()=> window._xMode === 'sp' && window._spPreType === 'UFN';
+    window._xIsUfnFlow = ()=> window._xMode === 'sp' && (window._spPreType === 'UFN' || window._spPreType === 'Festival');   /* UFN + Festival: position -> duty calendar -> substitute */
     window._xFlowLabel = ()=>{ if(confirmBtn && (window._xMode === 'ex' || window._xMode === 'cl' || window._xIsUfnFlow())) confirmBtn.textContent = window._xFlowHasPos() ? '\uD83D\uDCC5 Select date' : '\uD83D\uDCCD Select position'; };
     window._xRunMode = ()=>{ const b = modeBtn[window._xMode]; if(!b) return; window._xConfirm = true; try{ b.click(); } finally { window._xConfirm = false; } };
     window._xFlowStart = ()=>{
@@ -11499,7 +11528,7 @@ function initExchangePanel(){
         if(pSel) pSel.value = '';
         if(dI){ dI.value = todayDateKey(); }
         { const tI = document.getElementById('exchangeDateTo'); if(tI) tI.value = ''; }
-        window._spType = ''; window._spPreType = '';
+        window._spType = ''; window._spPreType = ''; window._festDays = [];
         setMode('');
         updateExchangeCurrentHint();
       }catch(e){ console.error(e); }
@@ -11621,6 +11650,30 @@ function initExchangePanel(){
         return;
       }
       if(special){
+        { /* Festival: several separately picked days (calendar multi-select) */
+          const fd = (window._spType === 'Festival' && window._festDays) ? window._festDays.slice() : [];
+          if(fd.length > 1){
+            let n = 0, skip = 0;
+            window._exBatch = true;
+            try{
+              fd.forEach(k=>{
+                const rr = exchangeResolve(k);
+                if(!rr || (!rr.thmr && rr.shift === 'Off') || !rr.who || rr.who === '-'){ skip++; return; }
+                if(k === today){ const w = exchangeShiftWindow(k, rr.team, ''); if(w && w.end <= Date.now()){ skip++; return; } }
+                const pe = { table:rr.table, pos:rr.pos, team:rr.team, subName:sub, nightHalf:'', special:true, spType:'Festival', vacant:!sub, who:rr.who };
+                exPutEntry(k, pe); exVacateMovedCell(k, pe); n++;
+              });
+            } finally { window._exBatch = false; }
+            window._festDays = [];
+            if(!n){ alert('No duty day left to add for the selected position.'); return; }
+            saveExchangesData(EXCHANGES);
+            try{ auditLog('el-add', 'Festival ' + fd.join(', ') + ' (' + n + ' duty days) \u00B7 ' + r.pos + ' \u00B7 ' + (r.who || '') + (sub ? ' \u2192 ' + sub : ' \u00B7 vacant')); }catch(e){}
+            window._spRangeMsg = 'Festival added: ' + n + ' duty day' + (n > 1 ? 's' : '') + (skip ? ' (' + skip + ' skipped)' : '');
+            subInput.value = '';
+            afterChange();
+            return;
+          }
+        }
         { /* Medical / Festival / Training / Maternity: optional To date -> every duty day from..to */
           const toKey = ((document.getElementById('exchangeDateTo') || {}).value || '');
           if(toKey && toKey > r.dateKey && EX_RANGE_TYPES.indexOf(window._spType) >= 0){
@@ -11732,7 +11785,8 @@ function initExchangePanel(){
               if(r.dateKey < today){ alert('A past date cannot be used.'); return; }
             } else if(!dateChecks()) return;
           }
-          const lab = type;
+          const _nFd = (type === 'Festival' && window._festDays) ? window._festDays.length : 0;
+          const lab = _nFd > 1 ? ('Festival \u00D7 ' + _nFd + ' days') : type;
           document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
           document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
           if(_m === 'request'){
@@ -11775,7 +11829,7 @@ function initExchangePanel(){
           window._spPicking = false;
           window._spPreType = b.getAttribute('data-sp');
           if(window._xSetMode) window._xSetMode('sp');   /* type chosen -> date / position fields appear */
-          if(window._spPreType === 'UFN' && window._xFlowStart) window._xFlowStart();   /* UFN: position -> date popup -> substitute */
+          if((window._spPreType === 'UFN' || window._spPreType === 'Festival') && window._xFlowStart) window._xFlowStart();   /* UFN: position -> date popup -> substitute */
           return;
         }
         if(window._spAfterType) window._spAfterType(b.getAttribute('data-sp'));
