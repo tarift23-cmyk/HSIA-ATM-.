@@ -2427,8 +2427,9 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 .rost-hist-btn{ background:#7fd6c2; }
 .rost-print-btn{ background:#d6c6ff; }
 /* History / Print are admin-only: invisible for everybody else */
-#rosterHistBtn, #rosterPrintBtn{ display:none !important; }
+#rosterHistBtn, #rosterPrintBtn, #rosterDlBtn{ display:none !important; }
 body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-block !important; }
+body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
 .rh-note{ font-size:12px; color:var(--muted); margin:2px 0 10px; line-height:1.5; }
 .rh-card{ border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; background:var(--panel); }
 .rh-card.cur{ border-color:#7fd6c2; }
@@ -2655,7 +2656,7 @@ body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-bloc
 
   <div class="cardpanel" id="rosterCardOuter">
     <div class="collapse-head" id="rosterHead">
-      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn" style="background: rgb(245, 66, 73); color: rgb(27, 33, 48);">Now</button><button type="button" class="rost-now-btn rost-me-btn" id="rosterMeBtn">Me</button><button type="button" class="rost-now-btn rost-hist-btn" id="rosterHistBtn">History</button><button type="button" class="rost-now-btn rost-print-btn" id="rosterPrintBtn">Print</button></div>
+      <div class="rost-titlewrap"><div class="cardpanel-title">Duty Roster</div><button type="button" class="rost-now-btn" id="rosterNowBtn" style="background: rgb(245, 66, 73); color: rgb(27, 33, 48);">Now</button><button type="button" class="rost-now-btn rost-me-btn" id="rosterMeBtn">Me</button><button type="button" class="rost-now-btn rost-hist-btn" id="rosterHistBtn">History</button><button type="button" class="rost-now-btn rost-print-btn" id="rosterPrintBtn">Print</button><button type="button" class="rost-dl-btn" id="rosterDlBtn" title="Download roster PNG" aria-label="Download roster PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><g class="ar"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/></g><path d="M5 20h14"/></svg></button></div>
       <div class="collapse-toggle" id="rosterToggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
     </div>
     <div class="collapse-body" id="rosterBody">
@@ -16436,6 +16437,405 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
+<style id="rosterDlCss">
+.rost-dl-btn{ width:34px; height:34px; border-radius:50%; border:0; padding:0; background:#ffd9a3; color:#2a1a00; place-items:center; cursor:pointer; flex:0 0 auto; animation:rdlRing 2.2s infinite; -webkit-tap-highlight-color:transparent; }
+.rost-dl-btn svg{ width:19px; height:19px; overflow:visible; }
+.rost-dl-btn .ar{ animation:rdlBob 1.3s ease-in-out infinite; }
+@keyframes rdlBob{ 0%,100%{ transform:translateY(-2px); } 55%{ transform:translateY(3px); } }
+@keyframes rdlRing{ 0%{ box-shadow:0 0 0 0 rgba(255,190,90,.55); } 70%,100%{ box-shadow:0 0 0 9px rgba(255,190,90,0); } }
+@media (prefers-reduced-motion:reduce){ .rost-dl-btn, .rost-dl-btn .ar{ animation:none; } }
+.rdl-sub{ font-size:12.5px; color:var(--muted); margin:-4px 0 14px; }
+.rdl-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
+.rdl-opt{ border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:50%; aspect-ratio:1; padding:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font:700 17px 'Space Grotesk',sans-serif; cursor:pointer; }
+.rdl-opt small{ display:block; font:600 10px 'Noto Sans Bengali','Inter',sans-serif; margin-top:1px; line-height:1.1; }
+.rdl-opt.rdl-all{ background:#f7c948; color:#1b2130; border:0; }
+.rdl-opt.rdl-all small{ color:#4a3a00; }
+.rdl-opt:active{ filter:brightness(.9); } .rdl-opt[disabled]{ opacity:.5; pointer-events:none; }
+.rdl-status{ font-size:12px; color:var(--gold-soft); min-height:16px; margin-top:12px; }
+</style>
+<script id="rosterDlJs">
+/* ================= Duty Roster: admin-only PNG download (All / shift A-E) =================
+   Draws the roster table that is ON SCREEN (selected tab + selected date, with CL / exchange changes)
+   onto a canvas by reading the live DOM + computed styles, so the PNG looks exactly like the table. */
+(function(){
+  'use strict';
+  if(window.hsiaRosterDl) return;
+  var BN_DAY = ['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+  var BN_SH = { night:'রাত', morning:'সকাল', afternoon:'বিকাল', off:'অফ' };
+  var BNF = ",'Noto Sans Bengali','Kalpurush','SolaimanLipi','Nirmala UI',sans-serif";
+  var SW = 230, PAD = 16, GAP = 12, BIG = 5000;
+  var LET = ['A','B','C','D','E'];
+  function $(id){ return document.getElementById(id); }
+  function isAdmin(){ try{ return !!rosterUnlocked; }catch(e){ return false; } }
+  function pad2(n){ return String(n).padStart(2, '0'); }
+  function selKey(){ return (typeof window._rosterSelKey === 'string' && window._rosterSelKey) ? window._rosterSelKey : todayDateKey(); }
+  function dateInfo(){
+    var p = selKey().split('-').map(Number), dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    return { txt:pad2(p[2]) + '/' + pad2(p[1]) + '/' + p[0], day:BN_DAY[dt.getUTCDay()], iso:p[0] + '-' + pad2(p[1]) + '-' + pad2(p[2]) };
+  }
+  function tabBtn(){ return document.querySelector('#rosterTabs .iflow-tab-btn.active'); }
+  function curTable(){ var b = tabBtn(), col = b ? $(b.getAttribute('data-tab')) : null; return col ? col.querySelector('table.roster-table') : null; }
+  function shiftMeta(tbl){
+    var ths = tbl.querySelectorAll('thead th');
+    return LET.map(function(L, i){
+      var th = ths[i + 1], sub = th ? th.querySelector('.rd-sub') : null;
+      var m = sub ? /(?:^|\s)d-([a-z]+)/.exec(sub.className) : null;
+      var t = m ? m[1] : (sub ? sub.textContent.trim().toLowerCase() : 'off');
+      return { L:L, type:t, bn:BN_SH[t] || (sub ? sub.textContent.trim() : '') };
+    });
+  }
+  function shColor(type){
+    var cs = getComputedStyle(document.documentElement), v = type === 'night' ? '--night' : type === 'morning' ? '--morning' : type === 'afternoon' ? '--afternoon' : '--muted';
+    return (cs.getPropertyValue(v) || '#9aa0b0').trim();
+  }
+
+  /* ---------- tiny canvas helpers ---------- */
+  function col(s){
+    var m = /rgba?\(([^)]*)\)/.exec(s || ''); if(!m) return null;
+    var p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);
+    return { r:p[0], g:p[1], b:p[2], a:p.length > 3 ? p[3] : 1 };
+  }
+  function css(c, mul){ return 'rgba(' + Math.round(c.r) + ',' + Math.round(c.g) + ',' + Math.round(c.b) + ',' + (c.a * (mul == null ? 1 : mul)) + ')'; }
+  function splitTop(s){
+    var out = [], d = 0, cur = '';
+    for(var i = 0; i < s.length; i++){
+      var ch = s[i];
+      if(ch === '(') d++; else if(ch === ')') d--;
+      if(ch === ',' && d === 0){ out.push(cur.trim()); cur = ''; } else cur += ch;
+    }
+    if(cur.trim()) out.push(cur.trim());
+    return out;
+  }
+  function parseShadows(str){
+    if(!str || str === 'none') return [];
+    return splitTop(str).map(function(p){
+      var m = /(rgba?\([^)]*\))/.exec(p); if(!m) return null;
+      var n = p.replace(m[1], '').replace('inset', '').trim().split(/\s+/).map(parseFloat);
+      return { c:col(m[1]), ox:n[0] || 0, oy:n[1] || 0, blur:n[2] || 0, spread:n[3] || 0, inset:/inset/.test(p) };
+    }).filter(Boolean);
+  }
+  function parseGradient(bi){
+    var m = /linear-gradient\((.*)\)\s*$/.exec(bi || ''); if(!m) return null;
+    var parts = splitTop(m[1]), ang = 180, i = 0, a0 = parts[0];
+    if(/deg$/.test(a0)){ ang = parseFloat(a0); i = 1; }
+    else if(/^to /.test(a0)){
+      var map = { 'to top':0, 'to right':90, 'to bottom':180, 'to left':270, 'to top right':45, 'to right top':45, 'to bottom right':135, 'to right bottom':135, 'to bottom left':225, 'to left bottom':225, 'to top left':315, 'to left top':315 };
+      ang = map[a0] != null ? map[a0] : 180; i = 1;
+    }
+    var stops = parts.slice(i).map(function(p){
+      var cm = /(rgba?\([^)]*\))\s*([\d.]+)?%?/.exec(p);
+      return cm ? { c:col(cm[1]), p:cm[2] != null ? parseFloat(cm[2]) / 100 : null } : null;
+    }).filter(Boolean);
+    return stops.length >= 2 ? { ang:ang, stops:stops } : null;
+  }
+
+  /* ---------- the painter ---------- */
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  var HALF = {
+    1:{ lab:'1st Night', fg:'#7cc0ff', bd:'#409cff', bg:'rgba(64,156,255,0.14)', bb:'linear-gradient(135deg,#7cc0ff,#409cff)', bt:'#0b1830', gl:'rgba(64,156,255,0.7)' },
+    2:{ lab:'2nd Night', fg:'#d3a3ff', bd:'#b066ff', bg:'rgba(176,102,255,0.14)', bb:'linear-gradient(135deg,#d3a3ff,#b066ff)', bt:'#ffffff', gl:'rgba(176,102,255,0.7)' }
+  };
+  function halfBlock(n, ex, orig){
+    var c = HALF[n];
+    var head = '<div style="font:700 10px Space Grotesk,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:' + c.fg + ';text-align:center;line-height:1.3">' + c.lab + '</div>';
+    if(!ex) return '<div style="margin:3px 4px;padding:4px 6px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.16)">' + head + '<div style="font:12.5px Inter,sans-serif;text-align:center;line-height:1.5;color:var(--text)">' + esc(orig) + '</div></div>';
+    var sub = String(ex.subName || '').trim(), vac = !!ex.vacant;
+    var bt = vac ? (ex.special ? (typeof exSpShort === 'function' ? exSpShort(ex.spType) : 'EL') : ex.moved ? (ex.to ? '➜ ' + ex.to : 'Vacant') : 'CL · Vacant') : sub;
+    var strike = (sub || vac) ? 'opacity:.55;text-decoration:line-through;text-decoration-color:' + c.bd + ';' : '';
+    return '<div style="margin:3px 4px;padding:4px 6px;border-radius:6px;background:' + c.bg + ';box-shadow:inset 0 0 0 1.5px ' + c.bd + ',0 0 8px ' + c.gl + '">' + head
+      + '<div style="font:12.5px Inter,sans-serif;text-align:center;line-height:1.5;color:var(--text);' + strike + '">' + esc(orig) + '</div>'
+      + (bt ? '<div style="font:700 11px Space Grotesk,sans-serif;color:' + c.bt + ';background:' + c.bb + ';border-radius:999px;padding:3px 8px;text-align:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 0 8px ' + c.gl + '">' + esc(bt) + '</div>' : '') + '</div>';
+  }
+  var KEYS = { rosterBodyRows:'roster', rosterBodyRowsCtrl:'rosterCtrl', rosterBodyRowsComm:'rosterComm' };
+  /* An off-screen copy of the table with ONLY "Duty place + the chosen shift". For a night shift every cell that has a
+     1st / 2nd night assignment shows BOTH halves (the live table only shows the half that is running). */
+  function buildShiftClone(tbl, k, m){
+    var first = tbl.querySelector('thead th').getBoundingClientRect().width, sel = k + 1;
+    var clone = tbl.cloneNode(true);
+    var a = tbl.querySelectorAll('input,textarea'), b = clone.querySelectorAll('input,textarea');
+    for(var i = 0; i < a.length && i < b.length; i++){ if(a[i].tagName === 'TEXTAREA') b[i].textContent = a[i].value; else b[i].setAttribute('value', a[i].value); }
+    Array.prototype.forEach.call(clone.querySelectorAll('tr'), function(tr){
+      var start = 0;
+      Array.prototype.slice.call(tr.children).forEach(function(c){
+        var span = c.colSpan || 1;
+        if(span > 1) c.colSpan = 1; else if(start !== 0 && start !== sel) c.remove();
+        start += span;
+      });
+    });
+    var cg = clone.querySelector('colgroup'); if(cg) cg.innerHTML = '<col style="width:' + first + 'px"><col style="width:' + SW + 'px">';
+    clone.style.width = (first + SW) + 'px'; clone.style.minWidth = '0';
+    Array.prototype.slice.call(clone.classList).forEach(function(c){ if(/^hl-/.test(c)) clone.classList.remove(c); });
+    if(tbl.classList.contains('hl-' + LET[k])) clone.classList.add('hl-A');   /* live shift keeps its highlight (it is now column 2) */
+    var tb = clone.querySelector('tbody'), key = tb ? KEYS[tb.id] : null;
+    if(m.type === 'night' && key && typeof rosterViewExchanges === 'function'){
+      var exs = []; try{ exs = rosterViewExchanges(key) || []; }catch(e){}
+      Array.prototype.forEach.call(clone.querySelectorAll('tbody tr'), function(tr){
+        var pi = tr.querySelector('.roster-pos-input'), td = tr.children[1];
+        if(!pi || !td || !td.querySelector('.roster-name-input')) return;
+        var mine = exs.filter(function(x){ return x && x.pos === pi.value && +x.team === k; });
+        var e1 = mine.filter(function(x){ return String(x.nightHalf || '') === '1'; })[0], e2 = mine.filter(function(x){ return String(x.nightHalf || '') === '2'; })[0];
+        if(!e1 && !e2) return;
+        var orig = (e1 && e1.base) || (e2 && e2.base) || td.querySelector('.roster-name-input').value;
+        td.className = ''; td.innerHTML = halfBlock(1, e1, orig) + halfBlock(2, e2, orig);
+      });
+    }
+    var holder = document.createElement('div');
+    holder.className = 'roster-tablewrap'; holder.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + (first + SW) + 'px;overflow:visible;';
+    holder.appendChild(clone); document.body.appendChild(holder);
+    return { holder:holder, table:clone };
+  }
+  async function makeCanvas(tbl, sel){
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    var single = sel !== 'All', meta = shiftMeta(tbl), holder = null, bgEl = tbl;
+    if(single){ var bc = buildShiftClone(tbl, sel, meta[sel]); holder = bc.holder; tbl = bc.table; await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
+    try{ return paint(tbl, sel, single, meta, bgEl); }
+    finally{ if(holder) holder.remove(); }
+  }
+  function paint(tbl, sel, single, meta, bgEl){
+    var T = tbl.getBoundingClientRect();
+    if(!T.width || !T.height) throw new Error('Roster table is not visible');
+    var total = T.width;
+    var di = dateInfo(), rootCS = getComputedStyle(document.documentElement);
+    var textCol = (rootCS.getPropertyValue('--text') || '#F0F1F3').trim(), mutedCol = (rootCS.getPropertyValue('--muted') || '#8B909B').trim(), borderCol = (rootCS.getPropertyValue('--border') || '#454444').trim();
+    var bannerH = single ? 88 : 54;
+    var cw = total + 2 * PAD, chh = PAD + bannerH + GAP + T.height + 10 + 16 + PAD;
+    var S = 3; while(S > 1 && (cw * S > 7000 || chh * S > 16000)) S -= 0.5;
+    var cv = document.createElement('canvas'); cv.width = Math.round(cw * S); cv.height = Math.round(chh * S);
+    var ctx = cv.getContext('2d'); if(!ctx) throw new Error('canvas unavailable');
+
+    /* page background = first solid background above the table */
+    var bgc = null;
+    for(var p = bgEl.parentElement; p && !bgc; p = p.parentElement){ var c0 = col(getComputedStyle(p).backgroundColor); if(c0 && c0.a > 0.95) bgc = c0; }
+    ctx.fillStyle = bgc ? css(bgc) : '#171616'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.scale(S, S);
+    function rrPath(x, y, w, h, r, keep){
+      r = Math.max(0, Math.min(r, w / 2, h / 2));
+      if(!keep) ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+    function setFont(cs){
+      ctx.font = (cs.fontStyle || 'normal') + ' ' + (cs.fontWeight || 400) + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+      try{ ctx.letterSpacing = (!cs.letterSpacing || cs.letterSpacing === 'normal') ? '0px' : cs.letterSpacing; }catch(e){}
+    }
+
+    /* ---- banner: date (+ shift when one shift is chosen) ---- */
+    rrPath(PAD, PAD, total, bannerH, 14);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = borderCol; ctx.stroke();
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = textCol;
+    ctx.font = "700 20px 'Space Grotesk','Inter'" + BNF;
+    ctx.fillText(di.txt + ' · ' + di.day, PAD + 16, PAD + (single ? 26 : bannerH / 2));
+    if(single){
+      var mm = meta[sel], label = 'Shift ' + mm.L + ' · ' + mm.bn, sc = shColor(mm.type);
+      ctx.font = "700 14px 'Space Grotesk','Inter'" + BNF;
+      var pw = ctx.measureText(label).width + 26;
+      rrPath(PAD + 16, PAD + 46, pw, 28, 14); ctx.fillStyle = 'rgba(255,255,255,0.07)'; ctx.fill(); ctx.strokeStyle = sc; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = sc; ctx.fillText(label, PAD + 29, PAD + 60);
+    }
+
+    /* ---- table ---- */
+    var bq = [];   /* border queue: thin borders are drawn first, thick (2px gold) ones win on shared edges */
+    function mapR(r, mp){
+      if(mp && mp.w){
+        var x = mp.nl + (r.left - mp.l) * mp.nw / mp.w, x2 = mp.nl + (r.right - mp.l) * mp.nw / mp.w;
+        return { x:x, y:r.top - T.top, w:x2 - x, h:r.height };
+      }
+      return { x:r.left - T.left, y:r.top - T.top, w:r.width, h:r.height };
+    }
+    function paintBox(cs, R, alpha){
+      var rad = parseFloat(cs.borderTopLeftRadius) || 0, shs = parseShadows(cs.boxShadow);
+      shs.forEach(function(s){
+        if(s.inset || !(s.blur > 0 || s.spread > 0) || !s.c) return;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(-1e4, -1e4, 2e4, 2e4); rrPath(R.x, R.y, R.w, R.h, rad, true); ctx.clip('evenodd');
+        ctx.shadowColor = css(s.c, alpha); ctx.shadowBlur = s.blur * S; ctx.shadowOffsetX = (BIG + s.ox) * S; ctx.shadowOffsetY = s.oy * S;
+        ctx.fillStyle = '#000';
+        rrPath(R.x - BIG - s.spread, R.y - s.spread, R.w + 2 * s.spread, R.h + 2 * s.spread, rad + s.spread);
+        ctx.fill(); ctx.restore();
+      });
+      var bg = col(cs.backgroundColor);
+      if(bg && bg.a > 0){ rrPath(R.x, R.y, R.w, R.h, rad); ctx.fillStyle = css(bg, alpha); ctx.fill(); }
+      var g = parseGradient(cs.backgroundImage);
+      if(g){
+        var a = g.ang * Math.PI / 180, sx = Math.sin(a), sy = -Math.cos(a), len = Math.abs(R.w * sx) + Math.abs(R.h * sy), cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+        var lg = ctx.createLinearGradient(cx - sx * len / 2, cy - sy * len / 2, cx + sx * len / 2, cy + sy * len / 2);
+        g.stops.forEach(function(s, k){ lg.addColorStop(Math.max(0, Math.min(1, s.p != null ? s.p : k / (g.stops.length - 1))), css(s.c, alpha)); });
+        rrPath(R.x, R.y, R.w, R.h, rad); ctx.fillStyle = lg; ctx.fill();
+      }
+      shs.forEach(function(s){
+        if(!s.inset || !s.c) return;
+        var w = Math.max(s.spread, 0.5);
+        ctx.save(); ctx.beginPath(); rrPath(R.x, R.y, R.w, R.h, rad, true); rrPath(R.x + w, R.y + w, R.w - 2 * w, R.h - 2 * w, Math.max(0, rad - w), true);
+        ctx.fillStyle = css(s.c, alpha * (s.blur > 0 ? 0.8 : 1)); ctx.fill('evenodd'); ctx.restore();
+      });
+      ['Top','Right','Bottom','Left'].forEach(function(sd){
+        var w = parseFloat(cs['border' + sd + 'Width']) || 0, c = col(cs['border' + sd + 'Color']);
+        if(w > 0 && cs['border' + sd + 'Style'] !== 'none' && c && c.a > 0) bq.push({ sd:sd, w:w, c:c, a:alpha, R:R });
+      });
+    }
+    function decoLine(cs, x0, x1, y, fs, alpha, fallback){
+      if((cs.textDecorationLine || '').indexOf('line-through') < 0) return;
+      var dc = col(cs.textDecorationColor) || fallback;
+      ctx.strokeStyle = css(dc, alpha); ctx.lineWidth = Math.max(1, fs / 13);
+      ctx.beginPath(); ctx.moveTo(x0, y - fs * 0.03); ctx.lineTo(x1, y - fs * 0.03); ctx.stroke();
+    }
+    function drawField(val, cs, R, alpha){
+      if(!val) return;
+      var tc = col(cs.color) || { r:240, g:241, b:243, a:1 }, fs = parseFloat(cs.fontSize) || 12;
+      var x0 = R.x + (parseFloat(cs.paddingLeft) || 0), x1 = R.x + R.w - (parseFloat(cs.paddingRight) || 0), ta = cs.textAlign;
+      ctx.save(); ctx.beginPath(); ctx.rect(R.x, R.y, R.w, R.h); ctx.clip();
+      setFont(cs); ctx.fillStyle = css(tc, alpha); ctx.textBaseline = 'middle';
+      var w = ctx.measureText(val).width, x, y = R.y + R.h / 2;
+      if(ta === 'center'){ ctx.textAlign = 'center'; x = (x0 + x1) / 2; }
+      else if(ta === 'right' || ta === 'end'){ ctx.textAlign = 'right'; x = x1; }
+      else { ctx.textAlign = 'left'; x = x0; }
+      ctx.fillText(val, x, y);
+      var l = ta === 'center' ? x - w / 2 : (ctx.textAlign === 'right' ? x - w : x);
+      decoLine(cs, l, l + w, y, fs, alpha, tc);
+      ctx.restore();
+    }
+    function drawArea(val, cs, R, alpha){
+      if(!val) return;
+      var tc = col(cs.color) || { r:240, g:241, b:243, a:1 }, fs = parseFloat(cs.fontSize) || 12, lh = parseFloat(cs.lineHeight) || fs * 1.4;
+      var x0 = R.x + (parseFloat(cs.paddingLeft) || 0), x1 = R.x + R.w - (parseFloat(cs.paddingRight) || 0), mw = Math.max(10, x1 - x0);
+      setFont(cs); ctx.fillStyle = css(tc, alpha); ctx.textBaseline = 'middle';
+      var lines = [];
+      String(val).split('\n').forEach(function(par){
+        var line = '';
+        par.split(/\s+/).filter(Boolean).forEach(function(wd){
+          var t = line ? line + ' ' + wd : wd;
+          if(ctx.measureText(t).width <= mw || !line) line = t; else { lines.push(line); line = wd; }
+        });
+        lines.push(line);
+      });
+      ctx.save(); ctx.beginPath(); ctx.rect(R.x, R.y, R.w, R.h); ctx.clip();
+      var y = R.y + (parseFloat(cs.paddingTop) || 0) + lh / 2, ta = cs.textAlign;
+      ctx.textAlign = ta === 'center' ? 'center' : (ta === 'right' ? 'right' : 'left');
+      var x = ta === 'center' ? (x0 + x1) / 2 : (ta === 'right' ? x1 : x0);
+      lines.forEach(function(ln, i){ ctx.fillText(ln, x, y + i * lh); });
+      ctx.restore();
+    }
+    function drawTextNode(n, cs, mp, alpha, PR, el){
+      var txt = n.nodeValue.replace(/\s+/g, ' ').trim(); if(!txt) return;
+      var rg = document.createRange(); rg.selectNodeContents(n);
+      if(!rg.getClientRects().length) return;
+      var bb = rg.getBoundingClientRect(), R2 = mapR(bb, mp), fs = parseFloat(cs.fontSize) || 12;
+      var tt = cs.textTransform; if(tt === 'uppercase') txt = txt.toUpperCase(); else if(tt === 'lowercase') txt = txt.toLowerCase();
+      setFont(cs);
+      if(cs.textOverflow === 'ellipsis' && cs.overflowX !== 'visible'){
+        var maxW = Math.max(10, PR.w - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
+        if(ctx.measureText(txt).width > maxW){ while(txt.length > 1 && ctx.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1); txt += '…'; }
+      }
+      var tc = col(cs.color) || { r:240, g:241, b:243, a:1 }, w = ctx.measureText(txt).width, cx = R2.x + R2.w / 2, cy = R2.y + R2.h / 2;
+      ctx.fillStyle = css(tc, alpha); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(txt, cx, cy);
+      decoLine(cs, cx - w / 2, cx + w / 2, cy, fs, alpha, tc);
+      if(el && el.classList && el.classList.contains('rd-live')){   /* the little red "live shift" dot */
+        ctx.beginPath(); ctx.arc(cx - w / 2 - 7, cy, 3, 0, Math.PI * 2); ctx.fillStyle = css({ r:245, g:66, b:73, a:1 }, alpha); ctx.fill();
+      }
+    }
+    function walk(el, alpha, mp){
+      var tag = el.tagName;
+      if(tag === 'COLGROUP' || tag === 'COL' || tag === 'SCRIPT' || tag === 'STYLE') return;
+      var cs = getComputedStyle(el);
+      if(cs.display === 'none' || cs.visibility === 'hidden') return;
+      var op = parseFloat(cs.opacity); alpha *= isNaN(op) ? 1 : op;
+      var r = el.getBoundingClientRect(), R;
+      if(tag === 'TD' || tag === 'TH'){
+        mp = null; R = mapR(r, mp);
+      } else R = mapR(r, mp);
+      if(r.width > 0 || r.height > 0) paintBox(cs, R, alpha);
+      if(tag === 'INPUT'){ drawField(el.value, cs, R, alpha); return; }
+      if(tag === 'TEXTAREA'){ drawArea(el.value, cs, R, alpha); return; }
+      var kids = el.childNodes;
+      for(var i = 0; i < kids.length; i++){
+        var nd = kids[i];
+        if(nd.nodeType === 3) drawTextNode(nd, cs, mp, alpha, R, el);
+        else if(nd.nodeType === 1) walk(nd, alpha, mp);
+      }
+    }
+    var wrapCS = tbl.parentElement ? getComputedStyle(tbl.parentElement) : null;
+    ctx.save();
+    ctx.translate(PAD, PAD + bannerH + GAP);
+    rrPath(0, 0, total, T.height, wrapCS ? (parseFloat(wrapCS.borderTopLeftRadius) || 10) : 10); ctx.clip();
+    walk(tbl, 1, null);
+    bq.sort(function(a, b){ return a.w - b.w; }).forEach(function(b){
+      ctx.fillStyle = css(b.c, b.a); var R = b.R;
+      if(b.sd === 'Top') ctx.fillRect(R.x, R.y, R.w, b.w);
+      else if(b.sd === 'Bottom') ctx.fillRect(R.x, R.y + R.h - b.w, R.w, b.w);
+      else if(b.sd === 'Left') ctx.fillRect(R.x, R.y, b.w, R.h);
+      else ctx.fillRect(R.x + R.w - b.w, R.y, b.w, R.h);
+    });
+    ctx.restore();
+
+    /* ---- footer ---- */
+    var tk = todayDateKey().split('-');
+    ctx.font = "11px 'Inter'" + BNF; ctx.fillStyle = mutedCol; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + total, PAD + bannerH + GAP + T.height + 16);
+    return cv;
+  }
+
+  /* ---------- popup + wiring ---------- */
+  function status(msg){ var s = $('rosterDlStatus'); if(s) s.textContent = msg || ''; }
+  function buildOverlay(){
+    if($('rosterDlOverlay')) return;
+    var ov = document.createElement('div');
+    ov.className = 'modal-overlay'; ov.id = 'rosterDlOverlay'; ov.style.cssText = 'z-index:10005;padding:16px 8px;';
+    ov.innerHTML = '<div class="modal-box" style="max-width:420px;"><div class="modal-header"><div class="modal-title">⬇ Roster PNG</div><button type="button" class="modal-close" id="rosterDlClose">✕</button></div>'
+      + '<div class="rdl-sub" id="rosterDlSub"></div><div class="rdl-grid" id="rosterDlGrid"></div><div class="rdl-status" id="rosterDlStatus"></div></div>';
+    document.body.appendChild(ov);
+    var close = function(){ ov.classList.remove('show'); };
+    $('rosterDlClose').addEventListener('click', close);
+    ov.addEventListener('click', function(e){ if(e.target === ov) close(); });
+    $('rosterDlGrid').addEventListener('click', function(e){
+      var b = e.target.closest('.rdl-opt'); if(!b || b.disabled) return;
+      run(b.getAttribute('data-k'));
+    });
+  }
+  function openDl(){
+    if(!isAdmin()){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
+    var tbl = curTable();
+    if(!tbl){ alert('এই ট্যাবের জন্য PNG ডাউনলোড নেই।\nController / Aerodrome Assistant / Communication ট্যাব খুলে আবার চাপুন।'); return; }
+    buildOverlay();
+    var di = dateInfo(), b = tabBtn(), meta = shiftMeta(tbl);
+    $('rosterDlSub').textContent = (b ? b.textContent.trim() : 'Duty Roster') + ' · ' + di.txt + ' (' + di.day + ')';
+    $('rosterDlGrid').innerHTML = '<button type="button" class="rdl-opt rdl-all" data-k="All">All<small>সব</small></button>'
+      + meta.map(function(m){ return '<button type="button" class="rdl-opt" data-k="' + m.L + '">' + m.L + '<small style="color:' + shColor(m.type) + '">' + m.bn + '</small></button>'; }).join('');
+    status(''); $('rosterDlOverlay').classList.add('show');
+  }
+  function save(blob, name){
+    var a = document.createElement('a'), url = URL.createObjectURL(blob);
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); }, 4000);
+  }
+  async function run(k){
+    var grid = $('rosterDlGrid'), btns = grid.querySelectorAll('.rdl-opt');
+    var tbl = curTable(); if(!tbl){ status('Table not found'); return; }
+    var card = $('rosterCardOuter'), wasCollapsed = !!(card && card.classList.contains('collapsed'));
+    btns.forEach(function(x){ x.disabled = true; }); status('PNG বানানো হচ্ছে…');
+    try{
+      if(wasCollapsed){ card.classList.remove('collapsed'); await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
+      var cv = await makeCanvas(tbl, k === 'All' ? 'All' : LET.indexOf(k));
+      var blob = await new Promise(function(r){ cv.toBlob(r, 'image/png'); });
+      if(!blob) throw new Error('PNG failed');
+      var b = tabBtn(), slug = String(b ? b.textContent : 'Roster').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'Roster';
+      save(blob, 'Roster_' + slug + '_' + dateInfo().iso + '_' + (k === 'All' ? 'All' : 'Shift-' + k) + '.png');
+      cv.width = cv.height = 1;
+      status('PNG ready ✓');
+      setTimeout(function(){ var ov = $('rosterDlOverlay'); if(ov) ov.classList.remove('show'); }, 700);
+    }catch(e){ status('Failed: ' + (e && e.message ? e.message : e)); }
+    if(wasCollapsed && card) card.classList.add('collapsed');
+    btns.forEach(function(x){ x.disabled = false; });
+  }
+  function init(){
+    var b = $('rosterDlBtn');
+    if(b && !b._rdl){ b._rdl = true; b.addEventListener('click', function(e){ e.stopPropagation(); openDl(); }); }
+  }
+  window.hsiaRosterDl = { open:openDl, make:makeCanvas };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
+
 
 <script>
 /* True full-screen helper for the PDF / map viewers (falls back to the CSS full-window mode where the browser has no Fullscreen API). */
