@@ -16603,15 +16603,15 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     var textCol = (rootCS.getPropertyValue('--text') || '#F0F1F3').trim(), mutedCol = (rootCS.getPropertyValue('--muted') || '#8B909B').trim(), borderCol = (rootCS.getPropertyValue('--border') || '#454444').trim();
     var bannerH = single ? 88 : 54;
     var cw = total + 2 * PAD, chh = PAD + bannerH + GAP + T.height + 10 + 16 + PAD;
-    var S = 3; while(S > 1 && (cw * S > 7000 || chh * S > 16000)) S -= 0.5;
+    var S = Math.max(1, Math.min(4, Math.floor(Math.sqrt(12e6 / (cw * chh))))); while(S > 1 && (cw * S > 9000 || chh * S > 16000)) S--;   /* whole-number scale = crisp 1px lines */
     var cv = document.createElement('canvas'); cv.width = Math.round(cw * S); cv.height = Math.round(chh * S);
-    var ctx = cv.getContext('2d'); if(!ctx) throw new Error('canvas unavailable');
+    var ctx = cv.getContext('2d', { alpha:false }); if(!ctx) throw new Error('canvas unavailable');
 
     /* page background = first solid background above the table */
     var bgc = null;
     for(var p = bgEl.parentElement; p && !bgc; p = p.parentElement){ var c0 = col(getComputedStyle(p).backgroundColor); if(c0 && c0.a > 0.95) bgc = c0; }
     ctx.fillStyle = bgc ? css(bgc) : '#171616'; ctx.fillRect(0, 0, cv.width, cv.height);
-    ctx.scale(S, S);
+    ctx.scale(S, S); try{ ctx.textRendering = 'geometricPrecision'; }catch(e){}
     function rrPath(x, y, w, h, r, keep){
       r = Math.max(0, Math.min(r, w / 2, h / 2));
       if(!keep) ctx.beginPath();
@@ -16778,6 +16778,83 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     return cv;
   }
 
+  /* ---------- small, sharp PNG: 256-colour indexed (the roster is flat UI colours, so it looks the same but is ~5-10x smaller) ---------- */
+  var CRC_T = null;
+  function crc32(u8){
+    if(!CRC_T){ CRC_T = new Uint32Array(256); for(var n = 0; n < 256; n++){ var c0 = n; for(var k = 0; k < 8; k++) c0 = (c0 & 1) ? (0xEDB88320 ^ (c0 >>> 1)) : (c0 >>> 1); CRC_T[n] = c0 >>> 0; } }
+    var c = 0xFFFFFFFF; for(var i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function pngChunk(type, data){
+    var out = new Uint8Array(12 + data.length), dv = new DataView(out.buffer);
+    dv.setUint32(0, data.length); for(var i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+    out.set(data, 8); dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+    return out;
+  }
+  function buildPalette(px, n){
+    var cnt = new Float64Array(32768), sr = new Float64Array(32768), sg = new Float64Array(32768), sb = new Float64Array(32768);
+    for(var i = 0, j = 0; i < n; i++, j += 4){
+      var r = px[j], g = px[j + 1], b = px[j + 2], key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+      cnt[key]++; sr[key] += r; sg[key] += g; sb[key] += b;
+    }
+    var bins = [];
+    for(var k = 0; k < 32768; k++) if(cnt[k] > 0){ sr[k] /= cnt[k]; sg[k] /= cnt[k]; sb[k] /= cnt[k]; bins.push(k); }
+    bins.sort(function(a, b){ return cnt[b] - cnt[a]; });
+    var pal = [], keep = Math.min(bins.length, 112);
+    for(var q = 0; q < keep; q++){ var kk = bins[q]; pal.push([sr[kk], sg[kk], sb[kk]]); }   /* the most used colours stay exact */
+    var rest = bins.slice(keep), K = 256 - keep;
+    if(rest.length <= K) rest.forEach(function(kk){ pal.push([sr[kk], sg[kk], sb[kk]]); });
+    else {
+      var boxes = [rest];
+      function stat(bx){
+        var lo = [255, 255, 255], hi = [0, 0, 0], tot = 0;
+        bx.forEach(function(kk){ var v = [sr[kk], sg[kk], sb[kk]]; for(var c = 0; c < 3; c++){ if(v[c] < lo[c]) lo[c] = v[c]; if(v[c] > hi[c]) hi[c] = v[c]; } tot += cnt[kk]; });
+        var ch = 0, rg = hi[0] - lo[0]; if(hi[1] - lo[1] > rg){ ch = 1; rg = hi[1] - lo[1]; } if(hi[2] - lo[2] > rg){ ch = 2; rg = hi[2] - lo[2]; }
+        return { ch:ch, score:rg * Math.sqrt(tot) };
+      }
+      var st = [stat(rest)];
+      while(boxes.length < K){
+        var bi = -1, best = -1;
+        for(var x = 0; x < boxes.length; x++) if(boxes[x].length > 1 && st[x].score > best){ best = st[x].score; bi = x; }
+        if(bi < 0) break;
+        var bx = boxes[bi], ch = st[bi].ch, arr = ch === 0 ? sr : ch === 1 ? sg : sb;
+        bx.sort(function(a, b){ return arr[a] - arr[b]; });
+        var tot = 0; bx.forEach(function(kk){ tot += cnt[kk]; });
+        var acc = 0, cut = 1; for(var y = 0; y < bx.length - 1; y++){ acc += cnt[bx[y]]; cut = y + 1; if(acc >= tot / 2) break; }
+        var A = bx.slice(0, cut), B = bx.slice(cut);
+        boxes[bi] = A; st[bi] = stat(A); boxes.push(B); st.push(stat(B));
+      }
+      boxes.forEach(function(bx){
+        var t = 0, r = 0, g = 0, b = 0; bx.forEach(function(kk){ t += cnt[kk]; r += sr[kk] * cnt[kk]; g += sg[kk] * cnt[kk]; b += sb[kk] * cnt[kk]; });
+        pal.push([r / t, g / t, b / t]);
+      });
+    }
+    var lut = new Uint8Array(32768);
+    bins.forEach(function(kk){
+      var bd = 1e12, bj = 0;
+      for(var p = 0; p < pal.length; p++){ var dr = pal[p][0] - sr[kk], dg = pal[p][1] - sg[kk], db = pal[p][2] - sb[kk], d = dr * dr * 0.3 + dg * dg * 0.59 + db * db * 0.11; if(d < bd){ bd = d; bj = p; } }
+      lut[kk] = bj;
+    });
+    return { pal:pal, lut:lut };
+  }
+  async function encodePng(cv){
+    try{
+      if(typeof CompressionStream === 'undefined') throw new Error('no CompressionStream');
+      var w = cv.width, h = cv.height, px = cv.getContext('2d').getImageData(0, 0, w, h).data;
+      var q = buildPalette(px, w * h), lut = q.lut, raw = new Uint8Array(h * (w + 1));
+      for(var y = 0, j = 0; y < h; y++){
+        var o = y * (w + 1); raw[o] = 0;
+        for(var x = 0; x < w; x++, j += 4) raw[o + 1 + x] = lut[((px[j] >> 3) << 10) | ((px[j + 1] >> 3) << 5) | (px[j + 2] >> 3)];
+      }
+      var z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
+      var ih = new Uint8Array(13), dv = new DataView(ih.buffer); dv.setUint32(0, w); dv.setUint32(4, h); ih[8] = 8; ih[9] = 3;
+      var pl = new Uint8Array(q.pal.length * 3); q.pal.forEach(function(c, i){ pl[i * 3] = Math.round(c[0]); pl[i * 3 + 1] = Math.round(c[1]); pl[i * 3 + 2] = Math.round(c[2]); });
+      return new Blob([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk('IHDR', ih), pngChunk('PLTE', pl), pngChunk('IDAT', z), pngChunk('IEND', new Uint8Array(0))], { type:'image/png' });
+    }catch(e){
+      return await new Promise(function(r){ cv.toBlob(r, 'image/png'); });   /* fallback: normal full-colour PNG */
+    }
+  }
+
   /* ---------- popup + wiring ---------- */
   function status(msg){ var s = $('rosterDlStatus'); if(s) s.textContent = msg || ''; }
   function buildOverlay(){
@@ -16819,7 +16896,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     try{
       if(wasCollapsed){ card.classList.remove('collapsed'); await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
       var cv = await makeCanvas(tbl, k === 'All' ? 'All' : LET.indexOf(k));
-      var blob = await new Promise(function(r){ cv.toBlob(r, 'image/png'); });
+      var blob = await encodePng(cv);
       if(!blob) throw new Error('PNG failed');
       var b = tabBtn(), slug = String(b ? b.textContent : 'Roster').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'Roster';
       save(blob, 'Roster_' + slug + '_' + dateInfo().iso + '_' + (k === 'All' ? 'All' : 'Shift-' + k) + '.png');
