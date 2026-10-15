@@ -16554,6 +16554,10 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     var clone = tbl.cloneNode(true);
     var a = tbl.querySelectorAll('input,textarea'), b = clone.querySelectorAll('input,textarea');
     for(var i = 0; i < a.length && i < b.length; i++){ if(a[i].tagName === 'TEXTAREA') b[i].textContent = a[i].value; else b[i].setAttribute('value', a[i].value); }
+    /* OJTI and Stand by belong to no shift (one cell spanning all shifts): left out of a single-shift picture */
+    Array.prototype.forEach.call(clone.querySelectorAll('tbody tr'), function(tr){
+      if(Array.prototype.some.call(tr.children, function(c){ return (c.colSpan || 1) > 1; })) tr.remove();
+    });
     Array.prototype.forEach.call(clone.querySelectorAll('tr'), function(tr){
       var start = 0;
       Array.prototype.slice.call(tr.children).forEach(function(c){
