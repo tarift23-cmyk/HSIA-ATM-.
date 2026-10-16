@@ -13495,17 +13495,19 @@ function findOpenskyByCallsign(states, cs){
 /* Free community ADS-B feeds (no key needed) — used when OpenSky has no answer or its quota is used up. */
 const ADSB_SOURCES = [
   { name:'adsb.lol',       url: cs=> 'https://api.adsb.lol/v2/callsign/' + encodeURIComponent(cs) },
-  { name:'airplanes.live', url: cs=> 'https://api.airplanes.live/v2/callsign/' + encodeURIComponent(cs) }
+  { name:'airplanes.live', url: cs=> 'https://api.airplanes.live/v2/callsign/' + encodeURIComponent(cs) },
+  { name:'adsb.fi',        url: cs=> 'https://opendata.adsb.fi/api/v2/callsign/' + encodeURIComponent(cs) }
 ];
 /* -> { answered:boolean, rec:OpenSky-shaped record | null } */
 async function lookupAdsbLive(cs){
   const want = normalizeCallsignKey(cs);
   let answered = false;
+  const diag = [];      // why a feed gave no answer (shown next to the "could not load" note, so the cause can be seen)
   for(const src of ADSB_SOURCES){
     try{
-      const ctl = new AbortController(); const tm = setTimeout(()=> ctl.abort(), 8000);
+      const ctl = new AbortController(); const tm = setTimeout(()=> ctl.abort(), 6000);
       const resp = await fetch(src.url(cs), { signal: ctl.signal }); clearTimeout(tm);
-      if(!resp.ok) continue;
+      if(!resp.ok){ diag.push(src.name + ': HTTP ' + resp.status); continue; }
       const data = await resp.json();
       answered = true;
       const list = data.ac || data.aircraft || [];
@@ -13523,9 +13525,9 @@ async function lookupAdsbLive(cs){
         last_contact: Math.floor(Date.now()/1000 - (+ac.seen_pos || +ac.seen || 0)),
         source: src.name
       }};
-    }catch(e){ /* try the next feed */ }
+    }catch(e){ diag.push(src.name + ': ' + (e && e.name === 'AbortError' ? 'timeout' : 'blocked / offline')); /* try the next feed */ }
   }
-  return { answered, rec:null };
+  return { answered, rec:null, diag };
 }
 
 async function lookupOpenskyLive(cs){
@@ -13538,7 +13540,11 @@ async function lookupOpenskyLive(cs){
   if(!rec){
     const alt = await lookupAdsbLive(cs);            /* fallback: adsb.lol / airplanes.live */
     if(alt.rec) rec = alt.rec;
-    else if(osErr && !alt.answered) throw osErr;      /* nothing answered at all -> show the old error message */
+    else if(osErr && !alt.answered){                    /* nothing answered at all -> show the error message */
+      const er = (osErr instanceof Error) ? osErr : new Error(String(osErr));
+      er.diag = 'OpenSky: ' + (er.message || 'error') + (alt.diag && alt.diag.length ? ' \u00b7 ' + alt.diag.join(' \u00b7 ') : '');
+      throw er;
+    }
   }
   if(!rec) return { status: 'not_found' };
   if(rec.latitude == null || rec.longitude == null || !pointInBdFir(rec.latitude, rec.longitude)){
@@ -13615,6 +13621,7 @@ function initFlightRadar(){
 
   /* Phone (Mobile view mode): the map is not embedded in the card; a logo opens it in a full-screen popup instead. */
   let frCurrentUrl = DEFAULT_SRC;
+  let openFullPopup = null;
   const isPhoneView = ()=> !document.body.classList.contains('desktop-mode');
   function setFrameUrl(u){
     frCurrentUrl = u;
@@ -13653,6 +13660,7 @@ function initFlightRadar(){
       else histPushed = false;
     }
     logoBtn.addEventListener('click', open);
+    openFullPopup = open;
     window.addEventListener('popstate', ()=>{ if(opened){ histPushed = false; close(false); } });   // phone Back button closes the popup
     // switching to Desktop view while the popup is open: close it, and give the embedded map its current address
     new MutationObserver(()=>{ if(!isPhoneView()){ close(true); if(iframe.getAttribute('src') !== frCurrentUrl) iframe.src = frCurrentUrl; } })
@@ -13698,7 +13706,7 @@ function initFlightRadar(){
         liveNote.style.display = 'block';
         liveNote.textContent = (e && e.message === 'RATE_LIMIT')
           ? '⚠️ OpenSky-এর আজকের কোটা শেষ হয়ে গেছে। কিছুক্ষণ পর আবার চেষ্টা করুন, অথবা নিচের Admin অংশে নিজের ফ্রি OpenSky client id/secret যোগ করুন।'
-          : '⚠️ লাইভ ডেটা লোড করা যায়নি (ইন্টারনেট সংযোগ বা OpenSky সার্ভার সমস্যা)।';
+          : '⚠️ লাইভ ডেটা লোড করা যায়নি (ইন্টারনেট সংযোগ বা সার্ভার সমস্যা)।' + (e && e.diag ? ' [' + e.diag + ']' : '');
       }
     }
   }
@@ -13749,6 +13757,7 @@ function initFlightRadar(){
 
     // FlightRadar24's per-flight data page for a call sign
     setFrameUrl('https://www.flightradar24.com/data/flights/' + encodeURIComponent(cs.toLowerCase()));
+    if(isPhoneView() && openFullPopup) openFullPopup();     // phone: show the searched flight on FlightRadar24 right away (close with the X to see the details card)
     openTab.href = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cs.toLowerCase());
     faLink.href = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cs);
     adsbLink.href = 'https://globe.adsbexchange.com/?callsign=' + encodeURIComponent(cs);
