@@ -50,14 +50,14 @@
   }
   function sheetHtml(f, V){ var h = f.html(V); return smj ? toSmj(h) : h; }
   /* CSS is embedded here so the editor never depends on forms.css being loaded (it was not being applied) */
-  var XF_CSS = ".xf-sheet{ box-sizing:border-box; background:#fff; color:#000; position:relative; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact;\n  font-family:\"Noto Sans Bengali\",\"Kalpurush\",\"SolaimanLipi\",\"Siyam Rupali\",\"Nirmala UI\",\"Vrinda\",\"FreeSans\",sans-serif; line-height:1.35; }\n.xf-sheet *{ box-sizing:border-box; }\n.xf-sheet img{ display:block; margin:0 auto; }\n.xf-fill{ flex:1 1 0; min-width:0; padding:0 1.2mm; min-height:1.45em; white-space:pre-wrap; overflow-wrap:anywhere; }\n.xf-cl .xf-fill{ border-bottom:1.3px dotted #000; }\n.xf-ex .xf-fill.xf-empty{ border-bottom:1px dotted #888; }\n.xf-b{ font-weight:700; }\n/* ---- CL form: A4 portrait ---- */\n.xf-cl{ width:210mm; height:297mm; padding:8mm 19mm 6mm 19mm; font-size:11pt; }\n.xf-cl .xf-hdr img{ width:70mm; height:auto; }\n.xf-cl .xf-office{ display:flex; justify-content:center; align-items:flex-end; gap:1.5mm; margin-top:0.5mm; font-weight:700; }\n.xf-cl .xf-office .xf-fill{ flex:0 0 105mm; }\n.xf-cl .xf-title{ text-align:center; font-weight:700; font-size:15.5pt; margin:4.5mm 0 8mm; }\n.xf-cl .xf-title span{ border-bottom:1.5px solid #000; padding-bottom:0.3mm; }\n.xf-cl .xf-li{ display:flex; align-items:flex-end; margin-bottom:5.6mm; }\n.xf-cl .xf-li .n{ width:8mm; flex:none; font-weight:700; }\n.xf-cl .xf-li .l{ flex:none; font-weight:700; }\n.xf-cl .xf-sigbox{ margin:7mm 0 0 auto; width:38%; }\n.xf-cl .xf-sigbox .xf-dots{ border-top:1.3px dotted #000; margin-top:13mm; margin-bottom:1mm; }\n.xf-cl .xf-sigbox .xf-sl{ display:flex; align-items:flex-end; font-weight:700; margin-top:0.8mm; }\n.xf-cl .xf-sigbox .xf-sl .xf-fill{ border-bottom:0; }\n.xf-cl .xf-row{ display:flex; align-items:flex-end; margin-top:5.2mm; }\n.xf-cl .xf-row .t{ flex:none; font-weight:700; white-space:nowrap; }\n.xf-cl .xf-ind1{ margin-left:11mm; }\n.xf-cl .xf-ind2{ margin-left:40%; }\n.xf-cl .xf-hr{ border-top:1.4px solid #000; margin-top:8mm; padding-top:1mm; }\n.xf-cl .xf-note{ font-size:10pt; line-height:1.5; }\n.xf-cl .xf-note p{ margin:0 0 0.4mm 0; }\n.xf-cl .xf-note .sub{ margin-left:9mm; text-indent:-8mm; padding-left:8mm; margin-top:0.6mm; }\n/* ---- Exchange form: A4 width x half A4 height ---- */\n.xf-ex{ width:210mm; height:148.5mm; padding:4mm 12mm 3mm 12mm; font-size:10pt; }\n.xf-ex .xf-hdr img{ width:66mm; height:auto; }\n.xf-ex .xf-addr{ text-align:center; font-weight:700; font-size:8.6pt; margin-top:0.6mm; }\n.xf-ex .xf-addr2{ text-align:center; font-weight:700; font-size:9pt; }\n.xf-ex .xf-boxt{ text-align:center; margin:1.6mm 0 2.2mm; }\n.xf-ex .xf-boxt span{ display:inline-block; border:1.3px solid #000; padding:0.4mm 3.5mm; font-weight:700; font-size:11pt; }\n.xf-ex .xf-r{ display:flex; align-items:flex-end; min-height:7.4mm; }\n.xf-ex .xf-r.sg{ min-height:12mm; }\n.xf-ex .xf-r .n{ width:8mm; flex:none; }\n.xf-ex .xf-r .l{ width:55mm; flex:none; }\n.xf-ex .xf-r .c{ width:5mm; flex:none; }\n.xf-ex .xf-r .m{ flex:1 1 0; min-width:0; display:flex; align-items:flex-end; gap:1.5mm; }\n.xf-ex .xf-r .t{ flex:none; white-space:nowrap; }\n.xf-ex .xf-r .gap{ flex:0 0 5mm; }\n.xf-ex .xf-r .w2{ flex:1.25 1 0; }\n.xf-ex .xf-r .w1{ flex:1 1 0; }\n.xf-ex .xf-r .sgn{ flex:1 1 0; white-space:nowrap; padding-left:1.2mm; }\n/* ---- SutonnyMJ (Bijoy) version of both forms ---- */\n.xf-smj{ font-family:SutonnyMJ,'Noto Sans Bengali',sans-serif; line-height:1.167; }\n.xf-smj .xf-en{ font-family:'Times New Roman',Times,'Liberation Serif',serif; font-size:.86em; }\n.xf-cl.xf-smj{ font-size:12.65pt; }\n.xf-cl.xf-smj .xf-title{ font-size:17.82pt; }\n.xf-cl.xf-smj .xf-note{ font-size:11.5pt; line-height:1.2; }\n.xf-ex.xf-smj{ font-size:11.5pt; }\n.xf-ex.xf-smj .xf-addr{ font-size:9.89pt; }\n.xf-ex.xf-smj .xf-addr2{ font-size:10.35pt; }\n.xf-ex.xf-smj .xf-boxt span{ font-size:12.65pt; }\n/* ---- edit screen ---- */\n.xf-ov{ position:fixed; inset:0; z-index:20000; background:#141416; color:#ececf0; display:flex; flex-direction:column; font-family:inherit; }\n.xf-ov[hidden]{ display:none; }\n.xf-top{ display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px; border-bottom:1px solid #34343a; background:#1b1b1f; }\n.xf-top .xf-tt{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n.xf-top button{ white-space:nowrap; height:38px; min-width:38px; padding:0 12px; border-radius:10px; border:1px solid #3b3b42; background:#26262b; color:#ececf0; font-size:14px; cursor:pointer; font-family:inherit; }\n.xf-top button.ico{ display:inline-flex; align-items:center; justify-content:center; padding:0 10px; }\n.xf-top button.ico[disabled]{ opacity:.5; }\n.xf-top button.pri{ background:#e8c35a; color:#1a1405; border-color:#e8c35a; font-weight:700; }\n.xf-body{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px)); }\n.xf-grp{ border:1px solid #34343a; border-radius:12px; padding:10px 10px 4px; margin-bottom:10px; background:#1a1a1e; }\n.xf-grp h4{ margin:0 0 8px; font-size:12.5px; color:#a9a9b3; letter-spacing:.3px; font-weight:600; }\n.xf-fld{ margin-bottom:9px; }\n.xf-fld label{ display:block; font-size:12px; color:#b5b5bf; margin-bottom:3px; }\n.xf-fld input, .xf-fld textarea{ box-sizing:border-box; width:100%; border:1px solid #3b3b42; background:#101012; color:#f2f2f5; border-radius:9px; padding:9px 10px; font-size:15px; font-family:inherit; outline:none; }\n.xf-fld input:focus, .xf-fld textarea:focus{ border-color:#22d3ee; }\n.xf-fld textarea{ min-height:62px; resize:vertical; }\n.xf-pvl{ font-size:12px; color:#a9a9b3; margin:14px 2px 6px; }\n.xf-pv{ background:#2a2a2e; border-radius:10px; overflow:hidden; position:relative; }\n.xf-pvin{ transform-origin:0 0; position:absolute; left:0; top:0; }\n.xf-pvin .xf-sheet{ box-shadow:none; }\n#xfPrint{ display:none; }\n@media print{\n  html, body.xf-printing{ background:#fff !important; height:auto !important; min-height:0 !important; overflow:visible !important; margin:0 !important; padding:0 !important; position:static !important; }\n  body.xf-printing > *:not(#xfPrint){ display:none !important; }\n  body.xf-printing #xfPrint{ display:block !important; }\n  #xfPrint .xf-sheet{ margin:0; page-break-inside:avoid; break-inside:avoid; }\n}\n";
+  var XF_CSS = ".xf-sheet{ box-sizing:border-box; background:#fff; color:#000; position:relative; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact;\n  font-family:\"Noto Sans Bengali\",\"Kalpurush\",\"SolaimanLipi\",\"Siyam Rupali\",\"Nirmala UI\",\"Vrinda\",\"FreeSans\",sans-serif; line-height:1.35; }\n.xf-sheet *{ box-sizing:border-box; }\n.xf-sheet img{ display:block; margin:0 auto; }\n.xf-fill{ flex:1 1 0; min-width:0; padding:0 1.2mm; min-height:1.45em; white-space:pre-wrap; overflow-wrap:anywhere; }\n.xf-cl .xf-fill{ border-bottom:1.3px dotted #000; }\n.xf-ex .xf-fill.xf-empty{ border-bottom:1px dotted #888; }\n.xf-b{ font-weight:700; }\n/* ---- CL form: A4 portrait ---- */\n.xf-cl{ width:210mm; height:297mm; padding:8mm 19mm 6mm 19mm; font-size:11pt; }\n.xf-cl .xf-hdr img{ width:70mm; height:auto; }\n.xf-cl .xf-office{ display:flex; justify-content:center; align-items:flex-end; gap:1.5mm; margin-top:0.5mm; font-weight:700; }\n.xf-cl .xf-office .xf-fill{ flex:0 0 105mm; }\n.xf-cl .xf-title{ text-align:center; font-weight:700; font-size:15.5pt; margin:4.5mm 0 8mm; }\n.xf-cl .xf-title span{ border-bottom:1.5px solid #000; padding-bottom:0.3mm; }\n.xf-cl .xf-li{ display:flex; align-items:flex-end; margin-bottom:5.6mm; }\n.xf-cl .xf-li .n{ width:8mm; flex:none; font-weight:700; }\n.xf-cl .xf-li .l{ flex:none; font-weight:700; }\n.xf-cl .xf-sigbox{ margin:7mm 0 0 auto; width:38%; }\n.xf-cl .xf-sigbox .xf-dots{ border-top:1.3px dotted #000; margin-top:13mm; margin-bottom:1mm; }\n.xf-cl .xf-sigbox .xf-sl{ display:flex; align-items:flex-end; font-weight:700; margin-top:0.8mm; }\n.xf-cl .xf-sigbox .xf-sl .xf-fill{ border-bottom:0; }\n.xf-cl .xf-row{ display:flex; align-items:flex-end; margin-top:5.2mm; }\n.xf-cl .xf-row .t{ flex:none; font-weight:700; white-space:nowrap; }\n.xf-cl .xf-ind1{ margin-left:11mm; }\n.xf-cl .xf-ind2{ margin-left:40%; }\n.xf-cl .xf-hr{ border-top:1.4px solid #000; margin-top:8mm; padding-top:1mm; }\n.xf-cl .xf-note{ font-size:10pt; line-height:1.5; }\n.xf-cl .xf-note p{ margin:0 0 0.4mm 0; }\n.xf-cl .xf-note .sub{ margin-left:9mm; text-indent:-8mm; padding-left:8mm; margin-top:0.6mm; }\n/* ---- Exchange form: A4 width x half A4 height ---- */\n.xf-ex{ width:210mm; height:148.5mm; padding:4mm 12mm 3mm 12mm; font-size:10pt; }\n.xf-ex .xf-hdr img{ width:66mm; height:auto; }\n.xf-ex .xf-addr{ text-align:center; font-weight:700; font-size:8.6pt; margin-top:0.6mm; }\n.xf-ex .xf-addr2{ text-align:center; font-weight:700; font-size:9pt; }\n.xf-ex .xf-boxt{ text-align:center; margin:1.6mm 0 2.2mm; }\n.xf-ex .xf-boxt span{ display:inline-block; border:1.3px solid #000; padding:0.4mm 3.5mm; font-weight:700; font-size:11pt; }\n.xf-ex .xf-r{ display:flex; align-items:flex-end; min-height:7.4mm; }\n.xf-ex .xf-r.sg{ min-height:12mm; }\n.xf-ex .xf-r .n{ width:8mm; flex:none; }\n.xf-ex .xf-r .l{ width:55mm; flex:none; }\n.xf-ex .xf-r .c{ width:5mm; flex:none; }\n.xf-ex .xf-r .m{ flex:1 1 0; min-width:0; display:flex; align-items:flex-end; gap:1.5mm; }\n.xf-ex .xf-r .t{ flex:none; white-space:nowrap; }\n.xf-ex .xf-r .gap{ flex:0 0 5mm; }\n.xf-ex .xf-r .w2{ flex:1.25 1 0; }\n.xf-ex .xf-r .w1{ flex:1 1 0; }\n.xf-ex .xf-r .sgn{ flex:1 1 0; white-space:nowrap; padding-left:1.2mm; }\n/* ---- SutonnyMJ (Bijoy) version of both forms ---- */\n.xf-smj{ font-family:SutonnyMJ,'Noto Sans Bengali',sans-serif; line-height:1.167; }\n.xf-smj .xf-en{ font-family:'Times New Roman',Times,'Liberation Serif',serif; font-size:.86em; }\n.xf-cl.xf-smj{ font-size:12.65pt; }\n.xf-cl.xf-smj .xf-title{ font-size:17.82pt; }\n.xf-cl.xf-smj .xf-note{ font-size:11.5pt; line-height:1.2; }\n.xf-ex.xf-smj{ font-size:11.5pt; }\n.xf-ex.xf-smj .xf-addr{ font-size:9.89pt; }\n.xf-ex.xf-smj .xf-addr2{ font-size:10.35pt; }\n.xf-ex.xf-smj .xf-boxt span{ font-size:12.65pt; }\n/* ---- edit screen ---- */\n.xf-ov{ position:fixed; inset:0; z-index:20000; background:#141416; color:#ececf0; display:flex; flex-direction:column; font-family:inherit; }\n.xf-ov[hidden]{ display:none; }\n.xf-top{ display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px; border-bottom:1px solid #34343a; background:#1b1b1f; }\n.xf-top .xf-tt{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n.xf-top button{ white-space:nowrap; height:38px; min-width:38px; padding:0 12px; border-radius:10px; border:1px solid #3b3b42; background:#26262b; color:#ececf0; font-size:14px; cursor:pointer; font-family:inherit; }\n.xf-top button.ico{ display:inline-flex; align-items:center; justify-content:center; padding:0 10px; }\n.xf-top button.ico[disabled]{ opacity:.5; }\n.xf-top button.pri{ background:#e8c35a; color:#1a1405; border-color:#e8c35a; font-weight:700; }\n.xf-body{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px)); }\n.xf-grp{ border:1px solid #34343a; border-radius:12px; padding:10px 10px 4px; margin-bottom:10px; background:#1a1a1e; }\n.xf-grp h4{ margin:0 0 8px; font-size:12.5px; color:#a9a9b3; letter-spacing:.3px; font-weight:600; }\n.xf-fld{ margin-bottom:9px; }\n.xf-fld label{ display:block; font-size:12px; color:#b5b5bf; margin-bottom:3px; }\n.xf-fld input, .xf-fld textarea{ box-sizing:border-box; width:100%; border:1px solid #3b3b42; background:#101012; color:#f2f2f5; border-radius:9px; padding:9px 10px; font-size:15px; font-family:inherit; outline:none; }\n.xf-fld input:focus, .xf-fld textarea:focus{ border-color:#22d3ee; }\n.xf-fld textarea{ min-height:62px; resize:vertical; }\n.xf-pvl{ font-size:12px; color:#a9a9b3; margin:14px 2px 6px; }\n.xf-pv{ background:#2a2a2e; border-radius:10px; overflow:hidden; position:relative; }\n.xf-pvin{ transform-origin:0 0; position:absolute; left:0; top:0; }\n.xf-pvin .xf-sheet{ box-shadow:none; }\n.xf-pv .xf-fill{ cursor:text; outline:none; -webkit-tap-highlight-color:transparent; }\n.xf-pv .xf-fill:focus{ background:rgba(34,211,238,.18); }\n.xf-sheet .xf-fill.xf-editing{ font-family:'Noto Sans Bengali','Kalpurush','SolaimanLipi','Nirmala UI',sans-serif; }\n#xfPrint{ display:none; }\n@media print{\n  html, body.xf-printing{ background:#fff !important; height:auto !important; min-height:0 !important; overflow:visible !important; margin:0 !important; padding:0 !important; position:static !important; }\n  body.xf-printing > *:not(#xfPrint){ display:none !important; }\n  body.xf-printing #xfPrint{ display:block !important; }\n  #xfPrint .xf-sheet{ margin:0; page-break-inside:avoid; break-inside:avoid; }\n}\n";
   function injectCss(){
     if(document.getElementById('xfStyle')) return;
     var st = document.createElement('style'); st.id = 'xfStyle'; st.textContent = XF_CSS; document.head.appendChild(st);
   }
 
   function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
-  function fill(V, k, extra){ var t = V && V[k] ? String(V[k]) : ''; return '<span class="xf-fill ' + (extra || '') + (t ? '' : ' xf-empty') + '">' + (t ? esc(t) : '&nbsp;') + '</span>'; }
+  function fill(V, k, extra){ var t = V && V[k] ? String(V[k]) : ''; return '<span class="xf-fill ' + (extra || '') + (t ? '' : ' xf-empty') + '" data-k="' + k + '">' + (t ? esc(t) : '&nbsp;') + '</span>'; }
 
   /* ---------- CL form (A4 portrait) ---------- */
   function clHtml(V){
@@ -109,7 +109,7 @@
   }
 
   var FORMS = {
-    cl: { title:'CL Form — নৈমিত্তিক ছুটির দরখাস্ত', page:'210mm 297mm', w:210, h:297, png:'CL-Form.png', defaults:{ office:"নির্বাহী পরিচালকের দপ্তর,হশা়আবি,ATM শাখা" }, html:clHtml, groups:[
+    cl: { title:'CL Form — নৈমিত্তিক ছুটির দরখাস্ত', page:'210mm 297mm', w:210, h:297, png:'CL-Form.png', defaults:{ office:"নির্বাহী পরিচালকের দপ্তর,হশাআবি,ATM শাখা" }, html:clHtml, groups:[
       { t:'দরখাস্তকারী', f:[['office','অফিস'],['name','১। নাম ও পদবী'],['total','২। মোট জমাকৃত ছুটির পরিমান'],['period','৩। প্রার্থিত ছুটির সময় কাল ও পরিমান'],['reason','৪। ছুটির কারণ'],['addr','৫। ছুটি সময়কালীন ঠিকানা'],['adate','তারিখ']] },
       { t:'ঊর্ধ্বতন কর্তৃপক্ষ', f:[['rec1','সুপারিশ (১ম লাইন)'],['rec2','সুপারিশ (২য় লাইন)'],['rpost','পদবী'],['rdate','তারিখ']] },
       { t:'ছুটি মঞ্জুরকারী কর্মকর্তা', f:[['com1','মন্তব্য (১ম লাইন)'],['com2','মন্তব্য (২য় লাইন)'],['cdate','তারিখ']] } ] },
@@ -132,44 +132,59 @@
     injectCss();
     ov = document.createElement('div'); ov.className = 'xf-ov'; ov.hidden = true;
     ov.innerHTML = '<div class="xf-top"><button type="button" data-x="close" aria-label="Close">✕</button><div class="xf-tt"></div><button type="button" data-x="reset" title="সব মুছুন">↺</button><button type="button" class="ico" data-x="png" aria-label="PNG ডাউনলোড" title="PNG ডাউনলোড (A4)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg></button><button type="button" class="pri" data-x="print">🖨️ প্রিন্ট</button></div>'
-      + '<div class="xf-body"><div class="xf-fields"></div><div class="xf-pvl" style="height:6px;margin:0"></div><div class="xf-pv"><div class="xf-pvin"></div></div></div>';
+      + '<div class="xf-body"><div class="xf-pv"><div class="xf-pvin"></div></div></div>';
     document.body.appendChild(ov);
     pageStyle = document.createElement('style'); pageStyle.id = 'xfPageStyle'; document.head.appendChild(pageStyle);
     printRoot = document.createElement('div'); printRoot.id = 'xfPrint'; document.body.appendChild(printRoot);
     ov.addEventListener('click', function(e){
       var b = e.target.closest && e.target.closest('[data-x]'); if(!b) return; var a = b.getAttribute('data-x');
-      if(a === 'close') close(); else if(a === 'print') doPrint(); else if(a === 'png') doPng(b); else if(a === 'reset'){ if(confirm('এই ফর্মের সব লেখা মুছে ফেলবেন?')){ vals = withDefaults(cur, {}); save(); fields(); preview(); } }
+      if(a === 'close') close(); else if(a === 'print') doPrint(); else if(a === 'png') doPng(b); else if(a === 'reset'){ if(confirm('এই ফর্মের সব লেখা মুছে ফেলবেন?')){ vals = withDefaults(cur, {}); save(); preview(); } }
     });
-    ov.addEventListener('input', function(e){ var t = e.target; if(t && t.getAttribute && t.getAttribute('data-k')){ vals[t.getAttribute('data-k')] = t.value; save(); preview(); } });
-    window.addEventListener('resize', function(){ if(ov && !ov.hidden) preview(); });
-  }
-  function fields(){
-    var f = FORMS[cur], box = ov.querySelector('.xf-fields'), h = '';
-    f.groups.forEach(function(g){
-      h += '<div class="xf-grp"><h4>' + esc(g.t) + '</h4>';
-      g.f.forEach(function(x){
-        var id = 'xf_' + x[0];
-        h += '<div class="xf-fld"><label for="' + id + '">' + esc(x[1]) + '</label>'
-          + (x[2] === 'area' ? '<textarea id="' + id + '" data-k="' + x[0] + '">' + esc(vals[x[0]] || '') + '</textarea>'
-                             : '<input id="' + id + '" type="text" data-k="' + x[0] + '" value="' + esc(vals[x[0]] || '') + '" autocomplete="off">') + '</div>';
-      });
-      h += '</div>';
+    function fk(t){ return t && t.classList && t.classList.contains('xf-fill') && t.getAttribute('data-k') ? t.getAttribute('data-k') : null; }
+    ov.addEventListener('focusin', function(e){
+      var t = e.target, k = fk(t); if(!k || t.classList.contains('xf-editing')) return;
+      t.classList.add('xf-editing'); t.classList.remove('xf-empty'); t.textContent = vals[k] || '';
+      try{ var r = document.createRange(); r.selectNodeContents(t); r.collapse(false); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }catch(x){}
     });
-    box.innerHTML = h;
+    ov.addEventListener('focusout', function(e){
+      var t = e.target, k = fk(t); if(!k) return;
+      t.classList.remove('xf-editing'); renderFill(t);
+      setTimeout(function(){ if(pend && !ov.querySelector('.xf-fill.xf-editing')){ pend = false; preview(); } }, 300);
+    });
+    ov.addEventListener('input', function(e){ var t = e.target, k = fk(t); if(k){ vals[k] = (t.textContent || '').replace(/\u00a0/g, ' '); save(); } });
+    ov.addEventListener('keydown', function(e){ var k = fk(e.target); if(k && k !== 'remark' && e.key === 'Enter') e.preventDefault(); });
+    ov.addEventListener('paste', function(e){ if(!fk(e.target)) return; e.preventDefault(); var tx = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\r?\n/g, ' '); document.execCommand('insertText', false, tx); });
+    window.addEventListener('resize', function(){ if(ov && !ov.hidden) fit(); });
   }
-  function preview(){
+  var pend = false;
+  function fit(){
     var f = FORMS[cur], pv = ov.querySelector('.xf-pv'), inn = ov.querySelector('.xf-pvin');
     var pxw = f.w * 96 / 25.4, pxh = f.h * 96 / 25.4, s = Math.min(1, (pv.clientWidth || 340) / pxw);
-    inn.innerHTML = sheetHtml(f, vals); inn.style.width = pxw + 'px'; inn.style.height = pxh + 'px'; inn.style.transform = 'scale(' + s + ')';
+    inn.style.width = pxw + 'px'; inn.style.height = pxh + 'px'; inn.style.transform = 'scale(' + s + ')';
     pv.style.height = Math.ceil(pxh * s) + 'px';
+  }
+  function renderFill(el){   /* redraw one field (Bijoy-converted when SutonnyMJ is on) after editing */
+    var v = vals[el.getAttribute('data-k')] || '';
+    if(!v){ el.innerHTML = '&nbsp;'; el.classList.add('xf-empty'); }
+    else { el.classList.remove('xf-empty'); el.innerHTML = smj ? toSmj(esc(v)) : esc(v); }
+  }
+  function preview(){
+    var f = FORMS[cur], inn = ov.querySelector('.xf-pvin');
+    inn.innerHTML = sheetHtml(f, vals);
+    Array.prototype.forEach.call(inn.querySelectorAll('.xf-fill[data-k]'), function(el){
+      try{ el.contentEditable = 'plaintext-only'; }catch(e){}
+      if(el.contentEditable !== 'plaintext-only') el.contentEditable = 'true';
+      el.spellcheck = false; el.setAttribute('autocapitalize', 'off'); el.setAttribute('autocomplete', 'off');
+    });
+    fit();
   }
   function open(k){
     if(!FORMS[k]) return; if(!ov) build();
-    ensureSmj().then(function(){ if(ov && !ov.hidden && cur === k) preview(); });
+    ensureSmj().then(function(){ if(ov && !ov.hidden && cur === k){ if(ov.querySelector('.xf-fill.xf-editing')) pend = true; else preview(); } });
     cur = k; vals = load(k); ov.querySelector('.xf-tt').textContent = FORMS[k].title;
     ov.hidden = false; document.documentElement.style.overscrollBehavior = 'none';
-    fields(); preview(); ov.querySelector('.xf-body').scrollTop = 0;
-    setTimeout(preview, 80);
+    preview(); ov.querySelector('.xf-body').scrollTop = 0;
+    setTimeout(function(){ if(ov && !ov.hidden) fit(); }, 80);
   }
   function close(){ if(ov) ov.hidden = true; }
   function doPrint(){
