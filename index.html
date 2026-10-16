@@ -13620,10 +13620,12 @@ function initFlightRadar(){
   const DEFAULT_SRC = 'https://www.flightradar24.com/23.53,89.91/6';
 
   /* Phone (Mobile view mode): the map is not embedded in the card; a logo opens it in a full-screen popup instead. */
-  let frCurrentUrl = DEFAULT_SRC;
+  let frPageUrl = DEFAULT_SRC;     // what the embedded frame shows in Desktop mode
+  let frMapUrl = DEFAULT_SRC;      // what the phone popup shows: FlightRadar24's /data/flights/... pages refuse to be framed (blank page), the live map does not
   const isPhoneView = ()=> !document.body.classList.contains('desktop-mode');
   function setFrameUrl(u){
-    frCurrentUrl = u;
+    frPageUrl = u;
+    frMapUrl = DEFAULT_SRC;                   // a new search starts from the default map; it is re-centred on the aircraft once its position is known
     if(!isPhoneView()) iframe.src = u;        // desktop mode: unchanged behaviour
   }
   (function wirePhonePopup(){
@@ -13643,7 +13645,7 @@ function initFlightRadar(){
       if(!overlay) build();
       pop = document.createElement('iframe');
       pop.setAttribute('referrerpolicy', 'no-referrer-when-downgrade'); pop.setAttribute('allow', 'geolocation; fullscreen');
-      pop.src = frCurrentUrl;
+      pop.src = frMapUrl;
       overlay.insertBefore(pop, overlay.firstChild);
       overlay.classList.add('show'); opened = true;
       document.documentElement.style.overflow = 'hidden';
@@ -13661,7 +13663,7 @@ function initFlightRadar(){
     logoBtn.addEventListener('click', open);
     window.addEventListener('popstate', ()=>{ if(opened){ histPushed = false; close(false); } });   // phone Back button closes the popup
     // switching to Desktop view while the popup is open: close it, and give the embedded map its current address
-    new MutationObserver(()=>{ if(!isPhoneView()){ close(true); if(iframe.getAttribute('src') !== frCurrentUrl) iframe.src = frCurrentUrl; } })
+    new MutationObserver(()=>{ if(!isPhoneView()){ close(true); if(iframe.getAttribute('src') !== frPageUrl) iframe.src = frPageUrl; } })
       .observe(document.body, { attributes:true, attributeFilter:['class'] });
   })();
 
@@ -13690,6 +13692,7 @@ function initFlightRadar(){
       }
 
       const rec = result.rec;
+      if(rec.latitude != null && rec.longitude != null) frMapUrl = 'https://www.flightradar24.com/' + (+rec.latitude).toFixed(3) + ',' + (+rec.longitude).toFixed(3) + '/9';   // phone popup opens centred on this aircraft
       if(liveCs) liveCs.textContent = '🔴 লাইভ (' + (rec.source || 'OpenSky') + ', Dhaka FIR) — ' + (rec.callsign || cs).trim();
       if(liveGround) liveGround.textContent = rec.on_ground ? 'গ্রাউন্ডে (Ground)' : 'উড্ডয়নরত (Airborne)';
       if(liveAlt) liveAlt.textContent = (rec.baro_altitude!=null) ? Math.round(rec.baro_altitude*3.28084).toLocaleString() + ' ft' : '—';
