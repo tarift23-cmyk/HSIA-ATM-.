@@ -186,7 +186,7 @@
     preview(); ov.querySelector('.xf-body').scrollTop = 0;
     setTimeout(function(){ if(ov && !ov.hidden) fit(); }, 80);
   }
-  function close(){ if(ov) ov.hidden = true; }
+  function close(){ if(ov) ov.hidden = true; document.documentElement.style.overscrollBehavior = ''; }   /* open() turns pull-to-refresh off while the editor is on screen; give it back when the editor closes */
   function doPrint(){
     ensureSmj().then(smjFonts).then(doPrint2);
   }
