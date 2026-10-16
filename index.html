@@ -3794,7 +3794,7 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
     if(formsState === 1) return;
     formsState = 1;
     if(!document.getElementById('hsiaFormsCss')){ var l = document.createElement('link'); l.id = 'hsiaFormsCss'; l.rel = 'stylesheet'; l.href = 'forms/forms.css?v=smj1'; document.head.appendChild(l); }
-    var s = document.createElement('script'); s.src = 'forms/forms.js?v=smj1';
+    var s = document.createElement('script'); s.src = 'forms/forms.js?v=smj2';
     s.onload = function(){ formsState = 2; cb(); };
     s.onerror = function(){ formsState = 0; s.remove(); alert('ফর্ম এডিটর লোড হয়নি।\nইন্টারনেট চেক করুন, আর GitHub এ forms ফোল্ডার (forms.js, forms.css, header.png) আপলোড হয়েছে কিনা দেখুন।'); };
     document.head.appendChild(s);
@@ -13621,7 +13621,6 @@ function initFlightRadar(){
 
   /* Phone (Mobile view mode): the map is not embedded in the card; a logo opens it in a full-screen popup instead. */
   let frCurrentUrl = DEFAULT_SRC;
-  let openFullPopup = null;
   const isPhoneView = ()=> !document.body.classList.contains('desktop-mode');
   function setFrameUrl(u){
     frCurrentUrl = u;
@@ -13660,7 +13659,6 @@ function initFlightRadar(){
       else histPushed = false;
     }
     logoBtn.addEventListener('click', open);
-    openFullPopup = open;
     window.addEventListener('popstate', ()=>{ if(opened){ histPushed = false; close(false); } });   // phone Back button closes the popup
     // switching to Desktop view while the popup is open: close it, and give the embedded map its current address
     new MutationObserver(()=>{ if(!isPhoneView()){ close(true); if(iframe.getAttribute('src') !== frCurrentUrl) iframe.src = frCurrentUrl; } })
@@ -13702,11 +13700,10 @@ function initFlightRadar(){
       if(liveCard) liveCard.classList.add('show');
     }catch(e){
       if(reqId !== _liveReqId) return;
-      if(liveNote){
+      /* Only the quota message is shown; the generic "live data could not be loaded" warning is no longer displayed. */
+      if(liveNote && e && e.message === 'RATE_LIMIT'){
         liveNote.style.display = 'block';
-        liveNote.textContent = (e && e.message === 'RATE_LIMIT')
-          ? '⚠️ OpenSky-এর আজকের কোটা শেষ হয়ে গেছে। কিছুক্ষণ পর আবার চেষ্টা করুন, অথবা নিচের Admin অংশে নিজের ফ্রি OpenSky client id/secret যোগ করুন।'
-          : '⚠️ লাইভ ডেটা লোড করা যায়নি (ইন্টারনেট সংযোগ বা সার্ভার সমস্যা)।' + (e && e.diag ? ' [' + e.diag + ']' : '');
+        liveNote.textContent = '⚠️ OpenSky-এর আজকের কোটা শেষ হয়ে গেছে। কিছুক্ষণ পর আবার চেষ্টা করুন, অথবা নিচের Admin অংশে নিজের ফ্রি OpenSky client id/secret যোগ করুন।';
       }
     }
   }
@@ -13757,7 +13754,6 @@ function initFlightRadar(){
 
     // FlightRadar24's per-flight data page for a call sign
     setFrameUrl('https://www.flightradar24.com/data/flights/' + encodeURIComponent(cs.toLowerCase()));
-    if(isPhoneView() && openFullPopup) openFullPopup();     // phone: show the searched flight on FlightRadar24 right away (close with the X to see the details card)
     openTab.href = 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(cs.toLowerCase());
     faLink.href = 'https://www.flightaware.com/live/flight/' + encodeURIComponent(cs);
     adsbLink.href = 'https://globe.adsbexchange.com/?callsign=' + encodeURIComponent(cs);
