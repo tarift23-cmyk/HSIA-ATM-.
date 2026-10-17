@@ -324,6 +324,7 @@
   #exchangeConfirmBtn{ flex:0 0 100%; order:1; }
   #exchangeModalOverlay .fr-manualform > #clDataBtn{ order:2; }
   body:not(.hsia-priv) #clDataBtn{ display:none !important; }   /* CL Data: only admin / moderator sessions see it */
+  body:not(.hsia-staff) #exReqOpenBtn{ display:none !important; }   /* Requests: admin + moderators only (logged-in users reach their own requests from Settings > My account) */
   .xmode-off #exchangeDate, .xmode-off .dfmt, .xmode-off .xpos-wrap, .xmode-off #exchangeNightHalf, .xmode-off #exchangeSubName, .xmode-off #exchangeConfirmBtn, .xmode-nosub #exchangeSubName{ display:none !important; }
   .xbtn-row{ display:flex; gap:5px; width:100%; flex:0 0 100%; }
   .xbtn-row .xbtn{ flex:1 1 auto; min-width:0; padding:10px 3px; font-size:11px; letter-spacing:-0.1px; white-space:nowrap; overflow:hidden; text-align:center; }
@@ -3047,6 +3048,7 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
 
   <div class="modal-overlay" id="clChooseOverlay" style="z-index:10002;align-items:center;">
     <div class="modal-box" style="max-width:340px;padding:8px 0;">
+      <div id="clChooseBal" style="padding:6px 16px 10px;font-size:13px;font-weight:700;text-align:center;opacity:.85;"></div>
       <button type="button" class="xp-choice" id="clChooseSub">CL + Substitute</button>
       <button type="button" class="xp-choice" id="clChooseVacant">CL + Position left vacant</button>
     </div>
@@ -7771,6 +7773,29 @@ function loadAuthSession(){
 }
 function saveAuthSession(s){ try{ localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); }catch(e){} }
 function clearAuthSession(){ try{ localStorage.removeItem(AUTH_SESSION_KEY); }catch(e){} }
+/* Moderators: an account record hsia_sync/<room>/users/<key>/role = "moderator" (set by hand in the Firebase console; <key> = the login e-mail,
+   lower case, "." replaced by ","). The role is copied into the local session (s.role) so the UI can show admin+moderator controls (body.hsia-staff).
+   For now a moderator only gets the Requests button; what else a moderator may do is still undecided. */
+window.hsiaIsModerator = function(){ try{ const s = loadAuthSession(); return !!(s && (s.role === 'moderator' || s.role === 'admin')); }catch(e){ return false; } };
+async function authRefreshRole(){
+  try{
+    const s = loadAuthSession(), saved = loadFirebaseSyncConfig();
+    if(!s || !s.key || typeof _fbDb === 'undefined' || !_fbDb || !saved) return;
+    const snap = await _fbDb.ref('hsia_sync/' + saved.roomId + '/users/' + s.key + '/role').once('value');
+    const role = snap.val() === 'moderator' ? 'moderator' : '';
+    if((s.role || '') !== role){ s.role = role; saveAuthSession(s); }
+    if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI();
+  }catch(e){ /* offline / not allowed: keep the last known role */ }
+}
+function clBalanceText(r){   /* "how many CL days does this person still have this year" */
+  try{
+    if(!r || !r.who || r.who === '-') return '';
+    const year = +String(r.dateKey).slice(0,4);
+    const used = clUsedBy(r.who, year, clIdFor(r.dateKey, r.table, r.pos, r.team));
+    const left = Math.max(0, CL_LIMIT - used);
+    return '🗓️ ' + r.who + ' — CL ' + used + '/' + CL_LIMIT + ' দিন নেওয়া · বাকি ' + left + ' দিন (' + year + ')';
+  }catch(e){ return ''; }
+}
 function loadNotifiedSet(){
   try{ const a = JSON.parse(localStorage.getItem(AUTH_NOTIFIED_KEY)); if(Array.isArray(a)) return new Set(a); }catch(e){}
   return new Set();
@@ -8152,6 +8177,7 @@ function checkMyExchangeNotifications(){
 
 function applyAuthUI(session){
   try{ setTimeout(()=>{ if(window.hsiaMeAuthRefresh) window.hsiaMeAuthRefresh(); }, 0); }catch(e){}
+  try{ setTimeout(authRefreshRole, 0); }catch(e){}
   const loggedOut = document.getElementById('authLoggedOutView');
   const loggedIn = document.getElementById('authLoggedInView');
   const welcome = document.getElementById('authWelcome');
@@ -9484,6 +9510,7 @@ function connectFirebaseSync(config, roomId){
     const clLogRef = _fbDb.ref('hsia_sync/' + roomId + '/clLog');
     const vccsRef = _fbDb.ref('hsia_sync/' + roomId + '/vccs');
 
+    setTimeout(authRefreshRole, 600);     /* moderator role of the logged-in account */
     /* Central-search copy of the Others tab (text only). The tab itself is admin-only; this node is readable by everyone signed in. */
     try{
       const OSK = 'hsia_othersSearchCache';
@@ -9964,6 +9991,7 @@ function updateExchangeCurrentHint(){
   const r = exchangeResolve();
   hint.textContent = '';
   if(!r){ if(clInfo) clInfo.textContent = ''; if(halfSel){ halfSel.style.display = 'none'; halfSel.value = ''; } return; }
+  if(window._xMode === 'cl') hint.textContent = clBalanceText(r);     // + Add CL: show how many CL days are left for this person
 
   /* The 1st/2nd-night split only makes sense for a team roster on a Night shift */
   if(halfSel && dateInput && dateInput.value){
@@ -11853,6 +11881,7 @@ function initExchangePanel(){
             }
             return;
           }
+          { const b = document.getElementById('clChooseBal'); if(b) b.textContent = ''; }
           if(chooser) chooser.classList.add('show');
         };
         if(window._spPreType){ window._spAfterType(window._spPreType); return; }   /* type was already chosen on the Others button */
@@ -11865,7 +11894,7 @@ function initExchangePanel(){
       document.getElementById('clChooseSub').textContent = lab + ' + Substitute';
       document.getElementById('clChooseVacant').textContent = lab + ' + Position left vacant';
       if(_m === 'request'){
-        if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\nThe admin decides whether somebody covers it or the position stays vacant.')){
+        if(confirm('Send a ' + lab + ' request for ' + r.dateKey + ' (' + r.pos + ') to the admin?\n\n' + (clBalanceText(r) ? clBalanceText(r) + '\n\n' : '') + 'The admin decides whether somebody covers it or the position stays vacant.')){
           if(exReqSubmit({ kind:'cl', r:r, subName:'', vacant:true }) && window._xDone) window._xDone('Request sent');
         }
         return;
@@ -11874,6 +11903,7 @@ function initExchangePanel(){
         document.getElementById('clChooseSub').textContent = 'CL \u00B7 With substitute';
         document.getElementById('clChooseVacant').textContent = 'CL \u00B7 Without substitute (duty place vacant)';
       }
+      { const b = document.getElementById('clChooseBal'); if(b) b.textContent = clBalanceText(r); }
       if(chooser) chooser.classList.add('show');
     };
     const spTypeOv = document.getElementById('spTypeOverlay');
@@ -15041,7 +15071,7 @@ function openRosterWindow(){
   function rangeInfo(){
     let priv = false; try{ priv = !!rosterUnlocked; }catch(e){}
     let s = null; try{ s = loadAuthSession(); }catch(e){}
-    if(s && (s.role === 'admin' || s.role === 'moderator')) priv = true;   /* moderator = same as admin (role is read from the session once moderators exist) */
+    /* moderator access is still undecided: a moderator is treated like a normal logged-in account here (only admin sees every day) */
     if(priv) return null;
     const t = todayDateKey();
     return s ? { min:addDays(t, -5), max:addDays(t, 7), who:'user' } : { min:t, max:t, who:'guest' };
@@ -15545,6 +15575,7 @@ initAdminNotepad();
   window.hsiaUpdatePrivUI = function(){
     const on = window.hsiaCanSeeOthers();
     document.body.classList.toggle('hsia-priv', on);
+    document.body.classList.toggle('hsia-staff', on || !!(window.hsiaIsModerator && window.hsiaIsModerator()));
     const t = document.getElementById('iflowAdminToggle');
     if(t){ t.textContent = on ? '🔓' : '🔐'; t.title = on ? 'Admin logout' : 'Admin / Moderator login'; }
     if(!on){
