@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261014-000500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261018-120000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -15982,17 +15982,23 @@ initAdminNotepad();
   }).observe(document.body, { childList:true, subtree:true });
 })();
 
-initFlightRadar();
-initFlightDb();
-initOpenskyCreds();
-initFirebaseSync();
-initRoster();
-initAuthPanel();
-initExchangePanel();
-initQuickExchangeModal();
-refreshAll();
-renderDutyTicker();
-setInterval(tick, 1000);
+/* Start-up: every step runs on its own. Before, these were plain one-after-another calls, so ONE error in an early step (a slow first load, a
+   missing element ...) cancelled all the steps after it: roster, buttons and the first screen were never wired = the "frozen after opening" bug
+   that a refresh cured. Now a failing step is only logged; if one failed, the page reloads itself ONCE (the same as the refresh that fixed it). */
+(function(){
+  var steps = [initFlightRadar, initFlightDb, initOpenskyCreds, initFirebaseSync, initRoster, initAuthPanel, initExchangePanel, initQuickExchangeModal, refreshAll, renderDutyTicker];
+  var failed = 0;
+  steps.forEach(function(fn){ try{ fn(); }catch(e){ failed++; console.error('Start-up step failed:', fn && fn.name, e); } });
+  try{ setInterval(tick, 1000); }catch(e){ console.error(e); }
+  if(failed){
+    try{
+      if(!sessionStorage.getItem('HSIA_INIT_RETRY')){
+        sessionStorage.setItem('HSIA_INIT_RETRY', '1');
+        setTimeout(function(){ location.reload(); }, 700);
+      }
+    }catch(e){}
+  }
+})();
 </script>
 <script>
 (function(){
