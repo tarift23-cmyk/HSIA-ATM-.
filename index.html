@@ -1629,6 +1629,41 @@ body:not(.hsia-priv) #iflowOthersColumn{ display:none !important; }
 }
 .fr-icon-btn svg{ width:18px; height:18px; }
 .fr-icon-btn:active{ filter:brightness(.9); }
+
+.fr-searchbox input{ min-width:0; }
+.fr-icon-btn.active{ border-color:var(--gold) !important; color:var(--gold-soft) !important; }
+.fr-filterpanel{
+  background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
+  padding:12px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px;
+}
+.fr-frow{ display:flex; gap:8px; }
+.fr-frow .fr-flabel{ flex:1; min-width:0; }
+.fr-flabel{ display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--muted); font-family:'Space Grotesk',sans-serif; font-weight:600; letter-spacing:.04em; }
+.fr-flabel input,.fr-flabel select{
+  width:100%; box-sizing:border-box; background:var(--panel); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:9px 10px; font-size:13px; font-family:'Inter',sans-serif; text-transform:uppercase;
+}
+.fr-flabel select{ text-transform:none; }
+.fr-flabel input:focus,.fr-flabel select:focus{ outline:none; border-color:var(--gold); }
+.fr-fbtns{ display:flex; gap:8px; }
+.fr-fbtn{
+  flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel);
+  color:var(--text); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; cursor:pointer;
+}
+.fr-fbtn.primary{ border-color:var(--gold); background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130; flex:2; }
+.fr-fresults{ margin-bottom:12px; }
+.fr-fcount{ font-size:11.5px; color:var(--muted); margin-bottom:8px; }
+.fr-fitem{
+  background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+  margin-bottom:8px; font-size:12px; color:var(--muted); cursor:pointer;
+}
+.fr-fitem:active{ filter:brightness(.92); }
+.fr-fitem.live{ border-color:#2fa56b; }
+.fr-fitem .fr-ftop{ display:flex; align-items:center; gap:8px; }
+.fr-fitem .fr-fcs{ color:var(--gold-soft); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; }
+.fr-fitem .fr-fdd{ color:var(--text); font-weight:600; margin-left:auto; }
+.fr-fitem .fr-fsub{ margin-top:4px; line-height:1.5; }
+.fr-livebadge{ background:#2fa56b; color:#fff; border-radius:20px; padding:1px 8px; font-size:10px; font-weight:700; }
 .fr-linkrow{
   display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;
 }
@@ -3617,9 +3652,32 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
     <div class="collapse-body" id="flightrBody">
       <div class="fr-searchbox">
         <input id="frCallsignInput" type="text" placeholder="কলসাইন লিখুন (e.g. BBC131, CCA512)" autocomplete="off">
-        <button id="frSearchBtn" type="button">খুঁজুন</button>
+        <button id="frSearchBtn" type="button" class="fr-icon-btn" title="সার্চ" aria-label="সার্চ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
+        <button id="frFilterBtn" type="button" class="fr-icon-btn" title="ফিল্টার" aria-label="ফিল্টার" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></button>
         <button id="frRefreshBtn" type="button" class="fr-icon-btn" title="রিফ্রেশ করুন" aria-label="রিফ্রেশ করুন"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
       </div>
+      <div class="fr-filterpanel" id="frFilterPanel" style="display:none;">
+        <label class="fr-flabel">রুট (Airway)
+          <select id="frFRoute"><option value="">সব রুট</option></select>
+        </label>
+        <div class="fr-frow">
+          <label class="fr-flabel">From
+            <input id="frFFrom" type="text" list="frAptList" maxlength="4" placeholder="VGHS / DAC" autocomplete="off" autocapitalize="characters">
+          </label>
+          <label class="fr-flabel">To
+            <input id="frFTo" type="text" list="frAptList" maxlength="4" placeholder="OMDB / DXB" autocomplete="off" autocapitalize="characters">
+          </label>
+        </div>
+        <label class="fr-flabel">Airlines (ঐচ্ছিক, ৩ অক্ষর)
+          <input id="frFAirline" type="text" maxlength="3" placeholder="IGO, QTR, UAE, BTN" autocomplete="off" autocapitalize="characters">
+        </label>
+        <datalist id="frAptList"></datalist>
+        <div class="fr-fbtns">
+          <button type="button" id="frFApply" class="fr-fbtn primary">ফিল্টার দেখুন</button>
+          <button type="button" id="frFClear" class="fr-fbtn">মুছুন</button>
+        </div>
+      </div>
+      <div class="fr-fresults" id="frFResults" style="display:none;"></div>
       <div class="fr-infocard" id="frDbMatch">
         <div class="fr-cs" id="frDbCallsign"></div>
         <div class="fr-row"><b>Type:</b> <span id="frDbType"></span></div>
@@ -13658,6 +13716,154 @@ function initFlightRadar(){
     frMapUrl = DEFAULT_SRC;                   // a new search starts from the default map; it is re-centred on the aircraft once its position is known
     if(!isPhoneView()) iframe.src = u;        // desktop mode: unchanged behaviour
   }
+
+  /* ---- Filter: route (airway) / from-to airport / airline (3-letter) ---- */
+  (function wireFilter(){
+    const fBtn = document.getElementById('frFilterBtn');
+    const panel = document.getElementById('frFilterPanel');
+    const selRoute = document.getElementById('frFRoute');
+    const inFrom = document.getElementById('frFFrom');
+    const inTo = document.getElementById('frFTo');
+    const inAir = document.getElementById('frFAirline');
+    const apply = document.getElementById('frFApply');
+    const clear = document.getElementById('frFClear');
+    const out = document.getElementById('frFResults');
+    const aptList = document.getElementById('frAptList');
+    const sBtn = document.getElementById('frSearchBtn');
+    if(!fBtn || !panel || !out) return;
+
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const icao = c => { c = (c||'').toString().trim().toUpperCase(); return c ? (window.icaoFromIata ? window.icaoFromIata(c) : c) : ''; };
+
+    function allRecords(){
+      const seen = new Set(), list = [];
+      const push = r => {
+        if(!r || !r.callsign) return;
+        const k = [normalizeCallsignKey(r.callsign), icao(r.departure), icao(r.destination), (r.route||'').toUpperCase()].join('|');
+        if(seen.has(k)) return; seen.add(k); list.push(r);
+      };
+      loadFlightDb().forEach(push);
+      ovBuildIndex().map.forEach(lines => lines.forEach(l => push(ovToRec(l))));
+      return list;
+    }
+
+    let optionsBuilt = false;
+    function buildOptions(){
+      const recs = allRecords();
+      const routes = new Set(), apts = new Set();
+      recs.forEach(r => {
+        (r.route||'').toUpperCase().split(/[\s,\/]+/).forEach(x => { if(x) routes.add(x); });
+        [r.departure, r.destination].forEach(a => { a = icao(a); if(a) apts.add(a); });
+      });
+      const cur = selRoute.value;
+      selRoute.innerHTML = '<option value="">সব রুট</option>' +
+        Array.from(routes).sort().map(r => '<option value="'+esc(r)+'">'+esc(r)+'</option>').join('');
+      selRoute.value = cur;
+      aptList.innerHTML = Array.from(apts).sort().map(a => '<option value="'+esc(a)+'"></option>').join('');
+      optionsBuilt = true;
+    }
+
+    fBtn.addEventListener('click', ()=>{
+      const show = panel.style.display === 'none';
+      panel.style.display = show ? 'flex' : 'none';
+      fBtn.classList.toggle('active', show);
+      fBtn.setAttribute('aria-expanded', show ? 'true' : 'false');
+      if(show && !optionsBuilt) buildOptions();
+    });
+
+    function routeHas(r, want){
+      return (r.route||'').toUpperCase().split(/[\s,\/]+/).indexOf(want) >= 0;
+    }
+    function airlineOf(cs){ const m = /^[A-Z]{3}/.exec(normalizeCallsignKey(cs)); return m ? m[0] : ''; }
+
+    let _fReq = 0;
+    async function runFilter(){
+      const req = ++_fReq;
+      const route = selRoute.value.trim().toUpperCase();
+      const from = icao(inFrom.value), to = icao(inTo.value);
+      const air = inAir.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+      if(!route && !from && !to && !air){
+        out.style.display = 'block';
+        out.innerHTML = '<div class="fr-note" style="display:block;">রুট, From/To বা Airlines — অন্তত একটি দিন।</div>';
+        return;
+      }
+      out.style.display = 'block';
+      out.innerHTML = '<div class="fr-note" style="display:block;">খোঁজা হচ্ছে…</div>';
+
+      let rows = allRecords().filter(r =>
+        (!route || routeHas(r, route)) &&
+        (!from || icao(r.departure) === from) &&
+        (!to || icao(r.destination) === to) &&
+        (!air || airlineOf(r.callsign) === air)
+      );
+
+      // live status (best-effort): which of these are inside Dhaka FIR right now
+      const liveMap = new Map();
+      let liveAll = [];
+      try{
+        const states = await fetchOpenskyStates();
+        states.forEach(row => {
+          const rec = {}; OS_FIELDS.forEach((f,i)=>{ rec[f] = row[i]; });
+          if(rec.latitude == null || rec.longitude == null || !pointInBdFir(rec.latitude, rec.longitude)) return;
+          const k = normalizeCallsignKey(rec.callsign || '');
+          if(k){ liveMap.set(k, rec); liveAll.push(rec); }
+        });
+      }catch(e){ /* live status is optional */ }
+      if(req !== _fReq) return;
+
+      rows = rows.map(r => ({ r, live: liveMap.get(normalizeCallsignKey(r.callsign)) || null }));
+      // only an airline code given -> also show live aircraft of that airline that are not in the local DB
+      if(air && !route && !from && !to){
+        const have = new Set(rows.map(x => normalizeCallsignKey(x.r.callsign)));
+        liveAll.forEach(rec => {
+          const k = normalizeCallsignKey(rec.callsign);
+          if(airlineOf(k) === air && !have.has(k)){ have.add(k); rows.push({ r:{ callsign:rec.callsign.trim() }, live:rec }); }
+        });
+      }
+      rows.sort((a,b) => (b.live?1:0) - (a.live?1:0) || a.r.callsign.localeCompare(b.r.callsign));
+
+      const total = rows.length, LIMIT = 150;
+      if(!total){
+        out.innerHTML = '<div class="fr-note" style="display:block;">কিছু পাওয়া যায়নি।</div>';
+        return;
+      }
+      const liveN = rows.filter(x => x.live).length;
+      let html = '<div class="fr-fcount">মোট ' + total + 'টি ফ্লাইট' + (liveN ? ' · 🔴 এখন FIR-এ ' + liveN + 'টি' : '') + (total > LIMIT ? ' (প্রথম ' + LIMIT + 'টি দেখানো হচ্ছে)' : '') + '</div>';
+      rows.slice(0, LIMIT).forEach(({r, live}) => {
+        const dd = (r.departure || r.destination) ? (icao(r.departure)||'—') + ' → ' + (icao(r.destination)||'—') : '';
+        const sub = [];
+        if(r.type) sub.push(esc(r.type));
+        if(r.registration) sub.push(esc(r.registration));
+        if(r.route) sub.push('Route ' + esc(r.route));
+        if(r.time) sub.push(esc(r.time));
+        if(live){
+          const alt = live.baro_altitude != null ? Math.round(live.baro_altitude*3.28084).toLocaleString() + ' ft' : '';
+          const spd = live.velocity != null ? Math.round(live.velocity*1.94384) + ' kt' : '';
+          sub.push([alt, spd].filter(Boolean).join(' · '));
+        }
+        html += '<div class="fr-fitem' + (live ? ' live' : '') + '" data-cs="' + esc(normalizeCallsignKey(r.callsign)) + '">' +
+          '<div class="fr-ftop"><span class="fr-fcs">' + esc(r.callsign) + '</span>' + (live ? '<span class="fr-livebadge">LIVE</span>' : '') +
+          (dd ? '<span class="fr-fdd">' + esc(dd) + '</span>' : '') + '</div>' +
+          (sub.length ? '<div class="fr-fsub">' + sub.filter(Boolean).join(' · ') + '</div>' : '') + '</div>';
+      });
+      out.innerHTML = html;
+    }
+
+    apply.addEventListener('click', runFilter);
+    [inFrom, inTo, inAir].forEach(el => el.addEventListener('keydown', e => { if(e.key === 'Enter') runFilter(); }));
+    clear.addEventListener('click', ()=>{
+      selRoute.value = ''; inFrom.value = ''; inTo.value = ''; inAir.value = '';
+      _fReq++; out.style.display = 'none'; out.innerHTML = '';
+    });
+    // tap a result -> run the normal callsign search for it
+    out.addEventListener('click', e => {
+      const it = e.target.closest('.fr-fitem'); if(!it) return;
+      input.value = it.getAttribute('data-cs') || '';
+      doSearch();
+      try{ input.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(_){}
+    });
+  })();
+
   (function wirePhonePopup(){
     const logoBtn = document.getElementById('frPhoneLogoBtn');
     if(!logoBtn) return;
