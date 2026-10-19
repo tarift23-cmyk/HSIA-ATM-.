@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261018-120000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261019-130000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -3819,6 +3819,8 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
   var FORMS = [
     { key:'cl', title:'CL Form', file:'cl-form.pdf', name:'CL-Form.pdf' },
     { key:'ex', title:'Exchange Form', file:'exchange-form.pdf', name:'Exchange-Form.pdf' },
+    { key:'earned', title:'অর্জিত ছুটির আবেদন (CSC-2/A)', file:'earned-leave-form.pdf', name:'Earned-Leave-Form.pdf' },
+    { key:'abroad', title:'বিদেশ ভ্রমণের আবেদন (CA/Pro-3)', file:'foreign-travel-form.pdf', name:'Foreign-Travel-Form.pdf' },
     { key:'blank', title:'Blank Page' },
     { key:'others', title:'Others', folder:true, items:[] }
   ];
@@ -3859,6 +3861,13 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
     s.onerror = function(){ formsState = 0; s.remove(); alert('ফর্ম এডিটর লোড হয়নি।\nইন্টারনেট চেক করুন, আর GitHub এ forms ফোল্ডার (forms.js, forms.css, header.png) আপলোড হয়েছে কিনা দেখুন।'); };
     document.head.appendChild(s);
   }
+  function withImgForm(cb){
+    if(window.hsiaOpenImgForm){ cb(); return; }
+    var s = document.createElement('script'); s.src = 'forms/imgform.js?v=20261019a';
+    s.onload = cb;
+    s.onerror = function(){ s.remove(); alert('Form editor did not load.\nCheck your internet, and make sure forms/imgform.js and the forms/f_*.png pictures are uploaded to GitHub.'); };
+    document.head.appendChild(s);
+  }
   function withBlank(cb){
     if(window.hsiaOpenBlank){ cb(); return; }
     var s = document.createElement('script'); s.src = 'forms/blank.js?v=smj1';
@@ -3877,7 +3886,7 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
     var sc = e.target.closest && e.target.closest('[data-scan]');
     if(sc){ withBlank(function(){ window.hsiaOpenBlank({ scan:true }); }); return; }
     var ed = e.target.closest && e.target.closest('[data-edit]');
-    if(ed){ var k = ed.getAttribute('data-edit'); if(k === 'blank'){ withBlank(function(){ window.hsiaOpenBlank(); }); return; } if(k === 'salary'){ withSalary(function(){ window.hsiaOpenSalary(); }); return; } withForms(function(){ window.hsiaOpenForm(k); }); return; }
+    if(ed){ var k = ed.getAttribute('data-edit'); if(k === 'blank'){ withBlank(function(){ window.hsiaOpenBlank(); }); return; } if(k === 'salary'){ withSalary(function(){ window.hsiaOpenSalary(); }); return; } if(k === 'earned' || k === 'abroad'){ withImgForm(function(){ window.hsiaOpenImgForm(k); }); return; } withForms(function(){ window.hsiaOpenForm(k); }); return; }
     var h = e.target.closest && e.target.closest('.imp-h');
     if(h){ var it = h.parentNode, was = it.classList.contains('open'); [].slice.call(it.parentNode.children).forEach(function(x){ if(x !== it) x.classList.remove('open'); }); it.classList.toggle('open', !was); }
   });
