@@ -1,11 +1,11 @@
 /* HSIA ATM service worker
-   - Pages (index.html ...): NETWORK FIRST. Online you always get the newest upload; if the network is down or slower than
+   - Pages (index.html ...) and own .js / .css files (forms/*.js): NETWORK FIRST. Online you always get the newest upload; if the network is down or slower than
      4 seconds, the last saved copy is shown instead (real offline mode).
    - Own files (icons, manifest): stale-while-revalidate.
    - Script / style / font files from the CDNs the app uses: stale-while-revalidate (so Firebase etc. also load offline).
    - Everything else (Firebase data, Google sign-in, flight / weather APIs, video) is never touched.
    Bump VERSION only if you ever want to throw away all saved copies. A normal GitHub upload needs no change here. */
-const VERSION = 'hsia-sw-v20261007c';
+const VERSION = 'hsia-sw-v20261020a';
 const SCOPE = self.registration.scope;
 const INDEX = new URL('index.html', SCOPE).href;
 const PRECACHE = [INDEX, new URL('manifest.json', SCOPE).href, new URL('icon-192.png', SCOPE).href,
@@ -86,7 +86,7 @@ self.addEventListener('fetch', e=>{
   if(url.searchParams.has('_probe')) return;
   const same = url.origin === self.location.origin;
   if(same && /\.pdf$/i.test(url.pathname)) return;   // PDFs are big and the app keeps its own saved copy: never duplicate them here
-  if(same && (req.mode === 'navigate' || /\.html?$/.test(url.pathname))){ e.respondWith(pageFirst(e, url)); return; }
+  if(same && (req.mode === 'navigate' || /\.(html?|js|css)$/.test(url.pathname))){ e.respondWith(pageFirst(e, url)); return; }   // pages AND the app's own .js/.css (forms/blank.js ...): network first, so a GitHub upload shows up on the very next open
   if(same){
     if(req.destination === 'video' || req.destination === 'audio') return;
     e.respondWith(swr(e, req)); return;
