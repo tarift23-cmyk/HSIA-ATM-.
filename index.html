@@ -2947,7 +2947,7 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
         var b = document.getElementById('qbmScanBtn'); if(!b) return;
         b.addEventListener('click', function(){
           if(window.hsiaScanQbm){ window.hsiaScanQbm(); return; }
-          var s = document.createElement('script'); s.src = 'forms/qbmscan.js';
+          var s = document.createElement('script'); s.src = 'forms/qbmscan.js?t=' + Date.now();
           s.onload = function(){ window.hsiaScanQbm(); };
           s.onerror = function(){ s.remove(); alert('QBM scanner did not load.\nCheck your internet, and make sure forms/qbmscan.js is uploaded to GitHub.'); };
           document.head.appendChild(s);
@@ -3855,29 +3855,29 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
     if(window.hsiaOpenForm){ cb(); return; }
     if(formsState === 1) return;
     formsState = 1;
-    if(!document.getElementById('hsiaFormsCss')){ var l = document.createElement('link'); l.id = 'hsiaFormsCss'; l.rel = 'stylesheet'; l.href = 'forms/forms.css?v=smj1'; document.head.appendChild(l); }
-    var s = document.createElement('script'); s.src = 'forms/forms.js?v=smj2';
+    if(!document.getElementById('hsiaFormsCss')){ var l = document.createElement('link'); l.id = 'hsiaFormsCss'; l.rel = 'stylesheet'; l.href = 'forms/forms.css?t=' + Date.now(); document.head.appendChild(l); }
+    var s = document.createElement('script'); s.src = 'forms/forms.js?t=' + Date.now();
     s.onload = function(){ formsState = 2; cb(); };
     s.onerror = function(){ formsState = 0; s.remove(); alert('ফর্ম এডিটর লোড হয়নি।\nইন্টারনেট চেক করুন, আর GitHub এ forms ফোল্ডার (forms.js, forms.css, header.png) আপলোড হয়েছে কিনা দেখুন।'); };
     document.head.appendChild(s);
   }
   function withImgForm(cb){
     if(window.hsiaOpenImgForm){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/imgform.js?v=20261019a';
+    var s = document.createElement('script'); s.src = 'forms/imgform.js?t=' + Date.now();
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Form editor did not load.\nCheck your internet, and make sure forms/imgform.js and the forms/f_*.png pictures are uploaded to GitHub.'); };
     document.head.appendChild(s);
   }
   function withBlank(cb){
     if(window.hsiaOpenBlank){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/blank.js?v=smj1';
+    var s = document.createElement('script'); s.src = 'forms/blank.js?t=' + Date.now();
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Blank Page editor did not load.\nCheck your internet, and make sure forms/blank.js is uploaded to GitHub.'); };
     document.head.appendChild(s);
   }
   function withSalary(cb){
     if(window.hsiaOpenSalary){ cb(); return; }
-    var s = document.createElement('script'); s.src = 'forms/salary.js?v=20261013c';
+    var s = document.createElement('script'); s.src = 'forms/salary.js?t=' + Date.now();
     s.onload = cb;
     s.onerror = function(){ s.remove(); alert('Salary Fixation editor did not load.\nCheck your internet, and make sure forms/salary.js is uploaded to GitHub.'); };
     document.head.appendChild(s);
