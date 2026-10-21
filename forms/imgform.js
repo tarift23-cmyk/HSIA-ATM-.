@@ -7,7 +7,7 @@ var FORMS={
   earned:{ title:'\u0985\u09b0\u09cd\u099c\u09bf\u09a4 \u099b\u09c1\u099f\u09bf\u09b0 \u0986\u09ac\u09c7\u09a6\u09a8 (CSC-2/A)', file:'earned-leave-form', pages:['earned_1','earned_2'] },
   abroad:{ title:'\u09ac\u09bf\u09a6\u09c7\u09b6 \u09ad\u09cd\u09b0\u09ae\u09a3\u09c7\u09b0 \u0986\u09ac\u09c7\u09a6\u09a8 (CA/Pro-3)', file:'foreign-travel-form', pages:['abroad_1','abroad_2','abroad_3'] }
 };
-var SN={"earned_1":{"l":[[2284,3448,651],[2459,4384,1232],[2458,4384,1386],[2458,2634,1538],[2732,3348,1538],[3496,3793,1538],[3940,4190,1538],[2458,4384,1692],[2458,4384,1843],[3273,4436,2280],[2450,2943,2459],[3146,3642,2459],[3884,4206,2459],[2459,4384,2610],[2458,4384,2761],[2458,4384,3353],[2458,4384,3504],[2458,4384,3651],[2458,4384,3802],[2458,4384,3953],[2459,4384,4104],[2466,3062,5471],[3456,4024,5471],[2462,3606,5622],[3801,4274,5622],[2462,2908,5800],[3138,3606,5800],[3801,4274,5800],[2462,2908,5976],[3138,3606,5976],[3801,4274,5976]],"k":[[2360,724],[2328,1228],[2328,1382],[2328,1534],[2328,1688],[2328,1840],[2328,1994],[2328,2455],[2328,2606],[2328,2757],[2328,2912],[2328,3349],[2328,3798],[2328,3949],[2328,4100],[2328,4518],[2328,4632],[2328,4792],[2328,5141],[2328,5256],[2328,5467],[2328,5618],[2328,5796],[2328,5972],[2328,6322],[2328,6440]]},"earned_2":{"l":[[1334,3064,2760],[3490,4358,2760],[1240,3046,2946],[976,3052,3096],[976,3052,3246]],"k":[[2330,740],[2330,1326],[2330,1442],[2330,1598],[2330,2180],[2330,2298]]},"abroad_1":{"l":[],"k":[[2654,702],[2654,892],[2654,1110],[2654,1308],[2654,1506],[2654,1734],[2654,1942],[2654,2140],[2654,2348],[2654,2802],[2654,3142],[2654,4466]]},"abroad_2":{"l":[[785,2385,5100],[2728,4553,5100],[776,2376,5278],[2538,3688,5278],[885,1535,6158],[885,1535,6747]],"k":[[2732,756],[2732,944],[2732,1133],[2732,1321],[2732,2075],[2730,3018],[2732,3206],[2732,3395],[2732,3584],[2732,3772],[2732,3960],[2732,4150],[2732,4338]]},"abroad_3":{"l":[],"k":[],"c":[[986,2442],[2445,3100],[3102,3829],[3832,4594]]}};
+var SN={"earned_1":{"b":[[2404,1911,2537,2028],[3184,1919,3317,2036],[3899,1921,4033,2038],[2401,2060,2534,2177],[3188,2050,3322,2167],[3904,2055,4037,2172],[2404,2204,2537,2321],[2406,2828,2540,2946],[3526,2843,3659,2960]],"l":[[2284,3448,651],[2459,4384,1232],[2458,4384,1386],[2458,2634,1538],[2732,3348,1538],[3496,3793,1538],[3940,4190,1538],[2458,4384,1692],[2458,4384,1843],[3273,4436,2280],[2450,2943,2459],[3146,3642,2459],[3884,4206,2459],[2459,4384,2610],[2458,4384,2761],[2458,4384,3353],[2458,4384,3504],[2458,4384,3651],[2458,4384,3802],[2458,4384,3953],[2459,4384,4104],[2466,3062,5471],[3456,4024,5471],[2462,3606,5622],[3801,4274,5622],[2462,2908,5800],[3138,3606,5800],[3801,4274,5800],[2462,2908,5976],[3138,3606,5976],[3801,4274,5976]],"k":[[2360,724],[2328,1228],[2328,1382],[2328,1534],[2328,1688],[2328,1840],[2328,2455],[2328,2606],[2328,2757],[2328,3349],[2328,3798],[2328,3949],[2328,4100],[2328,4518],[2328,4632],[2328,4792],[2328,5141],[2328,5256],[2328,5467],[2328,5618],[2328,5796],[2328,5972],[2328,6322],[2328,6440]]},"earned_2":{"l":[[1334,3064,2760],[3490,4358,2760],[1240,3046,2946],[976,3052,3096],[976,3052,3246]],"k":[[2330,740],[2330,1326],[2330,1442],[2330,1598],[2330,2180],[2330,2298]]},"abroad_1":{"l":[],"k":[[2654,702],[2654,892],[2654,1110],[2654,1308],[2654,1506],[2654,1734],[2654,1942],[2654,2140],[2654,2348],[2654,2802],[2654,3142],[2654,4466]]},"abroad_2":{"l":[[785,2385,5100],[2728,4553,5100],[776,2376,5278],[2538,3688,5278],[885,1535,6158],[885,1535,6747]],"k":[[2732,756],[2732,944],[2732,1133],[2732,1321],[2732,2075],[2730,3018],[2732,3206],[2732,3395],[2732,3584],[2732,3772],[2732,3960],[2732,4150],[2732,4338]]},"abroad_3":{"l":[],"k":[],"c":[[986,2442],[2445,3100],[3102,3829],[3832,4594]]}};
 var ROWS3=[[999,1664],[1667,2330],[2333,2997],[2999,3664],[3667,4330]];
 var FONT='"Noto Sans Bengali","Hind Siliguri","Nirmala UI","Bangla Sangam MN","Kohinoor Bangla",Arial,sans-serif';
 var S=null, root=null, imgs={};
@@ -70,22 +70,25 @@ function mergedLines(L){
 /* typing is allowed ONLY on a blank field, and the text always starts at the beginning of that field (just after the colon / at the start of the dotted line) */
 function snap(x,y){
   var s=SN[S.pages[S.pg]]||{l:[],k:[]}, best=null, bd=1e9, i, d, Ls=mergedLines(s.l);
-  for(i=0;i<Ls.length;i++){ var L=Ls[i]; d=y-L[2]; if(d>=-105 && d<=30 && Math.abs(d)<bd && x>L[0]-60 && x<L[1]+60){ bd=Math.abs(d); best={x:L[0]+8,y:L[2]-10}; } }
+  for(i=0;i<Ls.length;i++){ var L=Ls[i]; d=y-L[2]; if(d>=-105 && d<=30 && Math.abs(d)<bd && x>L[0]-60 && x<L[1]+60){ bd=Math.abs(d); best={x:L[0]+8,y:L[2]-10,w:L[1]-L[0]-12}; } }
   if(best) return best;
-  bd=1e9; for(i=0;i<s.k.length;i++){ var K=s.k[i]; d=y-K[1]; if(d>=-85 && d<=40 && Math.abs(d)<bd && x>K[0]){ bd=Math.abs(d); best={x:K[0]+70,y:K[1]+8}; } }
+  bd=1e9; for(i=0;i<s.k.length;i++){ var K=s.k[i]; d=y-K[1]; if(d>=-85 && d<=40 && Math.abs(d)<bd && x>K[0]){ bd=Math.abs(d); best={x:K[0]+70,y:K[1]+8,w:4420-(K[0]+70)}; } }
   if(best) return best;
   if(s.c){ var cy=null, cx=null, j;
     for(j=0;j<ROWS3.length;j++) if(y>=ROWS3[j][0]&&y<=ROWS3[j][1]) cy=ROWS3[j];
     for(j=0;j<s.c.length;j++) if(x>=s.c[j][0]&&x<=s.c[j][1]) cx=s.c[j];
-    if(cy&&cx) return {x:cx[0]+30, y:Math.min(Math.max(y+S.size*.3,cy[0]+S.size*1.1),cy[1]-30)};
+    if(cy&&cx) return {x:cx[0]+30, w:cx[1]-cx[0]-60, y:Math.min(Math.max(y+S.size*.3,cy[0]+S.size*1.1),cy[1]-30)};
   }
   return null;
 }
 function edit(it,isNew){
   var pi=S.pg, pg=S.pages[pi], page=$('hifPage'+pi), k=kScale(), fs=S.size*k, inp=document.createElement('input');
-  inp.className='hie'; inp.value=it.v||''; inp.style.fontSize=fs+'px'; inp.style.left=(it.x*k)+'px'; inp.style.top=(it.y*k-fs*.95)+'px'; inp.style.height=(fs*1.25)+'px'; inp.style.width=Math.max(160,S.w-it.x*k-10)+'px';
+  inp.className='hie'; inp.value=it.v||''; inp.style.fontSize=fs+'px'; inp.style.left=(it.x*k)+'px'; inp.style.top=(it.y*k-fs*.95)+'px'; inp.style.height=(fs*1.25)+'px'; var mw=it.w||(PW-it.x-60); inp.style.width=Math.max(30,mw*k)+'px';
   page.appendChild(inp); inp.focus();
+  var mc=document.createElement('canvas').getContext('2d'); function fit(){ mc.font=S.size+'px '+FONT; var a=Array.from(inp.value); while(a.length&&mc.measureText(a.join('')).width>mw) a.pop(); var t=a.join(''); if(t!==inp.value) inp.value=t; }
+  inp.addEventListener('input',function(e){ if(!e.isComposing) fit(); }); inp.addEventListener('compositionend',fit);
   function done(){
+    fit();
     var v=inp.value.replace(/\s+$/,''); inp.remove(); var arr=S.items[pg]||(S.items[pg]=[]), at=arr.indexOf(it);
     if(!v){ if(at>=0) arr.splice(at,1); } else { it.v=v; if(at<0) arr.push(it); }
     save(); render();
@@ -99,9 +102,14 @@ function onPage(e){
   var pg=S.pages[S.pg], r=pageEl.getBoundingClientRect(), k=kScale(), x=(e.clientX-r.left)/k, y=(e.clientY-r.top)/k, arr=S.items[pg]||(S.items[pg]=[]);
   var hit=e.target.closest&&e.target.closest('.hi');
   if(hit){ var it=arr[+hit.dataset.i]; if(!it) return; if(it.t==='c'){ arr.splice(+hit.dataset.i,1); save(); render(); } else { hit.remove(); edit(it); } return; }
-  if(S.tool==='c'){ arr.push({t:'c',x:x,y:y+S.size*.2}); save(); render(); return; }
-  var p=snap(x,y); if(!p){ $('hifSt').textContent='\u098f\u0996\u09be\u09a8\u09c7 \u09b2\u09c7\u0996\u09be \u09af\u09be\u09ac\u09c7 \u09a8\u09be \u2014 \u09b2\u09be\u0987\u09a8 \u09ac\u09be \u0995\u09cb\u09b2\u09a8\u09c7\u09b0 \u09aa\u09b0\u09c7 \u099f\u09cd\u09af\u09be\u09aa \u0995\u09b0\u09c1\u09a8\u0964'; return; } var ex=null; arr.forEach(function(q){ if(q.t==='t'&&Math.abs(q.x-p.x)<6&&Math.abs(q.y-p.y)<40) ex=q; }); if(ex){ var nd=pageEl.querySelector('.hi[data-i="'+arr.indexOf(ex)+'"]'); if(nd) nd.remove(); edit(ex); return; }
-  edit({t:'t',x:p.x,y:p.y,v:''},true);
+  var bx=(SN[pg]||{}).b||[], bi=-1, q;
+  for(q=0;q<bx.length;q++) if(x>=bx[q][0]-20&&x<=bx[q][2]+20&&y>=bx[q][1]-20&&y<=bx[q][3]+20){ bi=q; break; }
+  if(bi>=0){ var at=-1; arr.forEach(function(m,j){ if(m.t==='c'&&m.b===bi) at=j; });
+    if(at>=0) arr.splice(at,1); else arr.push({t:'c',b:bi,x:(bx[bi][0]+bx[bi][2])/2,y:(bx[bi][1]+bx[bi][3])/2+S.size*.25});
+    save(); render(); return; }
+  if(S.tool==='c'){ $('hifSt').textContent='\u099f\u09bf\u0995 \u09b6\u09c1\u09a7\u09c1 \u09ac\u0995\u09cd\u09b8\u09c7\u09b0 \u09ad\u09c7\u09a4\u09b0\u09c7 \u09a6\u09c7\u0993\u09af\u09bc\u09be \u09af\u09be\u09ac\u09c7\u0964'; return; }
+  var p=snap(x,y); if(!p){ $('hifSt').textContent='\u098f\u0996\u09be\u09a8\u09c7 \u09b2\u09c7\u0996\u09be \u09af\u09be\u09ac\u09c7 \u09a8\u09be \u2014 \u09b2\u09be\u0987\u09a8 \u09ac\u09be \u0995\u09cb\u09b2\u09a8\u09c7\u09b0 \u09aa\u09b0\u09c7 \u099f\u09cd\u09af\u09be\u09aa \u0995\u09b0\u09c1\u09a8\u0964'; return; } var ex=null; arr.forEach(function(q){ if(q.t==='t'&&Math.abs(q.x-p.x)<6&&Math.abs(q.y-p.y)<40) ex=q; }); if(ex){ ex.w=p.w; var nd=pageEl.querySelector('.hi[data-i="'+arr.indexOf(ex)+'"]'); if(nd) nd.remove(); edit(ex); return; }
+  edit({t:'t',x:p.x,y:p.y,v:'',w:p.w},true);
 }
 /* ---------- export ---------- */
 function loadImg(pg){ return new Promise(function(res,rej){ if(imgs[pg]) return res(imgs[pg]); var im=new Image(); im.onload=function(){ imgs[pg]=im; res(im); }; im.onerror=rej; im.src='forms/f_'+pg+'.png'; }); }
@@ -186,7 +194,7 @@ window.hsiaOpenImgForm=function(key){
   root=document.createElement('div'); root.className='hif'; root.id='hif';
   root.innerHTML='<div class="hif-top"><b>'+F.title+'</b><button id="hifPv">\u25c0</button><span id="hifPg"></span><button id="hifNx">\u25b6</button><button id="hifEx" title="Export" style="background:#FFD9A0;color:#2a1a00;border-color:#FFD9A0">\u2b07</button><button id="hifX">\u2715</button></div>'
    +'<div class="hif-tools"><button id="hifT" class="on">T  Text</button><button id="hifC">\u2714 Mark</button><button id="hifZm">\u2212</button><span id="hifZ">100%</span><button id="hifZp">+</button><button id="hifFm">A\u2212</button><button id="hifFp">A+</button><button id="hifClr">Clear page</button></div>'
-   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">[imgform v5] Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
+   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">[imgform v7] Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
   document.body.appendChild(root);
   F.pages.forEach(function(_,i){ var d=document.createElement('div'); d.className='hif-page'; d.id='hifPage'+i; d.dataset.pi=i; d.innerHTML='<canvas id="hifImg'+i+'"></canvas>'; $('hifBody').appendChild(d); });
   $('hifX').onclick=close; $('hifPv').onclick=function(){ go(-1); }; $('hifNx').onclick=function(){ go(1); }; $('hifEx').onclick=wheel;
