@@ -61,17 +61,25 @@ function paintBg(pi){
     cv.width=tw; cv.height=th; var c=cv.getContext('2d'); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high'; c.fillStyle='#fff'; c.fillRect(0,0,tw,th); c.drawImage(cur,0,0,tw,th); S.bgKey[pi]=tw; delete imgs[pg];
   }); }).catch(function(){});
 }
+/* merge dotted-line pieces of ONE row that are only a few pixels apart (a dotted line detected in fragments) */
+function mergedLines(L){
+  var out=[]; L.slice().sort(function(a,b){ return a[2]-b[2]||a[0]-b[0]; }).forEach(function(l){
+    var p=out[out.length-1]; if(p && Math.abs(p[2]-l[2])<8 && l[0]-p[1]<160){ p[1]=Math.max(p[1],l[1]); } else out.push([l[0],l[1],l[2]]);
+  }); return out;
+}
+/* typing is allowed ONLY on a blank field, and the text always starts at the beginning of that field (just after the colon / at the start of the dotted line) */
 function snap(x,y){
-  var s=SN[S.pages[S.pg]]||{l:[],k:[]}, best=null, bd=75, i, d;
-  for(i=0;i<s.l.length;i++){ var L=s.l[i]; d=Math.abs(y-L[2]); if(d<bd && x>L[0]-80 && x<L[1]+80){ bd=d; best={x:Math.max(x,L[0]+8),y:L[2]-10}; } }
+  var s=SN[S.pages[S.pg]]||{l:[],k:[]}, best=null, bd=1e9, i, d, Ls=mergedLines(s.l);
+  for(i=0;i<Ls.length;i++){ var L=Ls[i]; d=y-L[2]; if(d>=-105 && d<=30 && Math.abs(d)<bd && x>L[0]-60 && x<L[1]+60){ bd=Math.abs(d); best={x:L[0]+8,y:L[2]-10}; } }
   if(best) return best;
-  for(i=0;i<s.k.length;i++){ var K=s.k[i]; d=Math.abs(y-K[1]); if(d<bd && x>K[0]){ bd=d; best={x:Math.max(x,K[0]+70),y:K[1]+8}; } }
+  bd=1e9; for(i=0;i<s.k.length;i++){ var K=s.k[i]; d=y-K[1]; if(d>=-85 && d<=40 && Math.abs(d)<bd && x>K[0]){ bd=Math.abs(d); best={x:K[0]+70,y:K[1]+8}; } }
+  if(best) return best;
   if(s.c){ var cy=null, cx=null, j;
     for(j=0;j<ROWS3.length;j++) if(y>=ROWS3[j][0]&&y<=ROWS3[j][1]) cy=ROWS3[j];
     for(j=0;j<s.c.length;j++) if(x>=s.c[j][0]&&x<=s.c[j][1]) cx=s.c[j];
-    if(cy&&cx) return {x:Math.max(x,cx[0]+30), y:Math.min(Math.max(y+S.size*.3,cy[0]+S.size*1.1),cy[1]-30)};
+    if(cy&&cx) return {x:cx[0]+30, y:Math.min(Math.max(y+S.size*.3,cy[0]+S.size*1.1),cy[1]-30)};
   }
-  return best||null;
+  return null;
 }
 function edit(it,isNew){
   var pi=S.pg, pg=S.pages[pi], page=$('hifPage'+pi), k=kScale(), fs=S.size*k, inp=document.createElement('input');
@@ -92,7 +100,8 @@ function onPage(e){
   var hit=e.target.closest&&e.target.closest('.hi');
   if(hit){ var it=arr[+hit.dataset.i]; if(!it) return; if(it.t==='c'){ arr.splice(+hit.dataset.i,1); save(); render(); } else { hit.remove(); edit(it); } return; }
   if(S.tool==='c'){ arr.push({t:'c',x:x,y:y+S.size*.2}); save(); render(); return; }
-  var p=snap(x,y); if(!p){ $('hifSt').textContent='\u098f\u0996\u09be\u09a8\u09c7 \u09b2\u09c7\u0996\u09be \u09af\u09be\u09ac\u09c7 \u09a8\u09be \u2014 \u09b2\u09be\u0987\u09a8 \u09ac\u09be \u0995\u09cb\u09b2\u09a8\u09c7\u09b0 \u09aa\u09b0\u09c7 \u099f\u09cd\u09af\u09be\u09aa \u0995\u09b0\u09c1\u09a8\u0964'; return; } edit({t:'t',x:p.x,y:p.y,v:''},true);
+  var p=snap(x,y); if(!p){ $('hifSt').textContent='\u098f\u0996\u09be\u09a8\u09c7 \u09b2\u09c7\u0996\u09be \u09af\u09be\u09ac\u09c7 \u09a8\u09be \u2014 \u09b2\u09be\u0987\u09a8 \u09ac\u09be \u0995\u09cb\u09b2\u09a8\u09c7\u09b0 \u09aa\u09b0\u09c7 \u099f\u09cd\u09af\u09be\u09aa \u0995\u09b0\u09c1\u09a8\u0964'; return; } var ex=null; arr.forEach(function(q){ if(q.t==='t'&&Math.abs(q.x-p.x)<6&&Math.abs(q.y-p.y)<40) ex=q; }); if(ex){ var nd=pageEl.querySelector('.hi[data-i="'+arr.indexOf(ex)+'"]'); if(nd) nd.remove(); edit(ex); return; }
+  edit({t:'t',x:p.x,y:p.y,v:''},true);
 }
 /* ---------- export ---------- */
 function loadImg(pg){ return new Promise(function(res,rej){ if(imgs[pg]) return res(imgs[pg]); var im=new Image(); im.onload=function(){ imgs[pg]=im; res(im); }; im.onerror=rej; im.src='forms/f_'+pg+'.png'; }); }
@@ -177,7 +186,7 @@ window.hsiaOpenImgForm=function(key){
   root=document.createElement('div'); root.className='hif'; root.id='hif';
   root.innerHTML='<div class="hif-top"><b>'+F.title+'</b><button id="hifPv">\u25c0</button><span id="hifPg"></span><button id="hifNx">\u25b6</button><button id="hifEx" title="Export" style="background:#FFD9A0;color:#2a1a00;border-color:#FFD9A0">\u2b07</button><button id="hifX">\u2715</button></div>'
    +'<div class="hif-tools"><button id="hifT" class="on">T  Text</button><button id="hifC">\u2714 Mark</button><button id="hifZm">\u2212</button><span id="hifZ">100%</span><button id="hifZp">+</button><button id="hifFm">A\u2212</button><button id="hifFp">A+</button><button id="hifClr">Clear page</button></div>'
-   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
+   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">[imgform v5] Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
   document.body.appendChild(root);
   F.pages.forEach(function(_,i){ var d=document.createElement('div'); d.className='hif-page'; d.id='hifPage'+i; d.dataset.pi=i; d.innerHTML='<canvas id="hifImg'+i+'"></canvas>'; $('hifBody').appendChild(d); });
   $('hifX').onclick=close; $('hifPv').onclick=function(){ go(-1); }; $('hifNx').onclick=function(){ go(1); }; $('hifEx').onclick=wheel;
