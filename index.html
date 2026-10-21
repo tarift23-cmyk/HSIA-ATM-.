@@ -1252,17 +1252,18 @@ table.air-table td.air-code{ font-family:'Space Grotesk',sans-serif; font-weight
 /* ---- Swap suggestions + exchange requests ---- */
 body:not(.hsia-priv) .hsia-priv-only{ display:none !important; }
 /* Edit / Save / Add / Admin controls are for admin sessions only: hidden for everyone else (admin signs in with the lock button in the Info Flow Chart tab bar). */
-body:not(.hsia-priv) #rosterEditBtn,
-body:not(.hsia-priv) #rosterSaveBtn,
 body:not(.hsia-priv) .fr-adminbar,
 body:not(.hsia-priv) .iflow-save-row,
 body:not(.hsia-priv) .air-notepad-actions,
-body:not(.hsia-priv) #newAirportAddBtn,
-body:not(.hsia-priv) #newAirlineAddBtn,
 body:not(.hsia-priv) #eqEditBtn{ display:none !important; }
-body:not(.hsia-priv) .fr-manualform:has(#newAirportAddBtn),
-body:not(.hsia-priv) .fr-manualform:has(#newAirlineAddBtn),
 body:not(.hsia-priv) .fr-manualform:has(#eqEditBtn){ display:none !important; }
+/* admin + moderator: roster tables (Edit / Save) and the add-airport / add-airline forms */
+body:not(.hsia-staff) #rosterEditBtn,
+body:not(.hsia-staff) #rosterSaveBtn,
+body:not(.hsia-staff) #newAirportAddBtn,
+body:not(.hsia-staff) #newAirlineAddBtn,
+body:not(.hsia-staff) .fr-manualform:has(#newAirportAddBtn),
+body:not(.hsia-staff) .fr-manualform:has(#newAirlineAddBtn){ display:none !important; }
 .aud-row{ margin-bottom:8px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--panel-2); }
 .aud-top{ display:flex; justify-content:space-between; gap:8px; align-items:center; }
 .aud-a{ font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--gold-soft); }
@@ -2941,7 +2942,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       </div>
       <div class="fr-dbstatus" id="exchangeCurrentHint"></div>
       <button id="exReqOpenBtn" type="button" class="fr-dbimport" style="width:100%;margin-top:12px;">📨 Requests <span class="exreq-badge" style="display:none;">0</span></button>
-      <style>#qbmScanBtn{display:none !important;} body.rh-admin #qbmScanBtn{display:flex !important;}</style>
+      <style>#qbmScanBtn{display:none !important;} body.rh-admin #qbmScanBtn, body.hsia-staff #qbmScanBtn{display:flex !important;}</style>
       <div style="display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-top:12px;">
         <button id="qbmOpenBtn" type="button" class="fr-dbimport" style="width:auto;min-width:130px;padding-left:22px;padding-right:22px;">QBM</button>
         <button id="qbmScanBtn" type="button" class="fr-dbimport" title="Scan QBM photo" aria-label="Scan QBM photo" style="width:40px;height:40px;min-width:40px;padding:0;display:flex;align-items:center;justify-content:center;">
@@ -3811,7 +3812,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <button id="airClearBtn" type="button">✕</button>
       </div>
       <div class="air-count" id="airCount">176 টি এয়ারপোর্ট</div>
-      <div class="fr-manualform" style="margin-bottom:10px;">
+      <div class="fr-manualform hsia-staff-only" style="margin-bottom:10px;">
         <input type="text" id="newAirportIcao" class="fr-mfinput fr-mfinput-sm" placeholder="ICAO" maxlength="4">
         <input type="text" id="newAirportIata" class="fr-mfinput fr-mfinput-sm" placeholder="IATA" maxlength="4">
         <input type="text" id="newAirportCity" class="fr-mfinput" placeholder="City">
@@ -3835,7 +3836,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <button id="airlineClearBtn" type="button">✕</button>
       </div>
       <div class="air-count" id="airlineCount">134 টি এয়ারলাইন</div>
-      <div class="fr-manualform" style="margin-bottom:10px;">
+      <div class="fr-manualform hsia-staff-only" style="margin-bottom:10px;">
         <input type="text" id="newAirlineCallsign" class="fr-mfinput fr-mfinput-sm" placeholder="Call Sign" maxlength="10">
         <input type="text" id="newAirlineTelephony" class="fr-mfinput" placeholder="R. Telephony">
         <input type="text" id="newAirlineCompany" class="fr-mfinput" placeholder="Company">
@@ -3958,16 +3959,6 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <div class="fr-dbstatus hsia-priv-only" id="regActivateStatus">⚪ বন্ধ: আগের মতো চলছে</div>
       </div>
 
-      <div class="hsia-priv-only" id="rolesAdminBox">
-        <div class="fr-ocrsection-head" style="margin-bottom:8px; margin-top:14px;">👥 রোল সেট করুন (শুধু অ্যাডমিন)</div>
-        <div class="imp-note">Admin = Firebase Rules-এ নির্ধারিত Google অ্যাকাউন্ট (সব অ্যাক্সেস)। Moderator = রেজিস্ট্রেশন Approve / Reject (এডিট নয়)। Sub-moderator = 1st/2nd Night + রোস্টার ডাউনলোড।</div>
-        <div class="fr-manualform">
-          <button type="button" id="rolesLoadBtn" class="fr-dbimport">👥 ইউজার তালিকা লোড করুন</button>
-          <input type="text" id="rolesSearch" class="fr-mfinput" placeholder="নাম / ইমেইল খুঁজুন" autocomplete="off">
-        </div>
-        <div id="rolesList"></div>
-        <div class="fr-dbstatus" id="rolesStatus"></div>
-      </div>
     </div>
   </div>
 
@@ -7145,8 +7136,9 @@ async function adminGoogleSignIn(){
   }
 }
 function adminGate(unlockInputs){
-  if(rosterUnlocked){
-    rememberAdmin();
+  /* admin, or a moderator account (roster tables + QBM editing); the Firebase Rules decide what each may really write */
+  if(rosterUnlocked || (window.hsiaIsModerator && window.hsiaIsModerator())){
+    if(rosterUnlocked) rememberAdmin();
     if(unlockInputs) unlockAllRosterInputs();
     return true;
   }
@@ -7168,7 +7160,7 @@ function requireNightHalfAuth(){
    time — regardless of whether roster editing is already unlocked in
    this session (rosterUnlocked). This is intentionally separate from
    requireRosterAuth() above. */
-function requireDownloadAuth(){ return adminGate(false); }
+function requireDownloadAuth(){ if(rosterUnlocked) return adminGate(false); alert('Admin only'); return false; }   // full repo ZIP: admin only, never a moderator
 function unlockAllRosterInputs(){
   try{ if(typeof rosterHistSeed === 'function') rosterHistSeed(); }catch(e){}
   try{ if(window.hsiaTHMRUnlock) window.hsiaTHMRUnlock(); }catch(e){}
@@ -8201,7 +8193,7 @@ function loadAuthSession(){
 function saveAuthSession(s){ try{ localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); }catch(e){} }
 function clearAuthSession(){ try{ localStorage.removeItem(AUTH_SESSION_KEY); }catch(e){} }
 /* Roles. Admin = hsia_private/admins/<uid> (Firebase Rules). Moderator = hsia_private/mods/<uid>, Sub-moderator = hsia_private/submods/<uid>
-   (the admin sets them in Settings > Roles; only an admin can write them). The role is copied into the local session (s.role) so the UI can show the right controls:
+   (set by hand in the Firebase console: add the person's uid with the value true; the Rules let only an admin write them). The role is copied into the local session (s.role) so the UI can show the right controls:
      moderator     -> body.hsia-staff   : Requests button + Registrations (approve / reject only); NO Others tab, NO repo ZIP, NO editing
      sub-moderator -> body.hsia-submod  : like a normal logged-in user, plus 1st / 2nd Night and the roster download button
      admin         -> everything */
@@ -8222,56 +8214,6 @@ async function authRefreshRole(){
     if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI();
   }catch(e){ /* offline / not allowed: keep the last known role */ }
 }
-/* ---- Roles panel (admin only, Settings): set Moderator / Sub-moderator on an account ---- */
-(function(){
-  const $ = id=> document.getElementById(id);
-  const LABEL = { '':'Normal user', submoderator:'Sub-moderator', moderator:'Moderator' };
-  const esc2 = t=> String(t == null ? '' : t).replace(/[&<>"]/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
-  let USERS = [];
-  const status = t=>{ const e = $('rolesStatus'); if(e) e.textContent = t || ''; };
-  const refUsers = ()=>{ const saved = loadFirebaseSyncConfig(); return (_fbDb && saved) ? _fbDb.ref('hsia_sync/' + saved.roomId + '/users') : null; };
-  function draw(){
-    const box = $('rolesList'); if(!box) return;
-    const q = ((($('rolesSearch') || {}).value) || '').trim().toLowerCase();
-    const rows = USERS.filter(u=> !q || (u.name + ' ' + u.id).toLowerCase().indexOf(q) >= 0);
-    box.innerHTML = rows.slice(0, 80).map(u=> '<div class="rl-row"><div class="rl-who"><b>' + esc2(u.name || u.id) + '</b><span>' + esc2(u.id) + '</span></div>' +
-      '<select data-k="' + esc2(u.key) + '">' + Object.keys(LABEL).map(k=> '<option value="' + k + '"' + (u.role === k ? ' selected' : '') + '>' + LABEL[k] + '</option>').join('') + '</select></div>').join('') ||
-      '<div class="imp-note">No account found.</div>';
-    if(rows.length > 80) box.insertAdjacentHTML('beforeend', '<div class="imp-note">Showing 80 of ' + rows.length + ' - use the search box.</div>');
-  }
-  async function load(){
-    if(!(window.hsiaCanSeeOthers && window.hsiaCanSeeOthers())){ alert('Admin only'); return; }
-    const r = refUsers(); if(!r){ status('Firebase sync is not set up on this device.'); return; }
-    status('Loading...');
-    try{
-      const [snap, md, sm] = await Promise.all([ r.once('value'), _fbDb.ref('hsia_private/mods').once('value'), _fbDb.ref('hsia_private/submods').once('value') ]);
-      const v = snap.val() || {}, mods = md.val() || {}, subs = sm.val() || {};
-      USERS = Object.keys(v).map(k=>{ const uid = String(v[k].uid || ''); return { key:k, uid:uid, id:String(v[k].identifier || k), name:String(v[k].displayName || ''), role:(uid && mods[uid] === true) ? 'moderator' : (uid && subs[uid] === true) ? 'submoderator' : '' }; })
-        .sort((a, b)=> (a.name || a.id).toLowerCase().localeCompare((b.name || b.id).toLowerCase()));
-      status(USERS.length + ' accounts - Moderator: ' + USERS.filter(u=> u.role === 'moderator').length + ' - Sub-moderator: ' + USERS.filter(u=> u.role === 'submoderator').length);
-      draw();
-    }catch(e){ status('Could not load: ' + (e && e.message ? e.message : e) + ' (publish the new Firebase Rules first)'); }
-  }
-  async function setRole(key, val){
-    if(!(window.hsiaCanSeeOthers && window.hsiaCanSeeOthers())){ alert('Admin only'); return; }
-    const u = USERS.find(x=> x.key === key); if(!u) return;
-    if(!u.uid){ status((u.name || u.id) + ' has no Firebase ID yet - ask them to log in once more, then reload the list.'); draw(); return; }
-    try{
-      const mr = _fbDb.ref('hsia_private/mods/' + u.uid), sr = _fbDb.ref('hsia_private/submods/' + u.uid);
-      await Promise.all([ val === 'moderator' ? mr.set(true) : mr.remove(), val === 'submoderator' ? sr.set(true) : sr.remove() ]);
-      USERS.forEach(x=>{ if(x.uid === u.uid) x.role = val; });
-      status('Saved: ' + (u.name || u.id) + ' -> ' + LABEL[val]);
-      try{ auditLog('role-set', (u.id || key) + ' -> ' + (val || 'normal')); }catch(e){}
-    }catch(e){ status('Not saved: ' + (e && e.message ? e.message : e) + ' (publish the new Firebase Rules first)'); draw(); }
-  }
-  function wire(){
-    const b = $('rolesLoadBtn'); if(!b || b._w) return; b._w = true;
-    b.addEventListener('click', load);
-    const q = $('rolesSearch'); if(q) q.addEventListener('input', draw);
-    const box = $('rolesList'); if(box) box.addEventListener('change', e=>{ const s = e.target.closest && e.target.closest('select[data-k]'); if(s) setRole(s.getAttribute('data-k'), s.value); });
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
-})();
 function clBalanceText(r){   /* "how many CL days does this person still have this year" */
   try{
     if(!r || !r.who || r.who === '-') return '';
@@ -9947,7 +9889,7 @@ function fbSet(roomId, node, value){
       console.error('Firebase write failed [' + node + ']:', err);
       setFirebaseSyncStatus('❌ আপলোড ব্যর্থ (' + node + '): ' + msg);
       // Only interrupt the admin who is actively editing; regular viewers just get the status line.
-      if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked && Date.now() - _lastFbWriteAlert > 30000){
+      if(((typeof rosterUnlocked !== 'undefined' && rosterUnlocked) || (window.hsiaIsModerator && window.hsiaIsModerator())) && Date.now() - _lastFbWriteAlert > 30000){
         _lastFbWriteAlert = Date.now();
         alert('⚠️ এই পরিবর্তন Firebase-এ সেভ হয়নি — অন্য ডিভাইসে দেখাবে না।\n\nকারণ: ' + msg
           + (window._adminAuthFailed ? '\n(অ্যাডমিন সাইন-ইন আগেই ব্যর্থ হয়েছে: ' + window._adminAuthFailed + ')' : '')
@@ -11736,7 +11678,7 @@ function exMyNames(){
   return out.filter(Boolean);
 }
 function exIsMe(name){ const n = exNormName(name); return !!n && exMyNames().indexOf(n) !== -1; }
-function exIsAdmin(){ return !!rosterUnlocked; }
+function exIsAdmin(){ return !!rosterUnlocked || !!(window.hsiaIsModerator && window.hsiaIsModerator()); }
 function exReqKindLabel(k){ return k === 'cl' ? 'CL' : k === 'special' ? 'EL / Special' : 'Exchange'; }
 function exReqTitle(q){ return (q.kind === 'special' && q.spType) ? q.spType : exReqKindLabel(q.kind); }
 function exReqDates(q){ return String(q.dateKey) + ((q.dateTo && q.dateTo > q.dateKey) ? ' \u2192 ' + q.dateTo : ''); }
@@ -13377,6 +13319,7 @@ function initAirportsTable(){
   const addBtn = document.getElementById('newAirportAddBtn');
   if(addBtn){
     addBtn.addEventListener('click', ()=>{
+      if(!(window.hsiaIsModerator && window.hsiaIsModerator())) return;   // admin / moderator only
       const icao = (icaoInput.value||'').trim().toUpperCase();
       const iata = (iataInput.value||'').trim().toUpperCase();
       const city = (cityInput.value||'').trim();
@@ -13837,6 +13780,7 @@ function initAirlinesTable(){
   const addBtn = document.getElementById('newAirlineAddBtn');
   if(addBtn){
     addBtn.addEventListener('click', ()=>{
+      if(!(window.hsiaIsModerator && window.hsiaIsModerator())) return;   // admin / moderator only
       const cs = (csInput.value||'').trim().toUpperCase();
       const tel = (telInput.value||'').trim();
       const co = (coInput.value||'').trim();
