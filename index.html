@@ -324,6 +324,11 @@
   #exchangeConfirmBtn{ flex:0 0 100%; order:1; }
   #exchangeModalOverlay .fr-manualform > #clDataBtn{ order:2; }
   body:not(.hsia-priv) #clDataBtn{ display:none !important; }   /* CL Data: only admin / moderator sessions see it */
+  body:not(.hsia-staff) .hsia-staff-only{ display:none !important; }
+  body:not(.hsia-submod) .hsia-submod-only{ display:none !important; }
+  .rl-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
+  .rl-who{ min-width:0; display:flex; flex-direction:column; } .rl-who b{ font-size:13.5px; overflow-wrap:anywhere; } .rl-who span{ font-size:11px; color:var(--muted); overflow-wrap:anywhere; }
+  .rl-row select{ flex:0 0 auto; background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:7px 6px; font-size:12.5px; }
   body:not(.hsia-staff) #exReqOpenBtn{ display:none !important; }   /* Requests: admin + moderators only (logged-in users reach their own requests from Settings > My account) */
   .xmode-off #exchangeDate, .xmode-off .dfmt, .xmode-off .xpos-wrap, .xmode-off #exchangeNightHalf, .xmode-off #exchangeSubName, .xmode-off #exchangeConfirmBtn, .xmode-nosub #exchangeSubName{ display:none !important; }
   .xbtn-row{ display:flex; gap:5px; width:100%; flex:0 0 100%; }
@@ -2491,6 +2496,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 #rosterHistBtn, #rosterPrintBtn, #rosterDlBtn{ display:none !important; }
 body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-block !important; }
 body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
+body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
 .rh-note{ font-size:12px; color:var(--muted); margin:2px 0 10px; line-height:1.5; }
 .rh-card{ border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; background:var(--panel); }
 .rh-card.cur{ border-color:#7fd6c2; }
@@ -3671,12 +3677,13 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
     </div>
     <div class="collapse-body" id="flightrBody">
       <div class="air-tabs" id="airTabs">
-        <button type="button" class="air-tab-btn active" data-tab="airportColumn">✈️ Airport</button>
+        <button type="button" class="air-tab-btn active" data-tab="frTrackerCol">🛰️ Tracker</button>
+        <button type="button" class="air-tab-btn" data-tab="airportColumn">✈️ Airport</button>
         <button type="button" class="air-tab-btn" data-tab="airlineColumn">🛫 Airlines</button>
         <button type="button" class="air-tab-btn" data-tab="eqAircraftColumn">🛩️ Equivalent Aircraft Type</button>
       </div>
       <div class="air-columns">
-<div class="air-col" id="frTrackerCol">
+<div class="air-col air-tab-active" id="frTrackerCol">
       <div class="fr-searchbox">
         <input id="frCallsignInput" type="text" placeholder="কলসাইন লিখুন (e.g. BBC131, CCA512)" autocomplete="off">
         <button id="frSearchBtn" type="button" class="fr-icon-btn" title="সার্চ" aria-label="সার্চ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
@@ -3797,7 +3804,7 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
         </div>
       </div>
 </div>
-      <div class="air-col air-tab-active" id="airportColumn">
+      <div class="air-col" id="airportColumn">
       <div class="air-col-title">✈️ Airports</div>
       <div class="air-searchbox">
         <input id="airSearchInput" type="text" placeholder="ICAO/IATA কোড, শহর বা দেশ লিখুন (e.g. VGHS, DAC, Dhaka)" autocomplete="off">
@@ -3943,12 +3950,23 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
         <button type="button" id="openAuthModalBtn" class="fr-dbimport">👤 লগইন / আমার একাউন্ট<span class="notif-inline-dot" id="authNotifDotSettings"></span></button>
       </div>
 
-      <div class="hsia-priv-only" id="regAdminBox">
-        <div class="fr-ocrsection-head" style="margin-bottom:8px; margin-top:14px;">🔐 বাধ্যতামূলক লগইন (শুধু অ্যাডমিন)</div>
+      <div class="hsia-staff-only" id="regAdminBox">
+        <div class="fr-ocrsection-head" style="margin-bottom:8px; margin-top:14px;">🔐 বাধ্যতামূলক লগইন ও রেজিস্ট্রেশন</div>
         <div class="fr-manualform">
-          <button type="button" id="regActivateBtn" class="fr-dbimport">🔐 বাধ্যতামূলক লগইন চালু করুন</button>
+          <button type="button" id="regActivateBtn" class="fr-dbimport hsia-priv-only">🔐 বাধ্যতামূলক লগইন চালু করুন</button>
         </div>
-        <div class="fr-dbstatus" id="regActivateStatus">⚪ বন্ধ: আগের মতো চলছে</div>
+        <div class="fr-dbstatus hsia-priv-only" id="regActivateStatus">⚪ বন্ধ: আগের মতো চলছে</div>
+      </div>
+
+      <div class="hsia-priv-only" id="rolesAdminBox">
+        <div class="fr-ocrsection-head" style="margin-bottom:8px; margin-top:14px;">👥 রোল সেট করুন (শুধু অ্যাডমিন)</div>
+        <div class="imp-note">Admin = Firebase Rules-এ নির্ধারিত Google অ্যাকাউন্ট (সব অ্যাক্সেস)। Moderator = রেজিস্ট্রেশন Approve / Reject (এডিট নয়)। Sub-moderator = 1st/2nd Night + রোস্টার ডাউনলোড।</div>
+        <div class="fr-manualform">
+          <button type="button" id="rolesLoadBtn" class="fr-dbimport">👥 ইউজার তালিকা লোড করুন</button>
+          <input type="text" id="rolesSearch" class="fr-mfinput" placeholder="নাম / ইমেইল খুঁজুন" autocomplete="off">
+        </div>
+        <div id="rolesList"></div>
+        <div class="fr-dbstatus" id="rolesStatus"></div>
       </div>
     </div>
   </div>
@@ -7139,11 +7157,11 @@ function adminGate(unlockInputs){
 function requireRosterAuth(){ return adminGate(true); }
 // quick 1st/2nd-night exchange: same admin check, but leaves the roster cells locked
 function requireQuickAuth(){ return adminGate(false); }
-/* 1st / 2nd night (roster table): any logged-in user OR the admin may set it */
+/* 1st / 2nd night (roster table): the admin or a sub-moderator may set it */
 function requireNightHalfAuth(){
   if(rosterUnlocked) return true;
-  if(loadAuthSession()) return true;
-  alert('Please log in first (\u2699\uFE0F Settings) to set 1st / 2nd Night.');
+  if(window.hsiaIsSubMod && window.hsiaIsSubMod()) return true;
+  alert('Only an admin or a sub-moderator can set 1st / 2nd Night.');
   return false;
 }
 /* Backup download is always gated by the admin password, every single
@@ -8157,10 +8175,24 @@ function sanitizeUserKey(identifier){
     .replace(/\./g, ',')
     .replace(/[#$\[\]\/\s]/g, '_');
 }
-async function hashPassword(pw){
-  const enc = new TextEncoder().encode(pw);
-  const buf = await crypto.subtle.digest('SHA-256', enc);
+/* Passwords are stored as a salted, slow hash: "p1$<salt>$<PBKDF2-SHA256, 150000 rounds>". Old plain SHA-256 hashes still verify and are
+   upgraded to the new format at the next successful login. */
+async function hashPassword(pw, saltB64){
+  let salt;
+  if(saltB64){ salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0)); }
+  else { salt = crypto.getRandomValues(new Uint8Array(16)); saltB64 = btoa(String.fromCharCode.apply(null, Array.from(salt))); }
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name:'PBKDF2', salt:salt, iterations:150000, hash:'SHA-256' }, key, 256);
+  return 'p1$' + saltB64 + '$' + Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function legacyHashPassword(pw){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function verifyPassword(pw, stored){
+  stored = String(stored || '');
+  if(stored.indexOf('p1$') === 0){ return (await hashPassword(pw, stored.split('$')[1])) === stored; }
+  return !!stored && (await legacyHashPassword(pw)) === stored;
 }
 function loadAuthSession(){
   try{ const s = JSON.parse(localStorage.getItem(AUTH_SESSION_KEY)); if(s && s.identifier && s.displayName) return s; }catch(e){}
@@ -8168,20 +8200,78 @@ function loadAuthSession(){
 }
 function saveAuthSession(s){ try{ localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); }catch(e){} }
 function clearAuthSession(){ try{ localStorage.removeItem(AUTH_SESSION_KEY); }catch(e){} }
-/* Moderators: an account record hsia_sync/<room>/users/<key>/role = "moderator" (set by hand in the Firebase console; <key> = the login e-mail,
-   lower case, "." replaced by ","). The role is copied into the local session (s.role) so the UI can show admin+moderator controls (body.hsia-staff).
-   For now a moderator only gets the Requests button; what else a moderator may do is still undecided. */
-window.hsiaIsModerator = function(){ try{ const s = loadAuthSession(); return !!(s && (s.role === 'moderator' || s.role === 'admin')); }catch(e){ return false; } };
+/* Roles. Admin = hsia_private/admins/<uid> (Firebase Rules). Moderator = hsia_private/mods/<uid>, Sub-moderator = hsia_private/submods/<uid>
+   (the admin sets them in Settings > Roles; only an admin can write them). The role is copied into the local session (s.role) so the UI can show the right controls:
+     moderator     -> body.hsia-staff   : Requests button + Registrations (approve / reject only); NO Others tab, NO repo ZIP, NO editing
+     sub-moderator -> body.hsia-submod  : like a normal logged-in user, plus 1st / 2nd Night and the roster download button
+     admin         -> everything */
+window.hsiaRole = function(){
+  try{ if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) return 'admin'; }catch(e){}
+  try{ const s = loadAuthSession(); const r = s && s.role; return (r === 'moderator' || r === 'submoderator') ? r : ''; }catch(e){ return ''; }
+};
+window.hsiaIsModerator = function(){ const r = window.hsiaRole(); return r === 'admin' || r === 'moderator'; };
+window.hsiaIsSubMod = function(){ const r = window.hsiaRole(); return r === 'admin' || r === 'submoderator'; };
 async function authRefreshRole(){
   try{
-    const s = loadAuthSession(), saved = loadFirebaseSyncConfig();
-    if(!s || !s.key || typeof _fbDb === 'undefined' || !_fbDb || !saved) return;
-    const snap = await _fbDb.ref('hsia_sync/' + saved.roomId + '/users/' + s.key + '/role').once('value');
-    const role = snap.val() === 'moderator' ? 'moderator' : '';
+    const s = loadAuthSession(), u = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+    if(!s || !u || typeof _fbDb === 'undefined' || !_fbDb) return;
+    /* roles live in hsia_private/mods/<uid> and hsia_private/submods/<uid> (only an admin can write them; a person can read only their own) */
+    const [m, sm] = await Promise.all([ _fbDb.ref('hsia_private/mods/' + u.uid).once('value'), _fbDb.ref('hsia_private/submods/' + u.uid).once('value') ]);
+    const role = m.val() === true ? 'moderator' : sm.val() === true ? 'submoderator' : '';
     if((s.role || '') !== role){ s.role = role; saveAuthSession(s); }
     if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI();
   }catch(e){ /* offline / not allowed: keep the last known role */ }
 }
+/* ---- Roles panel (admin only, Settings): set Moderator / Sub-moderator on an account ---- */
+(function(){
+  const $ = id=> document.getElementById(id);
+  const LABEL = { '':'Normal user', submoderator:'Sub-moderator', moderator:'Moderator' };
+  const esc2 = t=> String(t == null ? '' : t).replace(/[&<>"]/g, c=> ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  let USERS = [];
+  const status = t=>{ const e = $('rolesStatus'); if(e) e.textContent = t || ''; };
+  const refUsers = ()=>{ const saved = loadFirebaseSyncConfig(); return (_fbDb && saved) ? _fbDb.ref('hsia_sync/' + saved.roomId + '/users') : null; };
+  function draw(){
+    const box = $('rolesList'); if(!box) return;
+    const q = ((($('rolesSearch') || {}).value) || '').trim().toLowerCase();
+    const rows = USERS.filter(u=> !q || (u.name + ' ' + u.id).toLowerCase().indexOf(q) >= 0);
+    box.innerHTML = rows.slice(0, 80).map(u=> '<div class="rl-row"><div class="rl-who"><b>' + esc2(u.name || u.id) + '</b><span>' + esc2(u.id) + '</span></div>' +
+      '<select data-k="' + esc2(u.key) + '">' + Object.keys(LABEL).map(k=> '<option value="' + k + '"' + (u.role === k ? ' selected' : '') + '>' + LABEL[k] + '</option>').join('') + '</select></div>').join('') ||
+      '<div class="imp-note">No account found.</div>';
+    if(rows.length > 80) box.insertAdjacentHTML('beforeend', '<div class="imp-note">Showing 80 of ' + rows.length + ' - use the search box.</div>');
+  }
+  async function load(){
+    if(!(window.hsiaCanSeeOthers && window.hsiaCanSeeOthers())){ alert('Admin only'); return; }
+    const r = refUsers(); if(!r){ status('Firebase sync is not set up on this device.'); return; }
+    status('Loading...');
+    try{
+      const [snap, md, sm] = await Promise.all([ r.once('value'), _fbDb.ref('hsia_private/mods').once('value'), _fbDb.ref('hsia_private/submods').once('value') ]);
+      const v = snap.val() || {}, mods = md.val() || {}, subs = sm.val() || {};
+      USERS = Object.keys(v).map(k=>{ const uid = String(v[k].uid || ''); return { key:k, uid:uid, id:String(v[k].identifier || k), name:String(v[k].displayName || ''), role:(uid && mods[uid] === true) ? 'moderator' : (uid && subs[uid] === true) ? 'submoderator' : '' }; })
+        .sort((a, b)=> (a.name || a.id).toLowerCase().localeCompare((b.name || b.id).toLowerCase()));
+      status(USERS.length + ' accounts - Moderator: ' + USERS.filter(u=> u.role === 'moderator').length + ' - Sub-moderator: ' + USERS.filter(u=> u.role === 'submoderator').length);
+      draw();
+    }catch(e){ status('Could not load: ' + (e && e.message ? e.message : e) + ' (publish the new Firebase Rules first)'); }
+  }
+  async function setRole(key, val){
+    if(!(window.hsiaCanSeeOthers && window.hsiaCanSeeOthers())){ alert('Admin only'); return; }
+    const u = USERS.find(x=> x.key === key); if(!u) return;
+    if(!u.uid){ status((u.name || u.id) + ' has no Firebase ID yet - ask them to log in once more, then reload the list.'); draw(); return; }
+    try{
+      const mr = _fbDb.ref('hsia_private/mods/' + u.uid), sr = _fbDb.ref('hsia_private/submods/' + u.uid);
+      await Promise.all([ val === 'moderator' ? mr.set(true) : mr.remove(), val === 'submoderator' ? sr.set(true) : sr.remove() ]);
+      USERS.forEach(x=>{ if(x.uid === u.uid) x.role = val; });
+      status('Saved: ' + (u.name || u.id) + ' -> ' + LABEL[val]);
+      try{ auditLog('role-set', (u.id || key) + ' -> ' + (val || 'normal')); }catch(e){}
+    }catch(e){ status('Not saved: ' + (e && e.message ? e.message : e) + ' (publish the new Firebase Rules first)'); draw(); }
+  }
+  function wire(){
+    const b = $('rolesLoadBtn'); if(!b || b._w) return; b._w = true;
+    b.addEventListener('click', load);
+    const q = $('rolesSearch'); if(q) q.addEventListener('input', draw);
+    const box = $('rolesList'); if(box) box.addEventListener('change', e=>{ const s = e.target.closest && e.target.closest('select[data-k]'); if(s) setRole(s.getAttribute('data-k'), s.value); });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+})();
 function clBalanceText(r){   /* "how many CL days does this person still have this year" */
   try{
     if(!r || !r.who || r.who === '-') return '';
@@ -8449,8 +8539,8 @@ async function loginUser(identifier, password){
     const snap = await ref.once('value');
     if(!snap.exists()){ setAuthStatus('⚠️ এই আইডিতে কোনো অ্যাকাউন্ট পাওয়া যায়নি।'); return; }
     const rec = snap.val();
-    const passHash = await hashPassword(password);
-    if(passHash !== rec.passHash){ setAuthStatus('⚠️ পাসওয়ার্ড ভুল।'); return; }
+    if(!(await verifyPassword(password, rec.passHash))){ setAuthStatus('⚠️ পাসওয়ার্ড ভুল।'); return; }
+    if(String(rec.passHash || '').indexOf('p1$') !== 0){ try{ await ref.update({ passHash: await hashPassword(password) }); }catch(e){} }   // upgrade an old hash
     try{ const _cu = firebase.auth().currentUser; if(_cu && !rec.uid) await ref.update({ uid:_cu.uid }); }catch(e){}     // first login after the security update: this device becomes the owner of the record
     const session = { identifier: rec.identifier, displayName: rec.displayName, key };
     saveAuthSession(session);
@@ -8503,8 +8593,7 @@ async function changeMyPassword(oldPassword, newPassword){
     const snap = await ref.once('value');
     if(!snap.exists()){ if(statusEl) statusEl.textContent = '⚠️ একাউন্ট পাওয়া যায়নি।'; return; }
     const rec = snap.val();
-    const oldHash = await hashPassword(oldPassword);
-    if(oldHash !== rec.passHash){ if(statusEl) statusEl.textContent = '⚠️ বর্তমান পাসওয়ার্ড ভুল।'; return; }
+    if(!(await verifyPassword(oldPassword, rec.passHash))){ if(statusEl) statusEl.textContent = '⚠️ বর্তমান পাসওয়ার্ড ভুল।'; return; }
     const newHash = await hashPassword(newPassword);
     try{ await ref.update({ passHash: newHash }); }
     catch(e){
@@ -9214,9 +9303,9 @@ function initAuthPanel(){
         });
       });
 
-      // Flight database (switched off: the Tracker tab was removed, so these results would have nowhere to open)
+      // Flight database
       safe(()=>{
-        [].forEach(r=>{
+        loadFlightDb().forEach(r=>{
           const bits = [r.type, r.registration, [r.departure, r.destination].filter(Boolean).join(' → '), r.route, r.time].filter(Boolean);
           add('flightdb', r.callsign, bits.join('   ·   '), ()=>{
             openPanel('flightrCardOuter','flightr');
@@ -9630,6 +9719,7 @@ function setQuickHalf(half){
 }
 
 function openQuickExchange(tableKey, ri, ci){
+  if(!requireNightHalfAuth()) return;
   if(typeof window._rosterSelKey === 'string' && window._rosterSelKey !== todayDateKey()){ alert('Quick exchange works for today only. Press Today first.'); return; }
   const data = rosterDataFor(tableKey);
   const row = data[ri];
@@ -15134,6 +15224,15 @@ function openRosterWindow(){
         const lab = (+x.team >= THS_BASE) ? ((THS_META[+x.team - THS_BASE] || {}).label || 'Duty') : shiftFor(+x.team, y, m0, d);
         items.push({ kind:'take', label:lab, who:String(x.base || x.who || exHistBaseName(x) || '').trim(), pos:x.pos });
       });
+      /* unannounced entries (long-press in My calendar) are my own record: show them here too */
+      manFor(dk).filter(m=> m && m.un).forEach(m=>{
+        if(m.k === 'cl' || m.k === 'by'){
+          const it = items.find(x=> x.kind === 'duty' && String(x.label) === String(m.shift));
+          if(it){ it.kind = 'gone'; it.tp = m.k === 'cl' ? 'CL' : 'Exchange'; it.sub = m.name || ''; it.un = true; }
+        } else if(m.k === 'fr' && !items.some(x=> x.kind === 'take' && String(x.label) === String(m.shift))){
+          items.push({ kind:'take', label:m.shift, who:m.name || '', pos:m.pos || '', un:true });
+        }
+      });
       if(!items.length) continue;
       if(!upcoming && !items.some(it=> it.kind !== 'duty')) continue;
       rows.push({ i:i, y:y, m0:m0, d:d, dow:dt.getUTCDay(), items:items });
@@ -15204,7 +15303,7 @@ function openRosterWindow(){
     (man || []).forEach(m=>{
       const k = m.k; if(!rec[k]) return;
       if(rec[k].some(z=> String(z.label) === String(m.shift))) return;      // already known from QBM / ledger
-      if(k === 'cl') rec.cl.push({ label:m.shift, days:clDaysForLabel(m.shift), sub:m.name || '', manual:true });
+      if(k === 'cl') rec.cl.push({ label:m.shift, days:clDaysForLabel(m.shift), sub:m.name || '', manual:true, un:!!m.un });
       else if(k === 'by') rec.by.push({ label:m.shift, sub:m.name || '', tp:'Exchange', manual:true });
       else rec.fr.push({ label:m.shift, who:m.name || '', pos:'', manual:true });
     });
@@ -15287,7 +15386,7 @@ function openRosterWindow(){
     const p = dk.split('-').map(Number), show = showKinds();
     let h = '<b>' + WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0] + '</b>';
     const row = (k, t)=> '<div><i style="background:' + KC[k] + '"></i>' + t + '</div>';
-    if(show.indexOf('cl') >= 0) rec.cl.forEach(c=> h += row('cl', 'CL \u00b7 ' + esc(c.label) + ' \u00b7 ' + c.days + (c.days > 1 ? ' days' : ' day') + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did duty' : (c.manual ? '' : ' \u00b7 vacant')) + (c.manual ? ' \u00b7 manual' : '')));
+    if(show.indexOf('cl') >= 0) rec.cl.forEach(c=> h += row('cl', 'CL \u00b7 ' + esc(c.label) + ' \u00b7 ' + c.days + (c.days > 1 ? ' days' : ' day') + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did duty' : (c.manual ? '' : ' \u00b7 vacant')) + (c.manual ? (c.un ? ' \u00b7 unannounced' : ' \u00b7 manual') : '')));
     if(show.indexOf('by') >= 0) rec.by.forEach(c=> h += row('by', esc(c.tp || 'Exchange') + ' \u00b7 ' + esc(c.label) + (c.sub ? ' \u00b7 ' + esc(c.sub) + ' did my duty' : ' \u00b7 vacant')));
     if(show.indexOf('fr') >= 0) rec.fr.forEach(c=> h += row('fr', 'I did duty \u00b7 ' + esc(c.label) + (c.who ? ' \u00b7 for ' + esc(c.who) : '') + (c.pos ? ' \u00b7 ' + esc(c.pos) : '')));
     return h;
@@ -15352,7 +15451,7 @@ function openRosterWindow(){
 
 
   // ---- press & hold a date -> set CL / covered by others / I did duty for others by hand (person picked from the roster table) ----
-  let lpT = 0, lpFired = false, lpX = 0, lpY = 0, memDk = '', memK = 'cl', memP = null, pkTab = 'rosterCtrl';
+  let lpT = 0, lpFired = false, lpX = 0, lpY = 0, memDk = '', memK = 'cl', memP = null, memUn = false, pkTab = 'rosterCtrl';
   const MK = [['cl','CL'], ['by','Covered by others'], ['fr','I did duty for others']];
   function memShiftNow(){
     // the shift is taken from the roster, nothing to type: CL / covered = my own duty that day, "I did duty" = the duty of the person I covered
@@ -15372,6 +15471,7 @@ function openRosterWindow(){
     if(ov) return ov;
     ov = document.createElement('div'); ov.id = 'meManOv'; ov.className = 'mem-ov';
     ov.innerHTML = '<div class="mem-box"><div class="mem-t" id="memT"></div><div id="memList"></div>' +
+      '<div class="mem-l">Record</div><div class="mem-chips" id="memU"></div><div class="mem-sh" id="memUH" style="margin-top:4px;"></div>' +
       '<div class="mem-l">Type</div><div class="mem-chips" id="memK"></div>' +
       '<div class="mem-l" id="memNL"></div><div class="mem-pick"><button type="button" class="mem-pbtn" id="memPick"></button><button type="button" class="mem-pclr" id="memPClr" aria-label="Clear">\u2715</button></div>' +
       '<div class="mem-sh" id="memSh"></div>' +
@@ -15379,16 +15479,17 @@ function openRosterWindow(){
     document.body.appendChild(ov);
     ov.addEventListener('click', e=>{
       if(e.target === ov || e.target.closest('#memX')){ ov.classList.remove('show'); return; }
+      if(e.target.closest('#memUbtn')){ memUn = !memUn; memDraw(); return; }
       const k = e.target.closest('[data-mk]'); if(k){ memK = k.getAttribute('data-mk'); memDraw(); return; }
       if(e.target.closest('#memPick')){ pkOpen(); return; }
       if(e.target.closest('#memPClr')){ memP = null; memDraw(); return; }
       const rm = e.target.closest('[data-rm]');
-      if(rm){ const m = loadMan(), arr = m[memDk] || []; m[memDk] = arr.filter(z=> z.id !== rm.getAttribute('data-rm')); saveMan(m); memDraw(); renderMe(); return; }
+      if(rm){ const m = loadMan(), arr = m[memDk] || []; m[memDk] = arr.filter(z=> z.id !== rm.getAttribute('data-rm')); saveMan(m); memDraw(); renderMe(); redrawWeek(); return; }
       if(e.target.closest('#memOk')){
         if(memK !== 'cl' && !memP){ alert(memK === 'by' ? 'Select who did your duty from the roster table.' : 'Select whose duty you did from the roster table.'); return; }
         const m = loadMan(), arr = m[memDk] = m[memDk] || [];
-        arr.push({ id:Date.now().toString(36) + Math.random().toString(36).slice(2, 5), k:memK, shift:memShiftNow(), name:memP ? memP.name : '', table:memP ? memP.table : '', pos:memP ? memP.pos : '' });
-        saveMan(m); memP = null; memDraw(); renderMe();
+        arr.push({ id:Date.now().toString(36) + Math.random().toString(36).slice(2, 5), k:memK, shift:memShiftNow(), name:memP ? memP.name : '', table:memP ? memP.table : '', pos:memP ? memP.pos : '', un:!!memUn });
+        saveMan(m); memP = null; memDraw(); renderMe(); redrawWeek();
         ov.classList.remove('show');
       }
     });
@@ -15397,6 +15498,8 @@ function openRosterWindow(){
   function memDraw(){
     const p = memDk.split('-').map(Number);
     document.getElementById('memT').textContent = WEEKDAYS[new Date(Date.UTC(p[0], p[1]-1, p[2])).getUTCDay()] + ', ' + p[2] + ' ' + MONTHS[p[1]-1].slice(0,3) + ' ' + p[0];
+    document.getElementById('memU').innerHTML = '<button type="button" class="mem-c' + (memUn ? ' on' : '') + '" id="memUbtn" style="--c:#c7a6ff">Unannounced (only my record)</button>';
+    document.getElementById('memUH').textContent = memUn ? 'Kept only in My calendar and My duty next 15 days. Nothing is sent to the admin.' : '';
     document.getElementById('memK').innerHTML = MK.map(x=> '<button type="button" class="mem-c' + (memK === x[0] ? ' on' : '') + '" data-mk="' + x[0] + '" style="--c:' + KC[x[0]] + '">' + x[1] + '</button>').join('');
     document.getElementById('memNL').textContent = memK === 'cl' ? 'Who does the duty (optional)' : memK === 'by' ? 'Who did my duty' : 'Whose duty I did';
     document.getElementById('memPick').textContent = memP ? (memP.name + (memP.pos ? ' \u00b7 ' + memP.pos : '')) : 'Select from roster table';
@@ -15404,7 +15507,7 @@ function openRosterWindow(){
     const sh = memShiftNow();
     document.getElementById('memSh').textContent = 'Shift (from roster): ' + sh + (memK === 'cl' ? ' \u00b7 ' + clDaysForLabel(sh) + ((clDaysForLabel(sh) > 1) ? ' days' : ' day') : '');
     const cur = (loadMan()[memDk] || []);
-    document.getElementById('memList').innerHTML = cur.length ? '<div class="mem-l">Added by hand</div>' + cur.map(z=> '<div class="mem-it"><i style="background:' + KC[z.k] + '"></i><span>' + esc((MK.find(q=> q[0] === z.k) || [0,''])[1]) + ' \u00b7 ' + esc(z.shift) + (z.name ? ' \u00b7 ' + esc(z.name) : '') + '</span><button type="button" data-rm="' + z.id + '" aria-label="Remove">\u2715</button></div>').join('') : '';
+    document.getElementById('memList').innerHTML = cur.length ? '<div class="mem-l">Added by hand</div>' + cur.map(z=> '<div class="mem-it"><i style="background:' + KC[z.k] + '"></i><span>' + esc((MK.find(q=> q[0] === z.k) || [0,''])[1]) + ' \u00b7 ' + esc(z.shift) + (z.name ? ' \u00b7 ' + esc(z.name) : '') + (z.un ? ' \u00b7 unannounced' : '') + '</span><button type="button" data-rm="' + z.id + '" aria-label="Remove">\u2715</button></div>').join('') : '';
   }
   // roster-table picker for the manual entry (same tables as "Select Your Name")
   function pkEl(){
@@ -15451,7 +15554,7 @@ function openRosterWindow(){
   function pkOpen(){ const ov = pkEl(); document.getElementById('mpkQ').value = ''; pkDraw(); ov.classList.add('show'); }
   function openManual(dk){
     const me = resolveMe(); if(!me) return;
-    memDk = dk; memP = null; memK = 'cl';
+    memDk = dk; memP = null; memK = 'cl'; memUn = false;
     const ov = memEl(); memDraw(); ov.classList.add('show');
   }
 
@@ -16127,6 +16230,7 @@ initAdminNotepad();
     const on = window.hsiaCanSeeOthers();
     document.body.classList.toggle('hsia-priv', on);
     document.body.classList.toggle('hsia-staff', on || !!(window.hsiaIsModerator && window.hsiaIsModerator()));
+    document.body.classList.toggle('hsia-submod', on || !!(window.hsiaIsSubMod && window.hsiaIsSubMod()));
     const t = document.getElementById('iflowAdminToggle');
     if(t){ t.textContent = on ? '🔓' : '🔐'; t.title = on ? 'Admin logout' : 'Admin / Moderator login'; }
     if(!on){
@@ -17709,7 +17813,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     });
   }
   function openDl(){
-    if(!isAdmin()){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
+    if(!isAdmin() && !(window.hsiaIsSubMod && window.hsiaIsSubMod())){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
     var tbl = curTable();
     if(!tbl){ alert('এই ট্যাবের জন্য PNG ডাউনলোড নেই।\nController / Aerodrome Assistant / Communication ট্যাব খুলে আবার চাপুন।'); return; }
     buildOverlay();
