@@ -7,7 +7,8 @@ var FORMS={
   earned:{ title:'\u0985\u09b0\u09cd\u099c\u09bf\u09a4 \u099b\u09c1\u099f\u09bf\u09b0 \u0986\u09ac\u09c7\u09a6\u09a8 (CSC-2/A)', file:'earned-leave-form', pages:['earned_1','earned_2'] },
   abroad:{ title:'\u09ac\u09bf\u09a6\u09c7\u09b6 \u09ad\u09cd\u09b0\u09ae\u09a3\u09c7\u09b0 \u0986\u09ac\u09c7\u09a6\u09a8 (CA/Pro-3)', file:'foreign-travel-form', pages:['abroad_1','abroad_2','abroad_3'] }
 };
-var SN={"earned_1":{"l":[[2284,3448,651],[2459,4384,1232],[2458,4384,1386],[2458,2634,1538],[2732,3348,1538],[3496,3793,1538],[3940,4190,1538],[2458,4384,1692],[2458,4384,1843],[3273,4436,2280],[2450,2943,2459],[3146,3642,2459],[3884,4206,2459],[2459,4384,2610],[2458,4384,2761],[2458,4384,3353],[2458,4384,3504],[2458,4384,3651],[2458,4384,3802],[2458,4384,3953],[2459,4384,4104],[2466,3062,5471],[3456,4024,5471],[2462,3606,5622],[3801,4274,5622],[2462,2908,5800],[3138,3606,5800],[3801,4274,5800],[2462,2908,5976],[3138,3606,5976],[3801,4274,5976]],"k":[[2360,724],[2328,1228],[2328,1382],[2328,1534],[2328,1688],[2328,1840],[2328,1994],[2328,2455],[2328,2606],[2328,2757],[2328,2912],[2328,3349],[2328,3798],[2328,3949],[2328,4100],[2328,4518],[2328,4632],[2328,4792],[2328,5141],[2328,5256],[2328,5467],[2328,5618],[2328,5796],[2328,5972],[2328,6322],[2328,6440]]},"earned_2":{"l":[[1334,3064,2760],[3490,4358,2760],[1240,3046,2946],[976,3052,3096],[976,3052,3246]],"k":[[2330,740],[2330,1326],[2330,1442],[2330,1598],[2330,2180],[2330,2298]]},"abroad_1":{"l":[],"k":[[2654,702],[2654,892],[2654,1110],[2654,1308],[2654,1506],[2654,1734],[2654,1942],[2654,2140],[2654,2348],[2654,2802],[2654,3142],[2654,4466]]},"abroad_2":{"l":[[785,2385,5100],[2728,4553,5100],[776,2376,5278],[2538,3688,5278],[885,1535,6158],[885,1535,6747]],"k":[[2732,756],[2732,944],[2732,1133],[2732,1321],[2732,2075],[2730,3018],[2732,3206],[2732,3395],[2732,3584],[2732,3772],[2732,3960],[2732,4150],[2732,4338]]},"abroad_3":{"l":[],"k":[]}};
+var SN={"earned_1":{"l":[[2284,3448,651],[2459,4384,1232],[2458,4384,1386],[2458,2634,1538],[2732,3348,1538],[3496,3793,1538],[3940,4190,1538],[2458,4384,1692],[2458,4384,1843],[3273,4436,2280],[2450,2943,2459],[3146,3642,2459],[3884,4206,2459],[2459,4384,2610],[2458,4384,2761],[2458,4384,3353],[2458,4384,3504],[2458,4384,3651],[2458,4384,3802],[2458,4384,3953],[2459,4384,4104],[2466,3062,5471],[3456,4024,5471],[2462,3606,5622],[3801,4274,5622],[2462,2908,5800],[3138,3606,5800],[3801,4274,5800],[2462,2908,5976],[3138,3606,5976],[3801,4274,5976]],"k":[[2360,724],[2328,1228],[2328,1382],[2328,1534],[2328,1688],[2328,1840],[2328,1994],[2328,2455],[2328,2606],[2328,2757],[2328,2912],[2328,3349],[2328,3798],[2328,3949],[2328,4100],[2328,4518],[2328,4632],[2328,4792],[2328,5141],[2328,5256],[2328,5467],[2328,5618],[2328,5796],[2328,5972],[2328,6322],[2328,6440]]},"earned_2":{"l":[[1334,3064,2760],[3490,4358,2760],[1240,3046,2946],[976,3052,3096],[976,3052,3246]],"k":[[2330,740],[2330,1326],[2330,1442],[2330,1598],[2330,2180],[2330,2298]]},"abroad_1":{"l":[],"k":[[2654,702],[2654,892],[2654,1110],[2654,1308],[2654,1506],[2654,1734],[2654,1942],[2654,2140],[2654,2348],[2654,2802],[2654,3142],[2654,4466]]},"abroad_2":{"l":[[785,2385,5100],[2728,4553,5100],[776,2376,5278],[2538,3688,5278],[885,1535,6158],[885,1535,6747]],"k":[[2732,756],[2732,944],[2732,1133],[2732,1321],[2732,2075],[2730,3018],[2732,3206],[2732,3395],[2732,3584],[2732,3772],[2732,3960],[2732,4150],[2732,4338]]},"abroad_3":{"l":[],"k":[],"c":[[986,2442],[2445,3100],[3102,3829],[3832,4594]]}};
+var ROWS3=[[999,1664],[1667,2330],[2333,2997],[2999,3664],[3667,4330]];
 var FONT='"Noto Sans Bengali","Hind Siliguri","Nirmala UI","Bangla Sangam MN","Kohinoor Bangla",Arial,sans-serif';
 var S=null, root=null, imgs={};
 function $(id){ return document.getElementById(id); }
@@ -19,7 +20,7 @@ function css(){
   +'.hif button{font:inherit;font-family:"Space Grotesk",Inter,sans-serif;cursor:pointer;color:#F0F1F3;background:#262525;border:1px solid #454444;border-radius:10px;padding:7px 11px;font-weight:600}'
   +'.hif button.on{background:linear-gradient(135deg,#A9AEB8,#DADCE0);color:#14151a;border-color:#d6d8dc}'
   +'.hif-top,.hif-tools{display:flex;align-items:center;gap:6px;padding:8px 10px;flex-wrap:wrap;border-bottom:1px solid #454444;background:#171616}.hif-top b{flex:1;min-width:120px;font-size:13px}'
-  +'.hif-body{flex:1;overflow:auto;background:#262525;padding:8px;-webkit-overflow-scrolling:touch}.hif-page{position:relative;margin:0 auto;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.5)}'
+  +'.hif-body{flex:1;overflow:auto;background:#262525;padding:8px;-webkit-overflow-scrolling:touch}.hif-page{position:relative;margin:0 auto 14px;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.5)}'
   +'.hif-page canvas{display:block;width:100%;height:100%;pointer-events:none}.hi{position:absolute;white-space:pre;color:#0a1f8f;line-height:1;cursor:text;font-family:'+FONT+'}'
   +'.hi.c{color:#0a1f8f;font-weight:700}.hif input.hie{position:absolute;border:0;border-bottom:2px solid #1a5fd0;background:rgba(255,255,160,.45);color:#000;padding:0;margin:0;outline:0;font-family:'+FONT+'}'
   +'.hif .w path{fill:#262525;stroke:#454444;stroke-width:1.5;cursor:pointer}.hif .w g.on path,.hif .w g:active path{fill:#A9AEB8}.hif .w text{fill:#F0F1F3;font:700 15px "Space Grotesk",Inter,sans-serif;text-anchor:middle;dominant-baseline:middle;pointer-events:none}'
@@ -28,37 +29,52 @@ function css(){
   if(!$('hifFont')){ var l=document.createElement('link'); l.id='hifFont'; l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap'; document.head.appendChild(l); }
 }
 function kScale(){ return S.w/PW; }
-function render(){
-  var pg=S.pages[S.pg], k=kScale(), page=$('hifPage');
-  S.w=Math.round(($('hifBody').clientWidth-16)*S.z);
-  k=kScale(); page.style.width=S.w+'px'; page.style.height=Math.round(S.w*PH/PW)+'px';
-  paintBg(pg); $('hifPg').textContent=(S.pg+1)+' / '+S.pages.length; $('hifZ').textContent=Math.round(S.z*100)+'%';
-  page.querySelectorAll('.hi,.hie').forEach(function(n){ n.remove(); });
-  (S.items[pg]||[]).forEach(function(it,i){
-    var d=document.createElement('div'); d.className='hi'+(it.t==='c'?' c':''); d.textContent=it.t==='c'?'\u2714':it.v; d.dataset.i=i;
-    var fs=S.size*k; d.style.fontSize=fs+'px'; d.style.left=(it.x*k)+'px'; d.style.top=(it.y*k-fs*.82)+'px'; if(it.t==='c'){ d.style.left=(it.x*k-fs*.45)+'px'; d.style.top=(it.y*k-fs*.6)+'px'; }
-    page.appendChild(d);
-  });
+function updPg(){
+  var body=$('hifBody'), br=body.getBoundingClientRect(), idx=0;
+  S.pages.forEach(function(_,i){ var el=$('hifPage'+i); if(el && el.getBoundingClientRect().top-br.top<=br.height*.4) idx=i; });
+  S.pg=idx; $('hifPg').textContent=(idx+1)+' / '+S.pages.length;
 }
-/* page picture: shrunk in steps of two with smoothing, a single big jump makes thin strokes disappear (the "blurry" look) */
-function paintBg(pg){
-  var cv=$('hifImg'), dpr=Math.min(window.devicePixelRatio||1,3), tw=Math.min(3600,Math.round(S.w*dpr)), th=Math.round(tw*PH/PW), key=pg+'|'+tw, tok=++S.tok;
-  if(S.bgKey===key) return; 
-  loadImg(pg).then(function(im){
-    if(tok!==S.tok) return; var cur=im;
-    while(cur.width/2>=tw){ var h=document.createElement('canvas'); h.width=Math.round(cur.width/2); h.height=Math.round(cur.height/2); var g=h.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(cur,0,0,h.width,h.height); cur=h; }
-    cv.width=tw; cv.height=th; var c=cv.getContext('2d'); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high'; c.fillStyle='#fff'; c.fillRect(0,0,tw,th); c.drawImage(cur,0,0,tw,th); S.bgKey=key;
+function render(){
+  var body=$('hifBody'), ratio=body.scrollHeight?body.scrollTop/body.scrollHeight:0;
+  S.w=Math.round((body.clientWidth-16)*S.z); var k=kScale(), h=Math.round(S.w*PH/PW);
+  $('hifZ').textContent=Math.round(S.z*100)+'%';
+  S.pages.forEach(function(pg,pi){
+    var page=$('hifPage'+pi); page.style.width=S.w+'px'; page.style.height=h+'px';
+    paintBg(pi);
+    page.querySelectorAll('.hi,.hie').forEach(function(n){ n.remove(); });
+    (S.items[pg]||[]).forEach(function(it,i){
+      var d=document.createElement('div'); d.className='hi'+(it.t==='c'?' c':''); d.textContent=it.t==='c'?'\u2714':it.v; d.dataset.i=i;
+      var fs=S.size*k; d.style.fontSize=fs+'px'; d.style.left=(it.x*k)+'px'; d.style.top=(it.y*k-fs*.82)+'px'; if(it.t==='c'){ d.style.left=(it.x*k-fs*.45)+'px'; d.style.top=(it.y*k-fs*.6)+'px'; }
+      page.appendChild(d);
+    });
   });
+  body.scrollTop=ratio*body.scrollHeight; updPg();
+}
+/* every page picture is drawn into its own canvas, one after another (keeps phone memory low); shrunk in steps of two with smoothing so thin strokes survive */
+var paintQ=Promise.resolve();
+function paintBg(pi){
+  var pg=S.pages[pi], cv=$('hifImg'+pi), dpr=Math.min(window.devicePixelRatio||1,3), tw=Math.min(2600,Math.round(S.w*dpr)), th=Math.round(tw*PH/PW), tok=(S.tok[pi]=(S.tok[pi]||0)+1);
+  if(S.bgKey[pi]===tw) return;
+  paintQ=paintQ.then(function(){ if(tok!==S.tok[pi]) return; return loadImg(pg).then(function(im){
+    if(tok!==S.tok[pi]){ delete imgs[pg]; return; } var cur=im;
+    while(cur.width/2>=tw){ var h=document.createElement('canvas'); h.width=Math.round(cur.width/2); h.height=Math.round(cur.height/2); var g=h.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(cur,0,0,h.width,h.height); cur=h; }
+    cv.width=tw; cv.height=th; var c=cv.getContext('2d'); c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high'; c.fillStyle='#fff'; c.fillRect(0,0,tw,th); c.drawImage(cur,0,0,tw,th); S.bgKey[pi]=tw; delete imgs[pg];
+  }); }).catch(function(){});
 }
 function snap(x,y){
   var s=SN[S.pages[S.pg]]||{l:[],k:[]}, best=null, bd=75, i, d;
   for(i=0;i<s.l.length;i++){ var L=s.l[i]; d=Math.abs(y-L[2]); if(d<bd && x>L[0]-80 && x<L[1]+80){ bd=d; best={x:Math.max(x,L[0]+8),y:L[2]-10}; } }
   if(best) return best;
   for(i=0;i<s.k.length;i++){ var K=s.k[i]; d=Math.abs(y-K[1]); if(d<bd && x>K[0]){ bd=d; best={x:Math.max(x,K[0]+70),y:K[1]+8}; } }
-  return best||{x:x,y:y+S.size*.3};
+  if(s.c){ var cy=null, cx=null, j;
+    for(j=0;j<ROWS3.length;j++) if(y>=ROWS3[j][0]&&y<=ROWS3[j][1]) cy=ROWS3[j];
+    for(j=0;j<s.c.length;j++) if(x>=s.c[j][0]&&x<=s.c[j][1]) cx=s.c[j];
+    if(cy&&cx) return {x:Math.max(x,cx[0]+30), y:Math.min(Math.max(y+S.size*.3,cy[0]+S.size*1.1),cy[1]-30)};
+  }
+  return best||null;
 }
 function edit(it,isNew){
-  var page=$('hifPage'), k=kScale(), pg=S.pages[S.pg], fs=S.size*k, inp=document.createElement('input');
+  var pi=S.pg, pg=S.pages[pi], page=$('hifPage'+pi), k=kScale(), fs=S.size*k, inp=document.createElement('input');
   inp.className='hie'; inp.value=it.v||''; inp.style.fontSize=fs+'px'; inp.style.left=(it.x*k)+'px'; inp.style.top=(it.y*k-fs*.95)+'px'; inp.style.height=(fs*1.25)+'px'; inp.style.width=Math.max(160,S.w-it.x*k-10)+'px';
   page.appendChild(inp); inp.focus();
   function done(){
@@ -70,18 +86,20 @@ function edit(it,isNew){
 }
 function onPage(e){
   if(e.target.classList.contains('hie')) return;
-  var pg=S.pages[S.pg], r=$('hifPage').getBoundingClientRect(), k=kScale(), x=(e.clientX-r.left)/k, y=(e.clientY-r.top)/k, arr=S.items[pg]||(S.items[pg]=[]);
+  var pageEl=e.target.closest&&e.target.closest('.hif-page'); if(!pageEl) return;
+  S.pg=+pageEl.dataset.pi; $('hifPg').textContent=(S.pg+1)+' / '+S.pages.length;
+  var pg=S.pages[S.pg], r=pageEl.getBoundingClientRect(), k=kScale(), x=(e.clientX-r.left)/k, y=(e.clientY-r.top)/k, arr=S.items[pg]||(S.items[pg]=[]);
   var hit=e.target.closest&&e.target.closest('.hi');
   if(hit){ var it=arr[+hit.dataset.i]; if(!it) return; if(it.t==='c'){ arr.splice(+hit.dataset.i,1); save(); render(); } else { hit.remove(); edit(it); } return; }
   if(S.tool==='c'){ arr.push({t:'c',x:x,y:y+S.size*.2}); save(); render(); return; }
-  var p=snap(x,y); edit({t:'t',x:p.x,y:p.y,v:''},true);
+  var p=snap(x,y); if(!p){ $('hifSt').textContent='\u098f\u0996\u09be\u09a8\u09c7 \u09b2\u09c7\u0996\u09be \u09af\u09be\u09ac\u09c7 \u09a8\u09be \u2014 \u09b2\u09be\u0987\u09a8 \u09ac\u09be \u0995\u09cb\u09b2\u09a8\u09c7\u09b0 \u09aa\u09b0\u09c7 \u099f\u09cd\u09af\u09be\u09aa \u0995\u09b0\u09c1\u09a8\u0964'; return; } edit({t:'t',x:p.x,y:p.y,v:''},true);
 }
 /* ---------- export ---------- */
 function loadImg(pg){ return new Promise(function(res,rej){ if(imgs[pg]) return res(imgs[pg]); var im=new Image(); im.onload=function(){ imgs[pg]=im; res(im); }; im.onerror=rej; im.src='forms/f_'+pg+'.png'; }); }
 function pageCanvas(pg,sc){
   return loadImg(pg).then(function(im){
     var c=document.createElement('canvas'); c.width=Math.round(PW*sc); c.height=Math.round(PH*sc); var g=c.getContext('2d');
-    g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.imageSmoothingEnabled=false; g.drawImage(im,0,0,c.width,c.height); g.fillStyle='#000'; g.strokeStyle='#000'; g.textBaseline='alphabetic';
+    g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.imageSmoothingEnabled=false; g.drawImage(im,0,0,c.width,c.height); delete imgs[pg]; g.fillStyle='#000'; g.strokeStyle='#000'; g.textBaseline='alphabetic';
     (S.items[pg]||[]).forEach(function(it){
       if(it.t==='c'){ var s=S.size*sc; g.lineWidth=s*.11; g.lineCap='round'; g.lineJoin='round'; g.beginPath(); g.moveTo(it.x*sc-s*.4,it.y*sc-s*.25); g.lineTo(it.x*sc-s*.12,it.y*sc+s*.05); g.lineTo(it.x*sc+s*.42,it.y*sc-s*.55); g.stroke(); }
       else { g.font=Math.round(S.size*sc)+'px '+FONT; g.fillText(it.v,it.x*sc,it.y*sc); }
@@ -149,24 +167,25 @@ function wheel(){
   $('hifCl').onclick=function(){ o.remove(); }; o.onclick=function(e){ if(e.target===o) o.remove(); };
 }
 var sector=function(r0,r1,a0,a1){const p=(r,a)=>[(150+r*Math.cos(a)).toFixed(1),(150+r*Math.sin(a)).toFixed(1)];const A=p(r1,a0),B=p(r1,a1),C=p(r0,a1),D=p(r0,a0);return`M${A}A${r1},${r1} 0 0 1 ${B}L${C}A${r0},${r0} 0 0 0 ${D}Z`};
-function go(d){ var n=S.pg+d; if(n<0||n>=S.pages.length) return; S.pg=n; render(); $('hifBody').scrollTop=0; }
+function go(d){ var n=S.pg+d; if(n<0||n>=S.pages.length) return; var body=$('hifBody'), el=$('hifPage'+n); body.scrollTop+=el.getBoundingClientRect().top-body.getBoundingClientRect().top-8; updPg(); }
 function zoom(d){ var z=[1,1.5,2,3,4], i=z.indexOf(S.z); i=Math.max(0,Math.min(z.length-1,i+d)); S.z=z[i]; render(); }
 function close(){ if(root){ root.remove(); root=null; } }
 window.hsiaOpenImgForm=function(key){
   var F=FORMS[key]; if(!F) return; css(); close();
   var saved=null; try{ saved=JSON.parse(localStorage.getItem('hsia_if_'+key)||'null'); }catch(e){}
-  S={ key:key, pages:F.pages, pg:0, z:1, w:0, tok:0, bgKey:'', tool:'t', size:(saved&&saved.size)||92, items:(saved&&saved.items)||{} };
+  S={ key:key, pages:F.pages, pg:0, z:1, w:0, tok:{}, bgKey:{}, tool:'t', size:(saved&&saved.size)||92, items:(saved&&saved.items)||{} };
   root=document.createElement('div'); root.className='hif'; root.id='hif';
   root.innerHTML='<div class="hif-top"><b>'+F.title+'</b><button id="hifPv">\u25c0</button><span id="hifPg"></span><button id="hifNx">\u25b6</button><button id="hifEx" title="Export" style="background:#FFD9A0;color:#2a1a00;border-color:#FFD9A0">\u2b07</button><button id="hifX">\u2715</button></div>'
    +'<div class="hif-tools"><button id="hifT" class="on">T  Text</button><button id="hifC">\u2714 Mark</button><button id="hifZm">\u2212</button><span id="hifZ">100%</span><button id="hifZp">+</button><button id="hifFm">A\u2212</button><button id="hifFp">A+</button><button id="hifClr">Clear page</button></div>'
-   +'<div class="hif-body" id="hifBody"><div class="hif-page" id="hifPage"><canvas id="hifImg"></canvas></div></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
+   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
   document.body.appendChild(root);
+  F.pages.forEach(function(_,i){ var d=document.createElement('div'); d.className='hif-page'; d.id='hifPage'+i; d.dataset.pi=i; d.innerHTML='<canvas id="hifImg'+i+'"></canvas>'; $('hifBody').appendChild(d); });
   $('hifX').onclick=close; $('hifPv').onclick=function(){ go(-1); }; $('hifNx').onclick=function(){ go(1); }; $('hifEx').onclick=wheel;
   $('hifT').onclick=function(){ S.tool='t'; $('hifT').classList.add('on'); $('hifC').classList.remove('on'); }; $('hifC').onclick=function(){ S.tool='c'; $('hifC').classList.add('on'); $('hifT').classList.remove('on'); };
   $('hifZm').onclick=function(){ zoom(-1); }; $('hifZp').onclick=function(){ zoom(1); };
   $('hifFm').onclick=function(){ S.size=Math.max(50,S.size-8); save(); render(); }; $('hifFp').onclick=function(){ S.size=Math.min(160,S.size+8); save(); render(); };
   $('hifClr').onclick=function(){ if(confirm('Clear everything written on this page?')){ S.items[S.pages[S.pg]]=[]; save(); render(); } };
-  $('hifPage').addEventListener('click',onPage);
+  $('hifBody').addEventListener('click',onPage); $('hifBody').addEventListener('scroll',updPg,{passive:true});
   render();
 };
 })();
