@@ -3875,15 +3875,17 @@ body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
         <button type="button" class="modal-close" id="settingsModalClose">✕</button>
       </div>
 
+      <div class="hsia-priv-only" id="repoZipAdminBox">
       <div class="fr-ocrsection-head" style="margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <span>⬇️ রোস্টার ব্যাকআপ ফাইল</span>
+        <span>⬇️ ফুল রেপো ZIP (শুধু অ্যাডমিন)</span>
         <button type="button" id="backupEyeBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">🙈</button>
       </div>
       <div id="backupSectionContent" style="display: block;">
         <div class="fr-manualform">
-          <button id="rosterDownloadBtn" type="button" class="fr-dbimport">⬇️ ব্যাকআপ ফাইল ডাউনলোড করুন</button>
+          <button id="repoZipBtn" type="button" class="fr-dbimport">⬇️ পুরো রেপো ZIP ডাউনলোড করুন</button>
         </div>
-        <div class="fr-dbstatus" id="backupStatus">✅ ব্যাকআপ ফাইল ডাউনলোড হয়েছে</div>
+        <div class="fr-dbstatus" id="backupStatus">GitHub-এর সর্বশেষ কোড (index.html, reg.js, forms, pdfs সহ)</div>
+      </div>
       </div>
 
 
@@ -10301,15 +10303,20 @@ function initRoster(){
     });
   }
 
-  const downloadBtn = document.getElementById('rosterDownloadBtn');
-  if(downloadBtn){
-    downloadBtn.addEventListener('click', ()=>{
+  /* Full repository ZIP (code only, not the Firebase data). Admin only: the section is hidden for everybody else (.hsia-priv-only)
+     and the click is refused unless an admin session is active. Change REPO_ZIP_URL if the repository is renamed. */
+  const REPO_ZIP_URL = 'https://github.com/tarift23-cmyk/HSIA-ATM-./archive/refs/heads/main.zip';
+  const repoZipBtn = document.getElementById('repoZipBtn');
+  if(repoZipBtn){
+    repoZipBtn.addEventListener('click', ()=>{
+      if(!(window.hsiaCanSeeOthers && window.hsiaCanSeeOthers())){ alert('Admin only'); return; }
       if(!requireDownloadAuth()) return;
-      const downloaded = exportRosterHtml();
+      const a = document.createElement('a');
+      a.href = REPO_ZIP_URL; a.rel = 'noopener'; a.download = 'HSIA-ATM-main.zip';
+      document.body.appendChild(a); a.click(); a.remove();
       const statusEl = document.getElementById('backupStatus');
-      const msg = downloaded ? '✅ ব্যাকআপ ফাইল ডাউনলোড হয়েছে' : '⚠️ ডাউনলোড শুরু হয়নি, আবার চেষ্টা করুন';
-      if(statusEl) statusEl.textContent = msg;
-      flashRosterSaved(downloaded ? 'ব্যাকআপ ফাইল ডাউনলোড হয়েছে ✓' : 'ডাউনলোড শুরু হয়নি, আবার চেষ্টা করুন');
+      if(statusEl) statusEl.textContent = '✅ ZIP ডাউনলোড শুরু হয়েছে';
+      try{ auditLog('repo-zip', 'Full repository ZIP downloaded'); }catch(e){}
     });
   }
 }
