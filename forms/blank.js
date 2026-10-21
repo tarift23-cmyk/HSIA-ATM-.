@@ -1345,11 +1345,11 @@
         split('ls', I.ls, 'Line and Paragraph Spacing') +
         btn('shd', '<span class="cap">' + I.shade + '<span class="bar" id="bkShBar" style="background:#ffff00"></span></span>', 'Shading') + DD.replace('@', 'shdm') +
         btn('brd', I.border, 'Borders') + DD.replace('@', 'brdm') + '</div></div>', true) +
-      grp('Insert', btn('tbl', I.table + '<span>Table</span>', 'Insert Table', 'big') + '<div class="rcol">' + btn('page', I.page + 'New Page', 'Add a new page', 'sm') + btn('photo', I.photo + 'Photo box', 'Photo box', 'sm') + btn('sign', I.sign + 'Signature box', 'Signature box', 'sm') + '</div>' + btn('cfg', I.gear, 'Scan settings')) +
       '<div class="grp' + (isCol ? ' col' : '') + '" id="bkGrpIS"><div class="gb"><div class="rcol"><div class="ish">Indent</div>' + isRow('isL', 'Left:', '"') + isRow('isR', 'Right:', '"') + '</div>' +
         '<div class="rcol"><div class="ish">Spacing</div>' + isRow('isB', 'Before:', 'pt') + isRow('isA', 'After:', 'pt') + '</div></div>' +
         '<div class="gl"><button type="button" class="tg" data-a="iscol" title="Collapse / expand">Indent &amp; Spacing <span id="bkIsA">' + (isCol ? '▸' : '▾') + '</span></button></div></div>' +
-      grp('Symbols', btn('sym', '<span style="font:600 22px serif;height:30px;line-height:30px">π</span><span>Symbol</span>', 'Math / physics symbols', 'big') + btn('eq', '<span style="font:italic 600 22px serif;height:30px;line-height:30px">∑</span><span>Equation</span>', 'Insert equation', 'big'));
+      grp('Symbols', btn('sym', '<span style="font:600 22px serif;height:30px;line-height:30px">π</span><span>Symbol</span>', 'Math / physics symbols', 'big') + btn('eq', '<span style="font:italic 600 22px serif;height:30px;line-height:30px">∑</span><span>Equation</span>', 'Insert equation', 'big')) +
+      grp('Insert', btn('tbl', I.table + '<span>Table</span>', 'Insert Table', 'big') + '<div class="rcol">' + btn('page', I.page + 'New Page', 'Add a new page', 'sm') + btn('photo', I.photo + 'Photo box', 'Photo box', 'sm') + btn('sign', I.sign + 'Signature box', 'Signature box', 'sm') + '</div>' + btn('cfg', I.gear, 'Scan settings'));
     var tbl =
       grp('Rows & Columns', '<div class="rcol"><div class="rrow">' + btn('tr-a', '+ Row above', 'Insert row above', 'tx') + btn('tr-b', '+ Row below', 'Insert row below', 'tx') + btn('tc-l', '+ Col left', 'Insert column left', 'tx') + btn('tc-r', '+ Col right', 'Insert column right', 'tx') + '</div>' +
         '<div class="rrow">' + btn('tr-d', '− Row', 'Delete row', 'tx') + btn('tc-d', '− Column', 'Delete column', 'tx') + btn('t-d', '✕ Table', 'Delete table', 'tx') + '</div></div>') +
