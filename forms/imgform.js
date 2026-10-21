@@ -190,17 +190,16 @@ function close(){ if(root){ root.remove(); root=null; } }
 window.hsiaOpenImgForm=function(key){
   var F=FORMS[key]; if(!F) return; css(); close();
   var saved=null; try{ saved=JSON.parse(localStorage.getItem('hsia_if_'+key)||'null'); }catch(e){}
-  S={ key:key, pages:F.pages, pg:0, z:1, w:0, tok:{}, bgKey:{}, tool:'t', size:(saved&&saved.size)||92, items:(saved&&saved.items)||{} };
+  S={ key:key, pages:F.pages, pg:0, z:1, w:0, tok:{}, bgKey:{}, tool:'t', size:92, items:(saved&&saved.items)||{} };
   root=document.createElement('div'); root.className='hif'; root.id='hif';
   root.innerHTML='<div class="hif-top"><b>'+F.title+'</b><button id="hifPv">\u25c0</button><span id="hifPg"></span><button id="hifNx">\u25b6</button><button id="hifEx" title="Export" style="background:#FFD9A0;color:#2a1a00;border-color:#FFD9A0">\u2b07</button><button id="hifX">\u2715</button></div>'
-   +'<div class="hif-tools"><button id="hifT" class="on">T  Text</button><button id="hifC">\u2714 Mark</button><button id="hifZm">\u2212</button><span id="hifZ">100%</span><button id="hifZp">+</button><button id="hifFm">A\u2212</button><button id="hifFp">A+</button><button id="hifClr">Clear page</button></div>'
-   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">[imgform v7] Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
+   +'<div class="hif-tools"><button id="hifT" class="on">T  Text</button><button id="hifC">\u2714 Mark</button><button id="hifZm">\u2212</button><span id="hifZ">100%</span><button id="hifZp">+</button><button id="hifClr">Clear page</button></div>'
+   +'<div class="hif-body" id="hifBody"></div><div id="hifSt" style="padding:6px 10px;font-size:12px;color:#8B909B;background:#171616;border-top:1px solid #454444">[imgform v8] Tap a line or the place after a colon, then type. Zoom with + / \u2212.</div>';
   document.body.appendChild(root);
   F.pages.forEach(function(_,i){ var d=document.createElement('div'); d.className='hif-page'; d.id='hifPage'+i; d.dataset.pi=i; d.innerHTML='<canvas id="hifImg'+i+'"></canvas>'; $('hifBody').appendChild(d); });
   $('hifX').onclick=close; $('hifPv').onclick=function(){ go(-1); }; $('hifNx').onclick=function(){ go(1); }; $('hifEx').onclick=wheel;
   $('hifT').onclick=function(){ S.tool='t'; $('hifT').classList.add('on'); $('hifC').classList.remove('on'); }; $('hifC').onclick=function(){ S.tool='c'; $('hifC').classList.add('on'); $('hifT').classList.remove('on'); };
   $('hifZm').onclick=function(){ zoom(-1); }; $('hifZp').onclick=function(){ zoom(1); };
-  $('hifFm').onclick=function(){ S.size=Math.max(50,S.size-8); save(); render(); }; $('hifFp').onclick=function(){ S.size=Math.min(160,S.size+8); save(); render(); };
   $('hifClr').onclick=function(){ if(confirm('Clear everything written on this page?')){ S.items[S.pages[S.pg]]=[]; save(); render(); } };
   $('hifBody').addEventListener('click',onPage); $('hifBody').addEventListener('scroll',updPg,{passive:true});
   render();
