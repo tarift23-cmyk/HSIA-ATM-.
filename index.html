@@ -8564,6 +8564,10 @@ async function changeMyPassword(oldPassword, newPassword){
 
 function logoutUser(){
   clearAuthSession();
+  /* a real logout also ends the admin side of this device: the 7-day "remember admin" flag and the Firebase (Google) sign-in
+     (the auth listener signs the device in anonymously again, so public data keeps syncing) */
+  try{ adminSetState(false); }catch(e){}
+  try{ if(typeof firebase !== 'undefined' && firebase.auth) firebase.auth().signOut(); }catch(e){}
   applyAuthUI(null);
   try{ if(window._authShowForm) window._authShowForm('home'); }catch(e){}
 }
