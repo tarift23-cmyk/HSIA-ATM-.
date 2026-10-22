@@ -47,7 +47,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261021-130000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261022-123000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -113,9 +113,13 @@
     });
   }
   /* a page that stays open: never reload while a window / form is open (nothing typed is lost) */
+  document.addEventListener('click', function(e){ var t = e.target; if(t && t.tagName === 'INPUT' && t.type === 'file') window.__hsiaPick = Date.now(); }, true);   /* a photo / file picker briefly sends the page to the background: that must not reload it */
   function quiet(){
     var a = document.activeElement;
     if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
+    if(window.__hsiaPick && Date.now() - window.__hsiaPick < 5*60*1000) return false;
+    if(document.querySelector('.xf-ov:not([hidden]), .xs-ov:not([hidden])')) return false;   /* CL / Exchange / Blank form editor and the signature popup */
+    if(document.body && /(^|\s)(qbm-printing|xf-printing)(\s|$)/.test(document.body.className)) return false;
     return !document.querySelector('.modal-overlay.show');
   }
   function check(atLoad){
@@ -170,9 +174,9 @@
     });
   }
   freshOpen(false);
-  /* Back from another app / page (away for more than ~10 s, so a notification pull-down or a file picker does not trigger it):
+  /* Back from another app / page (away for more than ~1.5 s, so a quick notification pull-down does not trigger it; file pickers / printing / open forms are skipped by quiet()):
      refresh ONCE right away. Same safety as the fresh open: skipped when offline / slow, and never while something is being typed. */
-  var AWAY_MS = 10*1000;
+  var AWAY_MS = 1500;
   function comeBack(){
     if(hiddenAt && Date.now() - hiddenAt > AWAY_MS){ hiddenAt = 0; freshOpen(true); }
   }
@@ -182,6 +186,27 @@
   });
   window.addEventListener('pagehide', function(){ hiddenAt = Date.now(); });
   window.addEventListener('pageshow', function(e){ if(e && e.persisted){ if(!hiddenAt) hiddenAt = Date.now() - AWAY_MS - 1; comeBack(); } });
+  /* ---- Freeze watchdog: sometimes a first open stays frozen (the clock never starts / stops) until a manual refresh.
+     In the first 20 s the live clock is looked at 3 times; if it is not ticking the page reloads itself straight from the network.
+     At most twice per session (counter in sessionStorage), so a real problem can never become a reload loop. ---- */
+  (function(){
+    var WD = 'HSIA_WD_N', PLACE = '10:12:14 PM', last = null, n = 0;
+    function txt(){ var c = document.getElementById('clock'); return c ? (c.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
+    function count(){ try{ return Number(sessionStorage.getItem(WD)) || 0; }catch(e){ return 9; } }
+    function look(){
+      n++;
+      if(!document.hidden){
+        var t = txt(), frozen = !t || t === PLACE || (last !== null && t === last);
+        if(frozen && count() < 2){
+          try{ sessionStorage.setItem(WD, String(count() + 1)); }catch(e){}
+          forceReload(true); return;
+        }
+        last = t;
+      } else { last = null; }
+      if(n < 3) setTimeout(look, 5000);
+    }
+    setTimeout(look, 5000);
+  })();
   check(true);
   // coming back to the front: look for a newer uploaded version right away (quietly retried until the newest runs)
   document.addEventListener('visibilitychange', function(){
@@ -362,6 +387,14 @@
   .qbm-line{ display:flex; gap:6px; align-items:flex-start; }
   .qbm-line + .qbm-line{ margin-top:3px; }
   .qbm-x{ background:none; border:1px solid rgba(245,66,73,0.6); color:#F54249; border-radius:5px; font-size:10px; line-height:1; padding:3px 5px; cursor:pointer; flex:0 0 auto; margin-top:1px; }
+  .qbm-sheet + .qbm-sheet{ margin-top:22px; }
+  .qbm-paper.qbm-pm{ background:#fff; color:#000; padding:14px 8px; border-radius:6px; }
+  .qbm-pm .qbm-title, .qbm-pm .qbm-table, .qbm-pm .qbm-table th, .qbm-pm .qbm-table td{ color:#000; }
+  .qbm-pm .qbm-table th, .qbm-pm .qbm-table td, .qbm-pm .qbm-table td.det, .qbm-pm .qbm-table td.rel, .qbm-pm .qbm-table th.det, .qbm-pm .qbm-table th.rel{ background:#fff; border-color:#000; }
+  .qbm-stl{ display:flex; justify-content:flex-end; }
+  .qbm-seg{ display:inline-flex; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:2px; gap:2px; }
+  .qbm-sbtn{ border:0; background:transparent; color:var(--muted); font:600 10.5px inherit; font-family:inherit; padding:4px 9px; border-radius:6px; cursor:pointer; }
+  .qbm-sbtn.on{ background:#d4d6db; color:#1a1d27; }
   #qbmPrintRoot{ display:none; }
   @media print{
     @page{ size:210mm 297mm; margin:12mm; }
@@ -378,6 +411,7 @@
     body.qbm-printing .qbm-table th{ font-size:calc(10pt * var(--qk, 1)) !important; line-height:calc(14pt * var(--qk, 1)); text-align:center; font-weight:700; }
     body.qbm-printing .qbm-line{ display:block; }
     body.qbm-printing .qbm-line + .qbm-line{ margin-top:0 !important; }
+    body.qbm-printing .qbm-sheet + .qbm-sheet{ margin-top:16pt !important; }
     body.qbm-printing .qbm-table tr{ page-break-inside:avoid; }
     body.qbm-printing .qbm-table thead{ display:table-header-group; }
     body.qbm-printing .qbm-table col:nth-child(1){ width:7% !important; }
@@ -485,12 +519,36 @@
   }
   .clock-card-row .clock-dual{ gap:8px; }
   .tc-icon-btn{
-    flex:0 0 auto; width:40px; height:40px; background:transparent;
+    flex:0 0 auto; width:42px; height:42px; background:transparent;
     border:none; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; padding:0;
+    cursor:pointer; padding:0; -webkit-tap-highlight-color:transparent;
+    animation:tcPop 6s ease-in-out infinite;
   }
   .tc-icon-btn:active{ opacity:.65; }
-  .tc-icon-btn svg{ display:block; }
+  .tc-icon-btn svg{ display:block; overflow:visible; animation:tcGlow 2.4s ease-in-out infinite; }
+  .tc-icon-btn svg *{ transform-box:view-box; }
+  .tc-icon-btn .gA{ transform-origin:9px 10px; animation:tcGA 6s ease-in-out infinite; }
+  .tc-icon-btn .gB{ transform-origin:15.5px 15px; animation:tcGB 6s ease-in-out infinite; }
+  .tc-icon-btn .hA{ transform-origin:9px 10px; animation:tcHands 6s ease-in-out infinite; }
+  .tc-icon-btn .hB{ transform-origin:15.5px 15px; animation:tcHands 6s ease-in-out infinite; }
+  .tc-icon-btn .cA{ animation:tcCircA 6s linear infinite; }
+  .tc-icon-btn .dlA{ transform-origin:12px 12px; opacity:0; animation:tcDlA 6s ease-in-out infinite; }
+  .tc-icon-btn .prog{ stroke-dasharray:100; stroke-dashoffset:100; opacity:0; transform:rotate(-90deg); transform-origin:12px 12px; animation:tcProg 6s ease-in-out infinite; }
+  .tc-icon-btn .tc-arrow{ animation:tcArrow .7s ease-in-out infinite; }
+  .tc-icon-btn .tc-h1{ transform-box:view-box; transform-origin:9px 10px; animation:tcSpin 2s linear infinite; }
+  .tc-icon-btn .tc-h2{ transform-box:view-box; transform-origin:15.5px 15px; animation:tcSpin 5s linear infinite reverse; }
+  @keyframes tcSpin{ to{ transform:rotate(360deg); } }
+  @keyframes tcGlow{ 0%,100%{ filter:drop-shadow(0 0 0 rgba(255,255,255,0)); } 50%{ filter:drop-shadow(0 0 5px rgba(255,255,255,.85)); } }
+  @keyframes tcPop{ 0%,80%,100%{ transform:scale(1) rotate(0); } 83%{ transform:scale(1.25) rotate(-10deg); } 86%{ transform:scale(1.25) rotate(10deg); } 89%{ transform:scale(1.18) rotate(-6deg); } 92%{ transform:scale(1.1) rotate(4deg); } 96%{ transform:scale(1) rotate(0); } }
+  /* 6s story: two clocks tick -> slide together into ONE circle (hands get sucked in) -> arrow pops out of the centre -> ring fills like a download -> arrow drops, circle splits back into two clocks */
+  @keyframes tcGA{ 0%,43%{ transform:translate(0,0) scale(1); } 53%,88%{ transform:translate(3px,2px) scale(1.25); } 98%,100%{ transform:translate(0,0) scale(1); } }
+  @keyframes tcGB{ 0%,40%{ transform:none; opacity:1; } 53%,88%{ transform:translate(-3.5px,-3px) scale(1.25); opacity:0; } 98%,100%{ transform:none; opacity:1; } }
+  @keyframes tcHands{ 0%,38%{ opacity:1; transform:scale(1); } 47%,92%{ opacity:0; transform:scale(.2); } 100%{ opacity:1; transform:scale(1); } }
+  @keyframes tcCircA{ 0%,43%{ stroke:#fff; } 53%,86%{ stroke:#6e6e6e; } 96%,100%{ stroke:#fff; } }
+  @keyframes tcDlA{ 0%,52%{ opacity:0; transform:scale(.2); } 58%{ opacity:1; transform:scale(1.18); } 62%,83%{ opacity:1; transform:translateY(0) scale(1); } 90%{ opacity:0; transform:translateY(6px) scale(.85); } 100%{ opacity:0; transform:scale(.2); } }
+  @keyframes tcProg{ 0%,56%{ opacity:0; stroke-dashoffset:100; } 59%{ opacity:1; stroke-dashoffset:100; } 83%{ opacity:1; stroke-dashoffset:0; } 90%,100%{ opacity:0; stroke-dashoffset:0; } }
+  @keyframes tcArrow{ 0%,100%{ transform:translateY(-1.4px); } 50%{ transform:translateY(2px); } }
+  @media (prefers-reduced-motion: reduce){ .tc-icon-btn, .tc-icon-btn svg, .tc-icon-btn *{ animation:none !important; } .tc-icon-btn .tc-dl{ opacity:0; } }
 
   .picker{
     background:var(--panel); border:1px solid var(--border); border-radius:16px;
@@ -2595,12 +2653,14 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         </div>
         <div class="datestr" id="datestr">Sat, October 10, 2026</div>
       </div>
-      <button type="button" class="tc-icon-btn" id="timeConvertIconBtn" title="Time Converter (UTC ⇄ Local)">
+      <button type="button" class="tc-icon-btn" id="timeConvertIconBtn" title="Converts: Important PDF &amp; Time Converter">
         <svg viewBox="0 0 24 24" width="30" height="30" fill="none">
-          <circle cx="9" cy="10" r="6.6" fill="none" stroke="var(--gold-soft)" stroke-width="1.4"></circle>
-          <path d="M9 6V10l2.2 1.2" stroke="var(--gold-soft)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
-          <circle cx="15.5" cy="15" r="6.6" fill="none" stroke="var(--muted)" stroke-width="1.4"></circle>
-          <path d="M15.5 11V15l2 1.1" stroke="var(--muted)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+          <g class="gB"><circle cx="15.5" cy="15" r="6.6" stroke="#9a9a9a" stroke-width="1.4"></circle>
+            <g class="hB"><path class="tc-h2" d="M15.5 11V15" stroke="#9a9a9a" stroke-width="1.3" stroke-linecap="round"></path><path d="M15.5 15l2 1.1" stroke="#9a9a9a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></g></g>
+          <g class="gA"><circle class="cA" cx="9" cy="10" r="6.6" stroke="#ffffff" stroke-width="1.4"></circle>
+            <g class="hA"><path class="tc-h1" d="M9 6V10" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round"></path><path d="M9 10l2.2 1.2" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></g></g>
+          <circle class="prog" cx="12" cy="12" r="8.25" pathLength="100" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></circle>
+          <g class="dlA"><g class="tc-arrow"><path d="M12 6.8V13" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path><path d="M9 10.2 12 13.2l3-3" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g><path d="M8.8 16.3h6.4" stroke="#9a9a9a" stroke-width="1.8" stroke-linecap="round"></path></g>
         </svg>
       </button>
     </div>
@@ -3067,6 +3127,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       <div class="qbm-filter" id="qbmFilter">
         <div class="qbm-fchips" id="qbmShiftChips"></div>
         <div class="qbm-fper"><select id="qbmPerson" aria-label="Filter by person"></select><button type="button" class="qbm-fclr" id="qbmFClear">Clear</button></div>
+        <div class="qbm-stl" id="qbmStyleChips"></div>
         <div class="qbm-fcount" id="qbmFCount"></div>
       </div>
       <div class="qbm-paper" id="qbmPaper"></div>
@@ -3170,12 +3231,19 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <div class="modal-title">Converts</div>
         <button type="button" class="modal-close" id="timeConvertModalClose">✕</button>
       </div>
-      <div class="fr-ocrsection-head" id="impPdfHead" style="margin-top:0; margin-bottom:8px; font-size:15px; display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;">
-        <span>📄 Important PDF</span>
-        <button type="button" id="impPdfBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">▾</button>
+      <div class="imp-hero" id="impPdfHead" role="button" tabindex="0">
+        <span class="imp-ic">📄</span>
+        <span class="imp-tx"><b>Important PDF</b><span>ফর্ম ও জরুরি ডকুমেন্ট</span></span>
+        <button type="button" id="impPdfBtn" class="imp-cv" title="দেখান/লুকান">▾</button>
       </div>
       <div id="impPdfList" style="display:none;"></div>
       <style id="impStyle">
+.imp-hero{ --g1:#ff7a45; --g2:#ff4d8d; --g3:#8b5cf6; --ang:135deg; display:flex; align-items:center; gap:12px; padding:14px; margin:0 0 10px; border-radius:18px; color:#fff; cursor:pointer; background:linear-gradient(var(--ang), var(--g1) 0%, var(--g2) 55%, var(--g3) 100%); box-shadow:0 6px 20px rgba(255,90,120,.28); -webkit-tap-highlight-color:transparent; }
+.imp-hero .imp-ic{ width:44px; height:44px; border-radius:12px; background:rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; font-size:24px; flex:none; }
+.imp-hero .imp-tx{ flex:1 1 auto; min-width:0; }
+.imp-hero .imp-tx b{ display:block; font-size:18px; line-height:1.15; text-shadow:0 1px 3px rgba(0,0,0,.25); }
+.imp-hero .imp-tx span{ font-size:11.5px; opacity:.9; }
+.imp-hero .imp-cv{ width:34px; height:34px; border-radius:10px; border:0; background:rgba(255,255,255,.22); color:#fff; font-size:14px; cursor:pointer; flex:none; font-family:inherit; }
 .imp-row{ display:flex; align-items:center; gap:8px; padding:9px 10px; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
 .imp-row a.imp-t{ flex:1 1 auto; min-width:0; color:var(--text); text-decoration:none; font-size:14px; overflow-wrap:anywhere; }
 .imp-row a.imp-d{ flex:0 0 auto; width:36px; height:34px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:8px; text-decoration:none; font-size:16px; }
@@ -3190,6 +3258,29 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
 .imp-item > .imp-act a, .imp-item > .imp-act button{ flex:1 1 0; display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; border-radius:9px; border:1px solid var(--border); background:rgba(255,255,255,.05); color:var(--text); font-size:14px; font-family:inherit; text-decoration:none; cursor:pointer; }
 </style>
       <script>
+/* live colour drift for the Important PDF header: every colour stop wanders around the colour wheel at its own pace, so the gradient never repeats */
+(function(){
+  var el = document.getElementById('impPdfHead'); if(!el) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var h = [18, 335, 265], v = [0.012, -0.015, 0.01], ang = 135, av = 0.008, last = 0;
+  setInterval(function(){
+    if(!el.offsetParent) return;                 /* window closed: no work */
+    var now = Date.now(), dt = last ? Math.min(200, now - last) : 50; last = now;
+    for(var i = 0; i < 3; i++){
+      v[i] += (Math.random() - 0.5) * 0.004; if(v[i] > 0.03) v[i] = 0.03; if(v[i] < -0.03) v[i] = -0.03;
+      if(Math.abs(v[i]) < 0.006) v[i] = v[i] < 0 ? -0.006 : 0.006;
+      h[i] = (h[i] + v[i] * dt + 360) % 360;
+    }
+    av += (Math.random() - 0.5) * 0.002; if(av > 0.02) av = 0.02; if(av < -0.02) av = -0.02;
+    ang = (ang + av * dt + 360) % 360;
+    el.style.setProperty('--g1', 'hsl(' + h[0].toFixed(1) + ',92%,58%)');
+    el.style.setProperty('--g2', 'hsl(' + h[1].toFixed(1) + ',90%,60%)');
+    el.style.setProperty('--g3', 'hsl(' + h[2].toFixed(1) + ',85%,62%)');
+    el.style.setProperty('--ang', ang.toFixed(1) + 'deg');
+  }, 60);
+})();
+</script>
+<script>
 /* Important PDF list. The CL / Exchange form editor lives in its own files (forms/forms.js + forms/forms.css + forms/header.png)
    and is only loaded when somebody taps "Edit"; the blank PDFs are pdfs/important/cl-form.pdf and exchange-form.pdf. */
 (function(){
@@ -3197,11 +3288,11 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
   if(!head || !box) return;
   var BASE = 'pdfs/important/', KEY = 'hsia_important_pdfs';
   var FORMS = [
+    { key:'blank', title:'Blank Page' },
     { key:'cl', title:'CL Form', file:'cl-form.pdf', name:'CL-Form.pdf' },
     { key:'ex', title:'Exchange Form', file:'exchange-form.pdf', name:'Exchange-Form.pdf' },
     { key:'earned', title:'অর্জিত ছুটির আবেদন (CSC-2/A)', file:'earned-leave-form.pdf', name:'Earned-Leave-Form.pdf' },
     { key:'abroad', title:'বিদেশ ভ্রমণের আবেদন (CA/Pro-3)', file:'foreign-travel-form.pdf', name:'Foreign-Travel-Form.pdf' },
-    { key:'blank', title:'Blank Page' },
     { key:'others', title:'Others', folder:true, items:[] }
   ];
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
@@ -11241,6 +11332,26 @@ let _qbmRuns = [];
 let _qbmF = { shift:'', person:'' };
 const _qbmNorm = x=> String(x || '').trim().toLowerCase();
 function qbmShiftOf(it){ const t = +it.ex.team; return (t < 100 && TEAMS[t]) ? TEAMS[t] : ''; }
+/* view style: 'app' (dark, tinted) or 'paper' (white sheet like the PNG / print). Saved per device. */
+let _qbmStyle = 'app';
+try{ if(localStorage.getItem('HSIA_QBM_STYLE') === 'paper') _qbmStyle = 'paper'; }catch(e){}
+/* one table per group, in this order (a group with no entries is skipped) */
+const QBM_GROUPS = [['rosterCtrl','Controllers'], ['roster','Aerodrome Assistant'], ['rosterComm','Communication'], ['th','Traffic Hand'], ['mr','Marshaller']];
+function qbmGroupList(items){
+  const out = [];
+  QBM_GROUPS.forEach(g=>{ const its = items.filter(it=> it.ex.table === g[0]); if(its.length) out.push({ name:g[1], items:its }); });
+  const known = QBM_GROUPS.map(g=> g[0]);
+  const rest = items.filter(it=> known.indexOf(it.ex.table) === -1);
+  if(rest.length) out.push({ name:'Others', items:rest });
+  if(!out.length) out.push({ name:'SATO', items:[] });
+  out.forEach(g=>{ g.title = 'QBM: ' + g.name + ' (' + qbmMonthLabel(g.items) + ')'; });
+  return out;
+}
+/* what Print / PNG draw: the (possibly edited) on-screen titles + the rows of every group */
+function qbmDrawGroups(){
+  const gl = qbmGroupList(qbmCollect('', '')), tEls = document.querySelectorAll('#qbmPaper .qbm-title');
+  return gl.map((g, i)=> ({ title:((tEls[i] ? tEls[i].innerText : g.title) || g.title).trim(), rows:qbmBuild(g.items) }));
+}
 function qbmApplyFilter(items){
   return items.filter(it=>{
     if(_qbmF.shift && qbmShiftOf(it) !== _qbmF.shift) return false;
@@ -11257,6 +11368,8 @@ function qbmFilterUI(all, shown){
     sel.innerHTML = '<option value="">All people</option>' + Object.keys(names).sort((a,b)=> names[a].localeCompare(names[b])).map(k=> '<option value="' + _xEsc(k) + '"' + (k === _qbmF.person ? ' selected' : '') + '>' + _xEsc(names[k]) + '</option>').join('');
     sel.value = _qbmF.person;
   }
+  const st = document.getElementById('qbmStyleChips');
+  if(st) st.innerHTML = '<div class="qbm-seg">' + [['app','\u{1F319} App'],['paper','\u{1F4C4} Paper']].map(x=> '<button type="button" class="qbm-sbtn' + (x[0] === _qbmStyle ? ' on' : '') + '" data-st="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
   const ch = document.getElementById('qbmShiftChips');
   if(ch) ch.innerHTML = [''].concat(TEAMS).map(t=> '<button type="button" class="qbm-fchip' + (t === _qbmF.shift ? ' on' : '') + '" data-sh="' + t + '">' + (t ? t + ' shift' : 'All shifts') + '</button>').join('');
   const cnt = document.getElementById('qbmFCount');
@@ -11370,34 +11483,38 @@ function qbmMonthLabel(items){
 function renderQbm(){
   const paper = document.getElementById('qbmPaper');
   if(!paper) return;
+  paper.className = 'qbm-paper' + (_qbmStyle === 'paper' ? ' qbm-pm' : '');
   const allItems = qbmCollect('', '', true), items = qbmApplyFilter(allItems);
   qbmFilterUI(allItems, items.length);
-  const rows = qbmBuild(items);
   _qbmRuns = [];
-  let body = '';
-  rows.forEach((P, i)=>{
-    const U = P.units.length;
-    P.units.forEach((u, k)=>{
-      const lines = u.runs.map(run=>{
-        _qbmRuns.push(run);
-        return '<div class="qbm-line">' + ((window.hsiaIsModerator && window.hsiaIsModerator()) ? '<button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button>' : '') + '<span>' + _xEsc(qbmDateText(run)) + '</span></div>';
-      }).join('');
-      const part = P.parts.find(pt=> pt.from === k);
-      body += '<tr>' +
-        (k === 0 ? '<td class="c" rowspan="' + U + '">' + String(i+1).padStart(2,'0') + '</td>' : '') +
-        '<td class="det">' + _xEsc(u.detailed) + '</td><td class="c">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
-        (k === 0 ? '<td class="rel" rowspan="' + U + '">' + _xEsc(P.relieved) + '</td>' : '') +
-        (part ? '<td class="c" rowspan="' + part.n + '">' + _xEsc(part.rmk) + '</td>' : '') +
-        '</tr>';
+  const mod = !!(window.hsiaIsModerator && window.hsiaIsModerator());
+  let html = '';
+  qbmGroupList(items).forEach(G=>{
+    const rows = qbmBuild(G.items);
+    let body = '';
+    rows.forEach((P, i)=>{
+      const U = P.units.length;
+      P.units.forEach((u, k)=>{
+        const lines = u.runs.map(run=>{
+          _qbmRuns.push(run);
+          return '<div class="qbm-line">' + (mod ? '<button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button>' : '') + '<span>' + _xEsc(qbmDateText(run)) + '</span></div>';
+        }).join('');
+        const part = P.parts.find(pt=> pt.from === k);
+        body += '<tr>' +
+          (k === 0 ? '<td class="c" rowspan="' + U + '">' + String(i+1).padStart(2,'0') + '</td>' : '') +
+          '<td class="det">' + _xEsc(u.detailed) + '</td><td class="c">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
+          (k === 0 ? '<td class="rel" rowspan="' + U + '">' + _xEsc(P.relieved) + '</td>' : '') +
+          (part ? '<td class="c" rowspan="' + part.n + '">' + _xEsc(part.rmk) + '</td>' : '') +
+          '</tr>';
+      });
     });
+    if(!rows.length) body = '<tr><td colspan="6" class="c">No entries</td></tr>';
+    html += '<div class="qbm-sheet"><div class="qbm-title" contenteditable="true" spellcheck="false">' + _xEsc(G.title) + '</div>' +
+      '<table class="qbm-table"><colgroup><col style="width:8%"><col style="width:17%"><col style="width:14%"><col style="width:26%"><col style="width:17%"><col style="width:18%"></colgroup>' +
+      '<thead><tr><th>SL.<br>NO</th><th class="det">PERSON<br>DETAILED</th><th>DUTY<br>PLACE</th><th>DATE &amp; DUTY PERIOD</th><th class="rel">PERSON<br>RELIEVED</th><th>RMKS</th></tr></thead>' +
+      '<tbody>' + body + '</tbody></table></div>';
   });
-  if(!rows.length) body = '<tr><td colspan="6" class="c">No entries</td></tr>';
-  paper.innerHTML =
-    '<div class="qbm-title" contenteditable="true" spellcheck="false">QBM: SATO (' + _xEsc(qbmMonthLabel(items)) + ')' + '' + '</div>' +
-    '<table class="qbm-table"><colgroup><col style="width:8%"><col style="width:17%"><col style="width:14%"><col style="width:26%"><col style="width:17%"><col style="width:18%"></colgroup>' +
-    '<thead><tr><th>SL.<br>NO</th><th class="det">PERSON<br>DETAILED</th><th>DUTY<br>PLACE</th><th>DATE &amp; DUTY PERIOD</th><th class="rel">PERSON<br>RELIEVED</th><th>RMKS</th></tr></thead>' +
-    '<tbody>' + body + '</tbody></table>' +
-    '';
+  paper.innerHTML = html;
   paper.querySelectorAll('.qbm-x').forEach(b=> b.addEventListener('click', ()=> qbmRemoveRun(+b.getAttribute('data-r'))));
 }
 function qbmRemoveRun(idx){
@@ -11429,7 +11546,7 @@ function printQbm(){
   root.querySelectorAll('.qbm-x').forEach(x=> x.remove());
   root.querySelectorAll('[contenteditable]').forEach(x=> x.removeAttribute('contenteditable'));
   let qk = 1;
-  try{ const tEl = document.querySelector('#qbmPaper .qbm-title'); qk = qbmFitScale((tEl ? tEl.innerText : 'QBM: SATO').trim(), qbmBuild(qbmCollect('', ''))); }catch(e){ qk = 1; }
+  try{ qk = qbmFitScale(qbmDrawGroups()); }catch(e){ qk = 1; }
   document.body.style.setProperty('--qk', String(qk));
   document.body.classList.add('qbm-printing'); document.documentElement.classList.add('qbm-printing');
   const done = ()=>{ document.body.style.removeProperty('--qk'); document.body.classList.remove('qbm-printing'); document.documentElement.classList.remove('qbm-printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done); };
@@ -11489,7 +11606,7 @@ async function qbmCanvasToPng(cv){
   const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
   return new Blob([sig, qbmChunk('IHDR', ihdr), qbmChunk('PLTE', plte), qbmChunk('pHYs', phys), qbmChunk('IDAT', idat), qbmChunk('IEND', new Uint8Array(0))], { type:'image/png' });
 }
-function qbmDrawPages(title, rows, k, dpi){
+function qbmDrawPages(groups, k, dpi){
   const K = k || 1;
   const S = (dpi || QBM_DPI) / 72, PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;   /* all layout maths in pt, scaled on draw */
   const SERIF = '"Times New Roman",Times,"Liberation Serif","Noto Serif","Noto Serif Bengali",serif';
@@ -11521,21 +11638,27 @@ function qbmDrawPages(title, rows, k, dpi){
     });
     y += h;
   };
-  const newPage = first=>{
+  const newPage = ()=>{
     cv = document.createElement('canvas'); cv.width = Math.round(PW * S); cv.height = Math.round(PH * S);
     ctx = cv.getContext('2d'); pages.push(cv);
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = '#000'; ctx.strokeStyle = '#000'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
     y = M;
-    if(first){
-      const w = tw(title, true, 13), x0 = (PW - w) / 2;
-      text(x0, y + 13, title, true, 13);
-      ctx.lineWidth = 0.7 * S; ctx.beginPath(); ctx.moveTo(x0 * S, (y + 15.5) * S); ctx.lineTo((x0 + w) * S, (y + 15.5) * S); ctx.stroke();
-      y += 30;
-    }
+  };
+  /* a new table: title + header; goes on the same page when the title, header and a first row fit, else on a new page */
+  const startGroup = title=>{
+    const need = 30 + 2 * (HS + 4 * K) + 2 * PY + 3 * LD + 2 * PY;
+    if(!pages.length) newPage();
+    else if(y + 16 * K + need <= PH - M) y += 16 * K;
+    else newPage();
+    const w = tw(title, true, 13), x0 = (PW - w) / 2;
+    text(x0, y + 13, title, true, 13);
+    ctx.lineWidth = 0.7 * S; ctx.beginPath(); ctx.moveTo(x0 * S, (y + 15.5) * S); ctx.lineTo((x0 + w) * S, (y + 15.5) * S); ctx.stroke();
+    y += 30;
     header();
   };
-  newPage(true);
+  groups.forEach(G=>{
+  startGroup(G.title); const rows = G.rows;
   const cellText = (i, lines, rowH, align)=>{
     const top = y + (rowH - lines.length * LD) / 2;
     lines.forEach((t, k)=>{
@@ -11557,7 +11680,7 @@ function qbmDrawPages(title, rows, k, dpi){
     let total = uh.reduce((a, b)=> a + b, 0);
     const needRel = relL.length * LD + 2 * PY;
     if(total < needRel){ uh[uh.length - 1] += needRel - total; total = needRel; }
-    if(y + total > PH - M) newPage(false);
+    if(y + total > PH - M){ newPage(); header(); }
     const at = (i, lines, top, h, align)=>{
       const t0 = top + (h - lines.length * LD) / 2;
       lines.forEach((t, k)=>{
@@ -11584,38 +11707,38 @@ function qbmDrawPages(title, rows, k, dpi){
     });
     y += total;
   });
+  });
   return pages;
 }
 /* Try to fit everything on ONE A4 page: shrink the text step by step (down to ~60%); if it still doesn't fit, use normal size and as many pages as needed. */
 const QBM_FIT_STEPS = [1, 0.94, 0.88, 0.82, 0.76, 0.7, 0.65, 0.6];
-function qbmFitScale(title, rows){
+function qbmFitScale(groups){
   for(const k of QBM_FIT_STEPS){
-    const pg = qbmDrawPages(title, rows, k, 100), n = pg.length;
+    const pg = qbmDrawPages(groups, k, 100), n = pg.length;
     pg.forEach(c=>{ c.width = c.height = 0; });
     if(n === 1) return k;
   }
   return 1;
 }
-function qbmDrawPagesFit(title, rows){
+function qbmDrawPagesFit(groups){
   for(const k of QBM_FIT_STEPS){
-    const dry = qbmDrawPages(title, rows, k, 100), n = dry.length;
+    const dry = qbmDrawPages(groups, k, 100), n = dry.length;
     dry.forEach(c=>{ c.width = c.height = 0; });
     if(n !== 1) continue;
-    const real = qbmDrawPages(title, rows, k);
+    const real = qbmDrawPages(groups, k);
     if(real.length === 1) return real;
     real.forEach(c=>{ c.width = c.height = 0; });
   }
-  return qbmDrawPages(title, rows, 1);
+  return qbmDrawPages(groups, 1);
 }
 async function downloadQbmPng(){
   const btn = document.getElementById('qbmPdfBtn'), old = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = '…'; }
   try{
-    const rows = qbmBuild(qbmCollect('', ''));
-    const tEl = document.querySelector('#qbmPaper .qbm-title');
-    const title = (tEl ? tEl.innerText : 'QBM: SATO').trim();
+    const groups = qbmDrawGroups();
+    const title = 'QBM ' + (groups.length === 1 ? groups[0].title.replace(/^QBM:\s*/, '') : qbmMonthLabel(qbmCollect('', '')));
     try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-    const pages = qbmDrawPagesFit(title, rows);
+    const pages = qbmDrawPagesFit(groups);
     const base = title.replace(/[^A-Za-z0-9\-]+/g, '_').replace(/^_+|_+$/g, '') || 'QBM';
     for(let i = 0; i < pages.length; i++){
       const blob = await qbmCanvasToPng(pages[i]);
@@ -11638,7 +11761,10 @@ function initQbm(){
   const fb = document.getElementById('qbmFilter');
   if(fb){
     fb.addEventListener('click', e=>{
-      const c = e.target.closest('.qbm-fchip'); if(c){ _qbmF.shift = c.getAttribute('data-sh') || ''; renderQbm(); return; }
+      const c = e.target.closest('.qbm-fchip'), sb = e.target.closest('.qbm-sbtn');
+      if(sb){ _qbmStyle = sb.getAttribute('data-st') === 'paper' ? 'paper' : 'app'; try{ localStorage.setItem('HSIA_QBM_STYLE', _qbmStyle); }catch(x){} renderQbm(); return; }
+      if(c && c.hasAttribute('data-st')){ _qbmStyle = c.getAttribute('data-st') === 'paper' ? 'paper' : 'app'; try{ localStorage.setItem('HSIA_QBM_STYLE', _qbmStyle); }catch(x){} renderQbm(); return; }
+      if(c){ _qbmF.shift = c.getAttribute('data-sh') || ''; renderQbm(); return; }
       if(e.target.closest('#qbmFClear')){ _qbmF = { shift:'', person:'' }; renderQbm(); }
     });
     fb.addEventListener('change', e=>{ if(e.target && e.target.id === 'qbmPerson'){ _qbmF.person = e.target.value || ''; renderQbm(); } });
@@ -11681,6 +11807,11 @@ function exReqRef(id){
 }
 const exClean = o=> JSON.parse(JSON.stringify(o));
 function exReqPush(id){
+  /* the Firebase Rules bind a request to the device/account that created it (byUid): fill it in if the request was made before sign-in was ready */
+  try{
+    const q0 = EX_REQUESTS[id], s0 = loadAuthSession(), u0 = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+    if(q0 && q0.v === 2 && !q0.byUid && u0 && s0 && q0.by && String(q0.by.id) === String(s0.identifier)) q0.byUid = u0.uid;
+  }catch(e){}
   exReqSaveLocal();
   const ref = exReqRef(id); if(!ref) return;
   try{ ref.set(EX_REQUESTS[id] ? exClean(EX_REQUESTS[id]) : null).catch(()=>{}); }catch(e){}
@@ -11803,7 +11934,7 @@ function exReqSubmit(o){
   if(dup){ alert('A request for this position is already waiting.'); return false; }
   const now = Date.now();
   const id = 'r' + now.toString(36) + Math.random().toString(36).slice(2, 6);
-  const q = { v:2, id:id, createdAt:now, by:{ id:String(s.identifier), name:String(s.displayName) }, kind:o.kind, dateKey:r.dateKey, table:r.table, pos:r.pos, team:+r.team,
+  const q = { v:2, id:id, createdAt:now, byUid:((typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) ? firebase.auth().currentUser.uid : ''), by:{ id:String(s.identifier), name:String(s.displayName) }, kind:o.kind, dateKey:r.dateKey, table:r.table, pos:r.pos, team:+r.team,
               who:String(r.who || ''), dateTo:(o.kind === 'special' && o.dateTo) ? String(o.dateTo) : '', spType:o.kind === 'special' ? String(o.spType || '') : '', subName:o.kind === 'exchange' ? sub : '', nightHalf:o.nightHalf || '', shift:r.shift || '', thmr:!!r.thmr,
               status: o.kind === 'exchange' ? 'sub' : 'admin',
               sub: o.kind === 'exchange' ? { status:'pending', at:0 } : null, admin:{ status:'pending', at:0 } };
