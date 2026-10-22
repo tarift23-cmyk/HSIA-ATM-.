@@ -1258,6 +1258,16 @@ body:not(.hsia-priv) .air-notepad-actions,
 body:not(.hsia-priv) #eqEditBtn{ display:none !important; }
 body:not(.hsia-priv) .fr-manualform:has(#eqEditBtn){ display:none !important; }
 /* admin + moderator: roster tables (Edit / Save) and the add-airport / add-airline forms */
+/* role-based visibility (admin = hsia-priv, admin + moderator = hsia-staff) */
+body:not(.hsia-staff) .roster-addrow,
+body:not(.hsia-staff) .thm-edit,
+body:not(.hsia-staff) .qbm-x{ display:none !important; }
+body:not(.hsia-priv) .np-chip-rename,
+body:not(.hsia-priv) .np-sub-add,
+body:not(.hsia-priv) .np-sub-manage,
+body:not(.hsia-priv) .np-sub-x{ display:none !important; }
+#authLoggedOutView .auth-back{ flex:0 0 auto; }
+#authLoggedOutView .auth-link{ font-size:11.5px; color:var(--muted); text-decoration:underline; cursor:pointer; align-self:center; padding:4px 2px; }
 body:not(.hsia-staff) #rosterEditBtn,
 body:not(.hsia-staff) #rosterSaveBtn,
 body:not(.hsia-staff) #newAirportAddBtn,
@@ -2819,7 +2829,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <div class="thg-wrap"><table class="thg-table"><thead id="thHeadTH"><tr><th class="thg-c thg-sel"><b>A</b><div class="thg-ds"><span class="thg-duty d-night rd-live">Night</span></div></th><th class="thg-c"><b>B</b><div class="thg-ds"><span class="thg-duty d-morning">Morning</span></div></th><th class="thg-c"><b>C</b><div class="thg-ds"><span class="thg-duty d-afternoon">Afternoon</span></div></th><th class="thg-c"><b>D</b><div class="thg-ds"><span class="thg-duty d-off">Off</span></div></th><th class="thg-c"><b>E</b><div class="thg-ds"><span class="thg-duty d-off">Off</span></div></th></tr></thead><tbody id="thBodyTH"><tr><td class="thg-live"><div class="thg-b"><small class="thg-tm">Shift A</small><div class="thg-p"><span class="thg-w">Arif,</span></div><div class="thg-p"><span class="thg-w">Tipu</span></div></div><div class="thg-b"><small class="thg-tm ot c-night">Shift B · OT</small><div class="thg-p"><span class="thg-w">Alim,</span></div><div class="thg-p"><span class="thg-w">Faruk</span></div></div></td><td class=""><div class="thg-b"><small class="thg-tm">Shift B</small><div class="thg-p"><span class="thg-w">Alim,</span></div><div class="thg-p"><span class="thg-w">Faruk</span></div></div><div class="thg-b"><small class="thg-tm ot c-morning">Shift D · OT</small><div class="thg-p"><span class="thg-w">Bashar,</span></div><div class="thg-p"><span class="thg-w">Tanvir</span></div></div></td><td class=""><div class="thg-b"><small class="thg-tm">Shift C</small><div class="thg-p"><span class="thg-w">Monowar,</span></div><div class="thg-p"><span class="thg-w">Mizan</span></div></div><div class="thg-b"><small class="thg-tm ot c-afternoon">Shift D · OT</small><div class="thg-p"><span class="thg-w">Bashar,</span></div><div class="thg-p"><span class="thg-w">Tanvir</span></div></div></td><td class=" thg-offc"><div class="thg-b"><small class="thg-tm ot">OT · <span class="w-morning">Morning</span> + <span class="w-afternoon">Afternoon</span></small><div class="thg-p"><span class="thg-w">Bashar,</span></div><div class="thg-p"><span class="thg-w">Tanvir</span></div></div></td><td class=" thg-offc"><div class="thg-b"><div class="thg-p"><span class="thg-w">Masum,</span></div><div class="thg-p"><span class="thg-w">Sathee,</span></div><div class="thg-p"><span class="thg-w">Kawsar</span></div></div></td></tr></tbody></table></div>
         <div class="roster-subtitle">Marshaller</div>
         <div class="thg-wrap"><table class="thg-table"><thead id="thHeadMR"><tr><th class="thg-c thg-sel"><b>A</b><div class="thg-ds"><span class="thg-duty d-night rd-live">Night</span></div></th><th class="thg-c"><b>B</b><div class="thg-ds"><span class="thg-duty d-morning">Morning</span></div></th><th class="thg-c"><b>C</b><div class="thg-ds"><span class="thg-duty d-afternoon">Afternoon</span></div></th><th class="thg-c"><b>D</b><div class="thg-ds"><span class="thg-duty d-off">Off</span></div></th><th class="thg-c"><b>E</b><div class="thg-ds"><span class="thg-duty d-off">Off</span></div></th></tr></thead><tbody id="thBodyMR"><tr><td class="thg-live"><div class="thg-b"><small class="thg-tm">Shift A</small><div class="thg-p"><span class="thg-w">Taher,</span></div><div class="thg-p"><span class="thg-w">Jamal,</span></div><div class="thg-p"><span class="thg-w">Alamgir</span></div></div><div class="thg-b"><small class="thg-tm ot c-night">Shift B · OT</small><div class="thg-p"><span class="thg-w">Borkat,</span></div><div class="thg-p"><span class="thg-w">Siddiq,</span></div><div class="thg-p"><span class="thg-w">Jobaydur</span></div></div></td><td class=""><div class="thg-b"><small class="thg-tm">Shift B</small><div class="thg-p"><span class="thg-w">Borkat,</span></div><div class="thg-p"><span class="thg-w">Siddiq,</span></div><div class="thg-p"><span class="thg-w">Jobaydur</span></div></div><div class="thg-b"><small class="thg-tm ot c-morning">Shift D · OT</small><div class="thg-p"><span class="thg-w">Waliul,</span></div><div class="thg-p"><span class="thg-w">Mehedi,</span></div><div class="thg-p"><span class="thg-w">Tarek</span></div></div></td><td class=""><div class="thg-b"><small class="thg-tm">Shift C</small><div class="thg-p"><span class="thg-w">Shagor,</span></div><div class="thg-p"><span class="thg-w">Shohag,</span></div><div class="thg-p"><span class="thg-w">Ashraful</span></div></div><div class="thg-b"><small class="thg-tm ot c-afternoon">Shift D · OT</small><div class="thg-p"><span class="thg-w">Waliul,</span></div><div class="thg-p"><span class="thg-w">Mehedi,</span></div><div class="thg-p"><span class="thg-w">Tarek</span></div></div></td><td class=" thg-offc"><div class="thg-b"><small class="thg-tm ot">OT · <span class="w-morning">Morning</span> + <span class="w-afternoon">Afternoon</span></small><div class="thg-p"><span class="thg-w">Waliul,</span></div><div class="thg-p"><span class="thg-w">Mehedi,</span></div><div class="thg-p"><span class="thg-w">Tarek</span></div></div></td><td class=" thg-offc"><div class="thg-b"><div class="thg-p"><span class="thg-w">Dilip,</span></div><div class="thg-p"><span class="thg-w">Shahidul,</span></div><div class="thg-p"><span class="thg-w">Alamin</span></div></div></td></tr></tbody></table></div>
-        <div class="thm-edit show">
+        <div class="thm-edit">
           <div class="roster-subtitle">Traffic Hand — Groups</div>
           <div id="thmEditTH"><div class="thm-row"><span class="thm-g">Shift A</span><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="0" data-p="0" value="Arif"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="0" data-p="1" value="Tipu"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="0" data-p="2" value=""></div><div class="thm-row"><span class="thm-g">Shift B</span><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="1" data-p="0" value="Alim"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="1" data-p="1" value="Faruk"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="1" data-p="2" value=""></div><div class="thm-row"><span class="thm-g">Shift C</span><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="2" data-p="0" value="Monowar"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="2" data-p="1" value="Mizan"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="2" data-p="2" value=""></div><div class="thm-row"><span class="thm-g">Shift D</span><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="3" data-p="0" value="Bashar"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="3" data-p="1" value="Tanvir"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="3" data-p="2" value=""></div><div class="thm-row"><span class="thm-g">Shift E</span><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="4" data-p="0" value="Masum"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="4" data-p="1" value="Sathee"><input class="thm-inp" type="text" autocomplete="off" data-k="th" data-g="4" data-p="2" value="Kawsar"></div></div>
           <div class="roster-subtitle" style="margin-top:12px;">Marshaller — Groups</div>
@@ -2845,20 +2855,18 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <button type="button" class="modal-close" id="authModalClose">✕</button>
       </div>
       <div id="authLoggedOutView" style="display: none;">
-        <div class="fr-manualform" style="margin-bottom:10px;">
-          <button type="button" id="googleLoginBtn" class="fr-dbimport" style="background:#fff;color:#3c4043;border:1px solid #dadce0;flex:1 1 auto;">🔵 Continue with Google</button>
-          <span id="googleSetupLink" style="font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;white-space:nowrap;align-self:center;">⚙️ সেটআপ</span>
+        <div id="authHome" class="fr-manualform" style="margin-bottom:10px;">
+          <button type="button" id="googleLoginBtn" class="fr-dbimport" style="background:#fff;color:#3c4043;border:1px solid #dadce0;flex:1 1 100%;">🔵 Continue with Google</button>
+          <button type="button" id="authTabLogin" class="fr-dbimport" style="flex:1 1 40%;">লগইন</button>
+          <button type="button" id="authTabRegister" class="fr-dbimport" style="flex:1 1 40%;">রেজিস্টার</button>
+          <span id="googleSetupLink" class="hsia-priv-only" style="font-size:11px;color:var(--muted);text-decoration:underline;cursor:pointer;white-space:nowrap;align-self:center;">⚙️ সেটআপ</span>
         </div>
-        <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:8px;">— অথবা ম্যানুয়ালি —</div>
-        <div class="fr-manualform" style="margin-bottom:6px;">
-          <button type="button" id="authTabLogin" class="fr-dbimport">লগইন</button>
-          <button type="button" id="authTabRegister" class="fr-dbclear">রেজিস্টার</button>
-          <button type="button" id="authTabForgot" class="fr-dbclear">পাসওয়ার্ড ভুলে গেছেন?</button>
-        </div>
-        <div id="authLoginForm" class="fr-manualform">
+        <div id="authLoginForm" class="fr-manualform" style="display:none;">
           <input type="text" id="authLoginId" class="fr-mfinput" placeholder="ইমেইল / ফোন নম্বর / ইউজার আইডি" autocomplete="off">
           <input type="password" id="authLoginPass" class="fr-mfinput" placeholder="পাসওয়ার্ড" autocomplete="off">
           <button type="button" id="authLoginBtn" class="fr-dbimport">লগইন করুন</button>
+          <span id="authTabForgot" class="auth-link">পাসওয়ার্ড ভুলে গেছেন?</span>
+          <button type="button" class="fr-dbclear auth-back">← ফিরে যান</button>
         </div>
         <div id="authRegisterForm" class="fr-manualform" style="display:none;">
           <input type="text" id="authRegId" class="fr-mfinput" placeholder="ইমেইল / ফোন নম্বর / ইউজার আইডি — যেকোনো একটা" autocomplete="off">
@@ -2866,12 +2874,14 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
           <input type="tel" id="authRegPhone" class="fr-mfinput" placeholder="ফোন নম্বর (ঐচ্ছিক)" autocomplete="off">
           <input type="password" id="authRegPass" class="fr-mfinput" placeholder="পাসওয়ার্ড সেট করুন" autocomplete="off">
           <button type="button" id="authRegBtn" class="fr-dbimport">রেজিস্টার করুন</button>
+          <button type="button" class="fr-dbclear auth-back">← ফিরে যান</button>
         </div>
         <div id="authForgotForm" class="fr-manualform" style="display:none;">
           <input type="text" id="authForgotId" class="fr-mfinput" placeholder="আপনার ইমেইল / ফোন / ইউজার আইডি" autocomplete="off">
           <input type="text" id="authForgotVerify" class="fr-mfinput" placeholder="যাচাই: রেজিস্টার্ড ফোন নম্বর অথবা আপনার নাম" autocomplete="off">
           <input type="password" id="authForgotNewPass" class="fr-mfinput" placeholder="নতুন পাসওয়ার্ড" autocomplete="off">
           <button type="button" id="authForgotBtn" class="fr-dbimport">পাসওয়ার্ড পরিবর্তন করুন</button>
+          <button type="button" class="fr-dbclear auth-back">← ফিরে যান</button>
         </div>
         <div class="fr-dbstatus" id="authStatus"></div>
       </div>
@@ -3930,11 +3940,11 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <div class="reset-link" id="dkScaleReset">ডিফল্ট স্কেলে ফিরে যান (115%)</div>
       </div>
 
-      <div class="fr-ocrsection-head" style="margin-bottom:8px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div class="fr-ocrsection-head hsia-priv-only" style="margin-bottom:8px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <span>🔄 ক্রস-ডিভাইস সিঙ্ক (Firebase, ঐচ্ছিক)</span>
         <button type="button" id="syncEyeBtn" class="modal-close" style="font-size:14px; padding:3px 9px;" title="দেখান/লুকান">👁️</button>
       </div>
-      <div id="syncSectionContent" style="display:none;">
+      <div id="syncSectionContent" class="hsia-priv-only" style="display:none;">
         <div class="fr-manualform">
           <textarea id="firebaseConfigInput" class="fr-dbtextarea" style="min-height:90px;" placeholder="এখানে Firebase কনফিগ পেস্ট করুন, যেমন: { apiKey: &quot;...&quot;, authDomain: &quot;...&quot;, databaseURL: &quot;...&quot;, projectId: &quot;...&quot; }" readonly=""></textarea>
         </div>
@@ -8214,8 +8224,9 @@ async function authRefreshRole(){
     if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI();
   }catch(e){ /* offline / not allowed: keep the last known role */ }
 }
-function clBalanceText(r){   /* "how many CL days does this person still have this year" */
+function clBalanceText(r){   /* "how many CL days does this person still have this year" — admin / moderator only */
   try{
+    if(!(window.hsiaIsModerator && window.hsiaIsModerator())) return '';
     if(!r || !r.who || r.who === '-') return '';
     const year = +String(r.dateKey).slice(0,4);
     const used = clUsedBy(r.who, year, clIdFor(r.dateKey, r.table, r.pos, r.team));
@@ -8554,6 +8565,7 @@ async function changeMyPassword(oldPassword, newPassword){
 function logoutUser(){
   clearAuthSession();
   applyAuthUI(null);
+  try{ if(window._authShowForm) window._authShowForm('home'); }catch(e){}
 }
 
 /* Scans EXCHANGES for entries whose subName matches the logged-in
@@ -8680,7 +8692,7 @@ function initAdminGatedSyncToggle(btnId, contentId, cfgInputId, idInputId){
 
 function initAuthPanel(){
   const openAuthModalBtn = document.getElementById('openAuthModalBtn');
-  if(openAuthModalBtn) openAuthModalBtn.addEventListener('click', ()=>{ closeModal('settingsModalOverlay'); openModal('authModalOverlay'); });
+  if(openAuthModalBtn) openAuthModalBtn.addEventListener('click', ()=>{ closeModal('settingsModalOverlay'); try{ if(window._authShowForm) window._authShowForm('home'); }catch(e){} openModal('authModalOverlay'); });
   const authModalClose = document.getElementById('authModalClose');
   if(authModalClose) authModalClose.addEventListener('click', ()=> closeModal('authModalOverlay'));
   const authModalOverlay = document.getElementById('authModalOverlay');
@@ -8699,7 +8711,9 @@ function initAuthPanel(){
   const loginForm = document.getElementById('authLoginForm');
   const registerForm = document.getElementById('authRegisterForm');
   const forgotForm = document.getElementById('authForgotForm');
+  const authHome = document.getElementById('authHome');
   function showAuthForm(which){
+    if(authHome) authHome.style.display = which==='home' ? 'flex' : 'none';
     if(loginForm) loginForm.style.display = which==='login' ? 'flex' : 'none';
     if(registerForm) registerForm.style.display = which==='register' ? 'flex' : 'none';
     if(forgotForm) forgotForm.style.display = which==='forgot' ? 'flex' : 'none';
@@ -8708,6 +8722,9 @@ function initAuthPanel(){
   if(tabLogin) tabLogin.addEventListener('click', ()=> showAuthForm('login'));
   if(tabRegister) tabRegister.addEventListener('click', ()=> showAuthForm('register'));
   if(tabForgot) tabForgot.addEventListener('click', ()=> showAuthForm('forgot'));
+  document.querySelectorAll('#authLoggedOutView .auth-back').forEach(b=> b.addEventListener('click', ()=> showAuthForm('home')));
+  window._authShowForm = showAuthForm;
+  showAuthForm('home');
 
   const loginBtn = document.getElementById('authLoginBtn');
   if(loginBtn){
@@ -11359,7 +11376,7 @@ function renderQbm(){
     P.units.forEach((u, k)=>{
       const lines = u.runs.map(run=>{
         _qbmRuns.push(run);
-        return '<div class="qbm-line"><button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button><span>' + _xEsc(qbmDateText(run)) + '</span></div>';
+        return '<div class="qbm-line">' + ((window.hsiaIsModerator && window.hsiaIsModerator()) ? '<button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button>' : '') + '<span>' + _xEsc(qbmDateText(run)) + '</span></div>';
       }).join('');
       const part = P.parts.find(pt=> pt.from === k);
       body += '<tr>' +
@@ -11382,6 +11399,7 @@ function renderQbm(){
 function qbmRemoveRun(idx){
   const run = _qbmRuns[idx];
   if(!run) return;
+  if(!(window.hsiaIsModerator && window.hsiaIsModerator())) return;   // admin / moderator only
   if(!requireRosterAuth()) return;
   if(!confirm('Remove this entry (' + qbmDateText(run) + ')?')) return;
   run.items.forEach(it=>{
@@ -13599,6 +13617,7 @@ function initAdminNotepad(){
   tabsWrap.addEventListener('click', (e)=>{
     const renameBtn = e.target.closest('.np-chip-rename');
     if(renameBtn){
+      if(!(typeof rosterUnlocked !== 'undefined' && rosterUnlocked)) return;   // admin only
       if(!requireQuickAuth()) return;
       const id = renameBtn.getAttribute('data-id');
       const state = loadNotepadState();
@@ -13630,6 +13649,7 @@ function initAdminNotepad(){
       const actEl = e.target.closest('[data-act]');
       const act = actEl && actEl.getAttribute('data-act');
       const tid = actEl && actEl.getAttribute('data-tid');
+      if((act === 'manage' || act === 'add' || act === 'rename' || act === 'del') && !(typeof rosterUnlocked !== 'undefined' && rosterUnlocked)) return;   // admin only
       if(act === 'manage'){ manageTags = !manageTags; render(); return; }
       if(act === 'clear'){ setActiveTagIds(active.id, []); render(); return; }
       if(act === 'add'){
