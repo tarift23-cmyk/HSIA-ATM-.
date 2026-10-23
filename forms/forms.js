@@ -30,12 +30,19 @@
     var d = new DOMParser().parseFromString('<body>' + h + '</body>', 'text/html');
     /* SutonnyMJ draws Latin letters as Bangla letters, so English words are kept out of it (own font); NBSP is "ড়" in Bijoy, so it is dropped */
     function conv(t){ return smj.toBijoy(t.replace(/([^\u09a1\u09a2\u09af])\u09bc/g, '$1')); }
-    (function walk(n){
+    var BN = /([\u0980-\u09FF\u200c\u200d]+(?:[ ]+[\u0980-\u09FF\u200c\u200d]+)*)/;
+    (function walk(n, du){
       Array.prototype.slice.call(n.childNodes).forEach(function(k){
-        if(k.nodeType === 1){ walk(k); return; }
+        if(k.nodeType === 1){ walk(k, du || (k.classList && k.classList.contains('xf-duty'))); return; }
         if(k.nodeType !== 3) return;
+        if(du){   /* duty table: Bangla -> Bijoy, everything else (dates, digits, APP-1 ...) stays in Times New Roman */
+          var dv = k.nodeValue.replace(/\u00a0/g, ' '); if(isBlank(dv)){ k.nodeValue = ''; return; }
+          var dfr = d.createDocumentFragment();
+          dv.split(BN).forEach(function(p, i){ if(!p) return; if(i % 2) dfr.appendChild(d.createTextNode(conv(p))); else { var ls = d.createElement('span'); ls.className = 'xf-lat'; ls.textContent = p; dfr.appendChild(ls); } });
+          k.parentNode.replaceChild(dfr, k); return;
+        }
         var v = k.nodeValue.replace(/\u00a0/g, ' ');
-        if(!v.trim()){ k.nodeValue = ''; return; }
+        if(isBlank(v)){ k.nodeValue = ''; return; }
         var parts = v.split(/([A-Za-z][A-Za-z0-9.&'\-]*)/), fr = d.createDocumentFragment();
         parts.forEach(function(p, i){
           if(!p) return;
@@ -44,22 +51,54 @@
         });
         k.parentNode.replaceChild(fr, k);
       });
-    })(d.body);
+    })(d.body, false);
     var sh = d.body.querySelector('.xf-sheet'); if(sh) sh.className += ' xf-smj';
     return d.body.innerHTML;
   }
   function sheetHtml(f, V){ var h = f.html(V); return smj ? toSmj(h) : h; }
   /* CSS is embedded here so the editor never depends on forms.css being loaded (it was not being applied) */
   var XF_CSS = ".xf-sheet{ box-sizing:border-box; background:#fff; color:#000; position:relative; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact;\n  font-family:\"Noto Sans Bengali\",\"Kalpurush\",\"SolaimanLipi\",\"Siyam Rupali\",\"Nirmala UI\",\"Vrinda\",\"FreeSans\",sans-serif; line-height:1.35; }\n.xf-sheet *{ box-sizing:border-box; }\n.xf-sheet img{ display:block; margin:0 auto; }\n.xf-fill{ flex:1 1 0; min-width:0; padding:0 1.2mm; min-height:1.45em; white-space:pre-wrap; overflow-wrap:anywhere; }\n.xf-cl .xf-fill{ border-bottom:1.3px dotted #000; }\n.xf-ex .xf-fill.xf-empty{ border-bottom:1px dotted #888; }\n.xf-b{ font-weight:700; }\n/* ---- CL form: A4 portrait ---- */\n.xf-cl{ width:210mm; height:297mm; padding:8mm 19mm 6mm 19mm; font-size:11pt; }\n.xf-cl .xf-hdr img{ width:70mm; height:auto; }\n.xf-cl .xf-office{ display:flex; justify-content:center; align-items:flex-end; gap:1.5mm; margin-top:0.5mm; font-weight:700; }\n.xf-cl .xf-office .xf-fill{ flex:0 0 105mm; }\n.xf-cl .xf-title{ text-align:center; font-weight:700; font-size:15.5pt; margin:4.5mm 0 8mm; }\n.xf-cl .xf-title span{ border-bottom:1.5px solid #000; padding-bottom:0.3mm; }\n.xf-cl .xf-li{ display:flex; align-items:flex-end; margin-bottom:5.6mm; }\n.xf-cl .xf-li .n{ width:8mm; flex:none; font-weight:700; }\n.xf-cl .xf-li .l{ flex:none; font-weight:700; }\n.xf-cl .xf-sigbox{ margin:7mm 0 0 auto; width:38%; }\n.xf-cl .xf-sigbox .xf-dots{ border-top:1.3px dotted #000; margin-top:0; margin-bottom:1mm; }\n.xf-cl .xf-sigbox .xf-sl{ display:flex; align-items:flex-end; font-weight:700; margin-top:0.8mm; }\n.xf-cl .xf-sigbox .xf-sl .xf-fill{ border-bottom:0; }\n.xf-cl .xf-row{ display:flex; align-items:flex-end; margin-top:5.2mm; }\n.xf-cl .xf-row .t{ flex:none; font-weight:700; white-space:nowrap; }\n.xf-cl .xf-ind1{ margin-left:11mm; }\n.xf-cl .xf-ind2{ margin-left:40%; }\n.xf-cl .xf-hr{ border-top:1.4px solid #000; margin-top:8mm; padding-top:1mm; }\n.xf-cl .xf-note{ font-size:10pt; line-height:1.5; }\n.xf-cl .xf-note p{ margin:0 0 0.4mm 0; }\n.xf-cl .xf-note .sub{ margin-left:9mm; text-indent:-8mm; padding-left:8mm; margin-top:0.6mm; }\n/* ---- Exchange form: A4 width x half A4 height ---- */\n.xf-ex{ width:210mm; height:148.5mm; padding:4mm 12mm 3mm 12mm; font-size:10pt; }\n.xf-ex .xf-hdr img{ width:66mm; height:auto; }\n.xf-ex .xf-addr{ text-align:center; font-weight:700; font-size:8.6pt; margin-top:0.6mm; }\n.xf-ex .xf-addr2{ text-align:center; font-weight:700; font-size:9pt; }\n.xf-ex .xf-boxt{ text-align:center; margin:1.6mm 0 2.2mm; }\n.xf-ex .xf-boxt span{ display:inline-block; border:1.3px solid #000; padding:0.4mm 3.5mm; font-weight:700; font-size:11pt; }\n.xf-ex .xf-r{ display:flex; align-items:flex-end; min-height:7.4mm; }\n.xf-ex .xf-r.sg{ min-height:12mm; }\n.xf-ex .xf-r .n{ width:8mm; flex:none; }\n.xf-ex .xf-r .l{ width:55mm; flex:none; }\n.xf-ex .xf-r .c{ width:5mm; flex:none; }\n.xf-ex .xf-r .m{ flex:1 1 0; min-width:0; display:flex; align-items:flex-end; gap:1.5mm; }\n.xf-ex .xf-r .t{ flex:none; white-space:nowrap; }\n.xf-ex .xf-r .gap{ flex:0 0 5mm; }\n.xf-ex .xf-r .w2{ flex:1.25 1 0; }\n.xf-ex .xf-r .w1{ flex:1 1 0; }\n.xf-ex .xf-r .sgn{ flex:1 1 0; white-space:nowrap; padding-left:1.2mm; }\n/* ---- SutonnyMJ (Bijoy) version of both forms ---- */\n.xf-smj{ font-family:SutonnyMJ,'Noto Sans Bengali',sans-serif; line-height:1.167; }\n.xf-smj .xf-en{ font-family:'Times New Roman',Times,'Liberation Serif',serif; font-size:.86em; }\n.xf-cl.xf-smj{ font-size:12.65pt; }\n.xf-cl.xf-smj .xf-title{ font-size:17.82pt; }\n.xf-cl.xf-smj .xf-note{ font-size:11.5pt; line-height:1.2; }\n.xf-ex.xf-smj{ font-size:11.5pt; }\n.xf-ex.xf-smj .xf-addr{ font-size:9.89pt; }\n.xf-ex.xf-smj .xf-addr2{ font-size:10.35pt; }\n.xf-ex.xf-smj .xf-boxt span{ font-size:12.65pt; }\n.xf-sheet [data-sig]{ position:relative; }\n.xf-sg{ height:13mm; }\n.xf-sheet .xf-sgi{ position:absolute; left:50%; bottom:0.4mm; transform:translateX(-50%); max-height:11mm; max-width:94%; width:auto; height:auto; margin:0; }\n.xf-ex .xf-sgi{ bottom:70%; max-height:10mm; }\n/* ---- edit screen ---- */\n.xf-pv [data-sig]{ cursor:pointer; background:rgba(43,108,176,.10); -webkit-tap-highlight-color:transparent; }\n.xf-pv .xf-sg:empty::after{ content:'✍ Signature'; position:absolute; left:50%; bottom:2mm; transform:translateX(-50%); font:600 9pt system-ui,sans-serif; color:#2b6cb0; white-space:nowrap; }\n.xf-ov{ position:fixed; inset:0; z-index:20000; background:#141416; color:#ececf0; display:flex; flex-direction:column; font-family:inherit; }\n.xf-ov[hidden]{ display:none; }\n.xf-top{ display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px; border-bottom:1px solid #34343a; background:#1b1b1f; }\n.xf-top .xf-tt{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }\n.xf-top button{ white-space:nowrap; height:38px; min-width:38px; padding:0 12px; border-radius:10px; border:1px solid #3b3b42; background:#26262b; color:#ececf0; font-size:14px; cursor:pointer; font-family:inherit; }\n.xf-top button.ico{ display:inline-flex; align-items:center; justify-content:center; padding:0 10px; }\n.xf-top button.ico[disabled]{ opacity:.5; }\n.xf-top button.pri{ background:#e8c35a; color:#1a1405; border-color:#e8c35a; font-weight:700; }\n.xf-body{ flex:1 1 auto; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 12px calc(24px + env(safe-area-inset-bottom,0px)); }\n.xf-grp{ border:1px solid #34343a; border-radius:12px; padding:10px 10px 4px; margin-bottom:10px; background:#1a1a1e; }\n.xf-grp h4{ margin:0 0 8px; font-size:12.5px; color:#a9a9b3; letter-spacing:.3px; font-weight:600; }\n.xf-fld{ margin-bottom:9px; }\n.xf-fld label{ display:block; font-size:12px; color:#b5b5bf; margin-bottom:3px; }\n.xf-fld input, .xf-fld textarea{ box-sizing:border-box; width:100%; border:1px solid #3b3b42; background:#101012; color:#f2f2f5; border-radius:9px; padding:9px 10px; font-size:15px; font-family:inherit; outline:none; }\n.xf-fld input:focus, .xf-fld textarea:focus{ border-color:#22d3ee; }\n.xf-fld textarea{ min-height:62px; resize:vertical; }\n.xf-pvl{ font-size:12px; color:#a9a9b3; margin:14px 2px 6px; }\n.xf-pv{ background:#2a2a2e; border-radius:10px; overflow:hidden; position:relative; }\n.xf-pvin{ transform-origin:0 0; position:absolute; left:0; top:0; }\n.xf-pvin .xf-sheet{ box-shadow:none; }\n.xf-pv .xf-fill{ cursor:text; outline:none; -webkit-tap-highlight-color:transparent; }\n.xf-pv .xf-fill:focus{ background:rgba(34,211,238,.18); }\n.xf-sheet .xf-fill.xf-editing{ font-family:'Noto Sans Bengali','Kalpurush','SolaimanLipi','Nirmala UI',sans-serif; }\n#xfPrint{ display:none; }\n@media print{\n  html, body.xf-printing{ background:#fff !important; height:auto !important; min-height:0 !important; overflow:visible !important; margin:0 !important; padding:0 !important; position:static !important; }\n  body.xf-printing > *:not(#xfPrint){ display:none !important; }\n  body.xf-printing #xfPrint{ display:block !important; }\n  #xfPrint .xf-sheet{ margin:0; page-break-inside:avoid; break-inside:avoid; }\n}\n";
+  var DUTY_CSS = [
+    '.xf-duty{ margin:0; }',
+    '.xf-cl .xf-duty:not(:empty){ margin:0 0 1mm; }',
+    '.xf-cl .xf-duty:not(:empty) + .xf-sigbox{ margin-top:5mm; }',
+    '.xf-dt{ border-collapse:collapse; width:100%; font-size:12pt; line-height:1.2; font-family:"Times New Roman",Times,"Liberation Serif","Noto Sans Bengali",serif; }',
+    '.xf-smj .xf-dt{ font-family:SutonnyMJ,"Noto Sans Bengali",sans-serif; line-height:1.2; }',
+    '.xf-dt td{ border:1px solid #000; padding:0.9mm 2mm; vertical-align:middle; }',
+    '.xf-dt td.p{ text-align:center; width:30%; }',
+    '.xf-dt .xf-lat{ font-family:"Times New Roman",Times,"Liberation Serif",serif; font-size:12pt; }',
+    '.xf-duty.xf-tight .xf-dt td{ padding:0.2mm 1.5mm; }',
+    '.xf-sheet .xf-fill.xf-empty{ color:transparent; }',
+    ''
+  ].join('\n');
+  var DUTY_EDIT_CSS = [
+    '.xf-pv .xf-duty:empty{ min-height:20mm; margin:0 0 4mm; border:2px dashed #2b6cb0; border-radius:3mm; background:rgba(43,108,176,.10); display:flex; align-items:center; justify-content:center; cursor:pointer; }',
+    '.xf-pv .xf-duty:empty::before{ content:"＋ CL-এর দিন ও পজিশন বেছে নাও"; font:700 20pt "Noto Sans Bengali","Kalpurush","Nirmala UI",system-ui,sans-serif; color:#2b6cb0; }',
+    '.xf-pv .xf-dt td.p{ cursor:pointer; }',
+    '.xf-pv .xf-dt td:last-child{ position:relative; }',
+    '.xf-pv .xf-dx{ position:absolute; right:-9mm; top:50%; transform:translateY(-50%); width:7mm; height:7mm; line-height:7mm; text-align:center; color:#c00; font:700 16pt system-ui,sans-serif; cursor:pointer; }',
+    '.xf-pv .xf-dmore{ display:block; margin:2mm auto 0; border:0; background:none; color:#2b6cb0; font:700 16pt "Noto Sans Bengali","Kalpurush","Nirmala UI",system-ui,sans-serif; cursor:pointer; }',
+    ''
+  ].join('\n');
+  XF_CSS = XF_CSS.replace('/* ---- edit screen ---- */', DUTY_CSS + '/* ---- edit screen ---- */') + DUTY_EDIT_CSS;
   function injectCss(){
     if(document.getElementById('xfStyle')) return;
     var st = document.createElement('style'); st.id = 'xfStyle'; st.textContent = XF_CSS; document.head.appendChild(st);
   }
 
+  /* a field that holds only spaces / NBSP / zero-width marks is EMPTY (in SutonnyMJ an NBSP is drawn as "ড়") */
+  function isBlank(t){ return !String(t == null ? '' : t).replace(/[\s\u00a0\u200b-\u200d\u2060\ufeff]/g, ''); }
   function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
-  function fill(V, k, extra){ var t = V && V[k] ? String(V[k]) : ''; return '<span class="xf-fill ' + (extra || '') + (t ? '' : ' xf-empty') + '" data-k="' + k + '">' + (t ? esc(t) : '') + '</span>'; }
+  function fill(V, k, extra){ var t = V && V[k] && !isBlank(V[k]) ? String(V[k]) : ''; return '<span class="xf-fill ' + (extra || '') + (t ? '' : ' xf-empty') + '" data-k="' + k + '">' + (t ? esc(t) : '') + '</span>'; }
 
   function sgi(V, k){ return V && V[k] && /^data:image\//.test(V[k]) ? '<img class="xf-sgi" alt="" src="' + V[k] + '">' : ''; }
+  /* ---------- CL duty table (position | date + shift), filled from the roster popup ---------- */
+  function dutyHtml(V){
+    var a = V && V.duty; if(!a || !a.length) return '<div class="xf-duty"></div>';
+    return '<div class="xf-duty' + (a.length > 7 ? ' xf-tight' : '') + '"><table class="xf-dt">'
+      + a.map(function(r, i){ return '<tr data-di="' + i + '"><td class="p">' + esc(r.p) + '</td><td>' + esc(r.t) + '</td></tr>'; }).join('')
+      + '</table></div>';
+  }
   /* ---------- CL form (A4 portrait) ---------- */
   function clHtml(V){
     var li = function(n, label, k){ return '<div class="xf-li"><span class="n">' + n + '</span><span class="l">' + label + '</span>' + fill(V, k) + '</div>'; };
@@ -72,6 +111,7 @@
       + li('৩।', 'প্রার্থিত ছুটির সময় কাল ও পরিমান', 'period')
       + li('৪।', 'ছুটির কারণ', 'reason')
       + li('৫।', 'প্রার্থীর ছুটি সময়কালীন ঠিকানা', 'addr')
+      + dutyHtml(V)
       + '<div class="xf-sigbox"><div class="xf-sg" data-sig="sig1">' + sgi(V, 'sig1') + '</div><div class="xf-dots"></div><div class="xf-b">দরখাস্তকারীর স্বাক্ষর</div><div class="xf-sl"><span>তারিখ :-</span>' + fill(V, 'adate') + '</div></div>'
       + '<div class="xf-row xf-ind1"><span class="t">ঊর্ধ্বতন কর্তৃপক্ষের সুপারিশ</span>' + fill(V, 'rec1') + '</div>'
       + '<div class="xf-row xf-ind2">' + fill(V, 'rec2') + '</div>'
@@ -138,6 +178,7 @@
     pageStyle = document.createElement('style'); pageStyle.id = 'xfPageStyle'; document.head.appendChild(pageStyle);
     printRoot = document.createElement('div'); printRoot.id = 'xfPrint'; document.body.appendChild(printRoot);
     ov.addEventListener('click', function(e){
+      if(dutyClick(e)) return;
       var sg = e.target.closest && e.target.closest('[data-sig]'); if(sg && ov.querySelector('.xf-pv').contains(sg)){ openSig(sg.getAttribute('data-sig')); return; }
       var b = e.target.closest && e.target.closest('[data-x]'); if(!b) return; var a = b.getAttribute('data-x');
       if(a === 'close') close(); else if(a === 'print') doPrint(); else if(a === 'png') doPng(b); else if(a === 'reset'){ if(confirm('এই ফর্মের সব লেখা মুছে ফেলবেন?')){ vals = withDefaults(cur, {}); save(); preview(); } }
@@ -153,7 +194,7 @@
       t.classList.remove('xf-editing'); renderFill(t);
       setTimeout(function(){ if(pend && !ov.querySelector('.xf-fill.xf-editing')){ pend = false; preview(); } }, 300);
     });
-    ov.addEventListener('input', function(e){ var t = e.target, k = fk(t); if(k){ vals[k] = (t.textContent || '').replace(/\u00a0/g, ' '); save(); } });
+    ov.addEventListener('input', function(e){ var t = e.target, k = fk(t); if(k){ var tx = (t.textContent || '').replace(/\u00a0/g, ' '); if(isBlank(tx)) delete vals[k]; else vals[k] = tx; save(); } });
     ov.addEventListener('keydown', function(e){ var k = fk(e.target); if(k && k !== 'remark' && e.key === 'Enter') e.preventDefault(); });
     ov.addEventListener('paste', function(e){ if(!fk(e.target)) return; e.preventDefault(); var tx = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\r?\n/g, ' '); document.execCommand('insertText', false, tx); });
     window.addEventListener('resize', function(){ if(ov && !ov.hidden) fit(); });
@@ -166,7 +207,8 @@
     pv.style.height = Math.ceil(pxh * s) + 'px';
   }
   function renderFill(el){   /* redraw one field (Bijoy-converted when SutonnyMJ is on) after editing */
-    var v = vals[el.getAttribute('data-k')] || '';
+    var kk = el.getAttribute('data-k'), v = vals[kk] || '';
+    if(isBlank(v)){ delete vals[kk]; save(); v = ''; }
     if(!v){ el.textContent = ''; el.classList.add('xf-empty'); }   /* empty stays truly empty: an NBSP would be drawn as "ড়" in SutonnyMJ (Bijoy) */
     else { el.classList.remove('xf-empty'); el.innerHTML = smj ? toSmj(esc(v)) : esc(v); }
   }
@@ -178,6 +220,7 @@
       if(el.contentEditable !== 'plaintext-only') el.contentEditable = 'true';
       el.spellcheck = false; el.setAttribute('autocapitalize', 'off'); el.setAttribute('autocomplete', 'off');
     });
+    decorateDuty(inn);
     fit();
   }
   function open(k){
@@ -342,6 +385,140 @@
     if(!sigOv) sigBuild();
     sigSlot = slot; sigClear(); sigThumbs(); sigOv.hidden = false;
     if(vals[slot]){ var im = new Image(); im.onload = function(){ var s2 = Math.min(sigPad.width * .94 / im.width, sigPad.height * .94 / im.height); sigCtx.drawImage(im, (sigPad.width - im.width * s2) / 2, (sigPad.height - im.height * s2) / 2, im.width * s2, im.height * s2); }; im.src = vals[slot]; }
+  }
+
+  /* ---------- CL duty picker: all-shift calendar -> own shift -> CL days -> position ---------- */
+  var XD_PER = ['0730-1400', '1400-2030', '2030-0730'], XD_MN = ['morning', 'evening', 'night'], XD_LB = ['সকাল', 'বিকাল', 'রাত'];
+  var XD_POS = { 'Controllers':['APP', 'APP-1', 'FDO', 'EOC'], 'Aerodrome Assistant':['ACC UPPER-1', 'ACC UPPER-3', 'ACC LOWER-1', 'ACC LOWER-3', 'SMC-2', 'RCC'] };
+  var xdOv = null, xdStep = 0, xdTeam = -1, xdSel = {}, xdY = 0, xdM = 0;
+  function xdRoster(){ return window.hsiaRoster || {}; }   /* optional hook: { teams:[..], positions:{group:[..]}, shift:function(team, year, month0, day){ return 0 morning | 1 evening | 2 night | -1 off } } */
+  function xdTeams(){ var t = xdRoster().teams; return t && t.length ? t : ['A', 'B', 'C', 'D', 'E']; }
+  function xdPos(){ var p = xdRoster().positions; return p && typeof p === 'object' ? p : XD_POS; }
+  function xdShift(t, y, m, d){
+    var R = xdRoster();
+    if(typeof R.shift === 'function'){ try{ var r = R.shift(t, y, m, d); if(typeof r === 'number') return r > 2 || r < 0 ? -1 : r; }catch(e){} }
+    var n = Math.round((Date.UTC(y, m, d) - Date.UTC(2026, 9, 22)) / 864e5);   /* fallback 5-shift cycle: 22/10/2026 = D morning, A evening, C night */
+    var k = (((n + 1 - 2 * t) % 5) + 5) % 5; return k > 2 ? -1 : k;
+  }
+  function p2(n){ return (n < 10 ? '0' : '') + n; }
+  function xdKey(y, m, d){ return y + '-' + p2(m + 1) + '-' + p2(d); }
+  function xdText(key, t, k){
+    var a = key.split('-'), y = +a[0], m = +a[1] - 1, d = +a[2], base = p2(d) + '/' + p2(m + 1) + '/' + y;
+    if(k === 2){
+      var n = new Date(y, m, d + 1), d2 = p2(n.getDate()), m2 = p2(n.getMonth() + 1);
+      if(n.getFullYear() !== y) base = p2(d) + '/' + p2(m + 1) + '/' + y + '-' + d2 + '/' + m2 + '/' + n.getFullYear();
+      else if(n.getMonth() !== m) base = p2(d) + '/' + p2(m + 1) + '-' + d2 + '/' + m2 + '/' + y;
+      else base = p2(d) + '-' + d2 + '/' + p2(m + 1) + '/' + y;
+    }
+    return base + ' (' + XD_PER[k] + ') ' + xdTeams()[t] + '-shift ' + XD_MN[k];
+  }
+  var BN_M = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+  function bnNum(n){ return String(n).replace(/\d/g, function(c){ return '০১২৩৪৫৬৭৮৯'.charAt(c); }); }
+  function xdPosLib(){ try{ var a = JSON.parse(localStorage.getItem('hsia_cl_pos') || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+  function xdPosSave(p){ var a = xdPosLib().filter(function(x){ return x !== p; }); a.unshift(p); try{ localStorage.setItem('hsia_cl_pos', JSON.stringify(a.slice(0, 8))); }catch(e){} }
+  function xdBuild(){
+    var st = document.createElement('style');
+    st.textContent = '.xd-ov{position:fixed;inset:0;z-index:20002;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:10px;font-family:system-ui,"Noto Sans Bengali",sans-serif}.xd-ov[hidden]{display:none}'
+      + '.xd-box{background:#1b1b1f;color:#ececf0;border:1px solid #34343a;border-radius:16px;width:100%;max-width:440px;max-height:94vh;overflow:auto;padding:14px}.xd-box h3{margin:0 0 4px;font-size:15px}.xd-box p{margin:0 0 10px;font-size:12px;color:#a9a9b3}'
+      + '.xd-nav{display:flex;align-items:center;gap:8px;margin-bottom:8px}.xd-nav b{flex:1;text-align:center;font-size:14px}.xd-nav button{width:38px;height:36px;border-radius:10px;border:1px solid #3b3b42;background:#26262b;color:#ececf0;font-size:16px;cursor:pointer}'
+      + '.xd-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.xd-chip{flex:1;min-width:52px;padding:10px 0;text-align:center;border:1px solid #3b3b42;border-radius:10px;font-weight:800;cursor:pointer;background:transparent;color:#ececf0;font-size:14px}'
+      + '.xd-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.xd-cal .h{font-size:10px;color:#a9a9b3;text-align:center}'
+      + '.xd-d{border:1px solid #3b3b42;border-radius:8px;min-height:50px;padding:3px;font-size:10px;line-height:1.25;text-align:center}.xd-d .n{font-weight:800;font-size:12px;display:block}'
+      + '.xd-d.sel{background:#e8c35a;color:#000;border-color:#e8c35a}.xd-d.duty{cursor:pointer}.xd-d.off{opacity:.35}'
+      + '.xd-m{color:#7db3f0}.xd-e{color:#f0a84a}.xd-ni{color:#b39cf0}.xd-d.sel .xd-m,.xd-d.sel .xd-e,.xd-d.sel .xd-ni{color:#000}'
+      + '.xd-row{display:flex;gap:8px;margin-top:12px}.xd-btn{flex:1;padding:12px;border-radius:10px;border:1px solid #3b3b42;background:transparent;color:#ececf0;font-weight:700;font-size:14px;cursor:pointer}.xd-btn.pri{background:#e8c35a;color:#1a1405;border-color:#e8c35a}'
+      + '.xd-grp{font-size:11px;color:#a9a9b3;margin:10px 0 4px;font-weight:700}.xd-pos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.xd-pos button{padding:10px 4px;border:1px solid #3b3b42;border-radius:10px;background:transparent;color:#ececf0;font-weight:700;font-size:13px;cursor:pointer}'
+      + '.xd-man{display:flex;gap:6px;margin-top:6px}.xd-man input{flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid #3b3b42;background:#101012;color:#f2f2f5;font-size:15px}';
+    document.head.appendChild(st);
+    xdOv = document.createElement('div'); xdOv.className = 'xd-ov'; xdOv.hidden = true; document.body.appendChild(xdOv);
+    xdOv.addEventListener('click', function(e){
+      var t = e.target, b;
+      if(t === xdOv){ xdClose(); return; }
+      if(!t.closest) return;
+      if((b = t.closest('[data-xa]'))){
+        var a = b.getAttribute('data-xa');
+        if(a === 'close') xdClose();
+        else if(a === 'prev' || a === 'next'){ xdM += a === 'next' ? 1 : -1; if(xdM < 0){ xdM = 11; xdY--; } if(xdM > 11){ xdM = 0; xdY++; } xdRender(); }
+        else if(a === 'team'){ xdTeam = +b.getAttribute('data-t'); xdStep = 2; xdRender(); }
+        else if(a === 'back2'){ xdStep = 1; xdRender(); }
+        else if(a === 'next2'){ if(!Object.keys(xdSel).length){ alert('অন্তত একটা দিন বেছে নিন'); return; } xdStep = 3; xdRender(); }
+        else if(a === 'back3'){ xdStep = 2; xdRender(); }
+        else if(a === 'pos') xdAdd(b.getAttribute('data-p'));
+        else if(a === 'man'){ var inp = xdOv.querySelector('input'); xdAdd(inp.value); }
+        return;
+      }
+      if((b = t.closest('[data-key]'))){ var k = b.getAttribute('data-key'); if(xdSel[k]) delete xdSel[k]; else xdSel[k] = 1; xdRender(); return; }
+    });
+    xdOv.addEventListener('keydown', function(e){ if(e.key === 'Enter' && e.target.tagName === 'INPUT'){ e.preventDefault(); xdAdd(e.target.value); } });
+  }
+  function xdCal(fn){
+    var f = new Date(xdY, xdM, 1).getDay(), n = new Date(xdY, xdM + 1, 0).getDate(), h = '';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(function(x){ h += '<div class="h">' + x + '</div>'; });
+    for(var i = 0; i < f; i++) h += '<div></div>';
+    for(var d = 1; d <= n; d++) h += fn(d);
+    return '<div class="xd-cal">' + h + '</div>';
+  }
+  function xdNav(){ return '<div class="xd-nav"><button type="button" data-xa="prev">‹</button><b>' + BN_M[xdM] + ' ' + bnNum(xdY) + '</b><button type="button" data-xa="next">›</button></div>'; }
+  function xdRender(){
+    var T = xdTeams(), h = '';
+    if(xdStep === 1){
+      h = '<h3>সব শিফটের ডিউটি ক্যালেন্ডার</h3><p>নিজের শিফট বেছে নিন।</p>' + xdNav()
+        + '<div class="xd-chips">' + T.map(function(t, i){ return '<button type="button" class="xd-chip" data-xa="team" data-t="' + i + '">' + t + ' শিফট</button>'; }).join('') + '</div>'
+        + xdCal(function(d){
+            var L = ['', '', '']; T.forEach(function(t, i){ var k = xdShift(i, xdY, xdM, d); if(k >= 0) L[k] = t; });
+            return '<div class="xd-d"><span class="n">' + d + '</span><span class="xd-m">M ' + L[0] + '</span><br><span class="xd-e">E ' + L[1] + '</span><br><span class="xd-ni">N ' + L[2] + '</span></div>';
+          })
+        + '<div class="xd-row"><button type="button" class="xd-btn" data-xa="close">বাতিল</button></div>';
+    } else if(xdStep === 2){
+      h = '<h3>' + T[xdTeam] + ' শিফটের ডিউটি ক্যালেন্ডার</h3><p>যেসব দিন CL নিচ্ছেন সেগুলোতে চাপুন (আবার চাপলে বাদ)।</p>' + xdNav()
+        + xdCal(function(d){
+            var k = xdShift(xdTeam, xdY, xdM, d); if(k < 0) return '<div class="xd-d off"><span class="n">' + d + '</span>অফ</div>';
+            var key = xdKey(xdY, xdM, d), c = ['xd-m', 'xd-e', 'xd-ni'][k];
+            return '<div class="xd-d duty' + (xdSel[key] ? ' sel' : '') + '" data-key="' + key + '"><span class="n">' + d + '</span><span class="' + c + '">' + XD_LB[k] + '</span></div>';
+          })
+        + '<div class="xd-row"><button type="button" class="xd-btn" data-xa="back2">← শিফট বদলান</button><button type="button" class="xd-btn pri" data-xa="next2">পরের ধাপ</button></div>';
+    } else if(xdStep === 3){
+      var ks = Object.keys(xdSel).sort(), P = xdPos(), lib = xdPosLib();
+      h = '<h3>পজিশন বেছে নিন</h3><p>নির্বাচিত দিন: ' + ks.map(function(k){ return +k.split('-')[2] + '/' + (+k.split('-')[1]); }).join(', ') + '</p>';
+      if(lib.length) h += '<div class="xd-grp">আমার লেখা পজিশন</div><div class="xd-pos">' + lib.map(function(p){ return '<button type="button" data-xa="pos" data-p="' + esc(p) + '">' + esc(p) + '</button>'; }).join('') + '</div>';
+      Object.keys(P).forEach(function(g){ h += '<div class="xd-grp">' + esc(g) + '</div><div class="xd-pos">' + P[g].map(function(p){ return '<button type="button" data-xa="pos" data-p="' + esc(p) + '">' + esc(p) + '</button>'; }).join('') + '</div>'; });
+      h += '<div class="xd-grp">রোস্টারে নেই? নিজে লিখুন</div><div class="xd-man"><input placeholder="যেমন: APP-2" autocomplete="off" autocapitalize="off"><button type="button" class="xd-btn pri" data-xa="man" style="flex:0 0 80px;padding:10px">যোগ</button></div>'
+        + '<div class="xd-row"><button type="button" class="xd-btn" data-xa="back3">← দিন বদলান</button></div>';
+    }
+    xdOv.innerHTML = '<div class="xd-box">' + h + '</div>';
+  }
+  function xdClose(){ if(xdOv) xdOv.hidden = true; }
+  function xdAdd(p){
+    p = String(p || '').replace(/\s+/g, ' ').trim(); if(!p){ alert('পজিশন লিখুন বা বেছে নিন'); return; }
+    var T = xdTeams(); if(!vals.duty) vals.duty = [];
+    Object.keys(xdSel).sort().forEach(function(key){
+      var a = key.split('-'), k = xdShift(xdTeam, +a[0], +a[1] - 1, +a[2]); if(k < 0) return;
+      vals.duty.push({ p:p, t:xdText(key, xdTeam, k) });
+    });
+    var known = false, P = xdPos(); Object.keys(P).forEach(function(g){ if(P[g].indexOf(p) >= 0) known = true; }); if(!known) xdPosSave(p);
+    xdSel = {}; save(); xdClose(); preview();
+    var sh = ov.querySelector('.xf-pvin .xf-sheet');
+    if(sh && sh.scrollHeight > sh.clientHeight + 2) alert('সারি বেশি হওয়ায় ফর্মের নিচের অংশ পাতার বাইরে চলে যাচ্ছে। কিছু সারি ✕ দিয়ে কমান।');
+  }
+  function dutyOpen(){
+    if(!xdOv) xdBuild();
+    var n = new Date(); xdY = n.getFullYear(); xdM = n.getMonth(); xdTeam = -1; xdSel = {}; xdStep = 1; xdRender(); xdOv.hidden = false;
+  }
+  function dutyClick(e){
+    var pv = ov && ov.querySelector('.xf-pv'); if(!pv || !pv.contains(e.target) || cur !== 'cl') return false;
+    var t = e.target, x = t.closest && t.closest('[data-dx]');
+    if(x){ vals.duty.splice(+x.getAttribute('data-dx'), 1); if(!vals.duty.length) delete vals.duty; save(); preview(); return true; }
+    if(t.closest && t.closest('[data-dopen]')){ dutyOpen(); return true; }
+    var du = t.closest && t.closest('.xf-duty');
+    if(du && !du.firstChild){ dutyOpen(); return true; }
+    var pc = t.closest && t.closest('td.p');
+    if(pc && vals.duty){ var i = +pc.parentNode.getAttribute('data-di'), nv = prompt('পজিশন (ম্যানুয়ালি লিখুন)', vals.duty[i].p); if(nv != null && nv.trim()){ vals.duty[i].p = nv.trim(); save(); preview(); } return true; }
+    return false;
+  }
+  function decorateDuty(inn){   /* edit-screen only: delete crosses and the "add more" button; never part of print / PNG */
+    var du = inn.querySelector('.xf-duty'), tb = du && du.querySelector('table'); if(!tb) return;
+    Array.prototype.forEach.call(tb.rows, function(tr, i){ var c = tr.cells[tr.cells.length - 1], x = document.createElement('span'); x.className = 'xf-dx'; x.setAttribute('data-dx', i); x.textContent = '✕'; c.appendChild(x); });
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'xf-dmore'; b.setAttribute('data-dopen', '1'); b.textContent = '＋ আরও ডিউটি যোগ'; du.appendChild(b);
   }
   window.hsiaOpenForm = open;
 })();
