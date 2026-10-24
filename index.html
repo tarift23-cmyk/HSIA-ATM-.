@@ -17572,20 +17572,8 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     1:{ lab:'1st Night', fg:'#7cc0ff', bd:'#409cff', bg:'rgba(64,156,255,0.14)', bb:'linear-gradient(135deg,#7cc0ff,#409cff)', bt:'#0b1830', gl:'rgba(64,156,255,0.7)' },
     2:{ lab:'2nd Night', fg:'#d3a3ff', bd:'#b066ff', bg:'rgba(176,102,255,0.14)', bb:'linear-gradient(135deg,#d3a3ff,#b066ff)', bt:'#ffffff', gl:'rgba(176,102,255,0.7)' }
   };
-  function halfBlock(n, ex, orig){
-    var c = HALF[n];
-    var head = '<div style="font:700 10px Space Grotesk,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:' + c.fg + ';text-align:center;line-height:1.3">' + c.lab + '</div>';
-    if(!ex) return '<div style="margin:3px 4px;padding:4px 6px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.16)">' + head + '<div style="font:12.5px Inter,sans-serif;text-align:center;line-height:1.5;color:var(--text)">' + esc(orig) + '</div></div>';
-    var sub = String(ex.subName || '').trim(), vac = !!ex.vacant;
-    var bt = vac ? (ex.special ? (typeof exSpShort === 'function' ? exSpShort(ex.spType) : 'EL') : ex.moved ? (ex.to ? '➜ ' + ex.to : 'Vacant') : 'CL · Vacant') : sub;
-    var strike = (sub || vac) ? 'opacity:.55;text-decoration:line-through;text-decoration-color:' + c.bd + ';' : '';
-    return '<div style="margin:3px 4px;padding:4px 6px;border-radius:6px;background:' + c.bg + ';box-shadow:inset 0 0 0 1.5px ' + c.bd + ',0 0 8px ' + c.gl + '">' + head
-      + '<div style="font:12.5px Inter,sans-serif;text-align:center;line-height:1.5;color:var(--text);' + strike + '">' + esc(orig) + '</div>'
-      + (bt ? '<div style="font:700 11px Space Grotesk,sans-serif;color:' + c.bt + ';background:' + c.bb + ';border-radius:999px;padding:3px 8px;text-align:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 0 8px ' + c.gl + '">' + esc(bt) + '</div>' : '') + '</div>';
-  }
-  var KEYS = { rosterBodyRows:'roster', rosterBodyRowsCtrl:'rosterCtrl', rosterBodyRowsComm:'rosterComm' };
-  /* An off-screen copy of the table with ONLY "Duty place + the chosen shift". For a night shift every cell that has a
-     1st / 2nd night assignment shows BOTH halves (the live table only shows the half that is running). */
+  /* An off-screen copy of the table with ONLY "Duty place + the chosen shift". Cells are copied as they are on screen, so a
+     1st / 2nd night marker looks exactly like in the All-shifts picture (name + one badge). */
   function buildShiftClone(tbl, k, m){
     var first = tbl.querySelector('thead th').getBoundingClientRect().width, sel = k + 1;
     var clone = tbl.cloneNode(true);
@@ -17607,21 +17595,6 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     clone.style.width = (first + SW) + 'px'; clone.style.minWidth = '0';
     Array.prototype.slice.call(clone.classList).forEach(function(c){ if(/^hl-/.test(c)) clone.classList.remove(c); });
     if(tbl.classList.contains('hl-' + LET[k])) clone.classList.add('hl-A');   /* live shift keeps its highlight (it is now column 2) */
-    var tb = clone.querySelector('tbody'), key = tb ? KEYS[tb.id] : null;
-    if(m.type === 'night' && key && typeof rosterViewExchanges === 'function'){
-      var exs = []; try{ exs = rosterViewExchanges(key) || []; }catch(e){}
-      Array.prototype.forEach.call(clone.querySelectorAll('tbody tr'), function(tr){
-        var pi = tr.querySelector('.roster-pos-input'), td = tr.children[1];
-        if(!pi || !td || !td.querySelector('.roster-name-input')) return;
-        var mine = exs.filter(function(x){ return x && x.pos === pi.value && +x.team === k; });
-        var e1 = mine.filter(function(x){ return String(x.nightHalf || '') === '1'; })[0], e2 = mine.filter(function(x){ return String(x.nightHalf || '') === '2'; })[0];
-        if(!e1 && !e2) return;
-        var fx = mine.filter(function(x){ return typeof exIsPlainSub === 'function' && exIsPlainSub(x); })[0];   /* a normal exchange on the same cell: the half marker belongs to that substitute */
-        var fold = function(e, n){ return (e && fx && !String(e.subName || '').trim()) ? Object.assign({}, fx, { nightHalf:String(n) }) : e; };
-        var orig = (e1 && e1.base) || (e2 && e2.base) || (fx && fx.base) || td.querySelector('.roster-name-input').value;
-        td.className = ''; td.innerHTML = halfBlock(1, fold(e1, 1), orig) + halfBlock(2, fold(e2, 2), orig);
-      });
-    }
     var holder = document.createElement('div');
     holder.className = 'roster-tablewrap'; holder.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + (first + SW) + 'px;overflow:visible;';
     holder.appendChild(clone); document.body.appendChild(holder);
