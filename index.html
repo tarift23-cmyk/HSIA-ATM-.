@@ -1536,6 +1536,8 @@ table.thg-table.ab-table td .ab-x{ position:absolute; top:2px; right:3px; paddin
 #abBody tr.ab-sep td{ border-top:2px solid var(--gold); }
 #abBody td.roster-pos{ padding:3px 10px; }
 .ab-lbl{ font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:11.5px; color:var(--gold-soft); line-height:1.2; text-align:left; }
+.ab-lbl span{ display:block; }
+#abBody[data-ed="1"] .ab-lbl [data-p], body.roster-editing #abBody .ab-lbl [data-p]{ text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; }
 .ab-lbl small{ display:block; margin-top:1px; font-size:8.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
 table.roster-table td.ab-span{ background:none !important; box-shadow:none !important; }
 .ab-chips{ display:flex; flex-direction:column; gap:2px; padding:3px; }
@@ -2507,6 +2509,14 @@ body.roster-editing .rearr-open{ display:inline-block; }
 table.roster-table td.rearr-blank{ background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 6px,transparent 6px 12px) !important; box-shadow:inset 0 0 0 1px dashed var(--border); }
 .rearr-from{ margin:2px auto 0; width:max-content; max-width:92%; font:700 9.5px 'Space Grotesk',sans-serif; color:#1B2130; background:linear-gradient(135deg,#9be7c4,#4fd1a1); border-radius:999px; padding:1px 8px; line-height:1.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 td.rearr-blank .rearr-from{ background:transparent; color:var(--muted); border:1px dashed var(--border); }
+/* show / hide the main-roster position chip (this device only) */
+body.rearr-hidepos .rearr-from{ display:none !important; }
+.rearr-pos{ display:none; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:999px; padding:3px 9px; font:700 10.5px 'Space Grotesk',sans-serif; cursor:pointer; white-space:nowrap; }
+.rearr-bar.is-view-on .rearr-pos{ display:inline-block; }
+.rearr-pos.is-shown{ background:linear-gradient(135deg,#9be7c4,#4fd1a1); color:#1B2130; border-color:transparent; }
+/* PNG download: chip drawn in full (never cut with ...) or left out */
+table.rr-png-full .rearr-from{ display:block !important; max-width:none !important; overflow:visible !important; text-overflow:clip !important; white-space:nowrap !important; }
+table.rr-png-nopos .rearr-from{ display:none !important; }
 .rr-pickgrid{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
 .rr-pickgrid .rdl-opt{ position:relative; }
 .rr-pickgrid .rdl-opt.has{ box-shadow:0 0 0 2px var(--gold); }
@@ -18162,6 +18172,11 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 .rdl-opt.rdl-all small{ color:#4a3a00; }
 .rdl-opt:active{ filter:brightness(.9); } .rdl-opt[disabled]{ opacity:.5; pointer-events:none; }
 .rdl-status{ font-size:12px; color:var(--gold-soft); min-height:16px; margin-top:12px; }
+.rdl-posrow{ display:none; gap:6px; margin:0 0 12px; }
+.rdl-posrow.show{ display:flex; }
+.rdl-posbtn{ flex:1 1 0; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:8px 6px; font:700 12px 'Space Grotesk',sans-serif; cursor:pointer; line-height:1.25; }
+.rdl-posbtn.active{ background:linear-gradient(135deg,#9be7c4,#4fd1a1); color:#1B2130; border-color:transparent; }
+.rdl-posbtn[disabled]{ opacity:.5; pointer-events:none; }
 </style>
 <script id="rosterDlJs">
 /* ================= Duty Roster: admin-only PNG download (All / shift A-E) =================
@@ -18287,7 +18302,16 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     try{ return paint(tbl, sel, single, meta, bgEl); }
     finally{ if(holder) holder.remove(); }
   }
+  /* main-roster-position chips: if one is wider than its cell, make its text a little smaller instead of cutting it */
+  function fitChips(tbl){
+    Array.prototype.forEach.call(tbl.querySelectorAll('.rearr-from'), function(c){
+      var td = c.parentNode, fs = 9.5;
+      if(!td || !c.getClientRects().length) return;
+      while(fs > 6.5 && c.getBoundingClientRect().width > td.clientWidth - 6){ fs -= 0.5; c.style.fontSize = fs + 'px'; }
+    });
+  }
   function paint(tbl, sel, single, meta, bgEl){
+    if(tbl.classList.contains('rr-png-full')) fitChips(tbl);
     var T = tbl.getBoundingClientRect();
     if(!T.width || !T.height) throw new Error('Roster table is not visible');
     var total = T.width;
@@ -18422,7 +18446,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       setFont(cs);
       if(cs.textOverflow === 'ellipsis' && cs.overflowX !== 'visible'){
         var maxW = Math.max(10, PR.w - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
-        if(ctx.measureText(txt).width > maxW){ while(txt.length > 1 && ctx.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1); txt += '…'; }
+        if(ctx.measureText(txt).width > maxW + 2){ while(txt.length > 1 && ctx.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1); txt += '…'; }
       }
       var tc = col(cs.color) || { r:240, g:241, b:243, a:1 }, w = ctx.measureText(txt).width, cx = R2.x + R2.w / 2, cy = R2.y + R2.h / 2;
       ctx.fillStyle = css(tc, alpha); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -18559,7 +18583,9 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     var ov = document.createElement('div');
     ov.className = 'modal-overlay'; ov.id = 'rosterDlOverlay'; ov.style.cssText = 'z-index:10005;padding:16px 8px;';
     ov.innerHTML = '<div class="modal-box" style="max-width:420px;"><div class="modal-header"><div class="modal-title">⬇ Roster PNG</div><button type="button" class="modal-close" id="rosterDlClose">✕</button></div>'
-      + '<div class="rdl-sub" id="rosterDlSub"></div><div class="rdl-grid" id="rosterDlGrid"></div><div class="rdl-status" id="rosterDlStatus"></div></div>';
+      + '<div class="rdl-sub" id="rosterDlSub"></div>'
+      + '<div class="rdl-posrow" id="rosterDlPosRow"><button type="button" class="rdl-posbtn" data-pos="1">With main roster position<br><small>মেইন রোস্টারের পজিশন সহ</small></button><button type="button" class="rdl-posbtn" data-pos="0">Without main roster position<br><small>শুধু rearranged</small></button></div>'
+      + '<div class="rdl-grid" id="rosterDlGrid"></div><div class="rdl-status" id="rosterDlStatus"></div></div>';
     document.body.appendChild(ov);
     var close = function(){ ov.classList.remove('show'); };
     $('rosterDlClose').addEventListener('click', close);
@@ -18568,6 +18594,16 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       var b = e.target.closest('.rdl-opt'); if(!b || b.disabled) return;
       run(b.getAttribute('data-k'));
     });
+    $('rosterDlPosRow').addEventListener('click', function(e){
+      var b = e.target.closest('.rdl-posbtn'); if(!b) return;
+      try{ localStorage.setItem('HSIA_RDL_POS_V1', b.getAttribute('data-pos')); }catch(_){}
+      paintPosRow();
+    });
+  }
+  function posWith(){ try{ return localStorage.getItem('HSIA_RDL_POS_V1') !== '0'; }catch(e){ return true; } }
+  function paintPosRow(){
+    var w = posWith();
+    Array.prototype.forEach.call(document.querySelectorAll('#rosterDlPosRow .rdl-posbtn'), function(b){ b.classList.toggle('active', (b.getAttribute('data-pos') === '1') === w); });
   }
   function openDl(){
     if(!isAdmin() && !(window.hsiaIsSubMod && window.hsiaIsSubMod())){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
@@ -18578,6 +18614,8 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     $('rosterDlSub').textContent = (b ? b.textContent.trim() : 'Duty Roster') + ' · ' + di.txt + ' (' + di.day + ')';
     $('rosterDlGrid').innerHTML = '<button type="button" class="rdl-opt rdl-all" data-k="All">All<small>সব</small></button>'
       + meta.map(function(m){ return '<button type="button" class="rdl-opt" data-k="' + m.L + '">' + m.L + '<small style="color:' + shColor(m.type) + '">' + m.bn + '</small></button>'; }).join('');
+    /* the choice shows only while the Internal rearrange view is on for this tab (there are green main-position chips) */
+    $('rosterDlPosRow').classList.toggle('show', !!tbl.querySelector('.rearr-from')); paintPosRow();
     status(''); $('rosterDlOverlay').classList.add('show');
   }
   function save(blob, name){
@@ -18592,7 +18630,12 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     btns.forEach(function(x){ x.disabled = true; }); status('PNG বানানো হচ্ছে…');
     try{
       if(wasCollapsed){ card.classList.remove('collapsed'); await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
-      var cv = await makeCanvas(tbl, k === 'All' ? 'All' : LET.indexOf(k));
+      var hasPos = !!tbl.querySelector('.rearr-from'), pc = posWith() ? 'rr-png-full' : 'rr-png-nopos', cv;
+      if(hasPos) tbl.classList.add(pc);
+      try{ cv = await makeCanvas(tbl, k === 'All' ? 'All' : LET.indexOf(k)); }
+      finally{
+        if(hasPos){ tbl.classList.remove(pc); Array.prototype.forEach.call(tbl.querySelectorAll('.rearr-from'), function(c){ c.style.fontSize = ''; }); }
+      }
       var blob = await encodePng(cv);
       if(!blob) throw new Error('PNG failed');
       var b = tabBtn(), slug = String(b ? b.textContent : 'Roster').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'Roster';
@@ -18642,18 +18685,23 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       var sub = col.querySelector('.roster-subtitle'); if(!sub) return;
       var bar = document.createElement('div'); bar.className = 'rearr-bar'; bar.setAttribute('data-set', s[0]);
       bar.innerHTML = '<span class="rearr-chip">\u21C4 Internal rearrange <b class="rearr-state">OFF</b> <small class="rearr-note"></small></span>'
-        + '<span class="rearr-ctl"><button type="button" class="rearr-open">Arrange \u25B8</button>'
+        + '<span class="rearr-ctl"><button type="button" class="rearr-pos" title="Show / hide the main roster position under each name">Main pos</button><button type="button" class="rearr-open">Arrange \u25B8</button>'
         + '<button type="button" class="rearr-sw" role="switch" aria-checked="false" aria-label="Internal rearrange on / off"><i></i></button></span>';
       sub.parentNode.insertBefore(bar, sub.nextSibling);
     });
   }
+  function posHidden(){ try{ return localStorage.getItem('HSIA_REARR_POS_V1') === '0'; }catch(e){ return false; } }
+  function applyPos(){ document.body.classList.toggle('rearr-hidepos', posHidden()); }
   function syncBars(){
+    applyPos();
     var st = rearrGet();
     SETS.forEach(function(s){
       var bar = document.querySelector('.rearr-bar[data-set="' + s[0] + '"]'); if(!bar) return;
       var n = 0; if(st.maps[s[0]]) LET.forEach(function(L){ if(st.maps[s[0]][L]) n++; });
       var pub = n > 0, on = pub && !rearrViewOff(s[0]);
       bar.classList.toggle('is-on', pub);
+      bar.classList.toggle('is-view-on', on);
+      var pb = bar.querySelector('.rearr-pos'); if(pb){ var ph = posHidden(); pb.classList.toggle('is-shown', !ph); pb.textContent = ph ? 'Main pos: Hide' : 'Main pos: Show'; }
       var sw = bar.querySelector('.rearr-sw'); if(sw) sw.setAttribute('aria-checked', on ? 'true' : 'false');
       var stt = bar.querySelector('.rearr-state'); if(stt) stt.textContent = pub ? (on ? 'ON' : 'OFF') : '';
       var note = bar.querySelector('.rearr-note');
@@ -18667,6 +18715,10 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
   document.addEventListener('click', function(e){
     var bar = e.target.closest ? e.target.closest('.rearr-bar') : null; if(!bar) return;
     var k = bar.getAttribute('data-set'), st = rearrGet();
+    if(e.target.closest('.rearr-pos')){
+      try{ localStorage.setItem('HSIA_REARR_POS_V1', posHidden() ? '1' : '0'); }catch(_){}
+      syncBars(); return;   /* personal, this device only */
+    }
     if(e.target.closest('.rearr-sw')){
       rearrSetViewOff(k, !rearrViewOff(k)); syncBars(); renderAll(); return;   /* personal, this device only */
     }
@@ -19808,6 +19860,7 @@ window.hsiaFs = function(wrap, on, onExit){
       + '</div></td></tr>';
     var sig = h + cur + ed + office + cc.M + cc.A + iso;
     if(body._sig !== sig){ body._sig = sig; body.innerHTML = h; }
+    body.setAttribute('data-ed', ed ? '1' : '0');
     var eb = document.getElementById('abEditBtn'); if(eb){ eb.classList.toggle('on', ed); eb.textContent = ed ? 'Done' : '✎ Edit'; }
   }
   render();
@@ -19845,8 +19898,12 @@ window.hsiaFs = function(wrap, on, onExit){
   /* edit mode: tap the row name (or its small line) to rename it */
   body.addEventListener('click', function(e){
     if(!editOn('ab')) return;
-    var el = e.target.closest('.ab-lbl [data-p]'); if(!el) return;
-    var box = el.closest('.ab-lbl'), key = box.getAttribute('data-l'), pi = +el.getAttribute('data-p');
+    /* the whole label cell is the tap target (title = upper part, small line = lower part), not just the thin text */
+    var td = e.target.closest('td.roster-pos'); if(!td) return;
+    var box = td.querySelector('.ab-lbl'); if(!box) return;
+    var key = box.getAttribute('data-l'), el = e.target.closest('[data-p]'), pi;
+    if(el && box.contains(el)) pi = +el.getAttribute('data-p');
+    else { var sm = box.querySelector('small'); pi = (sm && e.clientY >= sm.getBoundingClientRect().top) ? 1 : 0; }
     var v = prompt('Edit name', LBL[key][pi]); if(v === null) return; v = v.trim(); if(!v) return;
     LBL[key][pi] = v; lsave(); body._sig = ''; render();
   });
