@@ -1528,6 +1528,32 @@ body.hsia-staff .ab-add{ display:flex; }
 table.thg-table.ab-table td.ab-ed{ position:relative; cursor:pointer; outline:1px dashed var(--gold); outline-offset:-3px; }
 table.thg-table.ab-table td .ab-x{ position:absolute; top:2px; right:3px; padding:4px 6px; font-size:11px; line-height:1; color:#F54249; font-weight:800; }
 .sato-block{ margin-top:18px; }
+/* ---- unified Aerodrome Assistant table: Aero Billing + Office rows live inside #rosterTable ---- */
+#abBody td{ padding:0; vertical-align:middle; text-align:center; }
+#abBody tr.ab-sep td{ border-top:2px solid var(--gold); }
+#abBody td.roster-pos{ padding:3px 10px; }
+.ab-lbl{ font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:11.5px; color:var(--gold-soft); line-height:1.2; text-align:left; }
+.ab-lbl small{ display:block; margin-top:1px; font-size:8.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+table.roster-table td.ab-span{ background:none !important; box-shadow:none !important; }
+.ab-chips{ display:flex; flex-direction:column; gap:2px; padding:3px; }
+.ab-chips.row{ flex-direction:row; flex-wrap:wrap; justify-content:center; gap:4px; }
+.ab-chip{ position:relative; border:1px solid var(--border); border-radius:6px; background:var(--panel); padding:2px 7px; font-weight:800; font-size:11.5px; line-height:1.2; color:var(--text); }
+.ab-chip small{ display:block; font-size:8px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.ab-chips.row .ab-chip small{ display:inline; margin-left:5px; }
+.ab-chip.off{ opacity:.55; }
+.ab-chip.live{ background:rgba(166,171,180,0.16); box-shadow:inset 0 0 0 1px var(--gold); }
+.ab-chip.ed{ cursor:pointer; outline:1px dashed var(--gold); outline-offset:-3px; padding-right:20px; }
+.ab-chip .ab-x{ position:absolute; top:1px; right:3px; padding:3px 5px; font-size:11px; line-height:1; color:#F54249; font-weight:800; }
+td.ab-empty{ color:var(--muted); opacity:.35; font-size:12px; }
+/* ---- roster row tools: select a row, add a blank row under it, move it, remove it ---- */
+.roster-rowtools{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; }
+body:not(.hsia-staff) .roster-rowtools{ display:none !important; }
+.roster-rowtools .rt-sel{ flex:1 1 140px; font-size:11.5px; color:var(--muted); min-width:0; }
+.roster-rowtools button{ flex:0 0 auto; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 12px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; cursor:pointer; }
+table.roster-table tr.rt-sel td.roster-pos{ background:linear-gradient(135deg,var(--gold),var(--gold-soft)); box-shadow:inset 0 0 0 2px var(--gold); }
+table.roster-table tr.rt-sel td.roster-pos .roster-pos-input{ color:#1B2130; }
+body.hsia-staff table.roster-table td.roster-pos{ cursor:pointer; }
+
 table.thg-table.sato-table{ table-layout:auto; width:100%; }
 table.thg-table.sato-table td{ min-width:86px; padding:12px 8px; white-space:nowrap; }
 .sato-time{ font-size:10.5px; color:var(--muted); margin:-2px 2px 8px; }
@@ -2858,6 +2884,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <input id="rosterNewPosCtrl" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtnCtrl">+ Add</button>
       </div>
+      <div class="roster-rowtools" data-tb="rosterBodyRowsCtrl"><span class="rt-sel">Row: tap a DUTY PLACE to select</span><button type="button" data-act="ins">+ Row below</button><button type="button" data-act="up" aria-label="Move up">↑</button><button type="button" data-act="dn" aria-label="Move down">↓</button><button type="button" data-act="del">✕ Row</button></div>
 
       </div>
 
@@ -2876,36 +2903,20 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
             </tr>
           </thead>
           <tbody id="rosterBodyRows"><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="TWR-1" data-ri="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Moinul-2" data-ri="0" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Razu" data-ri="0" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Samiul" data-ri="0" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Rokibul" data-ri="0" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Shubho" data-ri="0" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="TWR-2" data-ri="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Anower" data-ri="1" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Milon islam" data-ri="1" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Tamzid" data-ri="1" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Razin Saleh" data-ri="1" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Mahbubur rahman" data-ri="1" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="SMC-1" data-ri="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Imtiaz" data-ri="2" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Nurul amin" data-ri="2" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Asaduzzaman -1" data-ri="2" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Almas" data-ri="2" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Monir-1" data-ri="2" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="SMC-2" data-ri="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Shaker" data-ri="3" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Ashikul" data-ri="3" data-ci="1" autocomplete="off" readonly=""></td><td class="roster-vacant-cell roster-has-tag"><input class="roster-name-input" type="text" value="Abdul khaleque" data-ri="3" data-ci="2" autocomplete="off" readonly=""><span class="roster-name-tag roster-tag-cl">CL</span><div class="roster-vacant-badge" title="Original: Abdul khaleque">Mahbubur rahman</div></td><td><input class="roster-name-input" type="text" value="Shajahan" data-ri="3" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Biprojit" data-ri="3" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="EOC" data-ri="4" autocomplete="off" readonly=""></td><td class="roster-vacant-cell roster-nosub"><input class="roster-name-input" type="text" value="Mamun 2" data-ri="4" data-ci="0" autocomplete="off" readonly=""><div class="roster-vacant-badge" title="Original: Mamun 2">➜ ACC LOWER-3</div></td><td><input class="roster-name-input" type="text" value="Ot" data-ri="4" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Sourab Roy" data-ri="4" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Asaduzzaman-2" data-ri="4" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Ranjan kumar" data-ri="4" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="ACC LOWER-1" data-ri="5" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night2 roster-nosub"><input class="roster-name-input" type="text" value="Amit" data-ri="5" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night2" title="Original: Amit (2nd Night)">🌙 2nd Night</div></td><td><input class="roster-name-input" type="text" value="Ata-E-Rabbi" data-ri="5" data-ci="1" autocomplete="off" readonly=""></td><td class="roster-vacant-cell roster-has-tag"><input class="roster-name-input" type="text" value="Alamin" data-ri="5" data-ci="2" autocomplete="off" readonly=""><span class="roster-name-tag roster-tag-cl">CL</span><div class="roster-vacant-badge" title="Original: Alamin">Moinul-2</div></td><td><input class="roster-name-input" type="text" value="Masud" data-ri="5" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Sajedur" data-ri="5" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="ACC LOWER-2" data-ri="6" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night2 roster-nosub"><input class="roster-name-input" type="text" value="Mottaleb" data-ri="6" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night2" title="Original: Mottaleb (2nd Night)">🌙 2nd Night</div></td><td><input class="roster-name-input" type="text" value="Sujan" data-ri="6" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Shariful" data-ri="6" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Rahidul" data-ri="6" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Akib" data-ri="6" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="ACC LOWER-3" data-ri="7" autocomplete="off" readonly=""></td><td class="roster-vacant-cell roster-has-tag"><input class="roster-name-input" type="text" value="Zahid" data-ri="7" data-ci="0" autocomplete="off" readonly=""><span class="roster-name-tag roster-tag-cl">CL</span><div class="roster-chain-old">Mamun 2</div><div class="roster-exchange-badge" title="Original: Zahid">Piaus</div></td><td><input class="roster-name-input" type="text" value="শাওন মন্ডল" data-ri="7" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Kamrul hasan" data-ri="7" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Ariful islam-2" data-ri="7" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Raihan" data-ri="7" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="ACC UPPER-1" data-ri="8" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night2 roster-nosub"><input class="roster-name-input" type="text" value="Lelin" data-ri="8" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night2" title="Original: Lelin (2nd Night)">🌙 2nd Night</div></td><td><input class="roster-name-input" type="text" value="Rashed" data-ri="8" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Borun" data-ri="8" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Monir-2" data-ri="8" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Naymul juwel" data-ri="8" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="ACC UPPER-2" data-ri="9" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night1 roster-nosub"><input class="roster-name-input" type="text" value="Tarif" data-ri="9" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night1" title="Original: Tarif (1st Night)">🌙 1st Night</div></td><td><input class="roster-name-input" type="text" value="Aysha" data-ri="9" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Abdullah" data-ri="9" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Razibul" data-ri="9" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Mogibur Rahman" data-ri="9" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="ACC UPPER-3" data-ri="10" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night2 roster-nosub"><input class="roster-name-input" type="text" value="Faruk" data-ri="10" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night2" title="Original: Faruk (2nd Night)">🌙 2nd Night</div></td><td><input class="roster-name-input" type="text" value="Piaus" data-ri="10" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Obaydul" data-ri="10" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Tarek" data-ri="10" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Papri" data-ri="10" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="PFIU" data-ri="11" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="11" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="11" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="11" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="11" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="11" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="RCC" data-ri="12" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night1 roster-nosub"><input class="roster-name-input" type="text" value="Amena" data-ri="12" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night1" title="Original: Amena (1st Night)">🌙 1st Night</div></td><td class="roster-vacant-cell roster-has-tag"><input class="roster-name-input" type="text" value="Warda" data-ri="12" data-ci="1" autocomplete="off" readonly=""><span class="roster-name-tag roster-tag-cl">CL</span><div class="roster-vacant-badge" title="Original: Warda">Ariful islam-2</div></td><td><input class="roster-name-input" type="text" value="Marzia" data-ri="12" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Razzaque" data-ri="12" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Afsana lima" data-ri="12" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="FDO" data-ri="13" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night1 roster-nosub"><input class="roster-name-input" type="text" value="Didar" data-ri="13" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night1" title="Original: Didar (1st Night)">🌙 1st Night</div></td><td><input class="roster-name-input" type="text" value="Jewel Rana" data-ri="13" data-ci="1" autocomplete="off" readonly=""></td><td class="roster-exchange-cell roster-has-tag"><input class="roster-name-input" type="text" value="Ashraful" data-ri="13" data-ci="2" autocomplete="off" readonly=""><span class="roster-name-tag roster-tag-xch">🔄</span><div class="roster-exchange-badge" title="Original: Ashraful">Sumon</div></td><td><input class="roster-name-input" type="text" value="Atauzzaman" data-ri="13" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Emdad" data-ri="13" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="APP" data-ri="14" autocomplete="off" readonly=""></td><td class="roster-exchange-cell-night1 roster-nosub"><input class="roster-name-input" type="text" value="Robiul" data-ri="14" data-ci="0" autocomplete="off" readonly=""><div class="roster-exchange-badge-night1" title="Original: Robiul (1st Night)">🌙 1st Night</div></td><td><input class="roster-name-input" type="text" value="Mijan" data-ri="14" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Mostafa" data-ri="14" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Sumon" data-ri="14" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Nayan" data-ri="14" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="BILLING" data-ri="15" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="15" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="15" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="15" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="15" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="15" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="FIC-1" data-ri="16" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Rowsanara" data-ri="16" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Mamun-1" data-ri="16" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Zahangir" data-ri="16" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Afsar" data-ri="16" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Sharmin" data-ri="16" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="FIC-2" data-ri="17" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="17" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="17" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="17" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="17" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="OT" data-ri="17" data-ci="4" autocomplete="off" readonly=""></td></tr><tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="Old FIC/CC" data-ri="18" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Asadullah Ahmed" data-ri="18" data-ci="0" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="KM Syduzaman" data-ri="18" data-ci="1" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="SK Sadi" data-ri="18" data-ci="2" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Zion" data-ri="18" data-ci="3" autocomplete="off" readonly=""></td><td><input class="roster-name-input" type="text" value="Arifur Rahman" data-ri="18" data-ci="4" autocomplete="off" readonly=""></td></tr><tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="5"><textarea class="roster-standby-input" rows="1" placeholder="Stand by names (comma separated)" autocomplete="off" readonly=""></textarea></td></tr></tbody>
+        <tbody id="abBody"></tbody>
         </table>
       </div>
       <div class="roster-addrow">
         <input id="rosterNewPos" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtn">+ Add</button>
       </div>
+      <div class="roster-rowtools" data-tb="rosterBodyRows"><span class="rt-sel">Row: tap a DUTY PLACE to select</span><button type="button" data-act="ins">+ Row below</button><button type="button" data-act="up" aria-label="Move up">↑</button><button type="button" data-act="dn" aria-label="Move down">↓</button><button type="button" data-act="del">✕ Row</button></div>
 
-      <div class="ab-block" id="aeroBillingBlock">
-        <div class="roster-subtitle">Aero Billing</div>
-        <div class="thg-wrap"><table class="thg-table ab-table">
-          <thead><tr><th id="abHM"><b>Morning</b></th><th id="abHA"><b>Afternoon</b></th></tr></thead>
-          <tbody id="abBody"></tbody>
-        </table></div>
-        <div class="roster-addrow ab-add">
-          <input id="abNewName" type="text" placeholder="New person (Aero Billing)" autocomplete="off">
-          <select id="abNewGrp"><option value="g1">Group 1</option><option value="g2">Group 2</option><option value="day">Day 09:00–16:00</option></select>
-          <button type="button" id="abAddBtn">+ Add</button>
-          <button type="button" id="abEditBtn">✎ Edit</button>
-        </div>
-      </div>
-
-      <div class="sato-block" id="satoBlock">
-        <div class="roster-subtitle">SATO Office / Admin</div>
-        <div class="sato-time">Office time 09:00 – 16:00</div>
-        <div class="thg-wrap"><table class="thg-table ab-table sato-table"><tbody><tr id="satoRow"></tr></tbody></table></div>
-        <div class="roster-addrow ab-add">
-          <input id="satoNewName" type="text" placeholder="New person (SATO Office / Admin)" autocomplete="off">
-          <button type="button" id="satoAddBtn">+ Add</button>
-          <button type="button" id="satoEditBtn">✎ Edit</button>
-        </div>
+      <div class="roster-addrow ab-add" id="abControls">
+        <input id="abNewName" type="text" placeholder="New person (Aero Billing / SATO)" autocomplete="off">
+        <select id="abNewGrp"><option value="g1">Aero Billing · Group 1</option><option value="g2">Aero Billing · Group 2</option><option value="day">Aero Billing · Day 09:00–16:00</option><option value="sato">SATO Office / Admin</option></select>
+        <button type="button" id="abAddBtn">+ Add</button>
+        <button type="button" id="abEditBtn">✎ Edit</button>
       </div>
       </div>
 
@@ -2932,6 +2943,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <input id="rosterNewPosComm" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtnComm">+ Add</button>
       </div>
+      <div class="roster-rowtools" data-tb="rosterBodyRowsComm"><span class="rt-sel">Row: tap a DUTY PLACE to select</span><button type="button" data-act="ins">+ Row below</button><button type="button" data-act="up" aria-label="Move up">↑</button><button type="button" data-act="dn" aria-label="Move down">↓</button><button type="button" data-act="del">✕ Row</button></div>
       </div>
 
       <div class="rost-col" id="rosterTHCol">
@@ -18017,6 +18029,13 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     return { holder:holder, table:clone };
   }
   async function makeCanvas(tbl, sel){
+    /* the Aero Billing / Office rows are drawn separately under the table (hsiaAeroBillingPaint), so lift them out while painting */
+    var ab = document.getElementById('abBody'), par = null, nx = null;
+    if(ab && tbl && tbl.contains(ab)){ par = ab.parentNode; nx = ab.nextSibling; par.removeChild(ab); }
+    try{ return await makeCanvas0(tbl, sel); }
+    finally{ if(par) par.insertBefore(ab, nx); }
+  }
+  async function makeCanvas0(tbl, sel){
     try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
     var single = sel !== 'All', meta = shiftMeta(tbl), holder = null, bgEl = tbl;
     if(single){ var bc = buildShiftClone(tbl, sel, meta[sel]); holder = bc.holder; tbl = bc.table; await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
@@ -19174,7 +19193,7 @@ window.hsiaFs = function(wrap, on, onExit){
   var DEF = { g1:[{n:'Abeer Rahman',off:[6]},{n:'Reshma',off:[6]}], g2:[{n:'Sarwar Zahan',off:[5]},{n:'OT',off:[]}], day:[{n:'Mahabub',off:[5]}] };
   var SDEF = ['Rahim','Delowar','Altaf'];
   var ST = load(), SATO = sload();
-  var EDIT = { ab:false, sato:false };
+  var EDIT = { ab:false };
   /* only an admin or a moderator may add / edit / remove people; for everybody else the controls are hidden (CSS) and these actions do nothing */
   function isStaff(){
     try{ if(window.hsiaIsModerator && window.hsiaIsModerator()) return true; }catch(e){}
@@ -19213,51 +19232,55 @@ window.hsiaFs = function(wrap, on, onExit){
   var daysOn = function(pl){ return ST.day.filter(function(p){ return !isOff(p, pl); }).map(function(p){ return p.n; }); };
   function chunk(list){ var r = []; for(var i = 0; i < list.length; i += 2) r.push(list.slice(i, i + 2)); return r; }
 
-  /* ---- on-screen tables ---- */
-  function render(){
-    var n = dhaka(), iso = selIso(), pl = plan(iso), live = (iso === n.iso), cur = live ? curShift(n.mins) : '';
-    document.getElementById('abHM').className = cur === 'M' ? 'ab-live' : '';
-    document.getElementById('abHA').className = cur === 'A' ? 'ab-live' : '';
-    var ed = editOn('ab');
-    function cell(it, g, span){
-      var p = it.p, off = isOff(p, pl), st = pl[g], on = !off && st === cur;
-      var tag = off ? '<small>Off</small>' : '<small class="' + (st === 'M' ? 'm' : 'a') + '">' + (st === 'M' ? 'Morning' : 'Afternoon') + '</small>';
-      return '<td data-g="' + g + '" data-i="' + it.i + '"' + (span ? ' colspan="2"' : '') + ' class="' + (on ? 'ab-live' : '') + (off ? ' ab-off' : '') + (ed ? ' ab-ed' : '') + '">' + esc(p.n) + tag + (ed ? '<span class="ab-x">✕</span>' : '') + '</td>';
+  /* ---- on-screen rows (inside the roster table): Aero Billing under the Morning / Afternoon team columns + one Office row ---- */
+  function shiftCols(){
+    var r = { M:-1, A:-1 }, ths = document.querySelectorAll('#rosterTable thead th');
+    for(var i = 1; i < ths.length; i++){
+      var s = ths[i].querySelector('.rd-sub'); if(!s) continue;
+      if(s.classList.contains('d-morning') && r.M < 0) r.M = i - 1;
+      if(s.classList.contains('d-afternoon') && r.A < 0) r.A = i - 1;
     }
-    var html = '';
-    ['g1','g2'].forEach(function(g){
-      chunk(ST[g].map(function(p, i){ return { p:p, i:i }; })).forEach(function(row){ html += '<tr>' + row.map(function(it){ return cell(it, g, row.length === 1); }).join('') + '</tr>'; });
-    });
-    ST.day.forEach(function(p, i){
-      var off = isOff(p, pl), on = live && inOffice(n.mins) && !off;
-      html += '<tr><td data-g="day" data-i="' + i + '" colspan="2" class="' + (on ? 'ab-live' : '') + (off ? ' ab-off' : '') + (ed ? ' ab-ed' : '') + '">' + esc(p.n) + '<small>' + (off ? 'Off' : DAY_TIME) + '</small>' + (ed ? '<span class="ab-x">✕</span>' : '') + '</td></tr>';
-    });
-    var sig = html + cur + ed;
-    if(body._sig !== sig){ body._sig = sig; body.innerHTML = html; }
+    if(r.M < 0) r.M = 1; if(r.A < 0) r.A = 2;
+    return r;
+  }
+  function render(){
+    var n = dhaka(), iso = selIso(), pl = plan(iso), live = (iso === n.iso), cur = live ? curShift(n.mins) : '', office = live && inOffice(n.mins);
+    var ed = editOn('ab'), cc = shiftCols(), at = {};
+    ['g1','g2'].forEach(function(g){ var c = cc[pl[g]]; at[c] = (at[c] || []).concat(g); });
+    function chip(p, g, i, st){
+      var o = isOff(p, pl), on = !o && st === cur;
+      return '<div class="ab-chip' + (on ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + (o ? '<small>Off</small>' : '') + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
+    }
+    var h = '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl">Aero Billing<small>Morning / Afternoon</small></div></td>';
+    for(var k = 0; k < 5; k++){
+      var gs = at[k];
+      h += gs ? '<td><div class="ab-chips">' + gs.map(function(g){ return ST[g].map(function(p, i){ return chip(p, g, i, pl[g]); }).join(''); }).join('') + '</div></td>' : '<td class="ab-empty">—</td>';
+    }
+    h += '</tr>';
+    function oc(p, g, i, tag){
+      var o = isOff(p, pl);
+      return '<div class="ab-chip' + (office && !o ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + '<small>' + (o ? 'Off' : tag) + '</small>' + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
+    }
+    h += '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl">Office<small>' + DAY_TIME + '</small></div></td><td class="ab-span" colspan="5"><div class="ab-chips row">'
+      + ST.day.map(function(p, i){ return oc(p, 'day', i, 'Aero Billing'); }).join('')
+      + SATO.map(function(nm, i){ return oc({ n:nm, off:[] }, 'sato', i, 'SATO / Admin'); }).join('')
+      + '</div></td></tr>';
+    var sig = h + cur + ed + office + cc.M + cc.A + iso;
+    if(body._sig !== sig){ body._sig = sig; body.innerHTML = h; }
     var eb = document.getElementById('abEditBtn'); if(eb){ eb.classList.toggle('on', ed); eb.textContent = ed ? 'Done' : '✎ Edit'; }
-    // SATO Office / Admin: one row, boxes lit during office time
-    var sRow = document.getElementById('satoRow'), sOn = (iso === n.iso) && inOffice(n.mins);
-    var sed = editOn('sato');
-    var sh = SATO.map(function(nm, i){ return '<td data-i="' + i + '" class="' + (sOn ? 'ab-live' : '') + (sed ? ' ab-ed' : '') + '">' + esc(nm) + (sed ? '<span class="ab-x">✕</span>' : '') + '</td>'; }).join('') || '<td class="ab-off">—</td>';
-    var seb = document.getElementById('satoEditBtn'); if(seb){ seb.classList.toggle('on', sed); seb.textContent = sed ? 'Done' : '✎ Edit'; }
-    var ssig = sh + sOn + sed;
-    if(sRow && sRow._sig !== ssig){ sRow._sig = ssig; sRow.innerHTML = sh; }
   }
   render();
   setInterval(render, 1000);
 
   /* ---- add people (admin / moderator only; the add rows are hidden for everybody else) ---- */
   function gate(){ return isStaff(); }
-  var abBtn = document.getElementById('abAddBtn'), sBtn = document.getElementById('satoAddBtn');
+  var abBtn = document.getElementById('abAddBtn');
   if(abBtn) abBtn.addEventListener('click', function(){
     var inp = document.getElementById('abNewName'), nm = inp.value.trim(); if(!nm) return;
     if(!gate()) return;
-    ST[document.getElementById('abNewGrp').value].push({ n:nm, off:[] }); save(); inp.value = ''; render();
-  });
-  if(sBtn) sBtn.addEventListener('click', function(){
-    var inp = document.getElementById('satoNewName'), nm = inp.value.trim(); if(!nm) return;
-    if(!gate()) return;
-    SATO.push(nm); ssave(); inp.value = ''; render();
+    var g = document.getElementById('abNewGrp').value;
+    if(g === 'sato'){ SATO.push(nm); ssave(); } else { ST[g].push({ n:nm, off:[] }); save(); }
+    inp.value = ''; render();
   });
 
   /* edit mode: tap a name to rename it, tap ✕ to remove it */
@@ -19266,20 +19289,19 @@ window.hsiaFs = function(wrap, on, onExit){
     if(btn) btn.addEventListener('click', function(){ if(!isStaff()) return; EDIT[key] = !EDIT[key]; render(); });
     if(tb) tb.addEventListener('click', function(e){
       if(!editOn(key)) return;
-      var td = e.target.closest('td[data-i]'); if(!td) return;
+      var td = e.target.closest('[data-i]'); if(!td) return;
       var i = +td.getAttribute('data-i'), g = td.getAttribute('data-g'), list = getList(g), it = list[i]; if(it == null) return;
       var cur = (typeof it === 'string') ? it : it.n;
       if(e.target.closest('.ab-x')){
-        if(confirm('Remove "' + cur + '"?')){ list.splice(i, 1); after(); render(); }
+        if(confirm('Remove "' + cur + '"?')){ list.splice(i, 1); after(g); render(); }
         return;
       }
       var v = prompt('Edit name', cur); if(v === null) return; v = v.trim(); if(!v) return;
       if(typeof it === 'string') list[i] = v; else it.n = v;
-      after(); render();
+      after(g); render();
     });
   }
-  bindEdit('abEditBtn', 'ab', 'abBody', function(g){ return ST[g]; }, save);
-  bindEdit('satoEditBtn', 'sato', 'satoRow', function(){ return SATO; }, ssave);
+  bindEdit('abEditBtn', 'ab', 'abBody', function(g){ return g === 'sato' ? SATO : ST[g]; }, function(g){ if(g === 'sato') ssave(); else save(); });
 
   /* ---- "Now" view: who of Aero Billing is on duty right now ---- */
   window.hsiaAeroBillingNow = function(){
@@ -19359,4 +19381,67 @@ window.hsiaFs = function(wrap, on, onExit){
   };
 })();
 </script>
+<script>
+/* ===== Roster row tools: tap a DUTY PLACE to select a row, then add a blank row under it, move it up / down, or remove it.
+   Works for Controllers, Aerodrome Assistant and Communication. Admin / moderator only (same gate as the + Add button). ===== */
+(function(){
+  var CFG = {
+    rosterBodyRowsCtrl: { data:function(){ return ROSTER_CTRL; }, save:function(d){ saveRosterCtrl(d); }, render:function(){ renderRosterCtrl(); } },
+    rosterBodyRows:     { data:function(){ return ROSTER; },      save:function(d){ saveRoster(d); },     render:function(){ renderRoster(); } },
+    rosterBodyRowsComm: { data:function(){ return ROSTER_COMM; }, save:function(d){ saveRosterComm(d); }, render:function(){ renderRosterComm(); } }
+  };
+  var SEL = {}, KEEP = ['standby','admin'];   /* Stand by / Admin texts live on the first row: they must follow whichever row is first */
+  function staff(){ return document.body.classList.contains('hsia-staff'); }
+  function mark(id){
+    var tb = document.getElementById(id); if(!tb) return;
+    Array.prototype.forEach.call(tb.querySelectorAll('tr.rt-sel'), function(t){ t.classList.remove('rt-sel'); });
+    var d = CFG[id].data(), si = SEL[id];
+    if(si != null && si >= 0 && d[si]){
+      var inp = tb.querySelector('.roster-pos-input[data-ri="' + si + '"]');
+      if(inp && inp.closest('tr')) inp.closest('tr').classList.add('rt-sel');
+    }
+    var box = document.querySelector('.roster-rowtools[data-tb="' + id + '"]'), lab = box && box.querySelector('.rt-sel');
+    if(lab) lab.textContent = (si != null && si >= 0 && d[si]) ? 'Row: ' + (d[si].pos || '(new row)') : 'Row: tap a DUTY PLACE to select';
+  }
+  Object.keys(CFG).forEach(function(id){
+    var tb = document.getElementById(id); if(!tb) return;
+    new MutationObserver(function(){ mark(id); }).observe(tb, { childList:true });
+    tb.addEventListener('click', function(e){
+      if(!staff()) return;
+      var td = e.target.closest('td.roster-pos'); if(!td) return;
+      var inp = td.querySelector('.roster-pos-input[data-ri]'); if(!inp) return;
+      SEL[id] = +inp.getAttribute('data-ri'); mark(id);
+    });
+  });
+  function withFirstRowProps(d, fn){
+    var keep = {}; KEEP.forEach(function(k){ if(d[0] && d[0][k] !== undefined) keep[k] = d[0][k]; });
+    fn();
+    d.forEach(function(r, i){ if(i > 0) KEEP.forEach(function(k){ delete r[k]; }); });
+    if(d[0]) KEEP.forEach(function(k){ if(keep[k] !== undefined) d[0][k] = keep[k]; });
+  }
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('.roster-rowtools button[data-act]'); if(!btn) return;
+    var box = btn.closest('.roster-rowtools'), id = box.getAttribute('data-tb'), c = CFG[id]; if(!c) return;
+    if(!requireRosterAuth()) return;
+    var d = c.data(), si = (SEL[id] != null) ? SEL[id] : -1, act = btn.getAttribute('data-act'), msg = '';
+    if(act === 'ins'){
+      var at = (si >= 0 && si < d.length) ? si + 1 : d.length;
+      d.splice(at, 0, { pos:'', names:['','','','',''] }); SEL[id] = at; msg = 'Blank row added — type the name, then Save';
+    } else if(si < 0 || !d[si]){ alert('First tap a DUTY PLACE name to select a row.'); return; }
+    else if(act === 'del'){
+      if(!confirm('Remove row "' + (d[si].pos || 'blank') + '"?')) return;
+      withFirstRowProps(d, function(){ d.splice(si, 1); }); SEL[id] = Math.min(si, d.length - 1); msg = 'Row removed';
+    } else {
+      var t = si + (act === 'up' ? -1 : 1); if(t < 0 || t >= d.length) return;
+      withFirstRowProps(d, function(){ var x = d[si]; d[si] = d[t]; d[t] = x; }); SEL[id] = t; msg = 'Row moved';
+    }
+    c.save(d); c.render();
+    try{ if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) unlockAllRosterInputs(); }catch(err){}
+    mark(id);
+    if(act === 'ins'){ var ni = document.querySelector('#' + id + ' .roster-pos-input[data-ri="' + SEL[id] + '"]'); if(ni){ try{ ni.focus(); }catch(err){} } }
+    try{ flashRosterSaved(msg); }catch(err){}
+  });
+})();
+</script>
+
 </body></html>
