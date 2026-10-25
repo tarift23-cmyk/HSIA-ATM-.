@@ -1548,6 +1548,18 @@ td.ab-empty{ color:var(--muted); opacity:.35; font-size:12px; }
 /* ---- roster row tools: select a row, add a blank row under it, move it, remove it ---- */
 .roster-rowtools{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; }
 body:not(.hsia-staff) .roster-rowtools{ display:none !important; }
+/* roster edit tools (+ Add, Row tools, Aero Billing add/edit) stay hidden until the pen (Edit) button is pressed; Save hides them again */
+body:not(.roster-editing) .roster-addrow,
+body:not(.roster-editing) .roster-rowtools,
+body:not(.roster-editing) #abControls{ display:none !important; }
+/* Information flow tables (Adjacent / VCC / Others): "+ নতুন সারি" and Save stay hidden until the pen is pressed */
+.iflow-save-row:not(.is-editing) .fr-dbimport:not(#iflowAdjEditBtn):not(#iflowVccEditBtn):not(#iflowOthersEditBtn){ display:none !important; }
+/* Notepad: add / rename / manage controls stay hidden until the pen unlocks editing */
+body:not(.np-editing) #npAddBtn,
+body:not(.np-editing) .np-chip-rename,
+body:not(.np-editing) .np-sub-add,
+body:not(.np-editing) .np-sub-manage,
+body:not(.np-editing) .np-sub-x{ display:none !important; }
 .roster-rowtools .rt-sel{ flex:1 1 140px; font-size:11.5px; color:var(--muted); min-width:0; }
 .roster-rowtools button{ flex:0 0 auto; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 12px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; cursor:pointer; }
 table.roster-table tr.rt-sel td.roster-pos{ background:linear-gradient(135deg,var(--gold),var(--gold-soft)); box-shadow:inset 0 0 0 2px var(--gold); }
@@ -10501,6 +10513,7 @@ function initRoster(){
     editBtn.addEventListener('click', ()=>{
       if(requireRosterAuth()){
         try{ if(window.hsiaTHMRShowEdit) window.hsiaTHMRShowEdit(); }catch(e){}
+        document.body.classList.add('roster-editing');
         flashRosterSaved('এডিট মোড চালু হয়েছে — এখন ঘরে ক্লিক করে পরিবর্তন করুন');
       }
     });
@@ -10521,6 +10534,7 @@ function initRoster(){
       saveRosterComm(ROSTER_COMM);
       try{ if(window.hsiaTHMRSave) window.hsiaTHMRSave(); }catch(e){}
       try{ if(window.hsiaTHMRHideEdit) window.hsiaTHMRHideEdit(); }catch(e){}
+      document.body.classList.remove('roster-editing');
       renderRoster();
       renderRosterCtrl();
       renderRosterComm();
@@ -14256,6 +14270,7 @@ function initAdminNotepad(){
       if(notepadUnlocked){
         ta.readOnly = true;
         notepadUnlocked = false;
+        document.body.classList.remove('np-editing');
         editBtn.innerHTML = window.HSIA_ICO.edit;
         return;
       }
@@ -14263,6 +14278,7 @@ function initAdminNotepad(){
       ta.readOnly = false;
       ta.focus();
       notepadUnlocked = true;
+      document.body.classList.add('np-editing');
       editBtn.innerHTML = window.HSIA_ICO.lock;
     });
   }
@@ -16814,6 +16830,7 @@ initAdminNotepad();
 
     function apply(on){
       getEditableEls().forEach(el=> el.contentEditable = on ? 'true' : 'false');
+      if(editBtn && editBtn.parentElement) editBtn.parentElement.classList.toggle('is-editing', !!on);
       if(addRowBtn){ addRowBtn.disabled = !on; addRowBtn.style.opacity = on ? '1' : '.5'; }
     }
     apply(false);
