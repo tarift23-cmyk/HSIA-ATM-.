@@ -393,7 +393,8 @@
   .qbm-pm .qbm-title, .qbm-pm .qbm-table, .qbm-pm .qbm-table th, .qbm-pm .qbm-table td{ color:#000; }
   .qbm-pm .qbm-table th, .qbm-pm .qbm-table td, .qbm-pm .qbm-table td.det, .qbm-pm .qbm-table td.rel, .qbm-pm .qbm-table th.det, .qbm-pm .qbm-table th.rel{ background:#fff; border-color:#000; }
   #qbmPaperPrev{ margin-top:6px; }
-  #qbmPaperPrev canvas{ display:block; width:100%; height:auto; background:#fff; margin:0 0 14px; border-radius:2px; box-shadow:0 2px 16px rgba(0,0,0,.55); }
+  #qbmPaperPrev .qbm-pg{ position:relative; margin:0 0 14px; }
+  #qbmPaperPrev canvas{ display:block; width:100%; height:auto; background:#fff; margin:0; border-radius:2px; box-shadow:0 2px 16px rgba(0,0,0,.55); }
   .qbm-stl{ display:flex; justify-content:flex-end; }
   .qbm-seg{ display:inline-flex; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:2px; gap:2px; }
   .qbm-sbtn{ border:0; background:transparent; color:var(--muted); font:600 10.5px inherit; font-family:inherit; padding:4px 9px; border-radius:6px; cursor:pointer; }
@@ -2484,6 +2485,55 @@ td.roster-vacant-cell .roster-name-input{
   cursor:pointer;
 }
 .roster-download-btn:active{ filter:brightness(.95); }
+
+/* ---- Internal rearrange (shadow roster): switch bar, shift picker, drag & drop editor ---- */
+.rearr-bar{ display:none; align-items:center; justify-content:space-between; gap:8px; margin:2px 0 8px; font-family:'Space Grotesk',sans-serif; }
+.rearr-bar.is-on{ display:flex; }
+body.roster-editing .rearr-bar{ display:flex; }
+.rearr-chip{ font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.02em; }
+.rearr-bar.is-on .rearr-chip{ color:var(--gold-soft); }
+.rearr-chip b{ font-weight:800; }
+.rearr-chip small{ font-weight:600; opacity:.8; }
+.rearr-ctl{ display:none; align-items:center; gap:8px; }
+body.roster-editing .rearr-ctl{ display:inline-flex; }
+.rearr-ctl{ display:inline-flex; }
+.rearr-sw{ position:relative; width:42px; height:24px; border-radius:999px; border:1px solid var(--border); background:var(--panel-2); padding:0; cursor:pointer; flex:0 0 auto; transition:background .15s; }
+.rearr-sw i{ position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--muted); transition:transform .15s, background .15s; }
+.rearr-sw[aria-checked="true"]{ background:var(--gold); border-color:var(--gold); }
+.rearr-sw[aria-checked="true"] i{ transform:translateX(18px); background:#1B2130; }
+.rearr-open{ display:none; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:8px; padding:5px 10px; font:700 11.5px 'Space Grotesk',sans-serif; cursor:pointer; }
+body.roster-editing .rearr-open{ display:inline-block; }
+.rearr-bar:not(.is-on) .rearr-sw{ display:none; }
+table.roster-table td.rearr-blank{ background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 6px,transparent 6px 12px) !important; box-shadow:inset 0 0 0 1px dashed var(--border); }
+.rearr-from{ margin:2px auto 0; width:max-content; max-width:92%; font:700 9.5px 'Space Grotesk',sans-serif; color:#1B2130; background:linear-gradient(135deg,#9be7c4,#4fd1a1); border-radius:999px; padding:1px 8px; line-height:1.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+td.rearr-blank .rearr-from{ background:transparent; color:var(--muted); border:1px dashed var(--border); }
+.rr-pickgrid{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+.rr-pickgrid .rdl-opt{ position:relative; }
+.rr-pickgrid .rdl-opt.has{ box-shadow:0 0 0 2px var(--gold); }
+.rr-list{ max-height:56vh; overflow-y:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--border); border-radius:12px; margin-top:6px; }
+.rr-row{ display:flex; align-items:stretch; border-bottom:1px solid var(--border); }
+.rr-row:last-child{ border-bottom:0; }
+.rr-pos{ flex:0 0 38%; padding:10px; font:700 12.5px 'Space Grotesk',sans-serif; color:var(--text); background:var(--panel-2); display:flex; align-items:center; word-break:break-word; }
+.rr-card{ flex:1 1 auto; min-height:46px; padding:8px 10px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font:600 13.5px 'Inter',sans-serif; color:var(--text); cursor:grab; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; transition:background .12s; }
+.rr-card small{ font:700 9.5px 'Space Grotesk',sans-serif; color:#4fd1a1; margin-top:2px; }
+.rr-card.rr-moved{ background:rgba(79,209,161,.10); }
+.rr-card.rr-blank{ cursor:pointer; color:var(--muted); background:repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 6px,transparent 6px 12px); }
+.rr-ph{ font:600 12px 'Inter',sans-serif; }
+.rr-row.rr-sel .rr-card{ background:rgba(246,200,76,.22); box-shadow:inset 0 0 0 2px var(--gold); }
+.rr-row.rr-over .rr-card{ background:rgba(64,156,255,.28); box-shadow:inset 0 0 0 2px #409cff; }
+.rr-row.rr-drag .rr-card{ opacity:.35; }
+.rr-ghost{ position:fixed; z-index:10100; pointer-events:none; padding:8px 14px; border-radius:10px; background:var(--gold); color:#1B2130; font:800 13px 'Space Grotesk',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,.45); transform:translate(-50%,-120%); max-width:70vw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rr-dates{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.rr-dates label{ flex:1 1 120px; font:700 11px 'Space Grotesk',sans-serif; color:var(--muted); display:flex; flex-direction:column; gap:4px; }
+.rr-dates input{ background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:7px 8px; font:600 13px 'Inter',sans-serif; min-width:0; }
+.rr-foot{ display:flex; gap:8px; margin-top:14px; }
+.rr-foot button{ flex:1 1 0; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:11px 6px; font:700 13px 'Space Grotesk',sans-serif; cursor:pointer; }
+.rr-foot button.rr-primary{ background:var(--gold); color:#1B2130; border-color:var(--gold); }
+.rr-foot button.rr-danger{ color:#ff7a85; }
+.rr-hint{ font-size:11.5px; color:var(--muted); line-height:1.5; margin:-2px 0 6px; }
+.rr-choose{ display:flex; flex-direction:column; gap:6px; max-height:50vh; overflow-y:auto; }
+.rr-choose button{ border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:11px 12px; font:600 14px 'Inter',sans-serif; text-align:left; cursor:pointer; }
+.rr-choose button small{ color:var(--muted); margin-left:6px; font-size:10.5px; }
 .roster-savedchip{
   font-size:11px; color:var(--gold-soft); text-align:center; margin-top:10px; min-height:15px;
 }
@@ -7699,6 +7749,99 @@ let ROSTER_COMM = (function(){
   return loadRosterGeneric(ROSTER_COMM_KEY, DEFAULT_ROSTER_COMM);
 })();
 function rosterDataFor(key){ return key === 'rosterCtrl' ? ROSTER_CTRL : key === 'rosterComm' ? ROSTER_COMM : ROSTER; }
+
+/* ============================================================
+   Internal rearrange = SHADOW roster on top of the main roster.
+   Nobody is added / removed here: each shift (A-E) of each roster (Controllers / Aerodrome Assistant / Communication)
+   can keep a list "place -> person of the MAIN roster (found by his main place + the name he had when it was saved)".
+   - CL / Exchange / name edits / removals are all done on the MAIN roster as always. The substitute of a CL / Exchange
+     simply takes over the rearranged place of the person he replaces (display is built from the main cell).
+   - If the main cell's name no longer matches (removed / renamed / spelling fixed), that rearranged place turns BLANK
+     and has to be selected again.
+   - Optional From / Until dates: outside them the main roster shows (default: from the day it was saved, no end).
+   ============================================================ */
+const REARR_KEY = 'HSIA_REARRANGE_V1';
+const REARR_SETS = ['rosterCtrl','roster','rosterComm'];
+var _rearrState;
+function rearrBlankState(){ return { v:1, on:{}, maps:{}, meta:{} }; }
+function rearrNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
+function rearrNormalize(o){
+  const out = rearrBlankState();
+  if(!o || typeof o !== 'object') return out;
+  REARR_SETS.forEach(k=>{
+    out.on[k] = !!(o.on && o.on[k]);
+    const m = o.maps && o.maps[k];
+    if(m && typeof m === 'object'){
+      TEAMS.forEach(L=>{
+        let arr = m[L]; if(!arr || typeof arr !== 'object') return;
+        if(!Array.isArray(arr)) arr = Object.keys(arr).map(i=> arr[i]);
+        arr = arr.filter(e=> e && typeof e === 'object').map(e=>({ p:String(e.p == null ? '' : e.p), s:String(e.s == null ? '' : e.s), n:String(e.n == null ? '' : e.n) }));
+        if(!arr.length) return;
+        (out.maps[k] = out.maps[k] || {})[L] = arr;
+        const mt = o.meta && o.meta[k] && o.meta[k][L];
+        (out.meta[k] = out.meta[k] || {})[L] = { f:String((mt && mt.f) || ''), u:String((mt && mt.u) || '') };
+      });
+    }
+  });
+  return out;
+}
+function rearrGet(){
+  if(!_rearrState){
+    let o = null;
+    try{ o = JSON.parse(localStorage.getItem(REARR_KEY)); }catch(e){}
+    _rearrState = rearrNormalize(o);
+  }
+  return _rearrState;
+}
+function rearrSave(){
+  try{ localStorage.setItem(REARR_KEY, JSON.stringify(rearrGet())); }catch(e){}
+  try{ pushRearrToFirebaseDebounced(); }catch(e){}
+}
+function rearrApplyRemote(val){
+  if(!val || typeof val !== 'object') return;
+  const n = rearrNormalize(val);
+  if(JSON.stringify(n) === JSON.stringify(rearrGet())) return;
+  _rearrState = n;
+  try{ localStorage.setItem(REARR_KEY, JSON.stringify(n)); }catch(e){}
+  try{ if(window.hsiaRearrRefresh) window.hsiaRearrRefresh(); }catch(e){}
+}
+/* the saved list for (roster, shift) when it is switched on, inside its From/Until days and (unless ignoreEdit) not in roster edit mode */
+/* every viewer can switch the rearranged view off / on for HIMSELF (this device), like the Now button */
+function rearrViewOff(k){ try{ const o = JSON.parse(localStorage.getItem('HSIA_REARR_VIEW_V1')) || {}; return o[k] === false; }catch(e){ return false; } }
+function rearrSetViewOff(k, off){ try{ const o = JSON.parse(localStorage.getItem('HSIA_REARR_VIEW_V1')) || {}; o[k] = off ? false : true; localStorage.setItem('HSIA_REARR_VIEW_V1', JSON.stringify(o)); }catch(e){} }
+function rearrListFor(tableKey, ci, dayKey, ignoreEdit){
+  const st = rearrGet();
+  if(rearrViewOff(tableKey)) return null;   /* ON / OFF is each person's own choice on his own device; it is never synced */
+  if(!ignoreEdit && document.body.classList.contains('roster-editing')) return null;   /* while editing the main roster, the main roster is shown */
+  const L = TEAMS[ci], list = st.maps[tableKey] && st.maps[tableKey][L];
+  if(!list || !list.length) return null;
+  const mt = (st.meta[tableKey] && st.meta[tableKey][L]) || {}, dk = dayKey || todayDateKey();
+  if(mt.f && dk < mt.f) return null;
+  if(mt.u && dk > mt.u) return null;
+  return list;
+}
+/* place -> { ri:main row index } | { blank:true } | null (= unchanged). Covers every non-pool row. */
+function rearrPlanFromList(tableKey, data, ci, list){
+  const idx = {}; data.forEach((r, i)=>{ if(!(r.pos in idx)) idx[r.pos] = i; });
+  const plan = {}, used = {};
+  list.forEach(e=>{
+    const si = (e.s !== '' && (e.s in idx)) ? idx[e.s] : -1;
+    let ok = si >= 0;
+    if(ok){ const r = data[si]; ok = !isPoolRow(r, tableKey) && rearrNorm(r.names[ci]) === rearrNorm(e.n); }
+    plan[e.p] = ok ? { ri:si } : { blank:true };
+    if(ok) used[e.s] = true;
+  });
+  data.forEach(r=>{
+    if(isPoolRow(r, tableKey) || (r.pos in plan)) return;
+    plan[r.pos] = used[r.pos] ? { blank:true } : null;   /* a place added later stays as it is, unless its person was moved away */
+  });
+  return plan;
+}
+function rearrPlanFor(tableKey, data, ci, dayKey, ignoreEdit){
+  const list = rearrListFor(tableKey, ci, dayKey, ignoreEdit);
+  return list ? rearrPlanFromList(tableKey, data, ci, list) : null;
+}
+function rearrPush(){ try{ const saved = loadFirebaseSyncConfig(); if(!_fbDb || !saved) return; fbSet(saved.roomId, 'rearrange', rearrGet()); }catch(e){} }
 function rosterLabelFor(key){ return key === 'th' ? 'Traffic Hand' : key === 'mr' ? 'Marshaller' : key === 'rosterCtrl' ? 'Controllers' : key === 'rosterComm' ? 'Communication' : 'Aerodrome Assistant'; }
 
 /* Correct the live clock, "who's on duty" lamps, hero card, and
@@ -9664,6 +9807,9 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const activeEx = tableKey ? rosterViewExchanges(tableKey) : [];
   const _vSel = window._rosterSelKey;
   const _vDay = (typeof _vSel === 'string' && _vSel) ? _vSel : todayDateKey();
+  /* Internal rearrange (shadow roster): per shift, who actually works at which place. Main roster data is never touched. */
+  const _rrPlans = {};
+  const _rrPlan = ci=>{ if(!tableKey) return null; if(!(ci in _rrPlans)) _rrPlans[ci] = rearrPlanFor(tableKey, data, ci, _vDay); return _rrPlans[ci]; };
   /* Admin row (Controllers only): one merged cell like OJTI / Stand by, sits right above OJTI (order: ... PFIU, Admin, OJTI, Stand by) */
   const adTxt = ((data[0] && Array.isArray(data[0].admin)) ? data[0].admin : []).filter(x=> String(x || '').trim()).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const adminRowHtml = tableKey === 'rosterCtrl' ? `<tr class="roster-standby-row roster-admin-row"><td class="roster-pos"><div class="roster-standby-label">Admin</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-admin-input" rows="${Math.max(1, Math.ceil(adTxt.length / 38))}" placeholder="Admin names (comma separated)" autocomplete="off" readonly>${adTxt}</textarea></td></tr>` : '';
@@ -9676,8 +9822,12 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       return adminRowHtml + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea></td></tr>`;
     }
     const cells = TEAMS.map((t, ci)=>{
-      const ex = exForCell(activeEx, row.pos, ci);
-      const _nm = tableKey ? rosterNameOn(tableKey, row, ci, _vDay) : (row.names[ci] || '');
+      const _rp = _rrPlan(ci), _rs = _rp ? _rp[row.pos] : null;
+      if(_rs && _rs.blank) return `<td class="rearr-blank"><input class="roster-name-input" type="text" value="" autocomplete="off" readonly><div class="rearr-from">⇄ blank</div></td>`;
+      const _srcRow = _rs ? data[_rs.ri] : row, _srcRi = _rs ? _rs.ri : ri;
+      const _rrFrom = (_rs && _rs.ri !== ri) ? `<div class="rearr-from" title="Main roster place: ${String(_srcRow.pos || '').replace(/"/g,'&quot;')}">⇄ ${String(_srcRow.pos || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>` : '';
+      const ex = exForCell(activeEx, _srcRow.pos, ci);
+      const _nm = tableKey ? rosterNameOn(tableKey, _srcRow, ci, _vDay) : (_srcRow.names[ci] || '');
       const val = ((ex && ex.base) || _nm || '').replace(/"/g,'&quot;');
       const origTitle = ((ex && ex.base) || _nm || '—').replace(/"/g,'&quot;');
       /* colours: CL / vacant position = deep red, Exchange = golden amber, Special (Others) = orange */
@@ -9702,7 +9852,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       const badgeText = (ex && ex.vacant) ? (ex.special ? exSpShort(ex.spType) : ex.moved ? (ex.to ? '➜ ' + String(ex.to).replace(/</g,'&lt;') : 'Vacant') : 'CL · Vacant') : subEsc ? (tagHtml ? '' : '🔄 ') + subEsc + halfTag + (ex && ex.special ? ' · ' + exSpShort(ex.spType) : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
       const viaEsc = (ex && ex.via) ? String(ex.via).replace(/</g,'&lt;') : '';
       const badge = !ex ? '' : (viaEsc ? `<div class="roster-chain-old">${viaEsc}</div>` : '') + `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
-      return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${ri}" data-ci="${ci}" autocomplete="off" readonly>${tagHtml}${badge}</td>`;
+      return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${_srcRi}" data-ci="${ci}" autocomplete="off" readonly>${tagHtml}${badge}${_rrFrom}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
     return `<tr><td class="roster-pos"><input class="roster-pos-input" type="text" value="${posSafe}" data-ri="${ri}" autocomplete="off" readonly></td>${cells}</tr>`;
@@ -10262,6 +10412,7 @@ function connectFirebaseSync(config, roomId){
       }
     });
     listen(thmrRef, snap=>{ const val = snap.val(); if(val && typeof val === 'object' && window.hsiaTHMRApplyRemote) window.hsiaTHMRApplyRemote(val); });
+    listen(_fbDb.ref('hsia_sync/' + roomId + '/rearrange'), snap=>{ try{ rearrApplyRemote(snap.val()); }catch(e){ console.error(e); } });
     listen(clLogRef, snap=>{ let val = snap.val(); if(val === null) val = {}; if(val && typeof val === 'object') clApplyRemote(val); });
     listen(_fbDb.ref('hsia_sync/' + roomId + '/exreq'), snap=>{ try{ exReqRemote(snap.val()); }catch(e){ console.error(e); } });
     let _exHistAttached = false;
@@ -10383,6 +10534,7 @@ function pushClLogToFirebase(){
   fbSet(saved.roomId, 'clLog', CL_LOG);
 }
 const pushThmrToFirebaseDebounced = debounce(pushThmrToFirebase, 500);
+const pushRearrToFirebaseDebounced = debounce(rearrPush, 500);
 const pushClLogToFirebaseDebounced = debounce(pushClLogToFirebase, 500);
 function pushExHistoryToFirebase(){
   const saved = loadFirebaseSyncConfig();
@@ -11515,7 +11667,7 @@ function qbmFilterUI(all, shown){
   const ch = document.getElementById('qbmShiftChips');
   if(ch) ch.innerHTML = [''].concat(TEAMS).map(t=> '<button type="button" class="qbm-fchip' + (t === _qbmF.shift ? ' on' : '') + '" data-sh="' + t + '">' + (t ? t + ' shift' : 'All shifts') + '</button>').join('');
   const cnt = document.getElementById('qbmFCount');
-  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : ((window.hsiaIsModerator && window.hsiaIsModerator()) ? (_qbmStyle === 'paper' ? 'Paper = exact PNG A4 / Print page. Switch to App to edit.' : 'Tip: double-tap a name, place or date to change it') : '');
+  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : ((window.hsiaIsModerator && window.hsiaIsModerator()) ? (_qbmStyle === 'paper' ? 'Paper = exact PNG A4 / Print page. Double-tap a name, place or date to change it' : 'Tip: double-tap a name, place or date to change it') : '');
 }
 function qbmPeriod(ex, dk){
   const t = +ex.team;
@@ -11622,6 +11774,7 @@ function qbmMonthLabel(items){
   if(years.length === 1) return seen.map(m=> names[+m.slice(5,7)-1]).join('/') + '-' + years[0];
   return seen.map(m=> names[+m.slice(5,7)-1] + '-' + m.slice(0,4)).join('/');
 }
+let _qbmDG = [];
 function renderQbm(){
   const paper = document.getElementById('qbmPaper');
   if(!paper) return;
@@ -11629,11 +11782,12 @@ function renderQbm(){
   paper.className = 'qbm-paper' + (_qbmStyle === 'paper' ? ' qbm-pm' : '') + ((window.hsiaIsModerator && window.hsiaIsModerator()) ? ' qbm-ed' : '');
   const allItems = qbmCollect('', '', true), items = qbmApplyFilter(allItems);
   qbmFilterUI(allItems, items.length);
-  _qbmRuns = []; _qbmUnits = []; _qbmPers = [];
+  _qbmRuns = []; _qbmUnits = []; _qbmPers = []; _qbmDG = [];
   const mod = !!(window.hsiaIsModerator && window.hsiaIsModerator());
   let html = '';
   qbmGroupList(items).forEach(G=>{
     const rows = qbmBuild(G.items);
+    _qbmDG.push({ title:G.title, rows:rows });
     let body = '';
     rows.forEach((P, i)=>{
       const U = P.units.length, pIdx = _qbmPers.push(P) - 1;
@@ -11668,13 +11822,49 @@ function qbmPaperPreview(){
   const paper = document.getElementById('qbmPaper'), prev = document.getElementById('qbmPaperPrev');
   if(!paper || !prev) return;
   Array.prototype.forEach.call(prev.querySelectorAll('canvas'), c=>{ c.width = c.height = 0; });
-  prev.innerHTML = '';
+  prev.innerHTML = ''; prev._hits = [];
   if(_qbmStyle !== 'paper'){ paper.style.display = ''; return; }
   paper.style.display = 'none';
   try{
-    const groups = qbmDrawGroups(), k = qbmFitScale(groups);
-    qbmDrawPages(groups, k, 170).forEach(c=> prev.appendChild(c));
+    const groups = _qbmDG.map(g=> ({ title:g.title, rows:g.rows })), k = qbmFitScale(groups), hits = [];
+    qbmDrawPages(groups, k, 170, hits).forEach((c, i)=>{
+      const w = document.createElement('div'); w.className = 'qbm-pg'; w.setAttribute('data-pg', i);
+      w.appendChild(c); prev.appendChild(w);
+    });
+    prev._hits = hits;
+    qbmBindPreviewEdit(prev);
   }catch(e){ paper.style.display = ''; }
+}
+/* double-tap a person / place / date on the Paper page = same editor as double-tapping it in App style (admin / moderator only) */
+function qbmBindPreviewEdit(prev){
+  if(prev._qeBound) return;
+  prev._qeBound = true;
+  const PW = 595.28, PH = 841.89;
+  let last = { h:null, t:0 };
+  prev.addEventListener('click', e=>{
+    if(!(window.hsiaIsModerator && window.hsiaIsModerator())) return;
+    const pg = e.target.closest('.qbm-pg'); if(!pg) return;
+    const r = pg.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * PW, py = (e.clientY - r.top) / r.height * PH, n = +pg.getAttribute('data-pg');
+    const h = (prev._hits || []).find(z=> z.pg === n && px >= z.x && px <= z.x + z.w && py >= z.y && py <= z.y + z.h);
+    if(!h){ last = { h:null, t:0 }; return; }
+    const flash = ()=>{
+      const d = document.createElement('div');
+      d.style.cssText = 'position:absolute;pointer-events:none;background:rgba(246,200,76,.35);outline:1.5px solid rgba(246,200,76,.9);border-radius:2px;left:' + (h.x / PW * 100) + '%;top:' + (h.y / PH * 100) + '%;width:' + (h.w / PW * 100) + '%;height:' + (h.h / PH * 100) + '%;';
+      pg.appendChild(d); setTimeout(()=> d.remove(), 450);
+    };
+    const now = Date.now();
+    if(last.h === h.o && now - last.t < 450){
+      last = { h:null, t:0 };
+      const attr = { 'data-qe':h.qe };
+      if(h.qe === 'date') attr['data-r'] = _qbmRuns.indexOf(h.o);
+      else if(h.qe === 'who') attr['data-p'] = _qbmPers.indexOf(h.o);
+      else attr['data-u'] = _qbmUnits.indexOf(h.o);
+      flash();
+      qbmEditOpen({ getAttribute:k=> (k in attr ? String(attr[k]) : null) });
+      return;
+    }
+    last = { h:h.o, t:now }; flash();
+  });
 }
 function qbmRemoveRun(idx){
   const run = _qbmRuns[idx];
@@ -12006,7 +12196,7 @@ async function qbmCanvasToPng(cv){
   const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
   return new Blob([sig, qbmChunk('IHDR', ihdr), qbmChunk('PLTE', plte), qbmChunk('pHYs', phys), qbmChunk('IDAT', idat), qbmChunk('IEND', new Uint8Array(0))], { type:'image/png' });
 }
-function qbmDrawPages(groups, k, dpi){
+function qbmDrawPages(groups, k, dpi, hits){
   const K = k || 1;
   const S = (dpi || QBM_DPI) / 72, PW = 595.28, PH = 841.89, M = 34, TW = PW - 2*M;   /* all layout maths in pt, scaled on draw */
   const SERIF = '"Times New Roman",Times,"Liberation Serif","Noto Serif","Noto Serif Bengali",serif';
@@ -12090,6 +12280,7 @@ function qbmDrawPages(groups, k, dpi){
     };
     rect(cx[0], y, cw[0], total); at(0, [String(ri + 1).padStart(2, '0')], y, total, 'c');
     rect(cx[4], y, cw[4], total); at(4, relL, y, total, 'l');
+    if(hits) hits.push({ pg:pages.length - 1, x:cx[4], y:y, w:cw[4], h:total, qe:'who', o:P });
     let uy = y;
     const tops = [];
     P.units.forEach((u, k)=>{
@@ -12098,6 +12289,14 @@ function qbmDrawPages(groups, k, dpi){
       rect(cx[1], uy, cw[1], h); at(1, wrap(u.detailed, false, FS, cw[1] - 2 * PX), uy, h, 'l');
       rect(cx[2], uy, cw[2], h); at(2, wrap(u.place, false, FS, cw[2] - 2 * PX), uy, h, 'c');
       rect(cx[3], uy, cw[3], h); at(3, [].concat.apply([], u.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX))), uy, h, 'l');
+      if(hits){
+        const pg = pages.length - 1;
+        hits.push({ pg:pg, x:cx[1], y:uy, w:cw[1], h:h, qe:'sub', o:u });
+        hits.push({ pg:pg, x:cx[2], y:uy, w:cw[2], h:h, qe:'pos', o:u });
+        const rl = u.runs.map(run=> wrap(qbmDateText(run), false, FS, cw[3] - 2 * PX).length), tot = rl.reduce((a, b)=> a + b, 0);
+        let ty = uy + (h - tot * LD) / 2;
+        u.runs.forEach((run, ri)=>{ hits.push({ pg:pg, x:cx[3], y:ty - 1, w:cw[3], h:rl[ri] * LD + 2, qe:'date', o:run }); ty += rl[ri] * LD; });
+      }
       uy += h;
     });
     P.parts.forEach(pt=>{
@@ -15587,9 +15786,13 @@ function renderRosterNow(){
       });
     });
     let part = '';
-    data.forEach(r=>{
+    const _rrNp = rearrPlanFor(set[0], data, idx, todayDateKey(), true);   /* internal rearrange: whoever really works at this place */
+    data.forEach(r0=>{
+      let r = r0;
+      { const _s = _rrNp ? _rrNp[r0.pos] : null;
+        if(_s){ if(_s.blank) return; r = Object.assign({}, data[_s.ri], { pos:r0.pos, __src:data[_s.ri].pos }); } }
       const base = String((r.names && r.names[idx]) || '').trim();
-      const mine = ex.filter(o=> o.x.pos === r.pos)
+      const mine = ex.filter(o=> o.x.pos === (r.__src || r.pos))
         .sort((p,q)=> String(p.x.nightHalf||'').localeCompare(String(q.x.nightHalf||'')));
       { /* an exchange substitute + a 1st/2nd Night marker on the same cell = ONE line (the substitute with the half tag) */
         const _full = mine.find(o=> exIsPlainSub(o.x)), _marks = mine.filter(o=> exIsHalfMarker(o.x));
@@ -18411,6 +18614,289 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 
 </script>
 
+
+<script id="rosterRearrangeJs">
+/* ================= Duty Roster: "Internal rearrange" (shadow roster) =================
+   Switch + shift picker + drag & drop editor. The data / rules live next to the roster code (rearrPlanFor etc.). */
+(function(){
+  'use strict';
+  if(window.hsiaRearrUI) return;
+  var SETS = [['rosterCtrl','rosterCtrlCol','Controllers','rosterTableCtrl'], ['roster','rosterAsstCol','Aerodrome Assistant','rosterTable'], ['rosterComm','rosterCommCol','Communication','rosterTableComm']];
+  var LET = ['A','B','C','D','E'];
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function setInfo(k){ for(var i=0;i<SETS.length;i++) if(SETS[i][0] === k) return SETS[i]; return null; }
+  function renderAll(){
+    try{ renderRoster(); }catch(e){} try{ renderRosterCtrl(); }catch(e){} try{ renderRosterComm(); }catch(e){}
+    try{ updateRosterHighlight(); }catch(e){}
+  }
+  function editing(){ return document.body.classList.contains('roster-editing'); }
+  function auth(){ try{ return adminGate(false); }catch(e){ return false; } }
+  function toast(m){ try{ flashRosterSaved(m); }catch(e){} }
+  function baseName(r, ci){ return String((r && r.names && r.names[ci]) || '').trim(); }
+
+  /* ---------- the switch bar under each roster title ---------- */
+  function buildBars(){
+    SETS.forEach(function(s){
+      var col = $(s[1]); if(!col || col.querySelector('.rearr-bar')) return;
+      var sub = col.querySelector('.roster-subtitle'); if(!sub) return;
+      var bar = document.createElement('div'); bar.className = 'rearr-bar'; bar.setAttribute('data-set', s[0]);
+      bar.innerHTML = '<span class="rearr-chip">\u21C4 Internal rearrange <b class="rearr-state">OFF</b> <small class="rearr-note"></small></span>'
+        + '<span class="rearr-ctl"><button type="button" class="rearr-open">Arrange \u25B8</button>'
+        + '<button type="button" class="rearr-sw" role="switch" aria-checked="false" aria-label="Internal rearrange on / off"><i></i></button></span>';
+      sub.parentNode.insertBefore(bar, sub.nextSibling);
+    });
+  }
+  function syncBars(){
+    var st = rearrGet();
+    SETS.forEach(function(s){
+      var bar = document.querySelector('.rearr-bar[data-set="' + s[0] + '"]'); if(!bar) return;
+      var n = 0; if(st.maps[s[0]]) LET.forEach(function(L){ if(st.maps[s[0]][L]) n++; });
+      var pub = n > 0, on = pub && !rearrViewOff(s[0]);
+      bar.classList.toggle('is-on', pub);
+      var sw = bar.querySelector('.rearr-sw'); if(sw) sw.setAttribute('aria-checked', on ? 'true' : 'false');
+      var stt = bar.querySelector('.rearr-state'); if(stt) stt.textContent = pub ? (on ? 'ON' : 'OFF') : '';
+      var note = bar.querySelector('.rearr-note');
+      if(note){
+        note.textContent = (pub && on) ? (editing() ? '\u00B7 shows after Save' : (n ? '\u00B7 ' + n + ' shift' + (n > 1 ? 's' : '') : '')) : '';
+      }
+    });
+  }
+  window.hsiaRearrRefresh = function(){ syncBars(); if(!editing()) renderAll(); };
+
+  document.addEventListener('click', function(e){
+    var bar = e.target.closest ? e.target.closest('.rearr-bar') : null; if(!bar) return;
+    var k = bar.getAttribute('data-set'), st = rearrGet();
+    if(e.target.closest('.rearr-sw')){
+      rearrSetViewOff(k, !rearrViewOff(k)); syncBars(); renderAll(); return;   /* personal, this device only */
+    }
+    if(e.target.closest('.rearr-open')){ if(auth()) openPicker(k); }
+  });
+
+  /* ---------- shift picker (looks like the PNG download picker) ---------- */
+  function shiftMeta(k){
+    var inf = setInfo(k), tbl = $(inf[3]), ths = tbl ? tbl.querySelectorAll('thead th') : [];
+    return LET.map(function(L, i){
+      var th = ths[i + 1], sub = th ? th.querySelector('.rd-sub') : null, m = sub ? /(?:^|\s)d-([a-z]+)/.exec(sub.className) : null;
+      return { L:L, type:m ? m[1] : 'off', txt:sub ? sub.textContent.trim() : '' };
+    });
+  }
+  function shColor(type){
+    var cs = getComputedStyle(document.documentElement), v = type === 'night' ? '--night' : type === 'morning' ? '--morning' : type === 'afternoon' ? '--afternoon' : '--muted';
+    return (cs.getPropertyValue(v) || '#9aa0b0').trim();
+  }
+  function makeOverlay(id, title){
+    var ov = $(id); if(ov) ov.remove();
+    ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = id; ov.style.cssText = 'z-index:10005;padding:16px 8px;';
+    ov.innerHTML = '<div class="modal-box" style="max-width:460px;"><div class="modal-header"><div class="modal-title"></div><button type="button" class="modal-close" data-x="1">\u2715</button></div><div class="rr-body"></div></div>';
+    ov.querySelector('.modal-title').textContent = title;
+    document.body.appendChild(ov);
+    return ov;
+  }
+  function openPicker(k){
+    var inf = setInfo(k), st = rearrGet(), meta = shiftMeta(k);
+    var ov = makeOverlay('rearrPickOverlay', '\u21C4 Internal rearrange');
+    var body = ov.querySelector('.rr-body');
+    body.innerHTML = '<div class="rdl-sub">' + esc(inf[2]) + ' \u00B7 choose the shift to rearrange (people stay in their own shift; only the duty places are exchanged)</div>'
+      + '<div class="rr-pickgrid">' + meta.map(function(m){
+        var has = !!(st.maps[k] && st.maps[k][m.L]);
+        return '<button type="button" class="rdl-opt' + (has ? ' has' : '') + '" data-k="' + m.L + '">' + m.L + '<small style="color:' + shColor(m.type) + '">' + esc(m.txt) + '</small></button>';
+      }).join('') + '</div><div class="rdl-status">' + (st.maps[k] && Object.keys(st.maps[k]).length ? 'Gold ring = this shift already has its own arrangement.' : '') + '</div>';
+    ov.classList.add('show');
+    ov.addEventListener('click', function(e){
+      if(e.target === ov || e.target.closest('[data-x]')){ ov.classList.remove('show'); return; }
+      var b = e.target.closest('.rdl-opt'); if(!b) return;
+      ov.classList.remove('show');
+      openEditor(k, LET.indexOf(b.getAttribute('data-k')));
+    });
+  }
+
+  /* ---------- editor: one shift, places on the left, people on the right ---------- */
+  function openEditor(k, ci){
+    var inf = setInfo(k), data = rosterDataFor(k), L = LET[ci], st = rearrGet();
+    var rows = []; data.forEach(function(r, i){ if(!isPoolRow(r, k)) rows.push(i); });
+    var byPos = {}; rows.forEach(function(i){ if(!(data[i].pos in byPos)) byPos[data[i].pos] = i; });
+    var saved = (st.maps[k] && st.maps[k][L]) || null;
+    var plan = saved ? rearrPlanFromList(k, data, ci, saved) : null;
+    var W = rows.map(function(i){
+      var r = data[i], pl = plan ? plan[r.pos] : null;
+      if(!pl) return { p:r.pos, s:r.pos, n:baseName(r, ci) };
+      if(pl.blank) return { p:r.pos, s:'', n:'' };
+      return { p:r.pos, s:data[pl.ri].pos, n:baseName(data[pl.ri], ci) };
+    });
+    var meta = (st.meta[k] && st.meta[k][L]) || { f:'', u:'' };
+    var sel = -1, dirty = false, drag = null;
+    var tm = shiftMeta(k)[ci];
+    var ov = makeOverlay('rearrEditOverlay', '\u21C4 Shift ' + L + ' \u00B7 ' + (tm ? tm.txt : ''));
+    var body = ov.querySelector('.rr-body');
+    body.innerHTML = '<div class="rdl-sub" style="margin-bottom:6px;">' + esc(inf[2]) + '</div>'
+      + '<div class="rr-hint">Press and hold a name, then drag it onto another place (they swap). Or tap one name, then tap another. Blank place: tap it and pick a person. The main roster is not changed.</div>'
+      + '<div class="rr-list" id="rrList"></div>'
+      + '<div class="rr-dates"><label>From<input type="date" id="rrFrom"></label><label>Until (optional)<input type="date" id="rrUntil"></label></div>'
+      + '<div class="rr-foot"><button type="button" class="rr-danger" id="rrReset">Reset to main</button><button type="button" id="rrCancel">Cancel</button><button type="button" class="rr-primary" id="rrSave">Save</button></div>';
+    $('rrFrom').value = meta.f || todayDateKey(); $('rrUntil').value = meta.u || '';
+    $('rrFrom').addEventListener('change', function(){ dirty = true; }); $('rrUntil').addEventListener('change', function(){ dirty = true; });
+    var list = $('rrList');
+    function paint(){
+      list.innerHTML = W.map(function(e, i){
+        var blank = e.s === '', moved = !blank && e.s !== e.p;
+        return '<div class="rr-row' + (sel === i ? ' rr-sel' : '') + '" data-i="' + i + '"><div class="rr-pos">' + esc(e.p) + '</div>'
+          + '<div class="rr-card' + (blank ? ' rr-blank' : '') + (moved ? ' rr-moved' : '') + '" data-i="' + i + '">'
+          + (blank ? '<span class="rr-ph">tap to select</span>' : '<span class="rr-nm">' + esc(e.n || '\u2014') + '</span>')
+          + (moved ? '<small>\u21C4 from ' + esc(e.s) + '</small>' : '') + '</div></div>';
+      }).join('');
+    }
+    function swap(a, b){
+      if(a === b) return;
+      var t = { s:W[a].s, n:W[a].n }; W[a].s = W[b].s; W[a].n = W[b].n; W[b].s = t.s; W[b].n = t.n; dirty = true;
+    }
+    function unplaced(){
+      var used = {}; W.forEach(function(e){ if(e.s) used[e.s] = true; });
+      return rows.filter(function(i){ var nm = baseName(data[i], ci); return !used[data[i].pos] && nm && nm !== '-'; });
+    }
+    function choose(i){
+      var un = unplaced();
+      if(!un.length){ toast('No unplaced person is left in this shift'); return; }
+      var c = makeOverlay('rearrChooseOverlay', 'Select person for ' + W[i].p);
+      c.style.zIndex = '10010';
+      c.querySelector('.rr-body').innerHTML = '<div class="rr-choose">' + un.map(function(ri){
+        return '<button type="button" data-ri="' + ri + '">' + esc(baseName(data[ri], ci)) + '<small>main: ' + esc(data[ri].pos) + '</small></button>'; }).join('') + '</div>';
+      c.classList.add('show');
+      c.addEventListener('click', function(e){
+        if(e.target === c || e.target.closest('[data-x]')){ c.remove(); return; }
+        var b = e.target.closest('button[data-ri]'); if(!b) return;
+        var r = data[+b.getAttribute('data-ri')];
+        W[i].s = r.pos; W[i].n = baseName(r, ci); dirty = true; sel = -1; c.remove(); paint();
+      });
+    }
+    paint();
+
+    /* tap / tap */
+    list.addEventListener('click', function(e){
+      if(drag && drag.justDropped){ drag.justDropped = false; return; }
+      var card = e.target.closest('.rr-card'); if(!card) return;
+      var i = +card.getAttribute('data-i'), blank = W[i].s === '';
+      if(sel < 0){ if(blank){ choose(i); } else { sel = i; paint(); } return; }
+      if(sel === i){ sel = -1; paint(); return; }
+      swap(sel, i); sel = -1; paint();
+    });
+
+    /* press-and-hold, drag, drop (touch + mouse) */
+    var HOLD = 320, timer = null, startX = 0, startY = 0, pend = null, ghost = null, scrollT = null, lastY = 0;
+    function rowAt(x, y){ var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest('.rr-row') : null; }
+    function clearOver(){ list.querySelectorAll('.rr-over').forEach(function(n){ n.classList.remove('rr-over'); }); }
+    function activate(){
+      if(!pend) return;
+      drag = { from:pend.i, over:-1, justDropped:false };
+      var row = list.querySelector('.rr-row[data-i="' + pend.i + '"]'); if(row) row.classList.add('rr-drag');
+      ghost = document.createElement('div'); ghost.className = 'rr-ghost'; ghost.textContent = W[pend.i].n || '\u2014';
+      ghost.style.left = startX + 'px'; ghost.style.top = startY + 'px'; document.body.appendChild(ghost);
+      if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(_){} }
+      scrollT = setInterval(function(){
+        var r = list.getBoundingClientRect();
+        if(lastY < r.top + 44) list.scrollTop -= 10; else if(lastY > r.bottom - 44) list.scrollTop += 10;
+      }, 16);
+    }
+    function endDrag(drop){
+      clearTimeout(timer); timer = null; clearInterval(scrollT); scrollT = null;
+      if(ghost){ ghost.remove(); ghost = null; }
+      if(drag){
+        var from = drag.from, over = drag.over;
+        drag.justDropped = true; var d = drag; drag = null;
+        setTimeout(function(){ d.justDropped = false; }, 350);
+        clearOver();
+        if(drop && over >= 0 && over !== from){ swap(from, over); sel = -1; }
+        paint();
+      }
+      pend = null;
+    }
+    list.addEventListener('pointerdown', function(e){
+      if(e.pointerType === 'mouse' && e.button !== 0) return;
+      var card = e.target.closest('.rr-card'); if(!card || card.classList.contains('rr-blank')) return;
+      pend = { i:+card.getAttribute('data-i') }; startX = lastX = e.clientX; startY = lastY = e.clientY;
+      clearTimeout(timer); timer = setTimeout(activate, HOLD);
+    });
+    var lastX = 0;
+    document.addEventListener('pointermove', onMove);
+    function onMove(e){
+      if(!$('rearrEditOverlay')){ document.removeEventListener('pointermove', onMove); return; }
+      lastX = e.clientX; lastY = e.clientY;
+      if(!drag){
+        if(timer && pend && (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10)){ clearTimeout(timer); timer = null; pend = null; }
+        return;
+      }
+      if(ghost){ ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px'; }
+      var row = rowAt(e.clientX, e.clientY); clearOver();
+      if(row && list.contains(row)){ var oi = +row.getAttribute('data-i'); drag.over = oi; if(oi !== drag.from) row.classList.add('rr-over'); } else drag.over = -1;
+    }
+    function onUp(e){ if(!$('rearrEditOverlay')){ document.removeEventListener('pointerup', onUp); document.removeEventListener('pointercancel', onCancel); return; } if(drag || timer) endDrag(true); }
+    function onCancel(){ if(drag || timer) endDrag(false); }
+    document.addEventListener('pointerup', onUp); document.addEventListener('pointercancel', onCancel);
+    /* once the hold has fired, stop the page from scrolling under the finger */
+    document.addEventListener('touchmove', function tm(e){
+      if(!$('rearrEditOverlay')){ document.removeEventListener('touchmove', tm); return; }
+      if(drag && e.cancelable) e.preventDefault();
+    }, { passive:false });
+    list.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+    /* buttons */
+    function close(force){
+      if(!force && dirty && !confirm('Discard the changes of this shift?')) return;
+      endDrag(false); ov.remove();
+    }
+    ov.addEventListener('click', function(e){ if(e.target === ov || e.target.closest('[data-x]')) close(false); });
+    $('rrCancel').addEventListener('click', function(){ close(false); });
+    $('rrReset').addEventListener('click', function(){
+      if(!confirm('Shift ' + L + ' goes back to the main roster places?')) return;
+      var s2 = rearrGet();
+      if(s2.maps[k]) delete s2.maps[k][L];
+      if(s2.meta[k]) delete s2.meta[k][L];
+      rearrSave(); syncBars(); renderAll();
+      try{ auditLog('rearrange', inf[2] + ' · Shift ' + L + ': reset to main roster'); }catch(_){}
+      toast('Shift ' + L + ' reset to main roster'); close(true);
+    });
+    $('rrSave').addEventListener('click', function(){
+      if(!auth()) return;
+      var from = $('rrFrom').value || todayDateKey(), until = $('rrUntil').value || '';
+      if(until && until < from){ alert('"Until" cannot be before "From".'); return; }
+      var hasBlank = W.some(function(e){ return e.s === ''; });
+      if(hasBlank && unplaced().length && !confirm('Some places are still blank and ' + unplaced().length + ' person/people are not placed. Save anyway?')) return;
+      var identity = W.every(function(e){ var r = data[byPos[e.p]]; return e.s === e.p && rearrNorm(e.n) === rearrNorm(baseName(r, ci)); });
+      var s2 = rearrGet();
+      s2.maps[k] = s2.maps[k] || {}; s2.meta[k] = s2.meta[k] || {};
+      if(identity){ delete s2.maps[k][L]; delete s2.meta[k][L]; }
+      else {
+        s2.maps[k][L] = W.map(function(e){ return { p:e.p, s:e.s, n:e.n }; });
+        s2.meta[k][L] = { f:from, u:until };
+        rearrSetViewOff(k, false);
+      }
+      rearrSave(); syncBars(); renderAll();
+      try{
+        var ch = W.filter(function(e){ return e.s !== e.p; }).map(function(e){ return (e.s || '\u2014') + ' \u2192 ' + e.p; });
+        auditLog('rearrange', inf[2] + ' · Shift ' + L + (identity ? ': same as main roster' : ': ' + ch.join(', ')) + (until ? ' (' + from + ' \u2192 ' + until + ')' : ' (from ' + from + ')'));
+      }catch(_){}
+      toast('\u21C4 Shift ' + L + ' saved \u2713 \u2014 rearranged view shows after Save (pen)');
+      close(true);
+    });
+    ov.classList.add('show');
+  }
+
+  /* roster edit mode shows the MAIN roster (so names can be edited); the rearranged view comes back after Save */
+  var wasEd = editing();
+  new MutationObserver(function(){
+    var ed = editing(); if(ed === wasEd) return; wasEd = ed;
+    syncBars();
+    if(ed){
+      var st = rearrGet(), any = false; REARR_SETS.forEach(function(k){ if(st.on[k]) any = true; });
+      if(any){ renderAll(); try{ unlockAllRosterInputs(); }catch(e){} }
+    }
+  }).observe(document.body, { attributes:true, attributeFilter:['class'] });
+
+  function init(){ buildBars(); syncBars(); renderAll(); }
+  window.hsiaRearrUI = { open:openPicker };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 0); }); else setTimeout(init, 0);
+})();
+</script>
 
 <script>
 /* True full-screen helper for the PDF / map viewers (falls back to the CSS full-window mode where the browser has no Fullscreen API). */
