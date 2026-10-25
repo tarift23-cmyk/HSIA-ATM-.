@@ -388,6 +388,7 @@
   .qbm-line + .qbm-line{ margin-top:3px; }
   .qbm-x{ background:none; border:1px solid rgba(245,66,73,0.6); color:#F54249; border-radius:5px; font-size:10px; line-height:1; padding:3px 5px; cursor:pointer; flex:0 0 auto; margin-top:1px; }
   .qbm-sheet + .qbm-sheet{ margin-top:22px; }
+  .qbm-paper.qbm-ed [data-qe]{ -webkit-user-select:none; user-select:none; touch-action:manipulation; -webkit-tap-highlight-color:rgba(255,255,255,.14); }
   .qbm-paper.qbm-pm{ background:#fff; color:#000; padding:14px 8px; border-radius:6px; }
   .qbm-pm .qbm-title, .qbm-pm .qbm-table, .qbm-pm .qbm-table th, .qbm-pm .qbm-table td{ color:#000; }
   .qbm-pm .qbm-table th, .qbm-pm .qbm-table td, .qbm-pm .qbm-table td.det, .qbm-pm .qbm-table td.rel, .qbm-pm .qbm-table th.det, .qbm-pm .qbm-table th.rel{ background:#fff; border-color:#000; }
@@ -1502,6 +1503,35 @@ table.thg-table small.thg-tm.ot{ color:#f5b53d; }
 table.thg-table small.thg-tm.ot.c-night{ color:var(--night); }
 table.thg-table small.thg-tm.ot.c-morning{ color:var(--morning); }
 table.thg-table small.thg-tm.ot.c-afternoon{ color:var(--afternoon); }
+
+/* ---- Aero Billing (under Aerodrome Assistant): running shift is highlighted ---- */
+.ab-block{ margin-top:18px; }
+table.thg-table.ab-table{ width:100%; table-layout:fixed; }
+table.thg-table.ab-table th, table.thg-table.ab-table td{ min-width:0; vertical-align:middle; text-align:center; padding:10px 6px; }
+table.thg-table.ab-table thead th{ font-size:12px; }
+table.thg-table.ab-table thead th b{ font-size:13px; }
+table.thg-table.ab-table td{ font-weight:800; font-size:13px; color:var(--text); }
+table.thg-table.ab-table td small{ display:block; margin-top:3px; font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+table.thg-table.ab-table td small.m{ color:var(--morning); }
+table.thg-table.ab-table td small.a{ color:var(--afternoon); }
+table.thg-table.ab-table td.ab-off{ opacity:.55; }
+table.thg-table.ab-table td.ab-live{ background:rgba(166,171,180,0.16); box-shadow:inset 0 0 0 1px var(--gold); }
+table.thg-table.ab-table th.ab-live{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130; }
+table.thg-table.ab-table th.ab-live b{ color:#1B2130; }
+.ab-add{ display:none; flex-wrap:wrap; gap:8px; margin-top:8px; }
+body.hsia-staff .ab-add{ display:flex; }
+.ab-add input{ flex:1 1 140px; min-width:0; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; padding:9px 10px; outline:none; }
+.ab-add input:focus{ border-color:var(--gold); }
+.ab-add select{ flex:0 0 auto; max-width:46%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; padding:0 8px; outline:none; }
+.ab-add button{ flex:0 0 auto; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:9px 14px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; cursor:pointer; }
+.ab-add button.on{ background:linear-gradient(135deg, var(--gold), var(--gold-soft)); color:#1B2130; border-color:var(--gold); }
+table.thg-table.ab-table td.ab-ed{ position:relative; cursor:pointer; outline:1px dashed var(--gold); outline-offset:-3px; }
+table.thg-table.ab-table td .ab-x{ position:absolute; top:2px; right:3px; padding:4px 6px; font-size:11px; line-height:1; color:#F54249; font-weight:800; }
+.sato-block{ margin-top:18px; }
+table.thg-table.sato-table{ table-layout:auto; width:100%; }
+table.thg-table.sato-table td{ min-width:86px; padding:12px 8px; white-space:nowrap; }
+.sato-time{ font-size:10.5px; color:var(--muted); margin:-2px 2px 8px; }
+table.thg-table.ab-table th.ab-live b::before{ content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#F54249; margin-right:4px; vertical-align:1px; }
 table.thg-table small.thg-tm .w-morning{ color:var(--morning); }
 table.thg-table small.thg-tm .w-afternoon{ color:var(--afternoon); }
 .thm-edit{ margin-top:14px; display:none; }
@@ -2851,6 +2881,32 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       <div class="roster-addrow">
         <input id="rosterNewPos" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtn">+ Add</button>
+      </div>
+
+      <div class="ab-block" id="aeroBillingBlock">
+        <div class="roster-subtitle">Aero Billing</div>
+        <div class="thg-wrap"><table class="thg-table ab-table">
+          <thead><tr><th id="abHM"><b>Morning</b></th><th id="abHA"><b>Afternoon</b></th></tr></thead>
+          <tbody id="abBody"></tbody>
+        </table></div>
+        <div class="roster-addrow ab-add">
+          <input id="abNewName" type="text" placeholder="New person (Aero Billing)" autocomplete="off">
+          <select id="abNewGrp"><option value="g1">Group 1</option><option value="g2">Group 2</option><option value="day">Day 09:00–16:00</option></select>
+          <button type="button" id="abAddBtn">+ Add</button>
+          <button type="button" id="abEditBtn">✎ Edit</button>
+        </div>
+      </div>
+
+      <div class="sato-block" id="satoBlock">
+        <div class="roster-subtitle">SATO Office / Admin</div>
+        <div class="sato-time">Office time 09:00 – 16:00</div>
+        <div class="thg-wrap"><table class="thg-table ab-table sato-table"><tbody><tr id="satoRow"></tr></tbody></table></div>
+        <div class="roster-addrow ab-add">
+          <input id="satoNewName" type="text" placeholder="New person (SATO Office / Admin)" autocomplete="off">
+          <button type="button" id="satoAddBtn">+ Add</button>
+          <button type="button" id="satoEditBtn">✎ Edit</button>
+        </div>
+      </div>
       </div>
 
       </div>
@@ -9581,11 +9637,16 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const activeEx = tableKey ? rosterViewExchanges(tableKey) : [];
   const _vSel = window._rosterSelKey;
   const _vDay = (typeof _vSel === 'string' && _vSel) ? _vSel : todayDateKey();
+  /* Admin row (Controllers only): one merged cell like OJTI / Stand by, sits right above OJTI (order: ... PFIU, Admin, OJTI, Stand by) */
+  const adTxt = ((data[0] && Array.isArray(data[0].admin)) ? data[0].admin : []).filter(x=> String(x || '').trim()).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const adminRowHtml = tableKey === 'rosterCtrl' ? `<tr class="roster-standby-row roster-admin-row"><td class="roster-pos"><div class="roster-standby-label">Admin</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-admin-input" rows="${Math.max(1, Math.ceil(adTxt.length / 38))}" placeholder="Admin names (comma separated)" autocomplete="off" readonly>${adTxt}</textarea></td></tr>` : '';
+  let adminPlaced = false;
   tbody.innerHTML = data.map((row, ri)=>{
     if(isPoolRow(row, tableKey)){
+      if(adminRowHtml) adminPlaced = true;
       const pTxt = poolOf(row).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
       const pPos = (row.pos || '').replace(/"/g,'&quot;');
-      return `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea></td></tr>`;
+      return adminRowHtml + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea></td></tr>`;
     }
     const cells = TEAMS.map((t, ci)=>{
       const ex = exForCell(activeEx, row.pos, ci);
@@ -9621,14 +9682,22 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   }).join('');
   if(tableKey && standbyTableKeys().indexOf(tableKey) !== -1 && data.length){
     const sbTxt = standbyOf(data).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea></td></tr>`;
-    const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input)');   /* NOT the OJTI box (it shares the class and sits above) */
+    tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea></td></tr>`
+      + ((adminRowHtml && !adminPlaced) ? adminRowHtml : '');
+    const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input):not(.roster-admin-input)');   /* NOT the OJTI box (it shares the class and sits above) */
     if(sbEl) sbEl.addEventListener('input', ()=>{
       data[0].standby = sbEl.value.split(/[,\n]/).map(x=> x.trim()).filter(Boolean);
       sbEl.rows = Math.max(1, Math.ceil(sbEl.value.length / 38));
       onChange(data);
     });
   }
+
+  const adEl = tbody.querySelector('.roster-admin-input');
+  if(adEl) adEl.addEventListener('input', ()=>{
+    data[0].admin = adEl.value.split(/[,\n]/).map(x=> x.trim()).filter(Boolean);
+    adEl.rows = Math.max(1, Math.ceil(adEl.value.length / 38));
+    onChange(data);
+  });
 
   tbody.querySelectorAll('.roster-pool-input').forEach(ta=>{
     ta.addEventListener('input', ()=>{
@@ -10717,7 +10786,7 @@ function renderExchangePicker(){
   const match = n => !q || String(n).toLowerCase().indexOf(q) !== -1;
   const posMode = window._xpMode === 'pos';
   const posSelEl = document.getElementById('exchangePos');
-  const tg = posMode ? null : xpTarget();
+  const tg = (posMode || (window._qbmEdit && window._qbmEdit.field === 'who')) ? null : xpTarget();
   const legend = document.getElementById('exchangePickerLegend');
   if(legend){ legend.style.display = 'none'; legend.innerHTML = ''; if(tg && xpExchangeBlockActive()){ legend.style.cssText = 'display:block;font-size:12px;color:var(--muted);padding:4px 2px;'; legend.textContent = 'Same-shift names are disabled \u2014 select someone from a different shift.'; } }
   const btn = (n, extra, isSel, cell) => {
@@ -10778,6 +10847,12 @@ function pickExchangeSub(name, st, msg){
   if(st === 'busy' || st === 'away'){
     if(!confirm('\u26A0 ' + String(name || '').trim() + ' ' + (msg || (st === 'away' ? 'is not available.' : 'is busy at that time.')) + '\n\nSelect anyway?')) return;
   }
+  if(window._qbmEdit && (window._qbmEdit.field === 'sub' || window._qbmEdit.field === 'who')){
+    const _qc = window._qbmEdit; _qc.picked = true;
+    closeExchangePicker();
+    setTimeout(()=> qbmApplyName(_qc, String(name || '').trim()), 0);
+    return;
+  }
   if(window._exReqAssignId){
     const id = window._exReqAssignId, nm = String(name || '').trim();
     closeExchangePicker();
@@ -10813,6 +10888,7 @@ function pickExchangePos(b){
   }
   updateExchangeCurrentHint();
   try{ posSel.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+  if(window._qbmEdit && window._qbmEdit.field === 'pos'){ const _qc = window._qbmEdit; _qc.picked = true; setTimeout(()=> qbmApplyPos(_qc), 0); return; }
   if(window._xMode === 'ex' || window._xMode === 'cl' || (window._xIsUfnFlow && window._xIsUfnFlow())){
     window._xFlowWho = b.getAttribute('data-name') || '';
     if(window._xFlowLabel) window._xFlowLabel();
@@ -10840,6 +10916,7 @@ function pickExchangePos(b){
     '.xdc-d.blank{ visibility:hidden; cursor:default; }' +
     '.xdc-d.off{ background:#fbfaf8; color:#8a8982; }' +
     '.xdc-d.past{ opacity:.38; }' +
+    '.xdc-d.taken{ background:#e4e3dd; color:#8a8982; opacity:.5; border-color:#d9d7cf; cursor:not-allowed; }' +
     '.xdc-d.today{ outline:2.5px solid #1a1a1a; outline-offset:-2px; }' +
     '.xdc-d.shake{ animation:xdcShake .35s; }' +
     '@keyframes xdcShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }' +
@@ -10857,11 +10934,14 @@ function pickExchangePos(b){
     '.xdc-multi span{ flex:1; font-size:13px; font-weight:800; color:#444; }' +
     '.xdc-multi button{ border:0; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:800; cursor:pointer; }' +
     '#xdcClear{ background:#ecebe5; color:#333; } #xdcDone{ background:#1f7a4d; color:#fff; }' +
-    '.xdc-hint{ font-size:11.5px; color:#6b6a64; font-weight:700; margin:6px 2px 0; }';
+    '.xdc-hint{ font-size:11.5px; color:#6b6a64; font-weight:700; margin:6px 2px 0; }' +
+    '.xdc-seg{ display:flex; gap:4px; background:#ecebe5; border-radius:11px; padding:3px; margin:2px 0 8px; }' +
+    '.xdc-seg button{ flex:1; border:0; border-radius:9px; padding:9px 6px; font-size:13px; font-weight:800; background:transparent; color:#555; cursor:pointer; }' +
+    '.xdc-seg button.on{ background:#1a1a1a; color:#fff; }';
   document.head.appendChild(st);
 })();
-const _xdc = { y:0, m:0, ctx:null, pend:null, warnT:0, sel:new Set() };
-function _xdcMulti(){ return window._xMode === 'sp' && window._spPreType === 'Festival' && exIsAdmin(); }   /* several days at once: Festival, admin */
+const _xdc = { y:0, m:0, ctx:null, pend:null, warnT:0, sel:new Set(), multi:false };
+function _xdcMulti(){ return (window._qbmEdit && window._qbmEdit.field === 'date' && window._qbmEdit.multi) || window._xMode === 'sp' && window._spPreType === 'Festival' && exIsAdmin() || (_xdc.multi && (window._xMode === 'ex' || window._xMode === 'cl') && !window._qbmEdit); }   /* several days at once: Festival, admin */
 function _xdcKey(y, m, d){ return y + '-' + String(m + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
 function _xdcNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
 function xdcContext(){
@@ -10902,6 +10982,14 @@ function xdcWarn(msg, el){
 }
 function closeXDutyCal(){ const ov = document.getElementById('xdcOverlay'); if(ov) ov.classList.remove('show'); _xdc.pend = null; }
 function xdcPick(info, half){
+  if(window._qbmEdit && window._qbmEdit.field === 'date'){
+    const _qc = window._qbmEdit; _qc.picked = true;
+    const _qd = (window._festDays && window._festDays.length > 1) ? window._festDays.slice() : [info.dk];
+    window._festDays = [];
+    closeXDutyCal();
+    setTimeout(()=> qbmApplyDate(_qc, _qd), 0);
+    return;
+  }
   const dateInput = document.getElementById('exchangeDate'), posSel = document.getElementById('exchangePos'), halfSel = document.getElementById('exchangeNightHalf');
   if(!dateInput) return;
   dateInput.value = info.dk;
@@ -10911,6 +10999,21 @@ function xdcPick(info, half){
   closeXDutyCal();
   try{ updateExchangeCurrentHint(); }catch(e){}
   if(window._xRunMode) window._xRunMode();
+}
+/* a day on which this position / person already has a CL, Exchange or leave entry: greyed out and not selectable (returns its label, or '') */
+function xdcTaken(ctx, info){
+  try{
+    if(window._qbmEdit || !ctx) return '';
+    if(!(window._xMode === 'ex' || window._xMode === 'cl' || window._xMode === 'sp')) return '';
+    let table = ctx.table, pos, team;
+    if(ctx.thmr){
+      if(info.slot == null) return '';
+      pos = (ctx.table === 'th' ? 'TH-' : 'MR-') + (info.pi + 1); team = THS_BASE + info.slot;
+    } else { pos = ctx.pos; team = ctx.ci; }
+    const x = exHistList(EXCHANGES[info.dk]).find(e=> e && !e.moved && e.table === table && e.pos === pos && +e.team === +team && (String(e.subName || '').trim() || e.cl || e.special));
+    if(!x) return '';
+    return x.cl ? 'CL' : x.special ? exSpShort(x.spType) : 'Exchange';
+  }catch(e){ return ''; }
 }
 function renderXDutyCal(){
   const box = document.getElementById('xdcBox'); if(!box || !_xdc.ctx) return;
@@ -10922,23 +11025,26 @@ function renderXDutyCal(){
   let g = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(w=> '<div class="xdc-wd">' + w + '</div>').join('');
   for(let i = 0; i < first; i++) g += '<div class="xdc-d blank"></div>';
   for(let d = 1; d <= n; d++){
-    const info = xdcDay(ctx, y, m, d), past = info.dk < today, off = info.st === 'Off' || !info.st;
-    const bg = off ? '' : ' style="background:var(--' + info.cls + ');border-color:transparent"';
-    g += '<div class="xdc-d' + (off ? ' off' : '') + (past ? ' past' : '') + (info.dk === today ? ' today' : '') + (multi && _xdc.sel.has(info.dk) ? ' sel' : '') + '" data-d="' + d + '"' + bg + '>' + d + '<small>' + _xEsc(info.text) + '</small></div>';
+    const info = xdcDay(ctx, y, m, d), past = info.dk < today, off = info.st === 'Off' || !info.st, tk = off ? '' : xdcTaken(ctx, info);
+    const bg = (off || tk) ? '' : ' style="background:var(--' + info.cls + ');border-color:transparent"';
+    g += '<div class="xdc-d' + (off ? ' off' : '') + (tk ? ' taken' : '') + (past ? ' past' : '') + (info.dk === today ? ' today' : '') + (multi && _xdc.sel.has(info.dk) ? ' sel' : '') + '" data-d="' + d + '"' + bg + '>' + d + '<small>' + _xEsc(tk ? tk + ' \u2713' : info.text) + '</small></div>';
   }
   box.innerHTML =
-    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._xMode === 'cl' ? 'CL' : (window._xMode === 'sp' && window._spPreType === 'UFN') ? 'UFN' : (window._xMode === 'sp' && window._spPreType === 'Festival') ? 'Festival' : 'Exchange') + ' \u00B7 ' + (multi ? 'Select days' : 'Select date') + '</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
-    '<div class="xdc-nav"><button type="button" id="xdcPrev"' + (monthsFromNow <= 0 ? ' disabled' : '') + '>\u2039</button><div class="xdc-mon">' + MN[m] + ' ' + y + '</div><button type="button" id="xdcNext"' + (monthsFromNow >= 11 ? ' disabled' : '') + '>\u203A</button></div>' +
+    '<div class="xdc-top"><div class="xdc-ttl"><b>' + (window._qbmEdit ? 'QBM' : window._xMode === 'cl' ? 'CL' : (window._xMode === 'sp' && window._spPreType === 'UFN') ? 'UFN' : (window._xMode === 'sp' && window._spPreType === 'Festival') ? 'Festival' : 'Exchange') + ' \u00B7 ' + (multi ? 'Select days' : 'Select date') + '</b><span>' + _xEsc(ctx.head) + '</span></div><button type="button" class="xdc-x" id="xdcClose">\u2715</button></div>' +
+    '<div class="xdc-nav"><button type="button" id="xdcPrev"' + (monthsFromNow <= 0 && !window._qbmEdit ? ' disabled' : '') + '>\u2039</button><div class="xdc-mon">' + MN[m] + ' ' + y + '</div><button type="button" id="xdcNext"' + (monthsFromNow >= 11 ? ' disabled' : '') + '>\u203A</button></div>' +
+    ((window._xMode === 'ex' || window._xMode === 'cl') && !window._qbmEdit ? '<div class="xdc-seg"><button type="button" data-m="1"' + (!multi ? ' class="on"' : '') + '>Single day</button><button type="button" data-m="2"' + (multi ? ' class="on"' : '') + '>Multiple days</button></div>' : '') +
     '<div class="xdc-grid">' + g + '</div><div class="xdc-warn" id="xdcWarn"></div><div id="xdcHalf"></div>' +
     (multi ? '<div class="xdc-hint">Tap the duty days to select / unselect (you can go to other months too).</div><div class="xdc-multi"><span id="xdcCnt">' + _xdc.sel.size + ' day' + (_xdc.sel.size === 1 ? '' : 's') + ' selected</span><button type="button" id="xdcClear">Clear</button><button type="button" id="xdcDone">Done \u2714</button></div>' : '');
   box.querySelector('#xdcClose').addEventListener('click', closeXDutyCal);
+  box.querySelectorAll('.xdc-seg button').forEach(b=> b.addEventListener('click', ()=>{ _xdc.multi = b.getAttribute('data-m') === '2'; _xdc.sel = new Set(); renderXDutyCal(); }));
   box.querySelector('#xdcPrev').addEventListener('click', ()=>{ _xdc.m--; if(_xdc.m < 0){ _xdc.m = 11; _xdc.y--; } renderXDutyCal(); });
   box.querySelector('#xdcNext').addEventListener('click', ()=>{ _xdc.m++; if(_xdc.m > 11){ _xdc.m = 0; _xdc.y++; } renderXDutyCal(); });
   box.querySelectorAll('.xdc-d[data-d]').forEach(el=> el.addEventListener('click', ()=>{
     const d = +el.getAttribute('data-d'), info = xdcDay(ctx, y, m, d), dd = String(d).padStart(2,'0') + '/' + String(m + 1).padStart(2,'0');
     const hb = box.querySelector('#xdcHalf'); if(hb) hb.innerHTML = '';
+    { const _tk = (info.st === 'Off' || !info.st) ? '' : xdcTaken(ctx, info); if(_tk){ xdcWarn('\u26A0 ' + dd + ' already has ' + _tk + '. Pick another day.', el); return; } }
     if(info.st === 'Off' || !info.st){ xdcWarn('\u26A0 No duty on ' + dd + ' (Off day). Please select a duty day.', el); return; }
-    if(info.dk < today){ xdcWarn('\u26A0 ' + dd + ' is a past date. Please select today or a future date.', el); return; }
+    if(info.dk < today && !window._qbmEdit){ xdcWarn('\u26A0 ' + dd + ' is a past date. Please select today or a future date.', el); return; }
     if(multi){
       if(_xdc.sel.has(info.dk)) _xdc.sel.delete(info.dk); else _xdc.sel.add(info.dk);
       renderXDutyCal();
@@ -10960,7 +11066,7 @@ function renderXDutyCal(){
 function openXDutyCal(){
   const ctx = xdcContext();
   if(!ctx){ openExchangePosPicker(); return; }
-  _xdc.ctx = ctx; _xdc.sel = new Set();
+  _xdc.ctx = ctx; _xdc.sel = new Set(); _xdc.multi = false;
   const t = todayDateKey().split('-').map(Number); _xdc.y = t[0]; _xdc.m = t[1] - 1;
   let ov = document.getElementById('xdcOverlay');
   if(!ov){
@@ -11327,7 +11433,7 @@ function initClData(){
    official QBM table (Person detailed, Duty place, Date & duty
    period, Person relieved, Remarks) + print.
    ============================================================ */
-let _qbmRuns = [];
+let _qbmRuns = [], _qbmUnits = [], _qbmPers = [];
 /* QBM filter (admin convenience): one shift (A-E) and / or one person (detailed or relieved). Applies to the sheet, Print and PNG. */
 let _qbmF = { shift:'', person:'' };
 const _qbmNorm = x=> String(x || '').trim().toLowerCase();
@@ -11373,7 +11479,7 @@ function qbmFilterUI(all, shown){
   const ch = document.getElementById('qbmShiftChips');
   if(ch) ch.innerHTML = [''].concat(TEAMS).map(t=> '<button type="button" class="qbm-fchip' + (t === _qbmF.shift ? ' on' : '') + '" data-sh="' + t + '">' + (t ? t + ' shift' : 'All shifts') + '</button>').join('');
   const cnt = document.getElementById('qbmFCount');
-  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : '';
+  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : ((window.hsiaIsModerator && window.hsiaIsModerator()) ? 'Tip: double-tap a name, place or date to change it' : '');
 }
 function qbmPeriod(ex, dk){
   const t = +ex.team;
@@ -11483,27 +11589,29 @@ function qbmMonthLabel(items){
 function renderQbm(){
   const paper = document.getElementById('qbmPaper');
   if(!paper) return;
-  paper.className = 'qbm-paper' + (_qbmStyle === 'paper' ? ' qbm-pm' : '');
+  qbmBindEdit();
+  paper.className = 'qbm-paper' + (_qbmStyle === 'paper' ? ' qbm-pm' : '') + ((window.hsiaIsModerator && window.hsiaIsModerator()) ? ' qbm-ed' : '');
   const allItems = qbmCollect('', '', true), items = qbmApplyFilter(allItems);
   qbmFilterUI(allItems, items.length);
-  _qbmRuns = [];
+  _qbmRuns = []; _qbmUnits = []; _qbmPers = [];
   const mod = !!(window.hsiaIsModerator && window.hsiaIsModerator());
   let html = '';
   qbmGroupList(items).forEach(G=>{
     const rows = qbmBuild(G.items);
     let body = '';
     rows.forEach((P, i)=>{
-      const U = P.units.length;
+      const U = P.units.length, pIdx = _qbmPers.push(P) - 1;
       P.units.forEach((u, k)=>{
+        const uIdx = _qbmUnits.push(u) - 1;
         const lines = u.runs.map(run=>{
           _qbmRuns.push(run);
-          return '<div class="qbm-line">' + (mod ? '<button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button>' : '') + '<span>' + _xEsc(qbmDateText(run)) + '</span></div>';
+          return '<div class="qbm-line" data-qe="date" data-r="' + (_qbmRuns.length - 1) + '">' + (mod ? '<button type="button" class="qbm-x" data-r="' + (_qbmRuns.length - 1) + '" title="Remove">✕</button>' : '') + '<span>' + _xEsc(qbmDateText(run)) + '</span></div>';
         }).join('');
         const part = P.parts.find(pt=> pt.from === k);
         body += '<tr>' +
           (k === 0 ? '<td class="c" rowspan="' + U + '">' + String(i+1).padStart(2,'0') + '</td>' : '') +
-          '<td class="det">' + _xEsc(u.detailed) + '</td><td class="c">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
-          (k === 0 ? '<td class="rel" rowspan="' + U + '">' + _xEsc(P.relieved) + '</td>' : '') +
+          '<td class="det" data-qe="sub" data-u="' + uIdx + '">' + _xEsc(u.detailed) + '</td><td class="c" data-qe="pos" data-u="' + uIdx + '">' + _xEsc(u.place) + '</td><td>' + lines + '</td>' +
+          (k === 0 ? '<td class="rel" rowspan="' + U + '" data-qe="who" data-p="' + pIdx + '">' + _xEsc(P.relieved) + '</td>' : '') +
           (part ? '<td class="c" rowspan="' + part.n + '">' + _xEsc(part.rmk) + '</td>' : '') +
           '</tr>';
       });
@@ -11536,6 +11644,247 @@ function qbmRemoveRun(idx){
   saveExchangesData(EXCHANGES);
   try{ renderRoster(); renderRosterCtrl(); if(typeof renderRosterComm === 'function') renderRosterComm(); checkMyExchangeNotifications(); }catch(e){}
   renderQbm();
+}
+/* ---- QBM: double-tap a person / place / date to change it. Uses the same popups as Add Exchange / Add CL
+        (position picker, duty calendar, name picker). Moderator / admin only. ---- */
+function qbmBindEdit(){
+  const paper = document.getElementById('qbmPaper');
+  if(!paper || paper._qeBound) return;
+  paper._qeBound = true;
+  let last = { el:null, t:0 };
+  paper.addEventListener('click', e=>{
+    if(e.target.closest('.qbm-x')) return;
+    const cell = e.target.closest('[data-qe]');
+    if(!cell || !paper.contains(cell)){ last = { el:null, t:0 }; return; }
+    const now = Date.now();
+    if(last.el === cell && now - last.t < 450){ last = { el:null, t:0 }; qbmEditOpen(cell); return; }
+    last = { el:cell, t:now };
+  });
+  paper.addEventListener('dblclick', e=>{ if(e.target.closest('[data-qe]')) e.preventDefault(); });
+}
+function qbmToast(msg){
+  try{
+    let t = document.getElementById('qbmEdToast');
+    if(!t){
+      t = document.createElement('div'); t.id = 'qbmEdToast';
+      t.style.cssText = 'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:10050;background:#1f7a4d;color:#fff;border-radius:14px;padding:14px 22px;font-size:15px;font-weight:700;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:0;transition:opacity .2s;pointer-events:none;max-width:86vw;text-align:center;';
+      document.body.appendChild(t);
+    }
+    t.textContent = '\u2714 ' + msg; t.style.opacity = '1';
+    clearTimeout(t._h); t._h = setTimeout(()=>{ t.style.opacity = '0'; }, 2200);
+  }catch(e){}
+}
+/* the Exchange form fields drive the pickers / calendar, so they are pointed at the entry being edited and put back afterwards */
+function qbmFormSave(){
+  const v = id=>{ const el = document.getElementById(id); return el ? el.value : ''; };
+  return { table:v('exchangeTable'), pos:v('exchangePos'), team:v('exchangeTeam'), date:v('exchangeDate'), sub:v('exchangeSubName'), half:v('exchangeNightHalf'), mode:window._xMode, who:window._xFlowWho };
+}
+function qbmFormRestore(s){
+  if(!s) return;
+  const g = id=> document.getElementById(id);
+  try{
+    const t = g('exchangeTable'), p = g('exchangePos'), tm = g('exchangeTeam'), d = g('exchangeDate'), sb = g('exchangeSubName'), h = g('exchangeNightHalf');
+    if(d) d.value = s.date;
+    if(t){ t.value = s.table; populateExchangePositions(); }
+    if(p) p.value = s.pos;
+    if(tm) tm.value = s.team;
+    if(sb){ sb.value = s.sub; sb.style.opacity = ''; }
+    if(h) h.value = s.half;
+    updateExchangeCurrentHint();
+  }catch(e){}
+  window._xMode = s.mode; window._xFlowWho = s.who;
+  const tt = g('exchangePickerTitle'); if(tt && !window._xpMode) tt.textContent = '\uD83D\uDC65 Select Substitute';
+}
+function qbmFormFor(ex, dk){
+  const g = id=> document.getElementById(id);
+  const t = g('exchangeTable'), p = g('exchangePos'), tm = g('exchangeTeam'), d = g('exchangeDate');
+  if(!t || !p || !d) return;
+  d.value = dk; t.value = ex.table; populateExchangePositions();
+  if(isThMrTable(ex.table)){
+    const slot = +ex.team - THS_BASE, pi = (parseInt(String(ex.pos).replace(/\D+/g, ''), 10) || 1) - 1;
+    p.value = slot + '|' + pi;
+    window._xFlowWho = String(ex.who || '').trim();
+  } else {
+    p.value = ex.pos; if(tm) tm.value = String(+ex.team);
+  }
+}
+function qbmEditEnd(ctx){
+  const c = ctx || window._qbmEdit;
+  if(!c) return;
+  if(window._qbmEdit === c) window._qbmEdit = null;
+  qbmFormRestore(c.saved);
+  const vb = document.getElementById('qbmVacantBtn'); if(vb) vb.style.display = 'none';
+}
+function qbmWatch(id){
+  const el = document.getElementById(id);
+  if(!el || el._qeObs) return;
+  el._qeObs = true;
+  try{
+    new MutationObserver(()=>{
+      const c = window._qbmEdit;
+      if(!c || c.picked) return;
+      const a = document.getElementById('exchangePickerOverlay'), b = document.getElementById('xdcOverlay');
+      if(!((a && a.classList.contains('show')) || (b && b.classList.contains('show')))) qbmEditEnd(c);   /* popup closed without choosing = cancelled */
+    }).observe(el, { attributes:true, attributeFilter:['class'] });
+  }catch(e){}
+}
+function qbmLive(it){
+  return exHistList(EXCHANGES[it.dk]).find(x=> x && !x.moved && x.table === it.ex.table && x.pos === it.ex.pos && +x.team === +it.ex.team && (x.nightHalf || '') === (it.ex.nightHalf || '')) || null;
+}
+function qbmDropEntry(dk, ex){
+  const list = exHistList(EXCHANGES[dk]);
+  const i = list.indexOf(ex);
+  if(i < 0) return false;
+  try{ if(ex.cl) clLedgerDrop(dk, ex); }catch(e){}
+  list.splice(i, 1);
+  EXCHANGES[dk] = list;
+  exPurgeMoved(dk, ex);
+  if(!exHistList(EXCHANGES[dk]).length) delete EXCHANGES[dk];
+  return true;
+}
+function qbmDone(msg, audit){
+  saveExchangesData(EXCHANGES);
+  try{ auditLog('qbm-edit', audit); }catch(e){}
+  try{ renderExchangeList(); renderRoster(); renderRosterCtrl(); if(typeof renderRosterComm === 'function') renderRosterComm(); checkMyExchangeNotifications(); refreshThmrViews(); }catch(e){}
+  try{ renderQbm(); }catch(e){}
+  qbmToast(msg);
+}
+function qbmEditOpen(cell){
+  if(!(window.hsiaIsModerator && window.hsiaIsModerator())) return;
+  if(window._qbmEdit) return;
+  const f = cell.getAttribute('data-qe');
+  let items = [];
+  if(f === 'date'){ const run = _qbmRuns[+cell.getAttribute('data-r')]; if(run) items = run.items.slice(); }
+  else if(f === 'who'){ const P = _qbmPers[+cell.getAttribute('data-p')]; if(P) P.units.forEach(u=> u.items.forEach(it=> items.push(it))); }
+  else { const u = _qbmUnits[+cell.getAttribute('data-u')]; if(u) items = u.items.slice(); }
+  if(!items.length) return;
+  if(items.some(it=> it.ex && it.ex.ufn)){ alert('UFN entries cannot be changed from the QBM sheet.'); return; }
+  if(!requireRosterAuth()) return;
+  const first = items[0];
+  const ctx = { field:f, items:items, saved:qbmFormSave(), picked:false, multi:(f === 'date' && items.length > 1) };
+  window._qbmEdit = ctx;
+  window._xMode = ''; window._xpMode = '';
+  try{
+    qbmFormFor(first.ex, first.dk);
+    qbmWatch('exchangePickerOverlay');
+    const subEl = document.getElementById('exchangeSubName');
+    const man = document.getElementById('exchangePickerManualRow');
+    let vb = document.getElementById('qbmVacantBtn');
+    if(!vb && man){
+      vb = document.createElement('button'); vb.type = 'button'; vb.id = 'qbmVacantBtn'; vb.className = 'fr-dbimport'; vb.textContent = 'Vacant';
+      vb.addEventListener('click', ()=>{ const c = window._qbmEdit; if(!c || c.field !== 'sub') return; c.picked = true; closeExchangePicker(); setTimeout(()=> qbmApplyName(c, ''), 0); });
+      man.appendChild(vb);
+    }
+    if(vb) vb.style.display = 'none';
+    if(f === 'sub' || f === 'who'){
+      if(subEl) subEl.value = f === 'sub' ? String(first.ex.subName || '') : String(first.relieved || '');
+      openExchangePicker();
+      const tt = document.getElementById('exchangePickerTitle'); if(tt) tt.textContent = f === 'who' ? '\uD83D\uDC64 Person relieved' : '\uD83D\uDC65 Person detailed';
+      if(vb && f === 'sub') vb.style.display = '';
+    } else if(f === 'pos'){
+      openExchangePosPicker();
+    } else {
+      if(!xdcContext()){ alert('The duty calendar cannot be opened for this entry.'); qbmEditEnd(ctx); return; }
+      openXDutyCal();
+      qbmWatch('xdcOverlay');
+      const p = first.dk.split('-').map(Number);
+      _xdc.y = p[0]; _xdc.m = p[1] - 1;
+      _xdc.sel = new Set(ctx.multi ? items.map(it=> it.dk) : []);
+      renderXDutyCal();
+    }
+  }catch(e){ console.error(e); qbmEditEnd(ctx); }
+}
+/* move entries: drop the old ones, put the new ones (shared by "change date" and "change position") */
+function qbmMove(olds, plan, audit, msg){
+  const clash = plan.filter(p=> exHistList(EXCHANGES[p.k]).some(x=> x && !x.moved && x.table === p.e.table && x.pos === p.e.pos && +x.team === +p.e.team && !olds.some(o=> o.ex === x)));
+  if(clash.length && !confirm('There is already an entry for that position on ' + clash.map(p=> p.k).join(', ') + '.\n\nReplace it?')) return false;
+  if(plan.length && plan[0].e.cl){
+    const who = plan[0].who, year = +plan[0].k.slice(0, 4), norm = clNorm(who);
+    let oldTot = 0, newTot = 0;
+    olds.forEach(o=>{ const rec = CL_LOG[clIdFor(o.it.dk, o.ex.table, o.ex.pos, o.ex.team)]; if(rec && clNorm(rec.who) === norm && String(rec.date).slice(0, 4) === String(year)) oldTot += clRecDays(rec); });
+    plan.forEach(p=>{ newTot += clDaysForShift(p.rr.shift); });
+    if(clUsedBy(who, year, '') - oldTot + newTot > CL_LIMIT && !confirm('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for ' + who + '.\n\nContinue anyway?')) return false;
+  }
+  window._exBatch = true;
+  try{
+    olds.forEach(o=> qbmDropEntry(o.it.dk, o.ex));
+    plan.forEach(p=>{
+      exPutEntry(p.k, p.e); exVacateMovedCell(p.k, p.e);
+      if(p.e.cl) clLedgerSet(p.k, { who:p.who, table:p.e.table, pos:p.e.pos, team:p.e.team, shift:p.rr.shift }, clDaysForShift(p.rr.shift));
+    });
+  } finally { window._exBatch = false; }
+  qbmDone(msg, audit);
+  return true;
+}
+function qbmApplyName(ctx, name){
+  try{
+    const f = ctx.field;
+    let n = 0, skip = 0;
+    const desc = [];
+    window._exBatch = true;
+    try{
+      ctx.items.forEach(it=>{
+        const ex = qbmLive(it); if(!ex) return;
+        if(f === 'sub'){
+          if(!name && !(ex.cl || ex.special)){ skip++; return; }
+          desc.push(it.dk + ' ' + ex.pos + ': ' + (ex.subName || 'Vacant') + ' \u2192 ' + (name || 'Vacant'));
+          exPurgeMoved(it.dk, ex);
+          ex.subName = name;
+          if(ex.cl || ex.special) ex.vacant = !name;
+          exVacateMovedCell(it.dk, ex);
+        } else {
+          desc.push(it.dk + ' ' + ex.pos + ': relieved ' + (ex.who || it.relieved || '\u2014') + ' \u2192 ' + name);
+          ex.who = name;
+          if(ex.cl){ const rec = CL_LOG[clIdFor(it.dk, ex.table, ex.pos, ex.team)]; if(rec) rec.who = name; }
+        }
+        n++;
+      });
+    } finally { window._exBatch = false; }
+    if(f === 'who'){ try{ clSave(); }catch(e){} }
+    if(!n){ alert(skip ? 'An Exchange needs a substitute. Only CL / leave entries can be left Vacant.' : 'Nothing changed.'); return; }
+    qbmDone(f === 'sub' ? 'Person detailed changed' : 'Person relieved changed', desc.join(' | '));
+  } finally { qbmEditEnd(ctx); }
+}
+function qbmApplyDate(ctx, days){
+  try{
+    const olds = ctx.items.map(it=> ({ it:it, ex:qbmLive(it) })).filter(o=> o.ex);
+    if(!olds.length) return;
+    days = Array.from(new Set(days)).sort();
+    const oldDays = olds.map(o=> o.it.dk).sort();
+    if(days.join() === oldDays.join()) return;
+    const tpl = olds[0].ex, plan = [];
+    const oldRec = CL_LOG[clIdFor(olds[0].it.dk, tpl.table, tpl.pos, tpl.team)] || null;
+    const whoL = (oldRec && oldRec.who) || tpl.who || '';
+    for(const k of days){
+      const rr = exchangeResolve(k);
+      if(!rr || (!rr.thmr && rr.shift === 'Off')){ alert(k + ' is not a duty day for this position. Nothing changed.'); return; }
+      const e = Object.assign({}, tpl);
+      if(e.nightHalf && rr.shift !== 'Night') e.nightHalf = '';
+      plan.push({ k:k, e:e, rr:rr, who:whoL || rr.who });
+    }
+    qbmMove(olds, plan, tpl.pos + ': ' + oldDays.join(', ') + ' \u2192 ' + days.join(', '), 'Date changed');
+  } finally { qbmEditEnd(ctx); }
+}
+function qbmApplyPos(ctx){
+  try{
+    const olds = ctx.items.map(it=> ({ it:it, ex:qbmLive(it) })).filter(o=> o.ex);
+    if(!olds.length) return;
+    const plan = [], off = [];
+    let same = true;
+    for(const o of olds){
+      const rr = exchangeResolve(o.it.dk);
+      if(!rr){ alert('Please select a position.'); return; }
+      if(!rr.thmr && rr.shift === 'Off'){ off.push(o.it.dk); continue; }
+      if(!rr.who || rr.who === '-'){ alert('There is nobody on ' + rr.pos + ' for that team. Nothing changed.'); return; }
+      if(!(rr.table === o.ex.table && rr.pos === o.ex.pos && +rr.team === +o.ex.team)) same = false;
+      const e = Object.assign({}, o.ex, { table:rr.table, pos:rr.pos, team:rr.team, who:rr.who });
+      if(e.nightHalf && rr.shift !== 'Night') e.nightHalf = '';
+      plan.push({ k:o.it.dk, e:e, rr:rr, who:rr.who });
+    }
+    if(off.length){ alert('That team is Off on ' + off.join(', ') + '. Nothing changed.'); return; }
+    if(same) return;
+    qbmMove(olds, plan, olds[0].ex.pos + ' \u2192 ' + plan[0].e.pos + ' (' + olds.map(o=> o.it.dk).join(', ') + ')', 'Duty place changed');
+  } finally { qbmEditEnd(ctx); }
 }
 function printQbm(){
   const paper = document.getElementById('qbmPaper');
@@ -12184,7 +12533,7 @@ function initExchangePanel(){
         if(pSel) pSel.value = '';
         if(dI) dI.value = todayDateKey();
       }catch(e){ console.error(e); }
-      window._xFlowWho = '';
+      window._xFlowWho = ''; window._festDays = [];
       if(window._xFlowLabel) window._xFlowLabel();
       openExchangePosPicker();
     };
@@ -12280,7 +12629,7 @@ function initExchangePanel(){
     try{ const q = document.getElementById('qbmOverlay'); if(q && q.classList.contains('show')) renderQbm(); }catch(e){}
     try{
       const m = window._xMode;
-      if(window._xDone) window._xDone(m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? (window._spRangeMsg || ((window._spType || 'EL') + (window._spType === 'UFN' ? ' added to QBM' : ' added'))) : 'Added');
+      if(window._xDone) window._xDone((m === 'ex' || m === 'cl') && window._spRangeMsg ? window._spRangeMsg : m === 'ex' ? 'Exchange added' : m === 'cl' ? 'CL added' : m === 'sp' ? (window._spRangeMsg || ((window._spType || 'EL') + (window._spType === 'UFN' ? ' added to QBM' : ' added'))) : 'Added');
       window._spRangeMsg = '';
     }catch(e){}
   };
@@ -12296,6 +12645,33 @@ function initExchangePanel(){
       { const _tg = xpTarget(); if(_tg && xpSameShiftName(_tg, subName)){ alert('\u26D4 ' + subName + '\n\n' + XP_SAME_SHIFT_MSG); subInput.value = ''; return; } }
       const hasCl = (EXCHANGES[r.dateKey] || []).some(x=> (x.cl || x.special) && x.table === r.table && x.pos === r.pos && +x.team === +r.team);
       if(hasCl && !confirm('A CL / special entry already exists for this position on that day. Adding an exchange will cancel it. Continue?')) return;
+      { const _fdE = (window._festDays && window._festDays.length > 1) ? window._festDays.slice() : [];
+        if(_fdE.length){
+          window._festDays = [];
+          if(_mode === 'request'){
+            let ok = 0;
+            _fdE.forEach(k=>{ const rr = exchangeResolve(k); if(!rr || (!rr.thmr && rr.shift === 'Off')) return; if(exReqSubmit({ kind:'exchange', r:rr, subName:subName, nightHalf:'' })) ok++; });
+            subInput.value = ''; if(window._xDone) window._xDone(ok + ' request(s) sent'); return;
+          }
+          let n = 0, skip = 0;
+          window._exBatch = true;
+          try{
+            _fdE.forEach(k=>{
+              const rr = exchangeResolve(k);
+              if(!rr || (!rr.thmr && rr.shift === 'Off') || k < today){ skip++; return; }
+              const pe = { table:rr.table, pos:rr.pos, team:rr.team, subName:subName, nightHalf:'', who:rr.who };
+              exPutEntry(k, pe); exVacateMovedCell(k, pe); n++;
+            });
+          } finally { window._exBatch = false; }
+          if(!n){ alert('No duty day left to add for the selected position.'); return; }
+          saveExchangesData(EXCHANGES);
+          try{ auditLog('exchange-add', 'Exchange ' + _fdE.join(', ') + ' (' + n + ' duty days) \u00B7 ' + r.pos + ' \u00B7 ' + (r.who || '') + ' \u2192 ' + subName); }catch(e){}
+          window._spRangeMsg = 'Exchange added: ' + n + ' day' + (n > 1 ? 's' : '') + (skip ? ' (' + skip + ' skipped)' : '');
+          subInput.value = '';
+          afterChange();
+          return;
+        }
+      }
       const nightHalf = '';   /* Exchange is always a full night; 1st / 2nd night is set later from the roster table */
       // Same table+pos+team+half combo replaces any earlier entry for it; a 1st-night and a 2nd-night entry can both exist.
       if(_mode === 'request'){ if(exReqSubmit({ kind:'exchange', r:r, subName:subName, nightHalf:nightHalf })){ subInput.value = ''; if(window._xDone) window._xDone('Request sent'); } return; }
@@ -12312,6 +12688,37 @@ function initExchangePanel(){
       const special = window._clKind === 'special';
       const sub = vacant ? '' : (subInput.value || '').trim();
       if(!vacant && !sub){ alert('Select a substitute first.'); return; }
+      if(!special && window._festDays && window._festDays.length > 1){
+        const fd = window._festDays.slice(); window._festDays = [];
+        const plan = []; let skip = 0;
+        fd.forEach(k=>{
+          const rr = exchangeResolve(k);
+          if(!rr || (!rr.thmr && rr.shift === 'Off') || !rr.who || rr.who === '-'){ skip++; return; }
+          if(k === today){ const w = exchangeShiftWindow(k, rr.team, ''); if(w && w.end <= Date.now()){ skip++; return; } }
+          plan.push({ k:k, rr:rr });
+        });
+        if(!plan.length){ alert('No duty day left to add for the selected position.'); return; }
+        const need = plan.reduce((a, p)=> a + clDaysForShift(p.rr.shift), 0);
+        if(clUsedBy(r.who, +plan[0].k.slice(0, 4), '') + need > CL_LIMIT){ alert('CL limit (' + CL_LIMIT + ' days per year) would be exceeded for this person. CL not added.'); return; }
+        let n = 0;
+        if(window._exMode === 'request'){
+          plan.forEach(p=>{ if(exReqSubmit({ kind:'cl', spType:'', r:p.rr, subName:sub, vacant:!sub })) n++; });
+          subInput.value = ''; if(window._xDone) window._xDone(n + ' request(s) sent'); return;
+        }
+        window._exBatch = true;
+        try{
+          plan.forEach(p=>{
+            const pe = { table:p.rr.table, pos:p.rr.pos, team:p.rr.team, subName:sub, nightHalf:'', cl:true, vacant:!sub, who:p.rr.who };
+            exPutEntry(p.k, pe); exVacateMovedCell(p.k, pe); clLedgerSet(p.k, p.rr, clDaysForShift(p.rr.shift)); n++;
+          });
+        } finally { window._exBatch = false; }
+        saveExchangesData(EXCHANGES);
+        try{ auditLog('cl-add', 'CL ' + plan.map(p=> p.k).join(', ') + ' (' + n + ' duty days) \u00B7 ' + r.pos + ' \u00B7 ' + (r.who || '') + (sub ? ' \u2192 ' + sub : ' \u00B7 vacant')); }catch(e){}
+        window._spRangeMsg = 'CL added: ' + n + ' day' + (n > 1 ? 's' : '') + (skip ? ' (' + skip + ' skipped)' : '');
+        subInput.value = '';
+        afterChange();
+        return;
+      }
       if(window._exMode === 'request'){
         if(!special){
           const _days = clDaysForShift(r.shift), _year = +r.dateKey.slice(0,4), _id = clIdFor(r.dateKey, r.table, r.pos, r.team);
@@ -15093,9 +15500,18 @@ function renderRosterNow(){
       '<tr><td class="now-pos">Traffic Hand</td><td class="now-name">' + lines(t.th) + '</td></tr>' +
       '<tr><td class="now-pos">Marshaller</td><td class="now-name">' + lines(t.mr) + '</td></tr>';
   };
+  // Aero Billing: whoever is on duty at this minute (Morning/Afternoon group + Mahabub during 09:00-16:00)
+  const aeroRows = ()=>{
+    const t = (typeof window.hsiaAeroBillingNow === 'function') ? window.hsiaAeroBillingNow() : null;
+    if(!t) return '';
+    let r = '<tr class="now-group"><td colspan="2">Aero Billing' + (t.shift ? ' · ' + escT(t.shift) : '') + '</td></tr>';
+    if(t.names.length) r += '<tr><td class="now-pos">Aero Billing</td><td class="now-name">' + t.names.map(n=> '<div class="now-line"><span class="now-nm">' + escT(n) + '</span></div>').join('') + '</td></tr>';
+    if(t.days && t.days.length) r += '<tr><td class="now-pos">Aero Billing (Day)</td><td class="now-name">' + t.days.map(n=> '<div class="now-line"><span class="now-nm">' + escT(n) + '</span></div>').join('') + '<small>' + escT(t.dayTime) + '</small></td></tr>';
+    return r;
+  };
   if(idx < 0){
     view.innerHTML = '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div><div class="now-head-v">No team on duty</div></div>' + closeBtn + '</div>' +
-      '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + thmrRows() + '</tbody></table></div>';
+      '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + aeroRows() + thmrRows() + '</tbody></table></div>';
     return;
   }
   const st = getStatus(idx, Date.now(), nowDhakaFields());
@@ -15155,7 +15571,7 @@ function renderRosterNow(){
   view.innerHTML =
     '<div class="now-head"><div class="now-head-l"><div class="now-head-k">On duty now</div>' +
     '<div class="now-head-v">Team ' + esc(TEAMS[idx]) + ' · <span>' + esc(st.shiftType) + '</span></div></div>' + closeBtn + '</div>' +
-    '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + thmrRows() + '</tbody></table></div>';
+    '<div class="now-tablewrap"><table class="now-table"><thead><tr><th>Duty Place</th><th>Name</th></tr></thead><tbody>' + rowsHtml + aeroRows() + thmrRows() + '</tbody></table></div>';
 }
 function openRosterWindow(){
   const o = document.getElementById('rosterCardOuter');
@@ -17614,7 +18030,10 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     var di = dateInfo(), rootCS = getComputedStyle(document.documentElement);
     var textCol = (rootCS.getPropertyValue('--text') || '#F0F1F3').trim(), mutedCol = (rootCS.getPropertyValue('--muted') || '#8B909B').trim(), borderCol = (rootCS.getPropertyValue('--border') || '#454444').trim();
     var bannerH = single ? 88 : 54;
-    var cw = total + 2 * PAD, chh = PAD + bannerH + GAP + T.height + 10 + 16 + PAD;
+    var abx = null;   /* Aero Billing block (Aerodrome Assistant tab only) for the downloaded date + shift */
+    try{ if(bgEl && bgEl.closest && bgEl.closest('#rosterAsstCol') && typeof window.hsiaAeroBillingPaint === 'function') abx = window.hsiaAeroBillingPaint(sel, single, meta, di.iso); }catch(e){ abx = null; }
+    var abH = abx ? abx.h + 16 : 0;
+    var cw = total + 2 * PAD, chh = PAD + bannerH + GAP + T.height + abH + 10 + 16 + PAD;
     var S = Math.max(1, Math.min(4, Math.floor(Math.sqrt(12e6 / (cw * chh))))); while(S > 1 && (cw * S > 9000 || chh * S > 16000)) S--;   /* whole-number scale = crisp 1px lines */
     var cv = document.createElement('canvas'); cv.width = Math.round(cw * S); cv.height = Math.round(chh * S);
     var ctx = cv.getContext('2d', { alpha:false }); if(!ctx) throw new Error('canvas unavailable');
@@ -17783,10 +18202,12 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     });
     ctx.restore();
 
+    if(abx){ try{ abx.draw(ctx, PAD, PAD + bannerH + GAP + T.height + 10, total); }catch(e){} }
+
     /* ---- footer ---- */
     var tk = todayDateKey().split('-');
     ctx.font = "11px 'Inter'" + BNF; ctx.fillStyle = mutedCol; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + total, PAD + bannerH + GAP + T.height + 16);
+    ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + total, PAD + bannerH + GAP + T.height + abH + 16);
     return cv;
   }
 
@@ -18738,4 +19159,204 @@ window.hsiaFs = function(wrap, on, onExit){
 })();
 </script>
 </div><div id="pwaBars"></div><div id="pwaOffline" style="display: none;">📴 অফলাইন — শেষ সংরক্ষিত তথ্য</div><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1791646985241" name="I0_1791646985241" src="https://hsia-atm.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBg4RJRwWVrkFc-PSMbEvLesx_LNp0h984&amp;appName=%5BDEFAULT%5D&amp;v=12.17.1&amp;eid=p&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.gh7qIZtzO5w.O%2Fd%3D1%2Frs%3DAHpOoo84YKT1RVy0T6hcXi5rH3LooB1WCw%2Fm%3D__features__#id=I0_1791646985241&amp;_gfid=I0_1791646985241&amp;parent=https%3A%2F%2Ftarift23-cmyk.github.io&amp;pfname=&amp;rpctoken=89174557" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe><script>(function(){ var s = document.createElement('script'); s.src = 'reg.js?t=' + Date.now(); document.body.appendChild(s); })();</script>
+
+<script>
+/* ===== Aero Billing roster + SATO Office / Admin =====
+   Aero Billing: Group 1 and Group 2 swap Morning/Afternoon every calendar day (25 Oct 2026 Sun: Group 1 = Morning);
+   "Day" staff work 09:00-16:00. `off` = weekdays the person is off (0=Sun ... 6=Sat). People added with the + Add row are
+   kept on this device (localStorage). Morning 07:30-14:00, Afternoon 14:00-20:30 (Dhaka time).
+   SATO Office / Admin: one row, office time 09:00-16:00 -> boxes highlighted during office time.
+   Also feeds the roster "Now" view and the PNG download (window.hsiaAeroBillingNow / hsiaAeroBillingPaint). */
+(function(){
+  var body = document.getElementById('abBody'); if(!body) return;
+  var KEY = 'HSIA_AEROBILL_V1', SKEY = 'HSIA_SATO_V1';
+  var DAY_TIME = '09:00 – 16:00', ANCHOR = Date.UTC(2026,9,25);
+  var DEF = { g1:[{n:'Abeer Rahman',off:[6]},{n:'Reshma',off:[6]}], g2:[{n:'Sarwar Zahan',off:[5]},{n:'OT',off:[]}], day:[{n:'Mahabub',off:[5]}] };
+  var SDEF = ['Rahim','Delowar','Altaf'];
+  var ST = load(), SATO = sload();
+  var EDIT = { ab:false, sato:false };
+  /* only an admin or a moderator may add / edit / remove people; for everybody else the controls are hidden (CSS) and these actions do nothing */
+  function isStaff(){
+    try{ if(window.hsiaIsModerator && window.hsiaIsModerator()) return true; }catch(e){}
+    try{ return !!(document.body && document.body.classList.contains('hsia-staff')); }catch(e){ return false; }
+  }
+  function editOn(k){ if(EDIT[k] && !isStaff()) EDIT[k] = false; return !!EDIT[k]; }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function load(){
+    try{ var o = JSON.parse(localStorage.getItem(KEY)); if(o && Array.isArray(o.g1) && Array.isArray(o.g2) && Array.isArray(o.day)) return o; }catch(e){}
+    return clone(DEF);
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(ST)); }catch(e){} }
+  function sload(){ try{ var o = JSON.parse(localStorage.getItem(SKEY)); if(Array.isArray(o)) return o; }catch(e){} return SDEF.slice(); }
+  function ssave(){ try{ localStorage.setItem(SKEY, JSON.stringify(SATO)); }catch(e){} }
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var esc = function(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  function dhaka(){
+    var f = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dhaka',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()), o = {};
+    f.forEach(function(p){ o[p.type] = +p.value; });
+    return { iso:o.year+'-'+pad(o.month)+'-'+pad(o.day), mins:o.hour*60+o.minute };
+  }
+  function selIso(){ return (typeof window._rosterSelKey === 'string' && window._rosterSelKey) ? window._rosterSelKey : dhaka().iso; }
+  function plan(iso){
+    var a = iso.split('-').map(Number), ms = Date.UTC(a[0],a[1]-1,a[2]), dow = new Date(ms).getUTCDay();
+    var idx = Math.round((ms-ANCHOR)/86400000), g1M = (((idx%2)+2)%2) === 0;
+    return { g1:g1M?'M':'A', g2:g1M?'A':'M', dow:dow };
+  }
+  var isOff = function(p, pl){ return (p.off || []).indexOf(pl.dow) >= 0; };
+  function curShift(mins){ return (mins >= 450 && mins < 840) ? 'M' : (mins >= 840 && mins < 1230) ? 'A' : ''; }
+  var inOffice = function(mins){ return mins >= 540 && mins < 960; };
+  function onShift(pl, sh){
+    var l = [];
+    ['g1','g2'].forEach(function(g){ if(pl[g] === sh) ST[g].forEach(function(p){ if(!isOff(p, pl)) l.push(p.n); }); });
+    return l;
+  }
+  var daysOn = function(pl){ return ST.day.filter(function(p){ return !isOff(p, pl); }).map(function(p){ return p.n; }); };
+  function chunk(list){ var r = []; for(var i = 0; i < list.length; i += 2) r.push(list.slice(i, i + 2)); return r; }
+
+  /* ---- on-screen tables ---- */
+  function render(){
+    var n = dhaka(), iso = selIso(), pl = plan(iso), live = (iso === n.iso), cur = live ? curShift(n.mins) : '';
+    document.getElementById('abHM').className = cur === 'M' ? 'ab-live' : '';
+    document.getElementById('abHA').className = cur === 'A' ? 'ab-live' : '';
+    var ed = editOn('ab');
+    function cell(it, g, span){
+      var p = it.p, off = isOff(p, pl), st = pl[g], on = !off && st === cur;
+      var tag = off ? '<small>Off</small>' : '<small class="' + (st === 'M' ? 'm' : 'a') + '">' + (st === 'M' ? 'Morning' : 'Afternoon') + '</small>';
+      return '<td data-g="' + g + '" data-i="' + it.i + '"' + (span ? ' colspan="2"' : '') + ' class="' + (on ? 'ab-live' : '') + (off ? ' ab-off' : '') + (ed ? ' ab-ed' : '') + '">' + esc(p.n) + tag + (ed ? '<span class="ab-x">✕</span>' : '') + '</td>';
+    }
+    var html = '';
+    ['g1','g2'].forEach(function(g){
+      chunk(ST[g].map(function(p, i){ return { p:p, i:i }; })).forEach(function(row){ html += '<tr>' + row.map(function(it){ return cell(it, g, row.length === 1); }).join('') + '</tr>'; });
+    });
+    ST.day.forEach(function(p, i){
+      var off = isOff(p, pl), on = live && inOffice(n.mins) && !off;
+      html += '<tr><td data-g="day" data-i="' + i + '" colspan="2" class="' + (on ? 'ab-live' : '') + (off ? ' ab-off' : '') + (ed ? ' ab-ed' : '') + '">' + esc(p.n) + '<small>' + (off ? 'Off' : DAY_TIME) + '</small>' + (ed ? '<span class="ab-x">✕</span>' : '') + '</td></tr>';
+    });
+    var sig = html + cur + ed;
+    if(body._sig !== sig){ body._sig = sig; body.innerHTML = html; }
+    var eb = document.getElementById('abEditBtn'); if(eb){ eb.classList.toggle('on', ed); eb.textContent = ed ? 'Done' : '✎ Edit'; }
+    // SATO Office / Admin: one row, boxes lit during office time
+    var sRow = document.getElementById('satoRow'), sOn = (iso === n.iso) && inOffice(n.mins);
+    var sed = editOn('sato');
+    var sh = SATO.map(function(nm, i){ return '<td data-i="' + i + '" class="' + (sOn ? 'ab-live' : '') + (sed ? ' ab-ed' : '') + '">' + esc(nm) + (sed ? '<span class="ab-x">✕</span>' : '') + '</td>'; }).join('') || '<td class="ab-off">—</td>';
+    var seb = document.getElementById('satoEditBtn'); if(seb){ seb.classList.toggle('on', sed); seb.textContent = sed ? 'Done' : '✎ Edit'; }
+    var ssig = sh + sOn + sed;
+    if(sRow && sRow._sig !== ssig){ sRow._sig = ssig; sRow.innerHTML = sh; }
+  }
+  render();
+  setInterval(render, 1000);
+
+  /* ---- add people (admin / moderator only; the add rows are hidden for everybody else) ---- */
+  function gate(){ return isStaff(); }
+  var abBtn = document.getElementById('abAddBtn'), sBtn = document.getElementById('satoAddBtn');
+  if(abBtn) abBtn.addEventListener('click', function(){
+    var inp = document.getElementById('abNewName'), nm = inp.value.trim(); if(!nm) return;
+    if(!gate()) return;
+    ST[document.getElementById('abNewGrp').value].push({ n:nm, off:[] }); save(); inp.value = ''; render();
+  });
+  if(sBtn) sBtn.addEventListener('click', function(){
+    var inp = document.getElementById('satoNewName'), nm = inp.value.trim(); if(!nm) return;
+    if(!gate()) return;
+    SATO.push(nm); ssave(); inp.value = ''; render();
+  });
+
+  /* edit mode: tap a name to rename it, tap ✕ to remove it */
+  function bindEdit(btnId, key, tbodyId, getList, after){
+    var btn = document.getElementById(btnId), tb = document.getElementById(tbodyId);
+    if(btn) btn.addEventListener('click', function(){ if(!isStaff()) return; EDIT[key] = !EDIT[key]; render(); });
+    if(tb) tb.addEventListener('click', function(e){
+      if(!editOn(key)) return;
+      var td = e.target.closest('td[data-i]'); if(!td) return;
+      var i = +td.getAttribute('data-i'), g = td.getAttribute('data-g'), list = getList(g), it = list[i]; if(it == null) return;
+      var cur = (typeof it === 'string') ? it : it.n;
+      if(e.target.closest('.ab-x')){
+        if(confirm('Remove "' + cur + '"?')){ list.splice(i, 1); after(); render(); }
+        return;
+      }
+      var v = prompt('Edit name', cur); if(v === null) return; v = v.trim(); if(!v) return;
+      if(typeof it === 'string') list[i] = v; else it.n = v;
+      after(); render();
+    });
+  }
+  bindEdit('abEditBtn', 'ab', 'abBody', function(g){ return ST[g]; }, save);
+  bindEdit('satoEditBtn', 'sato', 'satoRow', function(){ return SATO; }, ssave);
+
+  /* ---- "Now" view: who of Aero Billing is on duty right now ---- */
+  window.hsiaAeroBillingNow = function(){
+    var n = dhaka(), pl = plan(n.iso), cur = curShift(n.mins), names = cur ? onShift(pl, cur) : [];
+    var days = inOffice(n.mins) ? daysOn(pl) : [];
+    if(!names.length && !days.length) return null;
+    return { shift: cur === 'M' ? 'Morning' : cur === 'A' ? 'Afternoon' : '', names:names, days:days, dayTime:DAY_TIME };
+  };
+
+  /* ---- PNG download: block drawn under the roster table. sel = 'All' or shift index, meta[sel].type = night/morning/afternoon/off ---- */
+  window.hsiaAeroBillingPaint = function(sel, single, meta, iso){
+    var pl = plan(iso), n = dhaka(), live = (iso === n.iso), cur = live ? curShift(n.mins) : '';
+    var type = single ? meta[sel].type : 'all';
+    if(single && type !== 'morning' && type !== 'afternoon') return null;       // Night / Off shift: no Aero Billing duty
+    var sh = type === 'morning' ? 'M' : type === 'afternoon' ? 'A' : '';
+    var RH = 46, HH = 30, TT = 26, rows = [], head;
+    var dayOn = live && inOffice(n.mins);
+    if(single){
+      var on = live && cur === sh;
+      head = [{ t:(sh === 'M' ? 'Morning' : 'Afternoon'), on:on }];
+      chunk(onShift(pl, sh)).forEach(function(r){ rows.push({ cells:r.map(function(nm){ return { t:nm, sub:'', on:on }; }) }); });
+      daysOn(pl).forEach(function(nm){ rows.push({ span:true, cells:[{ t:nm, sub:DAY_TIME, on:dayOn }] }); });
+    } else {
+      head = [{ t:'Morning', on:cur === 'M' }, { t:'Afternoon', on:cur === 'A' }];
+      ['g1','g2'].forEach(function(g){
+        chunk(ST[g]).forEach(function(r){
+          rows.push({ cells:r.map(function(p){ var off = isOff(p, pl), st = pl[g]; return { t:p.n, sub: off ? 'Off' : (st === 'M' ? 'Morning' : 'Afternoon'), on:!off && st === cur, off:off, col: off ? '' : st }; }) });
+        });
+      });
+      ST.day.forEach(function(p){ var off = isOff(p, pl); rows.push({ span:true, cells:[{ t:p.n, sub: off ? 'Off' : DAY_TIME, on:dayOn && !off, off:off }] }); });
+    }
+    if(!rows.length) return null;
+    var h = TT + HH + rows.length * RH;
+    return { h:h, draw:function(ctx, x, y, w){
+      var cs = getComputedStyle(document.documentElement);
+      var V = function(k, d){ return (cs.getPropertyValue(k) || d).trim(); };
+      var text = V('--text','#F0F1F3'), muted = V('--muted','#8B909B'), border = V('--border','#454444'), panel2 = V('--panel-2','#262525'), panel = V('--panel','#171616');
+      var gold = V('--gold','#A6ABB4'), gold2 = V('--gold-soft','#D6D8DC'), mor = V('--morning','#F6C84C'), aft = V('--afternoon','#00EB55');
+      var F = "'Inter',sans-serif";
+      ctx.save();
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = muted;
+      ctx.font = "700 12px 'Space Grotesk'," + F; try{ ctx.letterSpacing = '1px'; }catch(e){}
+      ctx.fillText('AERO BILLING', x + 2, y + TT / 2); try{ ctx.letterSpacing = '0px'; }catch(e){}
+      var ty = y + TT;
+      ctx.beginPath(); ctx.rect(x, ty, w, HH + rows.length * RH); ctx.fillStyle = panel2; ctx.fill();
+      var hw = single ? w : w / 2;
+      head.forEach(function(hd, i){
+        var hx = x + i * hw;
+        ctx.fillStyle = panel; ctx.fillRect(hx, ty, hw, HH);
+        if(hd.on){ var g = ctx.createLinearGradient(hx, ty, hx + hw, ty + HH); g.addColorStop(0, gold); g.addColorStop(1, gold2); ctx.fillStyle = g; ctx.fillRect(hx, ty, hw, HH); }
+        ctx.textAlign = 'center'; ctx.font = "700 13px " + F; ctx.fillStyle = hd.on ? '#1B2130' : text;
+        var tw = ctx.measureText(hd.t).width;
+        ctx.fillText(hd.t, hx + hw / 2, ty + HH / 2);
+        if(hd.on){ ctx.beginPath(); ctx.arc(hx + hw / 2 - tw / 2 - 8, ty + HH / 2, 3, 0, Math.PI * 2); ctx.fillStyle = '#F54249'; ctx.fill(); }
+      });
+      rows.forEach(function(r, ri){
+        var ry = ty + HH + ri * RH, ww = r.cells.length === 1 ? w : w / 2;
+        r.cells.forEach(function(ce, ci){
+          var cx = x + ci * ww;
+          if(ce.on){ ctx.fillStyle = 'rgba(166,171,180,0.16)'; ctx.fillRect(cx, ry, ww, RH); ctx.strokeStyle = gold; ctx.lineWidth = 1; ctx.strokeRect(cx + .5, ry + .5, ww - 1, RH - 1); }
+          ctx.globalAlpha = ce.off ? 0.55 : 1; ctx.textAlign = 'center';
+          ctx.font = "800 13px " + F; ctx.fillStyle = text; ctx.fillText(ce.t, cx + ww / 2, ry + (ce.sub ? RH / 2 - 8 : RH / 2));
+          if(ce.sub){ ctx.font = "800 9.5px " + F; try{ ctx.letterSpacing = '0.6px'; }catch(e){}
+            ctx.fillStyle = ce.col === 'M' ? mor : ce.col === 'A' ? aft : muted; ctx.fillText(ce.sub.toUpperCase(), cx + ww / 2, ry + RH / 2 + 10); try{ ctx.letterSpacing = '0px'; }catch(e){} }
+          ctx.globalAlpha = 1;
+        });
+      });
+      ctx.strokeStyle = border; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.moveTo(x, ty + HH + .5); ctx.lineTo(x + w, ty + HH + .5);
+      rows.forEach(function(r, ri){ var ry = ty + HH + (ri + 1) * RH - .5; if(ri < rows.length - 1){ ctx.moveTo(x, ry); ctx.lineTo(x + w, ry); } });
+      if(!single){ ctx.moveTo(x + w / 2 + .5, ty); ctx.lineTo(x + w / 2 + .5, ty + HH); }
+      rows.forEach(function(r, ri){ if(r.cells.length > 1){ ctx.moveTo(x + w / 2 + .5, ty + HH + ri * RH); ctx.lineTo(x + w / 2 + .5, ty + HH + (ri + 1) * RH); } });
+      ctx.stroke();
+      ctx.strokeRect(x + .5, ty + .5, w - 1, HH + rows.length * RH - 1);
+      ctx.restore();
+    } };
+  };
+})();
+</script>
 </body></html>
