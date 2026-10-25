@@ -392,6 +392,8 @@
   .qbm-paper.qbm-pm{ background:#fff; color:#000; padding:14px 8px; border-radius:6px; }
   .qbm-pm .qbm-title, .qbm-pm .qbm-table, .qbm-pm .qbm-table th, .qbm-pm .qbm-table td{ color:#000; }
   .qbm-pm .qbm-table th, .qbm-pm .qbm-table td, .qbm-pm .qbm-table td.det, .qbm-pm .qbm-table td.rel, .qbm-pm .qbm-table th.det, .qbm-pm .qbm-table th.rel{ background:#fff; border-color:#000; }
+  #qbmPaperPrev{ margin-top:6px; }
+  #qbmPaperPrev canvas{ display:block; width:100%; height:auto; background:#fff; margin:0 0 14px; border-radius:2px; box-shadow:0 2px 16px rgba(0,0,0,.55); }
   .qbm-stl{ display:flex; justify-content:flex-end; }
   .qbm-seg{ display:inline-flex; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:2px; gap:2px; }
   .qbm-sbtn{ border:0; background:transparent; color:var(--muted); font:600 10.5px inherit; font-family:inherit; padding:4px 9px; border-radius:6px; cursor:pointer; }
@@ -3211,6 +3213,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         <div class="qbm-fcount" id="qbmFCount"></div>
       </div>
       <div class="qbm-paper" id="qbmPaper"></div>
+      <div id="qbmPaperPrev"></div>
     </div>
   </div>
 
@@ -10861,6 +10864,13 @@ function renderExchangePicker(){
       const sb = standbyOf(data).filter(n=> !_xpBadName(n) && match(n));
       if(sb.length) html += '<tr><td class="xp-pos">Stand by</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + sb.map(n=> btn(String(n).trim(), ' data-standby="1" style="width:auto;"', false, { standby:true })).join('') + '</div>' + '</td></tr>';
     }
+    if(!posMode && _xpTab === 'roster' && typeof window.hsiaAeroBillingList === 'function'){
+      /* Aero Billing groups, Office (day) staff and SATO Office / Admin sit under the Aerodrome Assistant table too */
+      window.hsiaAeroBillingList().forEach(g=>{
+        const nm = g.names.filter(n=> !_xpBadName(n) && match(n));
+        if(nm.length) html += '<tr><td class="xp-pos">' + _xEsc(g.label) + '</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + nm.map(n=> btn(String(n).trim(), ' data-standby="1" style="width:auto;"', false, { standby:true })).join('') + '</div></td></tr>';
+      });
+    }
     html += '</tbody>';
   }
   tbl.innerHTML = html;
@@ -11505,7 +11515,7 @@ function qbmFilterUI(all, shown){
   const ch = document.getElementById('qbmShiftChips');
   if(ch) ch.innerHTML = [''].concat(TEAMS).map(t=> '<button type="button" class="qbm-fchip' + (t === _qbmF.shift ? ' on' : '') + '" data-sh="' + t + '">' + (t ? t + ' shift' : 'All shifts') + '</button>').join('');
   const cnt = document.getElementById('qbmFCount');
-  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : ((window.hsiaIsModerator && window.hsiaIsModerator()) ? 'Tip: double-tap a name, place or date to change it' : '');
+  if(cnt) cnt.textContent = (_qbmF.shift || _qbmF.person) ? ('Showing ' + shown + ' of ' + all.length + ' entries') : ((window.hsiaIsModerator && window.hsiaIsModerator()) ? (_qbmStyle === 'paper' ? 'Paper = exact PNG A4 / Print page. Switch to App to edit.' : 'Tip: double-tap a name, place or date to change it') : '');
 }
 function qbmPeriod(ex, dk){
   const t = +ex.team;
@@ -11650,6 +11660,21 @@ function renderQbm(){
   });
   paper.innerHTML = html;
   paper.querySelectorAll('.qbm-x').forEach(b=> b.addEventListener('click', ()=> qbmRemoveRun(+b.getAttribute('data-r'))));
+  qbmPaperPreview();
+}
+/* Paper style: show the SAME A4 page(s) the "PNG A4" button saves (same drawing code, same text-fit step), just at a lower resolution for the screen.
+   The editable HTML table stays in the page (hidden) so titles, Print and the PNG still read from it; App style shows it normally. */
+function qbmPaperPreview(){
+  const paper = document.getElementById('qbmPaper'), prev = document.getElementById('qbmPaperPrev');
+  if(!paper || !prev) return;
+  Array.prototype.forEach.call(prev.querySelectorAll('canvas'), c=>{ c.width = c.height = 0; });
+  prev.innerHTML = '';
+  if(_qbmStyle !== 'paper'){ paper.style.display = ''; return; }
+  paper.style.display = 'none';
+  try{
+    const groups = qbmDrawGroups(), k = qbmFitScale(groups);
+    qbmDrawPages(groups, k, 170).forEach(c=> prev.appendChild(c));
+  }catch(e){ paper.style.display = ''; }
 }
 function qbmRemoveRun(idx){
   const run = _qbmRuns[idx];
@@ -19216,7 +19241,20 @@ window.hsiaFs = function(wrap, on, onExit){
     try{ if(window.hsiaIsModerator && window.hsiaIsModerator()) return true; }catch(e){}
     try{ return !!(document.body && document.body.classList.contains('hsia-staff')); }catch(e){ return false; }
   }
-  function editOn(k){ if(EDIT[k] && !isStaff()) EDIT[k] = false; return !!EDIT[k]; }
+  /* the roster pen (body.roster-editing) switches these rows to edit mode too, same as the ✎ Edit button */
+  function editOn(k){ if(EDIT[k] && !isStaff()) EDIT[k] = false; return !!EDIT[k] || (isStaff() && !!document.body.classList.contains('roster-editing')); }
+  var LKEY = 'HSIA_AB_LABELS_V1', LBL = lload();
+  function lload(){ var d = { ab:['Aero Billing','Morning / Afternoon'], off:['Office','09:00 – 16:00'] };
+    try{ var o = JSON.parse(localStorage.getItem(LKEY)); if(o && o.ab && o.off) return o; }catch(e){} return d; }
+  function lsave(){ try{ localStorage.setItem(LKEY, JSON.stringify(LBL)); }catch(e){} }
+  window.hsiaAeroBillingList = function(){
+    return [
+      { label: LBL.ab[0] + ' · Group 1', names: ST.g1.map(function(p){ return p.n; }) },
+      { label: LBL.ab[0] + ' · Group 2', names: ST.g2.map(function(p){ return p.n; }) },
+      { label: LBL.off[0] + ' · Day ' + DAY_TIME, names: ST.day.map(function(p){ return p.n; }) },
+      { label: 'SATO Office / Admin', names: SATO.slice() }
+    ];
+  };
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
   function load(){
     try{ var o = JSON.parse(localStorage.getItem(KEY)); if(o && Array.isArray(o.g1) && Array.isArray(o.g2) && Array.isArray(o.day)) return o; }catch(e){}
@@ -19268,7 +19306,7 @@ window.hsiaFs = function(wrap, on, onExit){
       var o = isOff(p, pl), on = !o && st === cur;
       return '<div class="ab-chip' + (on ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + (o ? '<small>Off</small>' : '') + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
     }
-    var h = '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl">Aero Billing<small>Morning / Afternoon</small></div></td>';
+    var h = '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl" data-l="ab"><span data-p="0">' + esc(LBL.ab[0]) + '</span><small data-p="1">' + esc(LBL.ab[1]) + '</small></div></td>';
     for(var k = 0; k < 5; k++){
       var gs = at[k];
       h += gs ? '<td><div class="ab-chips">' + gs.map(function(g){ return ST[g].map(function(p, i){ return chip(p, g, i, pl[g]); }).join(''); }).join('') + '</div></td>' : '<td class="ab-empty">—</td>';
@@ -19278,7 +19316,7 @@ window.hsiaFs = function(wrap, on, onExit){
       var o = isOff(p, pl);
       return '<div class="ab-chip' + (office && !o ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + '<small>' + (o ? 'Off' : tag) + '</small>' + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
     }
-    h += '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl">Office<small>' + DAY_TIME + '</small></div></td><td class="ab-span" colspan="5"><div class="ab-chips row">'
+    h += '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl" data-l="off"><span data-p="0">' + esc(LBL.off[0]) + '</span><small data-p="1">' + esc(LBL.off[1]) + '</small></div></td><td class="ab-span" colspan="5"><div class="ab-chips row">'
       + ST.day.map(function(p, i){ return oc(p, 'day', i, 'Aero Billing'); }).join('')
       + SATO.map(function(nm, i){ return oc({ n:nm, off:[] }, 'sato', i, 'SATO / Admin'); }).join('')
       + '</div></td></tr>';
@@ -19318,6 +19356,14 @@ window.hsiaFs = function(wrap, on, onExit){
       after(g); render();
     });
   }
+  /* edit mode: tap the row name (or its small line) to rename it */
+  body.addEventListener('click', function(e){
+    if(!editOn('ab')) return;
+    var el = e.target.closest('.ab-lbl [data-p]'); if(!el) return;
+    var box = el.closest('.ab-lbl'), key = box.getAttribute('data-l'), pi = +el.getAttribute('data-p');
+    var v = prompt('Edit name', LBL[key][pi]); if(v === null) return; v = v.trim(); if(!v) return;
+    LBL[key][pi] = v; lsave(); body._sig = ''; render();
+  });
   bindEdit('abEditBtn', 'ab', 'abBody', function(g){ return g === 'sato' ? SATO : ST[g]; }, function(g){ if(g === 'sato') ssave(); else save(); });
 
   /* ---- "Now" view: who of Aero Billing is on duty right now ---- */
