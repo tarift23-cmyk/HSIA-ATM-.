@@ -4,7 +4,7 @@
    Hard switch: window.HSIA_NEWLOGIN=false; before this script. */
 (function(){
 if(window.HSIA_NEWLOGIN===false) return;
-var R, barEl, admEl, U=null, P=undefined, Pready=false, adm=false, modOnly=false, busy=false, cur='', unsub=null;
+var R, barEl, admEl, chipEl, U=null, P=undefined, Pready=false, adm=false, modOnly=false, busy=false, cur='', unsub=null;
 var v='home', tab='p', f={}, np={}, db={fold:null,prof:{}}, pics={};
 var TR=864e5, TM=['A','B','C','D','E'], OT=['OJTI','Standby','Regular (9-5, Fri-Sat off)','6 days a week','Other'];
 var CFG=null, authKnown=false, epochBusy=false, ts=0;
@@ -20,6 +20,10 @@ var left=function(){ return TR-(Date.now()-ts); };
 var hms=function(x){ x=Math.max(0,x)/1000|0; return [x/3600|0,x/60%60|0,x%60].map(function(n){ return String(n).padStart(2,'0'); }).join(':'); };
 var tl=function(p){ return !p.team?'-':p.team==='O'?'Others'+(p.oth?' \u00b7 '+p.oth:''):'Team '+p.team+(p.pos?' \u00b7 '+p.pos:''); };
 var ref=function(p){ return _fbDb.ref(p); };
+var profOn=false, DK='HSIA_REG_DRAFT';
+function saveDraft(){ if(v!=='signup') return; var o={}; ['bn','en','ein','mail','ph','des'].forEach(function(k){ o[k]=f[k]||''; }); try{ localStorage.setItem(DK,JSON.stringify({at:Date.now(),f:o,np:np})); }catch(e){ try{ localStorage.setItem(DK,JSON.stringify({at:Date.now(),f:o,np:{}})); }catch(x){} } }
+function loadDraft(){ try{ var d=JSON.parse(localStorage.getItem(DK)); if(d&&Date.now()-d.at<864e5) return d; }catch(e){} return null; }
+function clearDraft(){ try{ localStorage.removeItem(DK); }catch(e){} }
 var Q=Promise.resolve();
 function W(fn){ Q=Q.then(fn).catch(function(e){ console.warn(e); alert('Could not save: '+((e&&e.message)||e)); }); return Q; }
 function sv(k,x){ if(x===db&&db.fold) W(function(){ return ref('hsia_people/folders').set(db.fold); }); return 1; }
@@ -33,8 +37,9 @@ function commit(st,note){
   W(function(){ return ref('hsia_people/profiles/'+u).set(p); }); if(ch.p||ch.a) W(function(){ return ref('hsia_people/pics/'+u).update(ch); });
   return 1;
 }
-function publish(u,p){ W(function(){ return Promise.all([ref('hsia_people/dir/'+u).set({bn:p.bn||'',en:p.en||''}),ref('hsia_people/phones/'+u).set(p.ph||'')]); }); }
-function unpublish(u){ W(function(){ return Promise.all([ref('hsia_people/dir/'+u).remove(),ref('hsia_people/phones/'+u).remove()]); }); }
+function mk(e){ return String(e||'').trim().toLowerCase().replace(/\./g,',').replace(/[#$\[\]\/\s]/g,'_'); }
+function publish(u,p){ W(function(){ return Promise.all([ref('hsia_people/dir/'+u).set({bn:p.bn||'',en:p.en||''}),ref('hsia_people/phones/'+u).set(p.ph||''),p.mail?ref('hsia_people/mail/'+mk(p.mail)).set({u:u,e:p.ein}):null]); }); }
+function unpublish(u){ var pm=(db.prof[u]||{}).mail; W(function(){ return Promise.all([ref('hsia_people/dir/'+u).remove(),ref('hsia_people/phones/'+u).remove(),pm?ref('hsia_people/mail/'+mk(pm)).remove():null]); }); }
 function finish(u,sel){ var p=db.prof[u]||P||{}; Object.assign(p,sel); if(p.st==='draft') p.st='pending'; db.prof[u]=p; W(function(){ return ref('hsia_people/profiles/'+u).update(Object.assign({},sel,{st:p.st})); }); v='home'; busy=false; render(); }
 function usage(){ return ''; }
 function ferr(e){ var c=(e&&e.code)||''; return /email-already-in-use/.test(c)?'An account with this EIN already exists. Please log in.':/wrong-password|user-not-found|invalid-credential|invalid-login/.test(c)?'Wrong EIN or password':/network/.test(c)?'No internet connection':/operation-not-allowed/.test(c)?'Email/Password sign-in is not enabled in Firebase yet':/popup-closed|cancelled-popup/.test(c)?'':((e&&e.message)||String(e)); }
@@ -42,8 +47,10 @@ const SPEC={p:{w:413,h:531,kb:40,n:'Passport photo'},a:{w:650,h:1005,kb:110,n:'A
 const MIME=document.createElement('canvas').toDataURL('image/webp').indexOf('image/webp')>0?'image/webp':'image/jpeg';
 const kbOf=d=>Math.round((d.length-d.indexOf(',')-1)*.75/1024*10)/10;
 function enc(c,max){let lo=.3,hi=.92,best=c.toDataURL(MIME,lo);for(let i=0;i<8;i++){const q=(lo+hi)/2,d=c.toDataURL(MIME,q);if(kbOf(d)<=max){best=d;lo=q}else hi=q}return best}
-function pick(k,cam){const i=document.createElement('input');i.type='file';i.accept='image/*';if(cam)i.capture=k==='p'?'user':'environment';
- i.onchange=()=>{const fl=i.files[0];if(!fl)return;const im=new Image();im.onload=()=>cropper(k,im);im.onerror=()=>alert('Could not open the photo');im.src=URL.createObjectURL(fl)};i.click()}
+function pick(k,cam){window.__hsiaPick=Date.now();const i=document.createElement('input');i.type='file';i.accept='image/*';if(cam)i.capture=k==='p'?'user':'environment';
+ i.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(i);
+ const bye=()=>setTimeout(()=>{try{i.remove()}catch(e){}},60000);
+ i.onchange=()=>{window.__hsiaPick=Date.now();const fl=i.files[0];if(!fl){bye();return}const im=new Image();im.onload=()=>{cropper(k,im);bye()};im.onerror=()=>{alert('Could not open the photo');bye()};im.src=URL.createObjectURL(fl)};i.click()}
 /* ===== 4-corner perspective crop: the corners are auto-detected, can be dragged, then the quad is warped flat to the exact size ===== */
 const MAXS=1600;
 function srcCanvas(im){const s=Math.min(1,MAXS/Math.max(im.width,im.height)),w=Math.round(im.width*s),h=Math.round(im.height*s),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);return c}
@@ -86,16 +93,16 @@ function cropper(k,im){const S=SPEC[k];let cur=srcCanvas(im),q,sk,cw,ch,dg=-1;
  o.querySelector('#rt').onclick=()=>{cur=rot90(cur);setup(1)};o.querySelector('#au').onclick=()=>setup(1);o.querySelector('#cx').onclick=()=>o.remove();
  o.querySelector('#ok').onclick=()=>{const w=warp(cur,q,S.w,S.h),d=enc(w,S.kb);np[k]=d;
   if(k==='p'){const t=document.createElement('canvas');t.width=96;t.height=Math.round(96*S.h/S.w);t.getContext('2d').drawImage(w,0,0,t.width,t.height);np.t=enc(t,5)}
-  o.remove();showPic(k)}}
+  o.remove();showPic(k);saveDraft()}}
 function showPic(k){const d=np[k]||(pics[f._u]||{})[k];$('#pv'+k).style.backgroundImage=d?`url(${d})`:'';$('#pk'+k).innerHTML=d?`<span class="kb">${kbOf(d)} KB</span> \u00b7 ${SPEC[k].w}\u00d7${SPEC[k].h}px \u00b7 ${MIME.slice(6)}`:'No photo'}
 
 
 const fld=(id,l,val,x)=>`<label>${l}<input id="${id}" value="${esc(val)}" ${x||''}></label>`;
 const picH=(k,u)=>`<div class="pic"><div class="pv" id="pv${k}"></div><div><b>${SPEC[k].n}${k==='a'?' (optional)':' *'}</b><div class="mut" id="pk${k}"></div><button type="button" class="g" data-k="${k}">Gallery</button><button type="button" class="g" data-k="${k}" data-c="1">Camera</button></div></div>`;
 function fields(u){const su=v==='signup';return fld('bn','Name (Bangla) *',f.bn)+fld('en','Name (English) *',f.en)+`<label>Designation *<button type="button" class="in" id="ds">${esc(dName(f.des))||'Select designation \u25be'}</button></label>`+fld('ein','EIN number *',f.ein,man(u)?'readonly':'inputmode="numeric"')+fld('mail','Gmail'+(man(u)||su?' (optional)':''),f.mail,man(u)||su?'inputmode="email"':'readonly')+fld('ph','Phone number *',f.ph,'inputmode="tel"')+picH('p',u)+picH('a',u)}
-function bind(){['bn','en','ein','ph','mail'].forEach(i=>$('#'+i).oninput=e=>f[i]=e.target.value);
+function bind(){['bn','en','ein','ph','mail'].forEach(i=>$('#'+i).oninput=e=>{f[i]=e.target.value;saveDraft()});
  $('#ds').onclick=()=>{const o=document.createElement('div');o.className='ov';o.innerHTML='<div><div class="ttl">Select designation</div>'+db.fold.map(g=>`<div class="fh">${esc(g.n)}</div>`+g.posts.map(d=>`<div class="row" data-i="${d.id}">${esc(d.n)}</div>`).join('')).join('')+'</div>';R.appendChild(o);
-  o.onclick=e=>{const r=e.target.closest('[data-i]');if(r){f.des=r.dataset.i;$('#ds').textContent=dName(f.des)}if(r||e.target===o)o.remove()}};
+  o.onclick=e=>{const r=e.target.closest('[data-i]');if(r){f.des=r.dataset.i;$('#ds').textContent=dName(f.des);saveDraft()}if(r||e.target===o)o.remove()}};
  R.querySelectorAll('.pic button').forEach(b=>b.onclick=()=>pick(b.dataset.k,b.dataset.c));showPic('p');showPic('a')}
 function check(strict){const miss=[],bad=[];
  if(!f.bn)miss.push('Name (Bangla)');else if(!/[\u0980-\u09FF]/.test(f.bn))bad.push('Name (Bangla) must be written in Bangla');
@@ -143,9 +150,29 @@ function rosterPick(cb,cx){
   if(tabs.length) s1(); else s2();
 }
 /* ---------- screens ---------- */
+function linkAsk(B,cred,m){
+  busy=true; var gone=false;
+  var o=document.createElement('div'); o.className='ov';
+  o.innerHTML='<div><div class="ttl">Account found</div><p style="margin:0">This Gmail is registered with EIN <b>'+esc(m.e)+'</b>. Enter that account\'s password once; after this, Continue with Gmail opens the same account.<br><span class="mut">এই Gmail EIN '+esc(m.e)+'-এর সাথে নিবন্ধিত। একবার ওই অ্যাকাউন্টের পাসওয়ার্ড দিন, এরপর থেকে Continue with Gmail দিলেই সেই অ্যাকাউন্টে ঢুকবে।</span></p><label>Password<input id="lkp" type="password" autocomplete="current-password"></label><button class="b" id="lko">Connect &amp; login</button><button class="b gh" id="lkc">Cancel</button></div>';
+  R.appendChild(o);
+  o.querySelector('#lkc').onclick=function(){ o.remove(); var A=firebase.auth(); (gone?Promise.resolve():A.signOut()).then(function(){ return A.signInAnonymously().catch(function(){}); }).then(function(){ busy=false; render(); }); };
+  o.querySelector('#lko').onclick=function(){
+    var pw=o.querySelector('#lkp').value; if(pw.length<5) return alert('Password must be at least 5 characters');
+    var A=firebase.auth();
+    (gone?Promise.resolve():B.delete().then(function(){ gone=true; }))
+      .then(function(){ return A.signInWithEmailAndPassword(m.e+'@hsia.app','HSIA#'+pw); })
+      .then(function(cr){ return cr.user.linkWithCredential(cred).catch(function(e){ if(/provider-already-linked/.test((e&&e.code)||'')) return; throw e; }); })
+      .then(function(){ o.remove(); busy=false; render(); alert('Done. Gmail login is now connected to your account.'); })
+      .catch(function(e){ var c=(e&&e.code)||''; if(A.currentUser&&!A.currentUser.isAnonymous){ o.remove(); busy=false; render(); alert('Logged in, but Gmail could not be connected: '+ferr(e)); } else alert(ferr(e)||c); });
+  };
+}
 function google(){
   var A=firebase.auth(), pr=new firebase.auth.GoogleAuthProvider();
-  A.signInWithPopup(pr).catch(function(e){ if(/popup-blocked/.test((e&&e.code)||'')) return A.signInWithRedirect(pr); var m=ferr(e); if(m) alert(m); });
+  A.signInWithPopup(pr).then(function(res){
+    var B=res.user, nu=res.additionalUserInfo&&res.additionalUserInfo.isNewUser;
+    if(!nu||!B||!B.email||!res.credential) return;
+    return ref('hsia_people/mail/'+mk(B.email)).once('value').then(function(s){ var m=s.val(); if(m&&m.e&&m.u) linkAsk(B,res.credential,m); }).catch(function(){});
+  }).catch(function(e){ if(/popup-blocked/.test((e&&e.code)||'')) return A.signInWithRedirect(pr); var m=ferr(e); if(m) alert(m); });
 }
 function login(m,ex){
   m.innerHTML=(ex?'<div class="card"><b>Your 24-hour trial has ended.</b><p class="mut" style="margin:6px 0 0">Please log in to continue.</p></div>':'')+'<div class="card"><div class="ttl">HSIA ATM</div><button class="b" id="gl" style="margin-top:0">Continue with Google</button><p class="mut" style="text-align:center;margin:16px 0 0">or sign in with your EIN and password</p><label>EIN number<input id="le" inputmode="numeric"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><div class="two"><button class="b" id="li">Login</button><button class="b gh" id="lc">Create new account</button></div></div><a class="lnk" id="al">Admin sign-in</a>'+(ex?'':'<a class="lnk" id="bk2">&larr; Back</a>');
@@ -157,12 +184,12 @@ function login(m,ex){
   $('#al').onclick=function(){ try{ if(typeof requireRosterAuth==='function') requireRosterAuth(); }catch(e){} };
 }
 function signup(m){
-  f={mail:'',_u:'',man:true}; np={};
+  f={mail:'',_u:'',man:true}; np={}; var dr=loadDraft(); if(dr){ Object.assign(f,dr.f||{}); np=dr.np||{}; }
   m.innerHTML='<div class="card"><div class="ttl">Create account</div><p class="mut">Fields marked * are required. The admin will review your details before approval.</p>'+fields('')+'<label>Create your password * (minimum 5 characters)<input id="pw1" type="password" autocomplete="new-password"></label><label>Confirm password *<input id="pw2" type="password" autocomplete="new-password"></label><button class="b" id="sv">Save &amp; continue</button><button class="b gh" id="sb">&larr; Back to login</button></div>';
-  bind(); $('#sb').onclick=function(){ v='login'; render(); };
+  bind(); $('#sb').onclick=function(){ clearDraft(); v='login'; render(); };
   $('#sv').onclick=function(){
     var a=$('#pw1').value; if(!dn(f.ein||'').trim()) return alert('EIN number is required: it is your login ID'); if(a.length<5) return alert('Password must be at least 5 characters'); if(a!==$('#pw2').value) return alert('Passwords do not match'); if(!check()) return;
-    busy=true; firebase.auth().createUserWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }).catch(function(e){ busy=false; alert(ferr(e)); });
+    busy=true; firebase.auth().createUserWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ clearDraft(); f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }).catch(function(e){ busy=false; alert(ferr(e)); });
   };
 }
 function form(m){
@@ -177,13 +204,18 @@ function sortable(box,sel,hs,done){box.addEventListener('pointerdown',e=>{const 
  const up=()=>{['pointermove','pointerup','pointercancel'].forEach((n,i)=>document.removeEventListener(n,i?up:mv));sb.forEach(c=>c.classList.remove('ins'));box.classList.remove('insb');it.classList.remove('dg');it.style.transform='';const ids=sb.map(c=>c.dataset.id);ids.splice(k,0,it.dataset.id);done(ids)};
  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up)})}
 const inUse=id=>Object.values(db.prof).some(p=>p.des===id);
-function admin(m){ if(modOnly&&(tab==='d'||tab==='o')) tab='p';
+function admin(m){ if(tab==='d'||(modOnly&&tab==='o')) tab='p';
  const L=st=>Object.keys(db.prof).filter(u=>db.prof[u].st===st).sort((a,b)=>(+db.prof[a].ein||1e15)-(+db.prof[b].ein||1e15));
  const row=u=>{const p=db.prof[u];return`<div class="row" data-u="${u}"><img src="${(db.prof[u]||{}).t||''}"><div><b>${esc(p.ein)} \u00b7 ${esc(p.bn)}</b>${p.inc?' <span style="color:#e8a0a8;font-size:12px">\u26a0 incomplete</span>':''}<br><span class="mut">${esc(p.en)} \u00b7 ${esc(dName(p.des))} \u00b7 ${tl(p)}</span></div></div>`};
- let h=`<div class="tabs"><button class="g ${tab==='p'?'on':''}" data-t="p">\u09aa\u09c7\u09a8\u09cd\u09a1\u09bf\u0982 (${L('pending').length})</button><button class="g ${tab==='a'?'on':''}" data-t="a">\u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09bf\u09a4</button>${modOnly?'':`<button class="g ${tab==='d'?'on':''}" data-t="d">\u09aa\u09a6</button>`}${modOnly?'':`<button class="g ${tab==='o'?'on':''}" data-t="o">Directory</button>`}</div>`;
- if(tab==='p')h+=`<div class="card">${L('pending').concat(L('rejected')).map(row).join('')||'<span class="mut">\u0995\u09cb\u09a8\u09cb \u09aa\u09c7\u09a8\u09cd\u09a1\u09bf\u0982 \u09a8\u09c7\u0987</span>'}</div>`;
+ let h=`<div class="tabs"><button class="g ${tab==='p'?'on':''}" data-t="p">\u09aa\u09c7\u09a8\u09cd\u09a1\u09bf\u0982 (${L('pending').length})</button><button class="g ${tab==='a'?'on':''}" data-t="a">\u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09bf\u09a4</button>${modOnly?'':`<button class="g ${tab==='o'?'on':''}" data-t="o">Directory</button>`}</div>`;
+ if(tab==='p')h+=`<div class="card">${L('pending').map(row).join('')||'<span class="mut">\u0995\u09cb\u09a8\u09cb \u09aa\u09c7\u09a8\u09cd\u09a1\u09bf\u0982 \u09a8\u09c7\u0987</span>'}</div>`;
  if(tab==='a')h+=db.fold.map(g=>{const l=L('approved').filter(u=>g.posts.some(p=>p.id===db.prof[u].des));return l.length?`<div class="card"><div class="ttl">${esc(g.n)} (${l.length})</div>`+g.posts.map(p=>{const x=l.filter(u=>db.prof[u].des===p.id);return x.length?`<div class="fh">${esc(p.n)}</div>`+x.map(row).join(''):''}).join('')+'</div>':''}).join('')||'<div class="card mut">\u0995\u09c7\u0989 \u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09bf\u09a4 \u09a8\u09af\u09bc</div>';
- if(tab==='o'){let n=0;h+=`<div class="card"><div class="ttl">Directory (admin only)</div><p class="mut" style="margin:0 0 6px">Everyone approved, in folder order then EIN order. This is what the Information Flow "Others" tab will hold. Gmail is shown here only; central search shows names and phone, never Gmail.</p>${db.fold.flatMap(g=>g.posts).flatMap(q=>L('approved').filter(u=>db.prof[u].des===q.id)).map(u=>{const x=db.prof[u];return`<div class="row" style="cursor:default"><div>${++n}. <b>${esc(x.bn)}</b> \u00b7 ${esc(x.en)}<br><span class="mut">\u2709 ${esc(x.mail||'\u2014')} \u00b7 \ud83d\udcde ${esc(x.ph)}</span></div></div>`}).join('')||'<span class="mut">Nobody approved yet</span>'}</div>`}
+ if(tab==='o'){let n=0;const all=L('approved'),known={};db.fold.forEach(g=>g.posts.forEach(p=>known[p.id]=1));
+ const dr=u=>{const x=db.prof[u];return`<div class="row" style="cursor:default"><div>${++n}. <b>${esc(x.bn)}</b> \u00b7 ${esc(x.en)}<br><span class="mut">\u2709 ${esc(x.mail||'\u2014')} \u00b7 \ud83d\udcde ${esc(x.ph)}</span></div></div>`};
+ h+=`<div class="card"><div class="ttl">Directory (admin only)</div><p class="mut" style="margin:0">Everyone approved, grouped by folder and post, in EIN order. This is what the Information Flow "Others" tab will hold. Gmail is shown here only; central search shows names and phone, never Gmail.</p></div>`;
+ h+=db.fold.map(g=>{const c=g.posts.reduce((s,p)=>s+all.filter(u=>db.prof[u].des===p.id).length,0);return c?`<div class="card"><div class="ttl">${esc(g.n)} (${c})</div>`+g.posts.map(p=>{const x=all.filter(u=>db.prof[u].des===p.id);return x.length?`<div class="fh">${esc(p.n)} (${x.length})</div>`+x.map(dr).join(''):''}).join('')+'</div>':''}).join('');
+ const lost=all.filter(u=>!known[db.prof[u].des]);if(lost.length)h+=`<div class="card"><div class="ttl">No post (${lost.length})</div>`+lost.map(dr).join('')+'</div>';
+ if(!all.length)h+='<div class="card mut">Nobody approved yet</div>'}
  if(tab==='d')h+=`<div class="card"><div class="ttl">\u09ab\u09cb\u09b2\u09cd\u09a1\u09be\u09b0 \u0993 \u09aa\u09a6</div><p class="mut" style="margin:0 0 6px">\u283f \u09a7\u09b0\u09c7 \u099f\u09c7\u09a8\u09c7 \u0995\u09cd\u09b0\u09ae \u09ac\u09a6\u09b2\u09be\u09a8 \u00b7 \u270e \u09a8\u09be\u09ae \u09ac\u09a6\u09b2\u09be\u09a8 \u00b7 \uff0b \u09ad\u09c7\u09a4\u09b0\u09c7 \u09aa\u09a6 \u09af\u09cb\u0997</p><div id="fl">${db.fold.map(g=>`<div class="fd" data-id="${g.id}"><div class="fr"><span class="gp fg">\u283f</span><b class="fn">${esc(g.n)}</b><button class="ic" data-e="${g.id}">\u270e</button><button class="ic" data-a="${g.id}">\uff0b</button><button class="ic" data-x="${g.id}">\u2715</button></div><div class="pl">${g.posts.map(p=>`<div class="ps" data-id="${p.id}"><span class="gp pg">\u283f</span><span class="fn">${esc(p.n)}</span><button class="ic" data-e="${p.id}">\u270e</button><button class="ic" data-x="${p.id}">\u2715</button></div>`).join('')}</div></div>`).join('')}</div><button class="b" data-a="">\uff0b \u09a8\u09a4\u09c1\u09a8 \u09ab\u09cb\u09b2\u09cd\u09a1\u09be\u09b0</button></div>`;
  m.innerHTML=h+'<a class="lnk" id="bk">\u2190 \u09ab\u09bf\u09b0\u09c7 \u09af\u09be\u09a8</a>';
  if(tab==='d'){const sv2=()=>{sv(0,db);render()};sortable($('#fl'),'.fd','.fg',ids=>{db.fold=ids.map(i=>db.fold.find(g=>g.id===i));sv2()});
@@ -196,12 +228,13 @@ function admin(m){ if(modOnly&&(tab==='d'||tab==='o')) tab='p';
    if(g)db.fold=db.fold.filter(z=>z!==g);else db.fold.forEach(z=>z.posts=z.posts.filter(q=>q.id!==id));sv(0,db);render()}
   else if(e.target.id==='bk'){v='home';m.onclick=null;render()}}}
 
-function review(u){f={...db.prof[u],_u:u};np={};const o=document.createElement('div');o.className='ov';
- o.innerHTML=`<div><h3>\u09af\u09be\u099a\u09be\u0987 \u0993 \u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09a8</h3>${fields(u)}<label>Roster position<button type="button" class="in" id="rp">${esc(tl(f))}</button></label><label>\u0985\u09cd\u09af\u09be\u09a1\u09ae\u09bf\u09a8 \u09a8\u09cb\u099f (\u09ac\u09be\u09a4\u09bf\u09b2 \u09b9\u09b2\u09c7 \u0987\u0989\u099c\u09be\u09b0 \u09a6\u09c7\u0996\u09ac\u09c7)<input id="nt" value="${esc(f.note)}"></label><button class="b" id="ap">\u2714 Approve</button><button class="b" id="rj" style="background:var(--no);color:#fff">\u2715 Reject</button><button class="b" id="cl" style="background:var(--c);color:var(--t);border:1px solid var(--l)">\u09ac\u09a8\u09cd\u09a7 \u0995\u09b0\u09c1\u09a8</button></div>`;
+function review(u){f={...db.prof[u],_u:u};const om=(db.prof[u]||{}).mail;np={};const o=document.createElement('div');o.className='ov';
+ o.innerHTML=`<div><h3>\u09af\u09be\u099a\u09be\u0987 \u0993 \u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09a8</h3>${fields(u)}<label>Roster position<button type="button" class="in" id="rp">${esc(tl(f))}</button></label>${modOnly?'':'<label>Role<select id="rl" disabled><option value="">User</option><option value="m">Moderator</option><option value="s">Sub-moderator</option></select></label>'}<label>\u0985\u09cd\u09af\u09be\u09a1\u09ae\u09bf\u09a8 \u09a8\u09cb\u099f (\u09ac\u09be\u09a4\u09bf\u09b2 \u09b9\u09b2\u09c7 \u0987\u0989\u099c\u09be\u09b0 \u09a6\u09c7\u0996\u09ac\u09c7)<input id="nt" value="${esc(f.note)}"></label><button class="b" id="ap">\u2714 Approve</button><button class="b" id="rj" style="background:var(--no);color:#fff">\u2715 Reject</button><button class="b" id="cl" style="background:var(--c);color:var(--t);border:1px solid var(--l)">\u09ac\u09a8\u09cd\u09a7 \u0995\u09b0\u09c1\u09a8</button></div>`;
  R.appendChild(o);bind();
+ let r0=null; if(!modOnly){ Promise.all([ref('hsia_private/mods/'+u).once('value'),ref('hsia_private/submods/'+u).once('value')]).then(x=>{ r0=x[0].val()===true?'m':x[1].val()===true?'s':''; const s=$('#rl'); if(s){ s.value=r0; s.disabled=false; } }).catch(()=>{}); }
  if(modOnly) o.querySelectorAll('input,select,textarea,button.in,.pic button,.pic label').forEach(function(el){ if(el.id!=='nt') el.disabled=true; });
  $('#rp').onclick=()=>rosterPick(sel=>{Object.assign(f,sel);$('#rp').textContent=tl(f)},1);
- $('#cl').onclick=()=>o.remove();$('#ap').onclick=()=>{if(check(1)&&commit('approved')){publish(f._u,f);o.remove();render()}};
+ $('#cl').onclick=()=>o.remove();$('#ap').onclick=()=>{if(check(1)&&commit('approved')){publish(f._u,f);if(om&&mk(om)!==mk(f.mail||''))W(()=>ref('hsia_people/mail/'+mk(om)).remove());const s=$('#rl'),nr=s&&!s.disabled?s.value:null;if(nr!==null&&nr!==r0){const id=f._u;W(()=>Promise.all([nr==='m'?ref('hsia_private/mods/'+id).set(true):ref('hsia_private/mods/'+id).remove(),nr==='s'?ref('hsia_private/submods/'+id).set(true):ref('hsia_private/submods/'+id).remove()]))}o.remove();render()}};
  $('#rj').onclick=()=>{const n=$('#nt').value.trim();if(!n)return alert('\u0995\u09be\u09b0\u09a3 \u09b2\u09bf\u0996\u09c1\u09a8');if(commit('rejected',n)){unpublish(f._u);o.remove();render()}}}
 /* ---------- routing ---------- */
 function show(on){ R.style.display=on?'block':'none'; }
@@ -254,31 +287,75 @@ function adminBox(){
     } else { cfg.update({loginRequired:false}).catch(function(e){ alert('Could not save: '+((e&&e.message)||e)); }); }
   };
 }
-function statusHtml(){ var o='<a id="rgOut">Logout</a>'; return !P?'':P.st==='approved'?'Welcome '+esc(P.en)+o:P.st==='rejected'?'REJECTED - '+esc(P.note)+'<a id="rgEdit">Edit</a>'+o:'ID PENDING - waiting for admin approval'+o; }
+function hasP(id){ return !!(U&&(U.providerData||[]).some(function(p){ return p.providerId===id; })); }
+function pwAsk(){
+  if(!U||U.isAnonymous||!P||!P.ein) return alert('EIN not found in your profile');
+  show(true);
+  var o=document.createElement('div'); o.className='ov';
+  o.innerHTML='<div><div class="ttl">Set password</div><p style="margin:0">After this you can also log in with EIN <b>'+esc(P.ein)+'</b> and this password.<br><span class="mut">এরপর EIN '+esc(P.ein)+' ও এই পাসওয়ার্ড দিয়েও ঢুকতে পারবেন।</span></p><label>Password (minimum 5 characters)<input id="sp1" type="password" autocomplete="new-password"></label><label>Confirm password<input id="sp2" type="password" autocomplete="new-password"></label><button class="b" id="spo">Save</button><button class="b gh" id="spc">Cancel</button></div>';
+  R.appendChild(o);
+  var close=function(){ o.remove(); cur=''; route(); };
+  o.querySelector('#spc').onclick=close;
+  o.querySelector('#spo').onclick=function(){
+    var a=o.querySelector('#sp1').value; if(a.length<5) return alert('Password must be at least 5 characters'); if(a!==o.querySelector('#sp2').value) return alert('Passwords do not match');
+    firebase.auth().currentUser.linkWithCredential(firebase.auth.EmailAuthProvider.credential(P.ein+'@hsia.app','HSIA#'+a)).then(function(){ close(); alert('Done. You can now log in with EIN + password too.'); }).catch(function(e){ alert(ferr(e)); });
+  };
+}
+function acct(){
+  if(!U||U.isAnonymous) return; show(true);
+  var hg=hasP('google.com'), hp=hasP('password');
+  var o=document.createElement('div'); o.className='ov';
+  o.innerHTML='<div><div class="ttl">My login</div><p class="mut" style="margin:0">'+esc((P&&P.en)||U.email||'')+'<br>EIN + password: '+(hp?'on':'off')+' \u00b7 Gmail: '+(hg?'on':'off')+'</p>'+(hg?'':'<button class="b gh" id="ag">Link Google</button>')+(hg&&!hp&&P&&P.ein?'<button class="b gh" id="ap2">Set password</button>':'')+'<button class="b gh" id="ao">Logout</button><button class="b" id="ax">Close</button></div>';
+  R.appendChild(o);
+  var close=function(){ o.remove(); cur=''; route(); };
+  o.querySelector('#ax').onclick=close;
+  o.querySelector('#ao').onclick=function(){ o.remove(); barEl.onclick({target:{id:'rgOut'}}); };
+  if(o.querySelector('#ag')) o.querySelector('#ag').onclick=function(){ close(); barEl.onclick({target:{id:'rgLink'}}); };
+  if(o.querySelector('#ap2')) o.querySelector('#ap2').onclick=function(){ o.remove(); pwAsk(); };
+}
+function statusHtml(){ var o=((U&&!U.isAnonymous&&!(U.providerData||[]).some(function(p){return p.providerId==='google.com';}))?'<a id="rgLink">Link Google</a>':'')+((U&&!U.isAnonymous&&P&&P.ein&&hasP('google.com')&&!hasP('password'))?'<a id="rgPw">Set password</a>':'')+'<a id="rgOut">Logout</a>'; return !P?'':P.st==='approved'?'Welcome '+esc(P.en)+o:P.st==='rejected'?'REJECTED - '+esc(P.note)+'<a id="rgEdit">Edit</a>'+o:'ID PENDING - waiting for admin approval'+o; }
+function setRole(x){ window.__hsiaRegRole=x||''; try{ if(window.hsiaUpdatePrivUI) window.hsiaUpdatePrivUI(); }catch(e){} try{ tick(); }catch(e){} }
+var roleOff=null;
+function loadRole(u){
+  if(roleOff){ try{ roleOff(); }catch(e){} roleOff=null; }
+  if(!u||u.isAnonymous){ setRole(''); return; }
+  var a=ref('hsia_private/mods/'+u.uid), b=ref('hsia_private/submods/'+u.uid), m=null, s=null, er=function(){};
+  var up=function(){ if(m===null||s===null) return; setRole(m?'moderator':s?'submoderator':''); };
+  var ha=function(x){ m=x.val()===true; up(); }, hb=function(x){ s=x.val()===true; up(); };
+  a.on('value',ha,er); b.on('value',hb,er);
+  roleOff=function(){ a.off('value',ha); b.off('value',hb); };
+}
 function attach(u){
   if(unsub){ try{ unsub(); }catch(e){} unsub=null; } P=undefined; Pready=false;
+  loadRole(u);
   if(!u||u.isAnonymous) return;
+  clearDraft();
   var r=ref('hsia_people/profiles/'+u.uid), h=function(s){ P=s.val(); if(P) db.prof[u.uid]=P; Pready=true; route(); };
   r.on('value',h,function(){ P=null; Pready=true; route(); }); unsub=function(){ r.off('value',h); };
   loadPics(u.uid);
 }
-function css(){ var s=document.createElement('style'); s.textContent="#hsiaReg{--bg:#030202;--c:#171616;--p2:#262525;--l:#454444;--t:#F0F1F3;--m:#8B909B;--a:#D6D8DC;--ok:#23724a;--no:#a8434b;--w:#a9741a}\n#hsiaReg *{box-sizing:border-box}\n#hsiaReg{background:#030202;color:#F0F1F3;font:15px/1.45 Inter,\"Noto Sans Bengali\",system-ui,sans-serif}\n#hsiaReg main{max-width:480px;margin:0 auto;padding:18px 16px calc(36px + env(safe-area-inset-bottom,0px))}\n#hsiaReg .bar{padding:calc(9px + env(safe-area-inset-top,0px)) 14px 9px;font:700 13px 'Space Grotesk',Inter,sans-serif;letter-spacing:.04em;text-align:center;color:#fff;position:sticky;top:0;z-index:5}\n#hsiaReg .ok{background:var(--ok)}\n#hsiaReg .no{background:var(--no)}\n#hsiaReg .wait{background:var(--w)}\n#hsiaReg .card{background:var(--c);border:1px solid var(--l);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 20px 60px rgba(0,0,0,.35)}\n#hsiaReg .ttl{font:700 11px 'Space Grotesk',Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:10px}\n#hsiaReg h3{margin:0 0 6px;font-family:'Space Grotesk',Inter,sans-serif}\n#hsiaReg .mut{color:var(--m);font-size:13px}\n#hsiaReg label{display:block;font-size:12px;color:var(--m);margin:12px 0 0;letter-spacing:.02em}\n#hsiaReg input,#hsiaReg select,#hsiaReg .in{width:100%;padding:11px 12px;margin-top:5px;border-radius:10px;border:1px solid var(--l);background:var(--bg);color:var(--t);font:inherit;text-align:left}\n#hsiaReg input:focus{outline:0;border-color:#A6ABB4}\n#hsiaReg input[readonly]{opacity:.6}\n#hsiaReg button{font:inherit;cursor:pointer}\n#hsiaReg .b,#hsiaReg .g{font-family:'Space Grotesk',Inter,sans-serif}\n#hsiaReg .b{width:100%;margin-top:12px;padding:12px 16px;border-radius:12px;border:1px solid #d6d8dc;background:linear-gradient(135deg,#A9AEB8,#DADCE0);color:#14151a;font-weight:700;font-size:14px;letter-spacing:.02em}\n#hsiaReg .b.gh{background:var(--p2);color:var(--m);border:1px solid var(--l)}\n#hsiaReg .g{padding:8px 13px;margin:6px 6px 0 0;border-radius:10px;border:1px solid var(--l);background:transparent;color:var(--m);font-weight:600;font-size:12.5px}\n#hsiaReg .two{display:flex;gap:10px}\n#hsiaReg .lnk{display:block;text-align:center;color:var(--m);margin:18px;text-decoration:underline;cursor:pointer;font-size:13px}\n#hsiaReg .pic{display:flex;gap:12px;align-items:center;margin-top:14px}\n#hsiaReg .pv{width:86px;height:110px;border-radius:10px;border:1px dashed var(--l);background:var(--bg) center/cover no-repeat;flex:none}\n#hsiaReg .row{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--l);cursor:pointer}\n#hsiaReg .row:first-child{border:0}\n#hsiaReg .row img{width:40px;height:52px;object-fit:cover;border-radius:6px;background:var(--bg)}\n#hsiaReg .tabs{display:flex;gap:8px}\n#hsiaReg .tabs .g{flex:1;margin:0;border-radius:999px}\n#hsiaReg .tabs .on{background:rgba(139,144,155,.32);border-color:var(--t);color:var(--t)}\n#hsiaReg .ov{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center}\n#hsiaReg .ov>div{background:var(--c);border:1px solid var(--l);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}\n#hsiaReg canvas{touch-action:none;border-radius:8px;border:1px solid var(--l);display:block;margin:8px auto}\n#hsiaReg .kb{font-weight:700;color:var(--a)}\n#hsiaReg .rt{width:100%;border-collapse:collapse;font-size:12px}\n#hsiaReg .rt th,#hsiaReg .rt td{border:1px solid var(--l);padding:8px 3px;text-align:center}\n#hsiaReg .rt th{color:var(--m);font:700 10.5px 'Space Grotesk',Inter,sans-serif;white-space:nowrap}\n#hsiaReg .rt td[data-n]{cursor:pointer}\n#hsiaReg .rt td.dim{opacity:.2}\n#hsiaReg .av{flex:none;width:84px;height:84px;border-radius:50%;padding:3px;background:conic-gradient(#ff6a6a,#ffd36a,#7bff9a,#6ab4ff,#b58cff,#ff6a6a)}\n#hsiaReg .av i{display:block;width:100%;height:100%;border-radius:50%;background:var(--bg) center 25%/cover no-repeat}\n#hsiaReg .bar.tb{padding:calc(4px + env(safe-area-inset-top,0px)) 10px 4px;font-size:11px;background:var(--no)}\n#hsiaReg .pk{flex:1;padding:13px 0;border-radius:10px;border:1px solid var(--l);background:var(--p2);color:var(--m);font:700 15px 'Space Grotesk',Inter,sans-serif}\n#hsiaReg .pk:active{background:linear-gradient(135deg,#A6ABB4,#D6D8DC);color:#1B2130}\n#hsiaReg .fd{border:1px solid var(--l);border-radius:12px;padding:4px 10px;margin:8px 0;background:var(--p2)}\n#hsiaReg .fr,#hsiaReg .ps{display:flex;align-items:center;gap:8px;padding:7px 0}\n#hsiaReg .ps{border-top:1px solid var(--l)}\n#hsiaReg .pl{margin-left:14px}\n#hsiaReg .fn{flex:1;min-width:0;word-break:break-word}\n#hsiaReg .gp{padding:6px 8px;color:var(--m);font-size:18px;touch-action:none;user-select:none;cursor:grab}\n#hsiaReg .ic{width:34px;height:34px;border-radius:9px;border:1px solid var(--l);background:transparent;color:var(--m);font-size:15px}\n#hsiaReg .dg{opacity:.7;background:var(--c);position:relative;z-index:3}\n#hsiaReg .ins{box-shadow:0 -2px 0 var(--a)}\n#hsiaReg .insb{box-shadow:0 2px 0 var(--a)}\n#hsiaReg .fh{font:700 11px 'Space Grotesk',Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin:12px 0 2px}\n#hsiaReg{position:fixed;inset:0;z-index:10050;overflow:auto;-webkit-overflow-scrolling:touch}\n#hsiaReg main{padding-top:calc(34px + env(safe-area-inset-top,0px))}\n#hsiaRegBar{position:fixed;top:0;left:0;right:0;z-index:10060;padding:calc(4px + env(safe-area-inset-top,0px)) 10px 4px;font:700 11px 'Space Grotesk',Inter,system-ui,sans-serif;letter-spacing:.04em;text-align:center;color:#fff;display:none}\n#hsiaRegBar a{color:#fff;text-decoration:underline;margin-left:10px;cursor:pointer}\n#hsiaRegBar.ok{background:#23724a}#hsiaRegBar.no{background:#a8434b}#hsiaRegBar.wait{background:#a9741a}#hsiaRegBar.tb{background:#a8434b}\n#hsiaRegAdm{display:none}"; document.head.appendChild(s);
+function css(){ var s=document.createElement('style'); s.textContent="#hsiaReg{--bg:#030202;--c:#171616;--p2:#262525;--l:#454444;--t:#F0F1F3;--m:#8B909B;--a:#D6D8DC;--ok:#23724a;--no:#a8434b;--w:#a9741a}\n#hsiaReg *{box-sizing:border-box}\n#hsiaReg{background:#030202;color:#F0F1F3;font:15px/1.45 Inter,\"Noto Sans Bengali\",system-ui,sans-serif}\n#hsiaReg main{max-width:480px;margin:0 auto;padding:18px 16px calc(36px + env(safe-area-inset-bottom,0px))}\n#hsiaReg .bar{padding:calc(9px + env(safe-area-inset-top,0px)) 14px 9px;font:700 13px 'Space Grotesk',Inter,sans-serif;letter-spacing:.04em;text-align:center;color:#fff;position:sticky;top:0;z-index:5}\n#hsiaReg .ok{background:var(--ok)}\n#hsiaReg .no{background:var(--no)}\n#hsiaReg .wait{background:var(--w)}\n#hsiaReg .card{background:var(--c);border:1px solid var(--l);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 20px 60px rgba(0,0,0,.35)}\n#hsiaReg .ttl{font:700 11px 'Space Grotesk',Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin-bottom:10px}\n#hsiaReg h3{margin:0 0 6px;font-family:'Space Grotesk',Inter,sans-serif}\n#hsiaReg .mut{color:var(--m);font-size:13px}\n#hsiaReg label{display:block;font-size:12px;color:var(--m);margin:12px 0 0;letter-spacing:.02em}\n#hsiaReg input,#hsiaReg select,#hsiaReg .in{width:100%;padding:11px 12px;margin-top:5px;border-radius:10px;border:1px solid var(--l);background:var(--bg);color:var(--t);font:inherit;text-align:left}\n#hsiaReg input:focus{outline:0;border-color:#A6ABB4}\n#hsiaReg input[readonly]{opacity:.6}\n#hsiaReg button{font:inherit;cursor:pointer}\n#hsiaReg .b,#hsiaReg .g{font-family:'Space Grotesk',Inter,sans-serif}\n#hsiaReg .b{width:100%;margin-top:12px;padding:12px 16px;border-radius:12px;border:1px solid #d6d8dc;background:linear-gradient(135deg,#A9AEB8,#DADCE0);color:#14151a;font-weight:700;font-size:14px;letter-spacing:.02em}\n#hsiaReg .b.gh{background:var(--p2);color:var(--m);border:1px solid var(--l)}\n#hsiaReg .g{padding:8px 13px;margin:6px 6px 0 0;border-radius:10px;border:1px solid var(--l);background:transparent;color:var(--m);font-weight:600;font-size:12.5px}\n#hsiaReg .two{display:flex;gap:10px}\n#hsiaReg .lnk{display:block;text-align:center;color:var(--m);margin:18px;text-decoration:underline;cursor:pointer;font-size:13px}\n#hsiaReg .pic{display:flex;gap:12px;align-items:center;margin-top:14px}\n#hsiaReg .pv{width:86px;height:110px;border-radius:10px;border:1px dashed var(--l);background:var(--bg) center/cover no-repeat;flex:none}\n#hsiaReg .row{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--l);cursor:pointer}\n#hsiaReg .row:first-child{border:0}\n#hsiaReg .row img{width:40px;height:52px;object-fit:cover;border-radius:6px;background:var(--bg)}\n#hsiaReg .tabs{display:flex;gap:8px}\n#hsiaReg .tabs .g{flex:1;margin:0;border-radius:999px}\n#hsiaReg .tabs .on{background:rgba(139,144,155,.32);border-color:var(--t);color:var(--t)}\n#hsiaReg .ov{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center}\n#hsiaReg .ov>div{background:var(--c);border:1px solid var(--l);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px))}\n#hsiaReg canvas{touch-action:none;border-radius:8px;border:1px solid var(--l);display:block;margin:8px auto}\n#hsiaReg .kb{font-weight:700;color:var(--a)}\n#hsiaReg .rt{width:100%;border-collapse:collapse;font-size:12px}\n#hsiaReg .rt th,#hsiaReg .rt td{border:1px solid var(--l);padding:8px 3px;text-align:center}\n#hsiaReg .rt th{color:var(--m);font:700 10.5px 'Space Grotesk',Inter,sans-serif;white-space:nowrap}\n#hsiaReg .rt td[data-n]{cursor:pointer}\n#hsiaReg .rt td.dim{opacity:.2}\n#hsiaReg .av{flex:none;width:84px;height:84px;border-radius:50%;padding:3px;background:conic-gradient(#ff6a6a,#ffd36a,#7bff9a,#6ab4ff,#b58cff,#ff6a6a)}\n#hsiaReg .av i{display:block;width:100%;height:100%;border-radius:50%;background:var(--bg) center 25%/cover no-repeat}\n#hsiaReg .bar.tb{padding:calc(4px + env(safe-area-inset-top,0px)) 10px 4px;font-size:11px;background:var(--no)}\n#hsiaReg .pk{flex:1;padding:13px 0;border-radius:10px;border:1px solid var(--l);background:var(--p2);color:var(--m);font:700 15px 'Space Grotesk',Inter,sans-serif}\n#hsiaReg .pk:active{background:linear-gradient(135deg,#A6ABB4,#D6D8DC);color:#1B2130}\n#hsiaReg .fd{border:1px solid var(--l);border-radius:12px;padding:4px 10px;margin:8px 0;background:var(--p2)}\n#hsiaReg .fr,#hsiaReg .ps{display:flex;align-items:center;gap:8px;padding:7px 0}\n#hsiaReg .ps{border-top:1px solid var(--l)}\n#hsiaReg .pl{margin-left:14px}\n#hsiaReg .fn{flex:1;min-width:0;word-break:break-word}\n#hsiaReg .gp{padding:6px 8px;color:var(--m);font-size:18px;touch-action:none;user-select:none;cursor:grab}\n#hsiaReg .ic{width:34px;height:34px;border-radius:9px;border:1px solid var(--l);background:transparent;color:var(--m);font-size:15px}\n#hsiaReg .dg{opacity:.7;background:var(--c);position:relative;z-index:3}\n#hsiaReg .ins{box-shadow:0 -2px 0 var(--a)}\n#hsiaReg .insb{box-shadow:0 2px 0 var(--a)}\n#hsiaReg .fh{font:700 11px 'Space Grotesk',Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--m);margin:12px 0 2px}\n#hsiaReg{position:fixed;inset:0;z-index:10050;overflow:auto;-webkit-overflow-scrolling:touch}\n#hsiaReg main{padding-top:calc(34px + env(safe-area-inset-top,0px))}\n#hsiaRegBar{position:fixed;top:0;left:0;right:0;z-index:10060;padding:calc(4px + env(safe-area-inset-top,0px)) 10px 4px;font:700 11px 'Space Grotesk',Inter,system-ui,sans-serif;letter-spacing:.04em;text-align:center;color:#fff;display:none}\n#hsiaRegBar a{color:#fff;text-decoration:underline;margin-left:10px;cursor:pointer}\n#hsiaRegBar.ok{background:#23724a}#hsiaRegBar.no{background:#a8434b}#hsiaRegBar.wait{background:#a9741a}#hsiaRegBar.tb{background:#a8434b}\n#hsiaRegAdm{display:none}\n#hsiaRegChip{position:fixed;right:8px;top:calc(6px + env(safe-area-inset-top,0px));z-index:10040;width:26px;height:26px;border-radius:50%;border:1px solid #454444;background:rgba(23,22,22,.85);color:#D6D8DC;font-size:13px;line-height:24px;text-align:center;padding:0;opacity:.6;display:none}"; document.head.appendChild(s);
   if(!document.getElementById('hsiaRegFonts')){ var l=document.createElement('link'); l.id='hsiaRegFonts'; l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap'; document.head.appendChild(l); } }
 function tick(){
+  if(chipEl) chipEl.style.display=(U&&!U.isAnonymous&&P&&on()&&barEl.style.display==='none'&&R.style.display==='none')?'block':'none';
   var ad=!!(window.hsiaCanSeeOthers&&window.hsiaCanSeeOthers()), mo=!ad&&!!(window.hsiaRole&&window.hsiaRole()==='moderator'), a=ad||mo; if(a!==adm||mo!==modOnly){ adm=a; modOnly=mo; render(); }
   if(!on()||(U&&!U.isAnonymous)) return; if(!ts) return;
   if(left()<=0){ if(barEl.className==='tb'&&cur===''||document.getElementById('tb')) render(); return; }
   var e=document.getElementById('tb'); if(e) e.textContent='Trial - '+hms(left())+' left';
 }
 function boot(){
+  if(loadDraft()) v='signup';
   css(); R=document.createElement('div'); R.id='hsiaReg'; R.style.display='none'; R.innerHTML='<main id="app"></main>'; document.body.appendChild(R);
+  chipEl=document.createElement('button'); chipEl.id='hsiaRegChip'; chipEl.type='button'; chipEl.textContent='\ud83d\udc64'; chipEl.onclick=acct; document.body.appendChild(chipEl);
   barEl=document.createElement('div'); barEl.id='hsiaRegBar'; document.body.appendChild(barEl);
   admEl=document.createElement('button'); admEl.id='hsiaRegAdm'; admEl.type='button'; admEl.className='fr-dbimport'; admEl.textContent='Registrations';
   /* sits in Settings, to the right of the Mandatory login button (falls back to the page body if Settings is missing) */
   var _ab=document.getElementById('regActivateBtn'); if(_ab&&_ab.parentNode){ _ab.parentNode.style.cssText+=';display:flex;flex-wrap:wrap;gap:8px;align-items:stretch'; _ab.parentNode.appendChild(admEl); } else document.body.appendChild(admEl);
-  admEl.onclick=function(){ loadAll().then(function(){ v='admin'; render(); }).catch(function(e){ alert('Could not load: '+((e&&e.message)||e)); }); };
+  admEl.onclick=function(){ loadAll().then(function(){ if(!modOnly) Object.keys(db.prof).forEach(function(u){ var p=db.prof[u]; if(p&&p.st==='approved'&&p.mail) ref('hsia_people/mail/'+mk(p.mail)).set({u:u,e:p.ein}).catch(function(){}); }); v='admin'; render(); if(!profOn){ profOn=true; ref('hsia_people/profiles').on('value',function(s){ db.prof=s.val()||{}; if(v==='admin'&&adm&&!R.querySelector('.ov')){ cur=''; route(); } },function(){ profOn=false; }); } }).catch(function(e){ alert('Could not load: '+((e&&e.message)||e)); }); };
   barEl.onclick=function(e){ var t=e.target;
     if(t.id==='rgOut'){ firebase.auth().signOut().then(function(){ P=undefined; return firebase.auth().signInAnonymously().catch(function(){}); }); }
+    else if(t.id==='rgLink'){ var cu=firebase.auth().currentUser; if(cu) cu.linkWithPopup(new firebase.auth.GoogleAuthProvider()).then(function(){ alert('Google linked. Continue with Google now opens this same account.'); render(); }).catch(function(e){ var c=(e&&e.code)||''; if(/credential-already-in-use|email-already-in-use/.test(c)) alert('This Google account is already used by another account here, so it cannot be linked.'); else { var m=ferr(e); if(m) alert(m); } }); }
+    else if(t.id==='rgPw'){ pwAsk(); }
     else if(t.id==='rgEdit'){ v='form'; render(); } else if(t.id==='rgLogin'){ v='login'; render(); } };
   var tries=0, t=setInterval(function(){
     tries++; var ok=typeof firebase!=='undefined'&&firebase.auth&&firebase.apps&&firebase.apps.length&&typeof _fbDb!=='undefined'&&_fbDb;

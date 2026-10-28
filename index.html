@@ -118,6 +118,7 @@
     var a = document.activeElement;
     if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
     if(window.__hsiaPick && Date.now() - window.__hsiaPick < 5*60*1000) return false;
+    var rg = document.getElementById('hsiaReg'); if(rg && rg.style.display === 'block') return false;   /* login / registration screen open: never reload it */
     if(document.querySelector('.xf-ov:not([hidden]), .xs-ov:not([hidden])')) return false;   /* CL / Exchange / Blank form editor and the signature popup */
     if(document.body && /(^|\s)(qbm-printing|xf-printing)(\s|$)/.test(document.body.className)) return false;
     return !document.querySelector('.modal-overlay.show');
@@ -8536,6 +8537,7 @@ function clearAuthSession(){ try{ localStorage.removeItem(AUTH_SESSION_KEY); }ca
      admin         -> everything */
 window.hsiaRole = function(){
   try{ if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) return 'admin'; }catch(e){}
+  try{ if(window.__hsiaRegRole) return window.__hsiaRegRole; }catch(e){}   /* role read by reg.js for the Firebase account that is logged in */
   try{ const s = loadAuthSession(); const r = s && s.role; return (r === 'moderator' || r === 'submoderator') ? r : ''; }catch(e){ return ''; }
 };
 window.hsiaIsModerator = function(){ const r = window.hsiaRole(); return r === 'admin' || r === 'moderator'; };
