@@ -8541,7 +8541,7 @@ window.hsiaRole = function(){
   try{ const s = loadAuthSession(); const r = s && s.role; return (r === 'moderator' || r === 'submoderator') ? r : ''; }catch(e){ return ''; }
 };
 window.hsiaIsModerator = function(){ const r = window.hsiaRole(); return r === 'admin' || r === 'moderator'; };
-window.hsiaIsSubMod = function(){ const r = window.hsiaRole(); return r === 'admin' || r === 'submoderator'; };
+window.hsiaIsSubMod = function(){ const r = window.hsiaRole(); return r === 'admin' || r === 'moderator' || r === 'submoderator'; };   /* a moderator can do everything a sub-moderator can */
 async function authRefreshRole(){
   try{
     const s = loadAuthSession(), u = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
@@ -17727,7 +17727,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
   const dl = dk=>{ const a = String(dk).split('-'); return (+a[2]) + ' ' + MON[+a[1]-1] + ' ' + a[0]; };
   const tl = t=>{ const d = new Date(t + DHAKA_OFFSET); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); };
   const who = ()=>{ try{ return auditWho(); }catch(e){ return ''; } };
-  const isAdmin = ()=> { try{ return !!rosterUnlocked; }catch(e){ return false; } };
+  const isAdmin = ()=> { try{ return !!rosterUnlocked || !!(window.hsiaIsModerator && window.hsiaIsModerator()); }catch(e){ return false; } };   /* admin or moderator */
 
   /* ---------- storage ---------- */
   function rhLoad(){
@@ -18193,7 +18193,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
   var SW = 230, PAD = 16, GAP = 12, BIG = 5000;
   var LET = ['A','B','C','D','E'];
   function $(id){ return document.getElementById(id); }
-  function isAdmin(){ try{ return !!rosterUnlocked; }catch(e){ return false; } }
+  function isAdmin(){ try{ return !!rosterUnlocked || !!(window.hsiaIsModerator && window.hsiaIsModerator()); }catch(e){ return false; } }   /* admin or moderator */
   function pad2(n){ return String(n).padStart(2, '0'); }
   function selKey(){ return (typeof window._rosterSelKey === 'string' && window._rosterSelKey) ? window._rosterSelKey : todayDateKey(); }
   function dateInfo(){
