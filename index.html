@@ -16093,6 +16093,7 @@ function openRosterWindow(){
     const c = e.target.closest && e.target.closest('.me-pick');
     if(!c) return;
     saveMe({ name:c.getAttribute('data-name'), table:c.getAttribute('data-table'), team:+c.getAttribute('data-team'), pos:c.getAttribute('data-pos') });
+    try{ if(window.hsiaApplyRosterTabOrder) window.hsiaApplyRosterTabOrder(true); }catch(e){}
     closePicker();
     setMe(true);
     redrawWeek();
@@ -16475,9 +16476,27 @@ function openRosterWindow(){
   }
   const _t0 = Date.now();
   const _hadMe = (function(){ try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.indexOf(ME_KEY + ':') === 0 && !/:[xm]$/.test(k)) return true; } }catch(e){} return false; })();
+  /* Duty Roster tabs: the tab of the table the person defined in "Me" comes first (Controller -> Controllers first, Aerodrome Assistant -> that tab first ...);
+     everybody else / not defined = the normal order. activate = also open that tab (once after sign-in, and right after choosing in "Me"). */
+  const _TAB_OF = { rosterCtrl:'rosterCtrlCol', roster:'rosterAsstCol', rosterComm:'rosterCommCol', th:'rosterTHCol', mr:'rosterTHCol' };
+  const _TAB_DEF = ['rosterCtrlCol', 'rosterAsstCol', 'rosterCommCol', 'rosterTHCol'];
+  let _tabOpened = false;
+  function applyTabOrder(activate){
+    try{
+      const wrap = document.getElementById('rosterTabs'); if(!wrap) return;
+      const me = gSession() ? loadMe() : null;
+      const first = me && _TAB_OF[me.table];
+      const order = first ? [first].concat(_TAB_DEF.filter(x=> x !== first)) : _TAB_DEF;
+      const btns = Array.prototype.slice.call(wrap.querySelectorAll('.iflow-tab-btn'));
+      order.forEach(id=>{ const b = btns.find(x=> x.getAttribute('data-tab') === id); if(b) wrap.appendChild(b); });
+      if(activate && first){ const f = wrap.querySelector('.iflow-tab-btn'); if(f && !f.classList.contains('active')) f.click(); }
+    }catch(e){}
+  }
+  window.hsiaApplyRosterTabOrder = applyTabOrder;
   function refreshAuth(){
     const ok = !!gSession();
     if(!ok && _hadMe && Date.now() - _t0 < 8000){ btn.style.display = ''; return; }   /* still loading the sign-in: do not hide the button for a moment */
+    if(ok && !_tabOpened){ _tabOpened = true; applyTabOrder(true); } else applyTabOrder(false);
     btn.style.display = ok ? '' : 'none';
     if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); redrawWeek(); }
     else { try{ if(window.hsiaMeSnap) window.hsiaMeSnap(); }catch(e){} if(window._rosterMeOn) renderMe(); }
