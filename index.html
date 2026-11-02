@@ -1570,6 +1570,14 @@ table.thg-table.ab-table td .ab-x{ position:absolute; top:2px; right:3px; paddin
 #abBody[data-ed="1"] .ab-lbl [data-p], body.roster-editing #abBody .ab-lbl [data-p]{ text-decoration:underline dotted; text-underline-offset:3px; cursor:pointer; }
 .ab-lbl small{ display:block; margin-top:1px; font-size:8.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
 table.roster-table td.ab-span{ background:none !important; box-shadow:none !important; }
+.sb-xchips{ display:flex; flex-wrap:wrap; justify-content:center; gap:4px; padding:2px 6px 8px; }
+.sb-xch{ border-radius:6px; padding:2px 8px; font-size:11.5px; font-weight:700; }
+.sb-xch.cl{ background:rgba(220,60,60,.2); color:#ff9a9a; border:1px solid rgba(220,60,60,.45); }
+.sb-xch.xch{ background:rgba(245,181,61,.16); color:#f5b53d; border:1px solid rgba(245,181,61,.45); }
+.ab-chip small.sb-ab-tag{ display:block; font-size:9px; font-weight:800; letter-spacing:0; text-transform:none; margin-top:1px; }
+.ab-chips.row .ab-chip small.sb-ab-tag{ display:inline; margin-left:5px; }
+.ab-chip small.sb-ab-tag.cl{ color:#ff9a9a; }
+.ab-chip small.sb-ab-tag.xch{ color:#f5b53d; }
 .ab-chips{ display:flex; flex-direction:column; gap:2px; padding:3px; }
 .ab-chips.row{ flex-direction:row; flex-wrap:wrap; justify-content:center; gap:4px; }
 .ab-chip{ position:relative; border:1px solid var(--border); border-radius:6px; background:var(--panel); padding:2px 7px; font-weight:800; font-size:11.5px; line-height:1.2; color:var(--text); }
@@ -8217,9 +8225,27 @@ function todayExchangesFor(tableKey){
    rules as the live "who's on duty" board. If the underlying shift is
    Night and a half ('1' or '2') is given, returns just that half's
    window (split at 3:00 AM) instead of the full 8:30 PM–7:30 AM span. */
+/* Stand by / OJTI / Aero Billing / Office / SATO people have no A-E team: for CL / Exchange they use the pseudo team 200 (whole day) */
+function sbParse(v){ const a = String(v == null ? '' : v).split('|'); if(a[0] !== '@SB' || a.length < 3) return null; try{ return { grp:decodeURIComponent(a[1]), name:decodeURIComponent(a.slice(2).join('|')) }; }catch(e){ return null; } }
+function sbEntriesFor(tableKey){ try{ return rosterViewExchanges(tableKey).filter(x=> x && +x.team === 200); }catch(e){ return []; } }
+function sbChipsHtml(tableKey, grp){
+  const list = sbEntriesFor(tableKey).filter(x=> x.pos === grp);
+  if(!list.length) return '';
+  return '<div class="sb-xchips">' + list.map(x=>{ const w = _xEsc(x.who || ''), sb = _xEsc(x.subName || ''); return '<span class="sb-xch ' + (x.cl ? 'cl' : 'xch') + '"><b>' + w + '</b> ' + (x.cl ? 'CL' : '\uD83D\uDD04') + (sb ? ' \u2192 ' + sb : ' \u00B7 Vacant') + '</span>'; }).join('') + '</div>';
+}
+window.hsiaSbTag = function(name){
+  try{
+    const nm = String(name == null ? '' : name).trim().toLowerCase(); if(!nm) return '';
+    const x = sbEntriesFor('roster').find(e=> String(e.who || '').trim().toLowerCase() === nm);
+    if(!x) return '';
+    const sb = String(x.subName || '').trim();
+    return '<small class="sb-ab-tag ' + (x.cl ? 'cl' : 'xch') + '">' + (x.cl ? 'CL' : '\uD83D\uDD04') + (sb ? ' \u2192 ' + _xEsc(sb) : ' \u00B7 Vacant') + '</small>';
+  }catch(e){ return ''; }
+};
 function exchangeShiftWindow(dateKey, team, half){
   const [y,m,day] = (dateKey||'').split('-').map(Number);
   if(!y || !m || !day) return null;
+  if(+team === 200){ const nd2 = addDays(y, m-1, day, 1); return { start: dhakaInstant(y, m-1, day, 0, 0), end: dhakaInstant(nd2.y, nd2.m, nd2.day, 0, 0) }; }
   if(+team >= THS_BASE){   // Traffic Hand (A-E model): 0 Night, 1 Night OT, 2 Morning, 3 Afternoon, 4 Morning OT, 5 Afternoon OT
     const nd1 = addDays(y, m-1, day, 1), sl1 = +team - THS_BASE;
     if(sl1 === 0 || sl1 === 1) return { start: dhakaInstant(y, m-1, day, 20, 30), end: dhakaInstant(nd1.y, nd1.m, nd1.day, 7, 30) };
@@ -8435,6 +8461,7 @@ function clApplyRemote(val){
 }
 function exTeamLabel(ex){
   const t = +ex.team;
+  if(t === 200) return 'Stand by / Office';
   if(t >= THS_BASE) return (THS_META[t - THS_BASE] || {}).label || '—';
   if(t >= 100) return ['Night 8:30PM–12AM', 'Night 12AM–7:30AM', 'Morning', 'Afternoon'][t - 100] || '—';
   return 'Team ' + (TEAMS[t] || '?');
@@ -9904,7 +9931,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       if(adminRowHtml) adminPlaced = true;
       const pTxt = poolOf(row).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
       const pPos = (row.pos || '').replace(/"/g,'&quot;');
-      return adminRowHtml + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea></td></tr>`;
+      return adminRowHtml + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea>${sbChipsHtml(tableKey, row.pos)}</td></tr>`;
     }
     const cells = TEAMS.map((t, ci)=>{
       const _rp = _rrPlan(ci), _rs = _rp ? _rp[row.pos] : null;
@@ -9944,7 +9971,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   }).join('');
   if(tableKey && standbyTableKeys().indexOf(tableKey) !== -1 && data.length){
     const sbTxt = standbyOf(data).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea></td></tr>`
+    tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea>${sbChipsHtml(tableKey, 'Stand by')}</td></tr>`
       + ((adminRowHtml && !adminPlaced) ? adminRowHtml : '');
     const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input):not(.roster-admin-input)');   /* NOT the OJTI box (it shares the class and sits above) */
     if(sbEl) sbEl.addEventListener('input', ()=>{
@@ -10822,6 +10849,9 @@ function exchangeResolve(forKey){
   const teamSel0 = document.getElementById('exchangeTeam');
   if(!tableSel || !posSel || !dateInput || !dateInput.value) return null;
   if(!tableSel.value || !posSel.value) return null;
+  { const _sb = sbParse(posSel.value);
+    if(_sb){ const _dk = forKey || dateInput.value; if(!/^\d{4}-\d{2}-\d{2}$/.test(_dk)) return null;
+      return { thmr:false, sb:true, table:tableSel.value, pos:_sb.grp, team:200, who:_sb.name, shift:'Morning', dateKey:_dk }; } }
   if(!isThMrTable(tableSel.value) && (!teamSel0 || teamSel0.value === '')) return null;
   const dateKey = forKey || dateInput.value;
   const parts = dateKey.split('-').map(Number);
@@ -11095,9 +11125,8 @@ function renderExchangePicker(){
     html += '<thead><tr><th>Position</th>' + TEAMS.map(t => '<th>Team ' + t + '</th>').join('') + '</tr></thead><tbody>';
     data.forEach(row=>{
       if(isPoolRow(row, _xpTab)){
-        if(posMode) return;
         const pl = poolOf(row).filter(n=> !_xpBadName(n) && match(n));
-        if(pl.length) html += '<tr><td class="xp-pos">' + _xEsc(row.pos) + '</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + pl.map(n=> btn(String(n).trim(), ' data-standby="1" style="width:auto;"', false, { standby:true })).join('') + '</div></td></tr>';
+        if(pl.length) html += '<tr><td class="xp-pos">' + _xEsc(row.pos) + '</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + pl.map(n=> btn(String(n).trim(), ' data-standby="1" data-grp="' + _xEsc(row.pos) + '" style="width:auto;"', false, { standby:true })).join('') + '</div></td></tr>';
         return;
       }
       html += '<tr><td class="xp-pos">' + _xEsc(row.pos) + '</td>';
@@ -11108,15 +11137,15 @@ function renderExchangePicker(){
       });
       html += '</tr>';
     });
-    if(!posMode && standbyTableKeys().indexOf(_xpTab) !== -1){
+    if(standbyTableKeys().indexOf(_xpTab) !== -1){
       const sb = standbyOf(data).filter(n=> !_xpBadName(n) && match(n));
-      if(sb.length) html += '<tr><td class="xp-pos">Stand by</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + sb.map(n=> btn(String(n).trim(), ' data-standby="1" style="width:auto;"', false, { standby:true })).join('') + '</div>' + '</td></tr>';
+      if(sb.length) html += '<tr><td class="xp-pos">Stand by</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + sb.map(n=> btn(String(n).trim(), ' data-standby="1" data-grp="Stand by" style="width:auto;"', false, { standby:true })).join('') + '</div>' + '</td></tr>';
     }
-    if(!posMode && _xpTab === 'roster' && typeof window.hsiaAeroBillingList === 'function'){
+    if(_xpTab === 'roster' && typeof window.hsiaAeroBillingList === 'function'){
       /* Aero Billing groups, Office (day) staff and SATO Office / Admin sit under the Aerodrome Assistant table too */
       window.hsiaAeroBillingList().forEach(g=>{
         const nm = g.names.filter(n=> !_xpBadName(n) && match(n));
-        if(nm.length) html += '<tr><td class="xp-pos">' + _xEsc(g.label) + '</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + nm.map(n=> btn(String(n).trim(), ' data-standby="1" style="width:auto;"', false, { standby:true })).join('') + '</div></td></tr>';
+        if(nm.length) html += '<tr><td class="xp-pos">' + _xEsc(g.label) + '</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + nm.map(n=> btn(String(n).trim(), ' data-standby="1" data-grp="' + _xEsc(g.label) + '" style="width:auto;"', false, { standby:true })).join('') + '</div></td></tr>';
       });
     }
     html += '</tbody>';
@@ -11161,9 +11190,18 @@ function pickExchangePos(b){
   const teamSel = document.getElementById('exchangeTeam');
   if(!tableSel || !posSel) return;
   const slot = b.getAttribute('data-slot');
+  const _isSb = b.getAttribute('data-standby') === '1';
   closeExchangePicker();
   if(tableSel.value !== _xpTab){ tableSel.value = _xpTab; populateExchangePositions(); }
-  if(slot !== null){
+  if(_isSb){
+    const _grp = b.getAttribute('data-grp') || 'Stand by', _nm = b.getAttribute('data-name') || '';
+    const _val = '@SB|' + encodeURIComponent(_grp) + '|' + encodeURIComponent(_nm);
+    let _o = Array.prototype.find.call(posSel.options, o=> o.value === _val);
+    if(!_o){ _o = document.createElement('option'); _o.value = _val; posSel.appendChild(_o); }
+    _o.textContent = _grp + ' \u00b7 ' + _nm;
+    posSel.value = _val;
+    if(teamSel) teamSel.value = '';
+  } else if(slot !== null){
     posSel.value = slot + '|' + b.getAttribute('data-pi');
   } else {
     posSel.value = b.getAttribute('data-pos');
@@ -11231,6 +11269,7 @@ function _xdcNorm(x){ return String(x == null ? '' : x).trim().toLowerCase(); }
 function xdcContext(){
   const tableSel = document.getElementById('exchangeTable'), posSel = document.getElementById('exchangePos'), teamSel = document.getElementById('exchangeTeam');
   if(!tableSel || !posSel || !tableSel.value || !posSel.value) return null;
+  { const _sb = sbParse(posSel.value); if(_sb) return { thmr:false, sb:true, table:tableSel.value, pos:_sb.grp, ci:200, who:_sb.name, head:_sb.grp + ' \u00B7 ' + _sb.name }; }
   if(isThMrTable(tableSel.value)){
     const v = String(posSel.value).split('|'), slot = +v[0], pi = +v[1];
     let name = String(window._xFlowWho || '').trim();
@@ -11245,6 +11284,7 @@ function xdcContext(){
 }
 function xdcDay(ctx, y, m, d){
   const dk = _xdcKey(y, m, d);
+  if(ctx.sb) return { dk:dk, st:'Duty', cls:'morning', text:'Duty' };
   if(!ctx.thmr){
     const sh = shiftFor(ctx.ci, y, m, d);
     return { dk:dk, st:sh, cls:(sh === 'Morning' ? 'morning' : sh === 'Afternoon' ? 'afternoon' : sh === 'Night' ? 'night' : ''), text:shiftLabel(sh) };
@@ -12867,7 +12907,7 @@ function initExchangePanel(){
     setMode('');
     window._xSetMode = setMode;
     /* flow helpers: position first, then the duty calendar, then the substitute table */
-    window._xFlowHasPos = ()=>{ const tS = document.getElementById('exchangeTable'), pS = document.getElementById('exchangePos'), tmS = document.getElementById('exchangeTeam'); return !!(tS && pS && tS.value && pS.value && (isThMrTable(tS.value) || (tmS && tmS.value !== ''))); };
+    window._xFlowHasPos = ()=>{ const tS = document.getElementById('exchangeTable'), pS = document.getElementById('exchangePos'), tmS = document.getElementById('exchangeTeam'); return !!(tS && pS && tS.value && pS.value && (isThMrTable(tS.value) || (tmS && tmS.value !== '') || !!sbParse(pS.value))); };
     window._xIsUfnFlow = ()=> window._xMode === 'sp' && (window._spPreType === 'UFN' || window._spPreType === 'Festival');   /* UFN + Festival: position -> duty calendar -> substitute */
     window._xFlowLabel = ()=>{ if(confirmBtn && (window._xMode === 'ex' || window._xMode === 'cl' || window._xIsUfnFlow())) confirmBtn.textContent = window._xFlowHasPos() ? '\uD83D\uDCC5 Select date' : '\uD83D\uDCCD Select position'; };
     window._xRunMode = ()=>{ const b = modeBtn[window._xMode]; if(!b) return; window._xConfirm = true; try{ b.click(); } finally { window._xConfirm = false; } };
@@ -20149,7 +20189,7 @@ window.hsiaFs = function(wrap, on, onExit){
     ['g1','g2'].forEach(function(g){ var c = cc[pl[g]]; at[c] = (at[c] || []).concat(g); });
     function chip(p, g, i, st){
       var o = isOff(p, pl), on = !o && st === cur;
-      return '<div class="ab-chip' + (on ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + (o ? '<small>Off</small>' : '') + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
+      return '<div class="ab-chip' + (on ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + (o ? '<small>Off</small>' : '') + (window.hsiaSbTag ? window.hsiaSbTag(p.n) : '') + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
     }
     var h = '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl" data-l="ab"><span data-p="0">' + esc(LBL.ab[0]) + '</span><small data-p="1">' + esc(LBL.ab[1]) + '</small></div></td>';
     for(var k = 0; k < 5; k++){
@@ -20159,7 +20199,7 @@ window.hsiaFs = function(wrap, on, onExit){
     h += '</tr>';
     function oc(p, g, i, tag){
       var o = isOff(p, pl);
-      return '<div class="ab-chip' + (office && !o ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + '<small>' + (o ? 'Off' : tag) + '</small>' + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
+      return '<div class="ab-chip' + (office && !o ? ' live' : '') + (o ? ' off' : '') + (ed ? ' ed' : '') + '" data-g="' + g + '" data-i="' + i + '">' + esc(p.n) + '<small>' + (o ? 'Off' : tag) + '</small>' + (window.hsiaSbTag ? window.hsiaSbTag(p.n) : '') + (ed ? '<span class="ab-x">✕</span>' : '') + '</div>';
     }
     h += '<tr class="ab-sep"><td class="roster-pos"><div class="ab-lbl" data-l="off"><span data-p="0">' + esc(LBL.off[0]) + '</span><small data-p="1">' + esc(LBL.off[1]) + '</small></div></td><td class="ab-span" colspan="5"><div class="ab-chips row">'
       + ST.day.map(function(p, i){ return oc(p, 'day', i, 'Aero Billing'); }).join('')
