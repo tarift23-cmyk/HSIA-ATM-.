@@ -10132,15 +10132,20 @@ function setQuickHalf(half){
 
 function openQuickExchange(tableKey, ri, ci){
   if(!requireNightHalfAuth()) return;
-  if(typeof window._rosterSelKey === 'string' && window._rosterSelKey !== todayDateKey()){ alert('Quick exchange works for today only. Press Today first.'); return; }
+  /* Quick exchange: the date selected in the roster date bar is used (today when nothing else is picked) */
+  const _todayKey = todayDateKey();
+  const _selKey = (typeof window._rosterSelKey === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(window._rosterSelKey)) ? window._rosterSelKey : _todayKey;
+  const _isToday = _selKey === _todayKey;
+  /* Today follows the original rules; FUTURE dates can be assigned in advance; past dates are not editable here */
+  if(_selKey < _todayKey){ alert('1st/2nd Night can be assigned for today or a future date only.'); return; }
   const data = rosterDataFor(tableKey);
   const row = data[ri];
   if(!row) return;
-  let dateKey = todayDateKey();
+  let dateKey = _selKey;
   let [y,m,day] = dateKey.split('-').map(Number);
   // A night shift runs 8:30 PM → 7:30 AM, so after midnight the night that is
-  // still running belongs to YESTERDAY's roster date. Check that first.
-  {
+  // still running belongs to YESTERDAY's roster date. Check that first (today only).
+  if(_isToday){
     const pd = addDays(y, m-1, day, -1);
     const pKey = pd.y + '-' + String(pd.m+1).padStart(2,'0') + '-' + String(pd.day).padStart(2,'0');
     if(shiftFor(ci, pd.y, pd.m, pd.day) === 'Night'){
@@ -10150,12 +10155,12 @@ function openQuickExchange(tableKey, ri, ci){
   }
   const st = shiftFor(ci, y, m-1, day);
   if(st === 'Off'){
-    alert('Team ' + TEAMS[ci] + ' has no duty today, so an exchange cannot be added.');
+    alert('Team ' + TEAMS[ci] + ' has no duty on ' + dateKey + ', so an exchange cannot be added.');
     return;
   }
   // This popup is only for the 1st / 2nd night split (someone rests for half the night, another covers).
   if(st !== 'Night'){
-    alert('No night duty in this cell today — 1st/2nd Night can only be assigned on night duty.');
+    alert('No night duty in this cell on ' + dateKey + ' — 1st/2nd Night can only be assigned on night duty.');
     return;
   }
   const isNight = true;
@@ -10166,7 +10171,7 @@ function openQuickExchange(tableKey, ri, ci){
   let half = '';
   if(isNight){
     const win1 = exchangeShiftWindow(dateKey, ci, '1');
-    half = (win1 && Date.now() < win1.end) ? '1' : '2';
+    half = (!_isToday || (win1 && Date.now() < win1.end)) ? '1' : '2';
   }
 
   quickExchangeCtx = { table: tableKey, pos: row.pos, team: ci, date: dateKey, isNight };
@@ -10180,7 +10185,7 @@ function openQuickExchange(tableKey, ri, ci){
   if(!titleEl || !subEl || !removeBtn) return;
 
   titleEl.textContent = '🔄 ' + row.pos + ' — Team ' + TEAMS[ci];
-  subEl.textContent = 'Today (' + dateKey + ') — current roster name: ' + (row.names[ci] || '—');
+  subEl.textContent = (dateKey === _todayKey ? 'Today (' : 'Date (') + dateKey + ') — current roster name: ' + (row.names[ci] || '—');
   { const cs = existingList.find(x=> (x.cl || x.special) && !x.vacant && String(x.subName || '').trim()); if(cs) subEl.textContent += ' — ' + (cs.cl ? 'CL' : 'Leave') + ' substitute: ' + cs.subName + ' (1st/2nd Night is for the substitute)'; }
 
   function fillFromEntry(ex){
@@ -16705,6 +16710,7 @@ function openRosterWindow(){
     const lv = liveState();
     if(window._rosterSelKey + '|' + lv.team + '|' + lv.carry !== lastSig) paintHeads();
   };
+  window.hsiaRosterGoToday = function(){ setKey(todayDateKey(), true); };
   render();
 })();
 
@@ -17807,6 +17813,46 @@ initAdminNotepad();
   var failed = 0;
   steps.forEach(function(fn){ try{ fn(); }catch(e){ failed++; console.error('Start-up step failed:', fn && fn.name, e); } });
   try{ setInterval(tick, 1000); }catch(e){ console.error(e); }
+  /* ---- Always-live sync: the phone / PC clock is the single source of truth (Date.now() + Dhaka offset).
+     Timers are paused or throttled while the app is in the background, so "Who's on duty right now", the week strip and the
+     calendars could show old data until a manual refresh. Now everything is redrawn
+       - the moment the app comes back (visible / focus / pageshow / online),
+       - when the Dhaka date changes (midnight),
+       - every minute (also catches a timer that was frozen),
+       - when the phone clock jumps (manual time change / time-zone sync). ---- */
+  (function liveSync(){
+    var lastDay = '', lastMin = -1, lastTs = Date.now(), busy = false;
+    function dayKey(){ try{ return todayDateKey(); }catch(e){ return ''; } }
+    function full(dayChanged){
+      if(busy) return; busy = true;
+      try{
+        if(dayChanged){
+          try{ var f = nowDhakaFields(); viewedY = f.y; viewedM = f.m; }catch(e){}   /* calendar goes back to the real current month */
+        }
+        try{ refreshAll(); }catch(e){ console.error(e); }
+        try{ renderDutyTicker(); }catch(e){}
+        try{ if(window.hsiaRosterDutyTick) window.hsiaRosterDutyTick(); }catch(e){}
+        try{ renderRoster(); renderRosterCtrl(); renderRosterComm(); }catch(e){}
+      } finally { busy = false; }
+    }
+    function sync(force){
+      var now = Date.now(), dk = dayKey(), min = Math.floor(now / 60000);
+      var jumped = Math.abs(now - lastTs) > 5000;       /* page was frozen / clock was changed */
+      var dayChanged = !!lastDay && dk !== lastDay;
+      if(force || jumped || dayChanged || min !== lastMin){
+        if(force || jumped || dayChanged) full(dayChanged);
+        else { try{ renderDutyTicker(); }catch(e){} }
+      }
+      lastDay = dk; lastMin = min; lastTs = now;
+    }
+    lastDay = dayKey(); lastMin = Math.floor(Date.now() / 60000);
+    setInterval(function(){ if(!document.hidden) sync(false); }, 1000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) sync(false); });
+    window.addEventListener('focus', function(){ sync(false); });
+    window.addEventListener('pageshow', function(){ sync(false); });
+    window.addEventListener('online', function(){ sync(false); });
+    setTimeout(function(){ sync(true); }, 1500);      /* one more pass right after start-up (late Firebase / roster data) */
+  })();
   if(failed){
     try{
       if(!sessionStorage.getItem('HSIA_INIT_RETRY')){
