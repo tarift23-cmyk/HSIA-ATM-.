@@ -269,7 +269,7 @@ function route(){
 function enforceEpoch(){
   if(epochBusy) return; epochBusy=true;
   var had=!!localStorage.getItem('HSIA_AUTH_USER_V1');
-  var done=function(){ localStorage.setItem('HSIA_REG_EPOCH',String(CFG.epoch)); epochBusy=false; if(had){ location.reload(); } else route(); };
+  var done=function(){ localStorage.setItem('HSIA_REG_EPOCH',String(CFG.epoch)); epochBusy=false; if(had){ var go=function(){ if(window.hsiaEditing&&window.hsiaEditing()) return setTimeout(go,5000); location.reload(); }; go(); } else route(); };
   try{ if(typeof clearAuthSession==='function') clearAuthSession(); else localStorage.removeItem('HSIA_AUTH_USER_V1'); }catch(e){}
   var real=!!(U&&!U.isAnonymous);
   if(!real) return done();
