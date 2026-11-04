@@ -2240,6 +2240,23 @@ table.roster-table .roster-standby-input{ width:100%; box-sizing:border-box; min
 table.roster-table .roster-standby-input:focus{ background:rgba(214,216,220,0.08); box-shadow:inset 0 0 0 1px var(--gold); }
 table.roster-table .roster-standby-input[readonly]{ pointer-events:none; }
 table.roster-table .roster-standby-label{ padding:10px 10px; color:var(--gold-soft); font-weight:800; font-size:13px; font-family:'Space Grotesk',sans-serif; }
+/* Option B: ONE split pill = type colour (Exchange amber / CL red / Others orange) + night colour (1st blue / 2nd purple) */
+.roster-split-pill{ display:flex; align-items:stretch; margin-top:2px; border-radius:999px; overflow:hidden; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px; line-height:1.3; }
+.roster-split-pill .rsp-main{ flex:1 1 auto; min-width:0; padding:3px 8px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.roster-split-pill .rsp-half{ flex:0 0 auto; padding:3px 9px; text-align:center; white-space:nowrap; }
+.rsp-ex{ color:#1B2130; background:linear-gradient(135deg,#ffcf5c,#ffb020); }
+.rsp-cl{ color:#fff; background:linear-gradient(135deg,#ff4d5e,#c8001a); }
+.rsp-sp{ color:#2a1100; background:linear-gradient(135deg,#ff9a47,#ff6a00); }
+.rsp-h1{ color:#0b1830; background:linear-gradient(135deg,#7cc0ff,#409cff); }
+.rsp-h2{ color:#fff; background:linear-gradient(135deg,#d3a3ff,#b066ff); }
+/* Training row (Aerodrome Assistant): minimised by default, tap the label to open */
+.roster-training-toggle{ cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; }
+.roster-training-toggle .rt-caret{ font-size:11px; opacity:.8; margin-left:4px; }
+.roster-training-sum{ padding:8px 10px; font-size:11.5px; color:var(--muted); text-align:center; cursor:pointer; }
+tr.roster-training-row:not(.open) .roster-training-input{ display:none; }
+tr.roster-training-row.open .roster-training-sum{ display:none; }
+body.roster-editing tr.roster-training-row .roster-training-input{ display:block !important; }
+body.roster-editing tr.roster-training-row .roster-training-sum{ display:none !important; }
 table.roster-table input[readonly]{ pointer-events:none; -webkit-user-select:none; user-select:none; }
 /* feedback while tapping a name 5 times in a row */
 table.roster-table td.roster-tap-hint{ box-shadow:inset 0 0 0 2px var(--gold); background:rgba(246,200,76,0.14); }
@@ -2995,6 +3012,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       <div class="roster-addrow">
         <input id="rosterNewPosCtrl" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtnCtrl">+ Add</button>
+        <button id="rosterAddBtnCtrlMerged" title="One merged cell across all shifts, like Stand by">+ Single-col row</button>
       </div>
       <div class="roster-rowtools" data-tb="rosterBodyRowsCtrl"><span class="rt-sel">Row: tap a DUTY PLACE to select</span><button type="button" data-act="ins">+ Row below</button><button type="button" data-act="up" aria-label="Move up">↑</button><button type="button" data-act="dn" aria-label="Move down">↓</button><button type="button" data-act="del">✕ Row</button></div>
 
@@ -3021,6 +3039,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       <div class="roster-addrow">
         <input id="rosterNewPos" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtn">+ Add</button>
+        <button id="rosterAddBtnMerged" title="One merged cell across all shifts, like Stand by">+ Single-col row</button>
       </div>
       <div class="roster-rowtools" data-tb="rosterBodyRows"><span class="rt-sel">Row: tap a DUTY PLACE to select</span><button type="button" data-act="ins">+ Row below</button><button type="button" data-act="up" aria-label="Move up">↑</button><button type="button" data-act="dn" aria-label="Move down">↓</button><button type="button" data-act="del">✕ Row</button></div>
 
@@ -3054,6 +3073,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       <div class="roster-addrow">
         <input id="rosterNewPosComm" type="text" placeholder="Enter new position name (e.g. NOTAM)">
         <button id="rosterAddBtnComm">+ Add</button>
+        <button id="rosterAddBtnCommMerged" title="One merged cell across all shifts, like Stand by">+ Single-col row</button>
       </div>
       <div class="roster-rowtools" data-tb="rosterBodyRowsComm"><span class="rt-sel">Row: tap a DUTY PLACE to select</span><button type="button" data-act="ins">+ Row below</button><button type="button" data-act="up" aria-label="Move up">↑</button><button type="button" data-act="dn" aria-label="Move down">↓</button><button type="button" data-act="del">✕ Row</button></div>
       </div>
@@ -9898,9 +9918,17 @@ function initAuthPanel(){
    Kept on the first roster row (data[0].standby) so it travels with the existing roster sync / backup. */
 function standbyOf(data){ return (data && data[0] && Array.isArray(data[0].standby)) ? data[0].standby.filter(x=> String(x || '').trim()) : []; }
 function standbyTableKeys(){ return ['roster','rosterCtrl']; }
+/* Training row (Aerodrome Assistant only): staff who are away on training, not on duty. Kept on the first roster row (data[0].training) like Stand by. */
+function trainingOf(data){ return (data && data[0] && Array.isArray(data[0].training)) ? data[0].training.filter(x=> String(x || '').trim()) : []; }
+function trainingRowHtml(tableKey, data){
+  if(tableKey !== 'roster' || !data || !data.length) return '';
+  const list = trainingOf(data), txt = list.join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const open = !!window._trainingOpen;
+  return `<tr class="roster-standby-row roster-training-row${open ? ' open' : ''}"><td class="roster-pos"><div class="roster-standby-label roster-training-toggle" role="button" tabindex="0" title="Show / hide Training">Training<span class="rt-caret">${open ? '▾' : '▸'}</span></div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><div class="roster-training-sum">${list.length ? list.length + ' staff on training · tap to show' : 'No one · tap to open'}</div><textarea class="roster-standby-input roster-training-input" rows="${Math.max(1, Math.ceil(txt.length / 38))}" placeholder="Training names (comma separated)" autocomplete="off" readonly>${txt}</textarea>${sbChipsHtml(tableKey, 'Training')}</td></tr>`;
+}
 /* OJTI row (Controllers only): not tied to any A-E shift, so it is ONE merged cell like Stand by.
    Names are kept on the row itself (row.pool) so they travel with the normal roster sync / backup. */
-function isPoolRow(row, tableKey){ return tableKey === 'rosterCtrl' && !!row && /^\s*ojti\s*$/i.test(String(row.pos || '')); }
+function isPoolRow(row, tableKey){ if(row && row.merged === true) return true; /* single-column row added with the pen tool */ return tableKey === 'rosterCtrl' && !!row && /^\s*ojti\s*$/i.test(String(row.pos || '')); }
 function poolOf(row){ return (row && Array.isArray(row.pool)) ? row.pool.filter(x=> String(x || '').trim()) : []; }
 /* A "1st / 2nd Night" marker (long-press popup) has no substitute name. When the same cell ALSO has a normal exchange
    (somebody came in for the night), the marker belongs to that substitute: show him with the half tag, not hide it. */
@@ -9928,10 +9956,11 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   let adminPlaced = false;
   tbody.innerHTML = data.map((row, ri)=>{
     if(isPoolRow(row, tableKey)){
-      if(adminRowHtml) adminPlaced = true;
+      const _isOj = !(row && row.merged === true);
+      if(_isOj && adminRowHtml) adminPlaced = true;
       const pTxt = poolOf(row).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
       const pPos = (row.pos || '').replace(/"/g,'&quot;');
-      return adminRowHtml + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea>${sbChipsHtml(tableKey, row.pos)}</td></tr>`;
+      return (_isOj ? adminRowHtml : '') + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea>${sbChipsHtml(tableKey, row.pos)}</td></tr>`;
     }
     const cells = TEAMS.map((t, ci)=>{
       const _rp = _rrPlan(ci), _rs = _rp ? _rp[row.pos] : null;
@@ -9943,11 +9972,16 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       const val = ((ex && ex.base) || _nm || '').replace(/"/g,'&quot;');
       const origTitle = ((ex && ex.base) || _nm || '—').replace(/"/g,'&quot;');
       /* colours: CL / vacant position = deep red, Exchange = golden amber, Special (Others) = orange */
+      /* Type colour (Exchange / CL / Others) always wins; the 1st/2nd Night colour only shows alone on a bare marker (nobody substituting) */
+      const _subTxt = ex ? String(ex.subName || '').trim() : '';
+      const _half = (ex && ex.nightHalf) ? String(ex.nightHalf) : '';
+      const _split = !!(ex && _half && (ex.special || ex.vacant || ex.cl || _subTxt));
       const cellClassName = !ex ? '' : ex.special ? 'roster-sp-cell'
         : ex.vacant ? 'roster-vacant-cell'
-        : ex.nightHalf === '1' ? 'roster-exchange-cell-night1'
-        : ex.nightHalf === '2' ? 'roster-exchange-cell-night2'
         : ex.cl ? 'roster-vacant-cell'
+        : _subTxt ? 'roster-exchange-cell'
+        : _half === '1' ? 'roster-exchange-cell-night1'
+        : _half === '2' ? 'roster-exchange-cell-night2'
         : 'roster-exchange-cell';
       // No substitute name (1st/2nd Night marker only): the person is still on duty, so the name stays as normal text.
       const noSub = ex && !ex.cl && !ex.special && !(ex.subName || '').trim();
@@ -9963,7 +9997,16 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       const subEsc = ex ? (ex.subName||'').replace(/</g,'&lt;') : '';
       const badgeText = (ex && ex.vacant) ? (ex.special ? exSpShort(ex.spType) : ex.moved ? (ex.to ? '➜ ' + String(ex.to).replace(/</g,'&lt;') : 'Vacant') : 'CL · Vacant') : subEsc ? (tagHtml ? '' : '🔄 ') + subEsc + halfTag + (ex && ex.special ? ' · ' + exSpShort(ex.spType) : '') : '🌙 ' + (ex && ex.nightHalf === '1' ? '1st Night' : ex && ex.nightHalf === '2' ? '2nd Night' : '');
       const viaEsc = (ex && ex.via) ? String(ex.via).replace(/</g,'&lt;') : '';
-      const badge = !ex ? '' : (viaEsc ? `<div class="roster-chain-old">${viaEsc}</div>` : '') + `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`;
+      let _pill = '';
+      if(_split){
+        const _mainTxt = ex.vacant ? (ex.special ? exSpShort(ex.spType) : ex.moved ? (ex.to ? '➜ ' + String(ex.to).replace(/</g,'&lt;') : 'Vacant') : 'CL · Vacant')
+          : ex.special ? subEsc + ' · ' + exSpShort(ex.spType)
+          : ex.cl ? 'CL · ' + subEsc
+          : '🔄 ' + subEsc;
+        const _mainCls = ex.special ? 'rsp-sp' : (ex.vacant || ex.cl) ? 'rsp-cl' : 'rsp-ex';
+        _pill = `<div class="roster-split-pill" title="Original: ${origTitle}${halfTag} → ${_mainTxt.replace(/"/g,'&quot;')}"><span class="rsp-main ${_mainCls}">${_mainTxt}</span><span class="rsp-half ${_half === '1' ? 'rsp-h1' : 'rsp-h2'}">${_half === '1' ? '1st' : '2nd'}</span></div>`;
+      }
+      const badge = !ex ? '' : (viaEsc ? `<div class="roster-chain-old">${viaEsc}</div>` : '') + (_split ? _pill : `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`);
       return `<td${cellClass}><input class="roster-name-input" type="text" value="${val}" data-ri="${_srcRi}" data-ci="${ci}" autocomplete="off" readonly>${tagHtml}${badge}${_rrFrom}</td>`;
     }).join('');
     const posSafe = (row.pos || '').replace(/"/g,'&quot;');
@@ -9972,13 +10015,34 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   if(tableKey && standbyTableKeys().indexOf(tableKey) !== -1 && data.length){
     const sbTxt = standbyOf(data).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
     tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea>${sbChipsHtml(tableKey, 'Stand by')}</td></tr>`
+      + trainingRowHtml(tableKey, data)
       + ((adminRowHtml && !adminPlaced) ? adminRowHtml : '');
-    const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input):not(.roster-admin-input)');   /* NOT the OJTI box (it shares the class and sits above) */
+    const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input):not(.roster-admin-input):not(.roster-training-input)');   /* NOT the OJTI box (it shares the class and sits above) */
     if(sbEl) sbEl.addEventListener('input', ()=>{
       data[0].standby = sbEl.value.split(/[,\n]/).map(x=> x.trim()).filter(Boolean);
       sbEl.rows = Math.max(1, Math.ceil(sbEl.value.length / 38));
       onChange(data);
     });
+  }
+
+  const trEl = tbody.querySelector('.roster-training-input');
+  if(trEl) trEl.addEventListener('input', ()=>{
+    data[0].training = trEl.value.split(/[,\n]/).map(x=> x.trim()).filter(Boolean);
+    trEl.rows = Math.max(1, Math.ceil(trEl.value.length / 38));
+    onChange(data);
+  });
+  if(!tbody._trainingBound){
+    tbody._trainingBound = true;   /* JS-only flag, see attachLongPressForRoster */
+    const _flip = e=>{
+      const t = e.target.closest ? e.target.closest('.roster-training-toggle, .roster-training-sum') : null;
+      if(!t) return;
+      const tr = t.closest('tr.roster-training-row'); if(!tr) return;
+      window._trainingOpen = !tr.classList.contains('open');
+      tr.classList.toggle('open', window._trainingOpen);
+      const c = tr.querySelector('.rt-caret'); if(c) c.textContent = window._trainingOpen ? '▾' : '▸';
+    };
+    tbody.addEventListener('click', _flip);
+    tbody.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' '){ if(e.target.closest && e.target.closest('.roster-training-toggle')){ e.preventDefault(); _flip(e); } } });
   }
 
   const adEl = tbody.querySelector('.roster-admin-input');
@@ -10778,6 +10842,19 @@ function initAddRow(addBtnId, addInputId, data, onChange, onRender){
   };
   addBtn.addEventListener('click', doAdd);
   addInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doAdd(); });
+  /* single-column row: ONE merged cell across all shifts (like Stand by); names typed comma separated */
+  const mBtn = document.getElementById(addBtnId + 'Merged');
+  if(mBtn) mBtn.addEventListener('click', ()=>{
+    if(!requireRosterAuth()) return;
+    const name = addInput.value.trim();
+    if(!name){ alert('আগে উপরের ঘরে সারির নাম লিখুন'); return; }
+    data.push({ pos:name, names:['','','','',''], merged:true, pool:[] });
+    onChange(data);
+    addInput.value='';
+    onRender();
+    try{ if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) unlockAllRosterInputs(); }catch(e){}
+    flashRosterSaved('Single-column row added — type names, then save');
+  });
 }
 
 function initRoster(){
@@ -11145,6 +11222,10 @@ function renderExchangePicker(){
     if(standbyTableKeys().indexOf(_xpTab) !== -1){
       const sb = standbyOf(data).filter(n=> !_xpBadName(n) && match(n));
       if(sb.length) html += '<tr><td class="xp-pos">Stand by</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + sb.map(n=> btn(String(n).trim(), ' data-standby="1" data-grp="Stand by" style="width:auto;"', false, { standby:true })).join('') + '</div>' + '</td></tr>';
+    }
+    if(_xpTab === 'roster'){
+      const trn = trainingOf(data).filter(n=> !_xpBadName(n) && match(n));
+      if(trn.length) html += '<tr><td class="xp-pos">Training</td><td colspan="' + TEAMS.length + '"><div style="display:flex;flex-wrap:wrap;gap:4px;">' + trn.map(n=> btn(String(n).trim(), ' data-standby="1" data-grp="Training" style="width:auto;"', false, { standby:true })).join('') + '</div></td></tr>';
     }
     if(_xpTab === 'roster' && typeof window.hsiaAeroBillingList === 'function'){
       /* Aero Billing groups, Office (day) staff and SATO Office / Admin sit under the Aerodrome Assistant table too */
@@ -20408,7 +20489,7 @@ window.hsiaFs = function(wrap, on, onExit){
     rosterBodyRows:     { data:function(){ return ROSTER; },      save:function(d){ saveRoster(d); },     render:function(){ renderRoster(); } },
     rosterBodyRowsComm: { data:function(){ return ROSTER_COMM; }, save:function(d){ saveRosterComm(d); }, render:function(){ renderRosterComm(); } }
   };
-  var SEL = {}, KEEP = ['standby','admin'];   /* Stand by / Admin texts live on the first row: they must follow whichever row is first */
+  var SEL = {}, KEEP = ['standby','admin','training'];   /* Stand by / Admin texts live on the first row: they must follow whichever row is first */
   function staff(){ return document.body.classList.contains('hsia-staff'); }
   function mark(id){
     var tb = document.getElementById(id); if(!tb) return;
@@ -20459,6 +20540,294 @@ window.hsiaFs = function(wrap, on, onExit){
     if(act === 'ins'){ var ni = document.querySelector('#' + id + ' .roster-pos-input[data-ri="' + SEL[id] + '"]'); if(ni){ try{ ni.focus(); }catch(err){} } }
     try{ flashRosterSaved(msg); }catch(err){}
   });
+})();
+</script>
+
+<script>
+/* ===== Roster Shuffle v2 (pen mode) =====
+   Hold a name and drop it on any position (any shift, any table row) or on the "Ground" at the bottom.
+   If the target already has a name, that name drops to the Ground (with physics). Pick it up from there and place it somewhere else.
+   Names are never retyped, so CL count / exchange history stay attached to the same spelling.
+   Comma-separated lists (Stand by / Training / OJTI / Admin / single-column rows) show each person as a chip that can be dragged too. ===== */
+(function(){
+  var TB = {
+    rosterBodyRowsCtrl: { data:function(){ return ROSTER_CTRL; }, save:function(d){ saveRosterCtrl(d); }, render:function(){ renderRosterCtrl(); } },
+    rosterBodyRows:     { data:function(){ return ROSTER; },      save:function(d){ saveRoster(d); },     render:function(){ renderRoster(); } },
+    rosterBodyRowsComm: { data:function(){ return ROSTER_COMM; }, save:function(d){ saveRosterComm(d); }, render:function(){ renderRosterComm(); } }
+  };
+  var TRAY_H = 120, HOLD = 380, MOVE = 10, G = 2600;
+  var on = false, undo = [], bodies = [], world = null, tray = null, raf = 0, last = 0;
+  var drag = null, cand = null, timer = null, sx = 0, sy = 0, lx = 0, ly = 0, scr = null;
+
+  var st = document.createElement('style');
+  st.textContent =
+    '.rt-shuf,.rt-undo{margin-left:6px}.rt-shuf.on{background:var(--gold,#D6D8DC);color:#1B2130;font-weight:800}' +
+    '.rt-shuf-hint{display:none;width:100%;font-size:11.5px;color:var(--gold-soft,#D6D8DC);margin-top:6px;line-height:1.5}' +
+    'body.roster-shuffle .rt-shuf-hint{display:block}' +
+    'body.roster-shuffle{padding-bottom:140px}' +
+    'body.roster-shuffle .roster-table .roster-name-input{pointer-events:none}' +
+    'body.roster-shuffle .roster-table td,body.roster-shuffle .shuf-chip{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}' +
+    'body.roster-shuffle tr.roster-standby-row .roster-standby-cell textarea{display:none!important}' +
+    'body.roster-shuffle tr.roster-training-row .roster-training-sum{display:none!important}' +
+    '.shuf-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;min-height:40px;border-radius:8px;border:1px dashed rgba(214,216,220,.35)}' +
+    '.shuf-chip{padding:5px 10px;border-radius:999px;background:rgba(214,216,220,.16);color:var(--text,#F0F1F3);font:600 12px "Space Grotesk",sans-serif;border:1px solid rgba(214,216,220,.4)}' +
+    '.shuf-empty{font-size:11px;color:var(--muted,#8B909B)}' +
+    '.shuf-chips.shuf-over,.shuf-chip.shuf-over{outline:2px solid var(--gold,#D6D8DC);background:rgba(214,216,220,.22)}' +
+    'td.shuf-src,.shuf-chip.shuf-src{opacity:.3;outline:2px dashed var(--gold,#D6D8DC)}' +
+    'td.shuf-over{outline:2px solid var(--gold,#D6D8DC);background:rgba(214,216,220,.2)!important}' +
+    '.shuf-ghost{position:fixed;z-index:100001;pointer-events:none;padding:7px 12px;border-radius:10px;background:var(--gold,#D6D8DC);color:#1B2130;font:700 13px "Space Grotesk",sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.5);transform:translate(-50%,-140%);white-space:nowrap}' +
+    '#shufTray{position:fixed;left:0;right:0;bottom:0;height:' + TRAY_H + 'px;z-index:99970;pointer-events:none;background:linear-gradient(to top,rgba(20,22,28,.96),rgba(20,22,28,.55) 70%,rgba(20,22,28,0));border-top:2px dashed rgba(214,216,220,.35);color:var(--gold-soft,#D6D8DC);font:700 11px "Space Grotesk",sans-serif;letter-spacing:.06em;text-align:center;padding-top:6px}' +
+    '#shufTray.over{border-top-color:var(--gold,#D6D8DC);background:linear-gradient(to top,rgba(60,62,70,.96),rgba(60,62,70,.55) 70%,rgba(60,62,70,0))}' +
+    '#shufWorld{position:fixed;left:0;top:0;width:100%;height:100%;z-index:99980;pointer-events:none}' +
+    '.shuf-gpill{position:absolute;left:0;top:0;pointer-events:auto;touch-action:none;padding:6px 12px;border-radius:10px;background:linear-gradient(135deg,#ffcf5c,#ffb020);color:#1B2130;font:700 13px "Space Grotesk",sans-serif;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.45);user-select:none;-webkit-user-select:none;cursor:grab;will-change:transform}';
+  document.head.appendChild(st);
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  function msg(t){ try{ flashRosterSaved(t); }catch(e){} }
+  function clean(a){ return (a || []).map(function(x){ return String(x || '').trim(); }).filter(Boolean); }
+  function arrOf(d, key){ if(key.indexOf('pool:') === 0){ var r = d[+key.slice(5)]; return (r && r.pool) || []; } return (d[0] && d[0][key]) || []; }
+  function setArr(d, key, a){ if(key.indexOf('pool:') === 0){ if(d[+key.slice(5)]) d[+key.slice(5)].pool = a; } else if(d[0]) d[0][key] = a; }
+  function tbIdOf(el){ var t = el && el.closest ? el.closest('tbody[id]') : null; return (t && TB[t.id]) ? t.id : null; }
+
+  /* ---------- chips for the comma-separated rows ---------- */
+  function decorate(){
+    if(!on) return;
+    Object.keys(TB).forEach(function(id){
+      var tb = document.getElementById(id); if(!tb) return; var d = TB[id].data();
+      Array.prototype.forEach.call(tb.querySelectorAll('textarea.roster-standby-input'), function(ta){
+        var td = ta.closest('td'); if(!td || td.querySelector('.shuf-chips')) return;
+        var key = ta.classList.contains('roster-pool-input') ? 'pool:' + ta.getAttribute('data-ri') : ta.classList.contains('roster-admin-input') ? 'admin' : ta.classList.contains('roster-training-input') ? 'training' : 'standby';
+        var box = document.createElement('div'); box.className = 'shuf-chips'; box.setAttribute('data-key', key);
+        var list = clean(arrOf(d, key));
+        box.innerHTML = list.length ? list.map(function(n, i){ return '<span class="shuf-chip" data-idx="' + i + '">' + esc(n) + '</span>'; }).join('') : '<span class="shuf-empty">খালি — নাম এখানে ছাড়ুন</span>';
+        ta.parentNode.insertBefore(box, ta.nextSibling);
+      });
+    });
+  }
+  Object.keys(TB).forEach(function(id){ var tb = document.getElementById(id); if(tb) new MutationObserver(decorate).observe(tb, { childList:true }); });
+
+  /* ---------- ground + physics ---------- */
+  function ensureWorld(){
+    if(world) return;
+    tray = document.createElement('div'); tray.id = 'shufTray'; tray.textContent = '🧺 GROUND — নাম এখানে ছাড়লে পড়ে থাকবে · তুলে অন্য ঘরে বসান';
+    world = document.createElement('div'); world.id = 'shufWorld';
+    document.body.appendChild(tray); document.body.appendChild(world);
+  }
+  function destroyWorld(){
+    bodies.forEach(function(b){ if(b.el.parentNode) b.el.remove(); }); bodies = [];
+    if(world) world.remove(); if(tray) tray.remove(); world = tray = null;
+    if(raf){ cancelAnimationFrame(raf); raf = 0; }
+  }
+  function draw(b){ b.el.style.transform = 'translate(' + (b.x - b.w/2) + 'px,' + (b.y - b.h/2) + 'px) rotate(' + b.a + 'rad)'; }
+  function wake(){ bodies.forEach(function(b){ b.sleep = false; b.rest = 0; }); if(!raf && world){ last = performance.now(); raf = requestAnimationFrame(loop); } }
+  function spawn(name, x, y, vx){
+    ensureWorld();
+    var el = document.createElement('div'); el.className = 'shuf-gpill'; el.textContent = name; world.appendChild(el);
+    var b = { el:el, name:name, x:x, y:y, w:el.offsetWidth, h:el.offsetHeight, vx:(vx == null ? (Math.random() - .5) * 260 : vx), vy:0, a:0, va:(Math.random() - .5) * 8, tilt:(Math.random() - .5) * .18, sleep:false, rest:0, gr:false };
+    bodies.push(b); draw(b); wake(); return b;
+  }
+  function step(dt){
+    var W = window.innerWidth, floor = window.innerHeight - 6, i, j;
+    bodies.forEach(function(b){
+      if(b.sleep) return;
+      b.vy += G * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.a += b.va * dt; b.gr = false;
+      if(b.x - b.w/2 < 0){ b.x = b.w/2; b.vx = Math.abs(b.vx) * .4; }
+      if(b.x + b.w/2 > W){ b.x = W - b.w/2; b.vx = -Math.abs(b.vx) * .4; }
+      if(b.y + b.h/2 > floor){ b.y = floor - b.h/2; b.vy = b.vy > 140 ? -b.vy * .32 : 0; b.vx *= .9; b.va *= .86; b.gr = true; }
+    });
+    for(var pass = 0; pass < 2; pass++){
+      for(i = 0; i < bodies.length; i++){
+        for(j = i + 1; j < bodies.length; j++){
+          var a = bodies[i], b = bodies[j]; if(a.sleep && b.sleep) continue;
+          var dx = b.x - a.x, dy = b.y - a.y, px = (a.w + b.w)/2 - Math.abs(dx), py = (a.h + b.h)/2 - Math.abs(dy);
+          if(px <= 0 || py <= 0) continue;
+          a.sleep = b.sleep = false; a.rest = b.rest = 0;
+          var s, h, rv, jj;
+          if(py < px){
+            s = dy >= 0 ? 1 : -1; h = py / 2; a.y -= s * h; b.y += s * h;
+            rv = (b.vy - a.vy) * s; if(rv < 0){ jj = -rv * 1.3 / 2; a.vy -= s * jj; b.vy += s * jj; }
+            a.vx *= .97; b.vx *= .97; a.va *= .9; b.va *= .9;
+            if(s > 0) a.gr = true; else b.gr = true;
+          } else {
+            s = dx >= 0 ? 1 : -1; h = px / 2; a.x -= s * h; b.x += s * h;
+            rv = (b.vx - a.vx) * s; if(rv < 0){ jj = -rv * 1.3 / 2; a.vx -= s * jj; b.vx += s * jj; }
+          }
+        }
+      }
+    }
+    bodies.forEach(function(b){
+      if(b.sleep) return;
+      if(b.gr) b.a += (b.tilt - b.a) * Math.min(1, dt * 10);
+      if(b.gr && Math.abs(b.vx) < 14 && Math.abs(b.vy) < 24){ b.rest += dt; if(b.rest > .45){ b.sleep = true; b.vx = b.vy = b.va = 0; } } else b.rest = 0;
+    });
+  }
+  function loop(t){
+    raf = 0; if(!world) return;
+    var dt = Math.min(.033, ((t - last) / 1000) || .016); last = t;
+    for(var k = 0; k < 3; k++) step(dt / 3);
+    bodies.forEach(draw);
+    if(bodies.some(function(b){ return !b.sleep; })) raf = requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', function(){ wake(); });
+
+  /* ---------- undo snapshots ---------- */
+  function snapshot(extraName){
+    var o = { d:{}, g:bodies.map(function(b){ return b.name; }) };
+    Object.keys(TB).forEach(function(id){ o.d[id] = JSON.stringify(TB[id].data()); });
+    if(extraName) o.g.push(extraName);
+    return o;
+  }
+  function restore(o){
+    Object.keys(TB).forEach(function(id){
+      var d = TB[id].data(), arr = JSON.parse(o.d[id]);
+      d.splice(0, d.length); arr.forEach(function(r){ d.push(r); });
+      TB[id].save(d); TB[id].render();
+    });
+    bodies.forEach(function(b){ if(b.el.parentNode) b.el.remove(); }); bodies = [];
+    o.g.forEach(function(n, i){ spawn(n, 80 + Math.random() * (window.innerWidth - 160), window.innerHeight - 160 - i * 6, 0); });
+  }
+
+  /* ---------- mode switch + buttons ---------- */
+  function sync(){
+    document.body.classList.toggle('roster-shuffle', on);
+    Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf'), function(b){ b.classList.toggle('on', on); b.textContent = on ? '✔ Shuffle ON' : '⇅ Shuffle'; });
+    Array.prototype.forEach.call(document.querySelectorAll('.rt-undo'), function(b){ b.style.display = (on && undo.length) ? '' : 'none'; });
+    if(on){
+      try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
+      ensureWorld(); Object.keys(TB).forEach(function(id){ TB[id].render(); });   /* re-render so the chips appear */
+      decorate();
+    } else {
+      stopDrag(); destroyWorld();
+      try{ if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) unlockAllRosterInputs(); }catch(e){}
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.roster-rowtools[data-tb]'), function(box){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'rt-shuf'; b.textContent = '⇅ Shuffle';
+    var u = document.createElement('button'); u.type = 'button'; u.className = 'rt-undo'; u.textContent = '↶ Undo'; u.style.display = 'none';
+    var h = document.createElement('div'); h.className = 'rt-shuf-hint';
+    h.textContent = 'Shuffle চালু: নাম একটু চেপে ধরে অন্য ঘরে ছাড়ুন। ঘরে আগে থেকে নাম থাকলে সে নিচের Ground-এ পড়ে যাবে — সেখান থেকে তুলে অন্য ঘরে বসান। Stand by / Training / OJTI-র নামও টানা যায়। শেষে Save।';
+    box.appendChild(b); box.appendChild(u); box.appendChild(h);
+  });
+  document.addEventListener('click', function(e){
+    var sv = e.target.closest && e.target.closest('#rosterSaveBtn');
+    if(sv && on && bodies.length){
+      var names = bodies.map(function(b){ return b.name; }).join(', ');
+      if(!confirm('Ground-এ এখনো কোথাও বসানো হয়নি: ' + names + '\n\nOK = এঁদের ছাড়াই Save (রোস্টার থেকে বাদ যাবেন)\nCancel = ফিরে গিয়ে বসান')){ e.stopImmediatePropagation(); e.preventDefault(); }
+      return;
+    }
+    var b = e.target.closest && e.target.closest('.rt-shuf'); if(b){ if(!on && !requireRosterAuth()) return; on = !on; sync(); return; }
+    var u = e.target.closest && e.target.closest('.rt-undo'); if(!u) return;
+    var x = undo.pop(); if(!x) return; restore(x); sync(); msg('Undo done');
+  }, true);
+  new MutationObserver(function(){ if(on && !document.body.classList.contains('roster-editing')){ on = false; undo = []; sync(); } }).observe(document.body, { attributes:true, attributeFilter:['class'] });
+
+  /* ---------- drag engine ---------- */
+  function resolve(x, y){
+    if(y > window.innerHeight - TRAY_H) return { type:'ground' };
+    var els = document.elementsFromPoint(x, y), i, el, id, chip, box, td;
+    for(i = 0; i < els.length; i++){
+      el = els[i];
+      if(el.closest('#shufWorld') || el.classList.contains('shuf-ghost')) continue;
+      chip = el.closest('.shuf-chip');
+      if(chip){ id = tbIdOf(chip); if(id) return { type:'list', id:id, key:chip.parentNode.getAttribute('data-key'), idx:+chip.getAttribute('data-idx'), node:chip }; }
+      box = el.closest('.shuf-chips');
+      if(box){ id = tbIdOf(box); if(id) return { type:'list', id:id, key:box.getAttribute('data-key'), idx:-1, node:box }; }
+      td = el.closest('td');
+      if(td){ id = tbIdOf(td); var inp = td.querySelector('.roster-name-input'); if(id && inp) return { type:'cell', id:id, ri:+inp.getAttribute('data-ri'), ci:+inp.getAttribute('data-ci'), node:td }; }
+    }
+    return null;
+  }
+  function clearTimer(){ if(timer){ clearTimeout(timer); timer = null; } cand = null; }
+  function begin(item, x, y){
+    var g = document.createElement('div'); g.className = 'shuf-ghost'; g.textContent = item.name; document.body.appendChild(g);
+    if(item.el) item.el.classList.add('shuf-src');
+    if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
+    drag = { item:item, ghost:g, over:null };
+    scr = setInterval(function(){ if(!drag) return; if(ly < 70) window.scrollBy(0, -14); else if(ly > window.innerHeight - TRAY_H - 30 && ly < window.innerHeight - TRAY_H) window.scrollBy(0, 14); }, 30);
+    move(x, y);
+  }
+  function stopDrag(){
+    if(scr){ clearInterval(scr); scr = null; }
+    if(drag){
+      if(drag.ghost.parentNode) drag.ghost.remove();
+      if(drag.item.el) drag.item.el.classList.remove('shuf-src');
+      if(drag.over) drag.over.classList.remove('shuf-over');
+      if(tray) tray.classList.remove('over');
+    }
+    drag = null; clearTimer();
+  }
+  function down(x, y, target){
+    if(!on || !target || !target.closest) return;
+    sx = x; sy = y; lx = x; ly = y;
+    var pill = target.closest('.shuf-gpill');
+    if(pill){
+      var bi = -1; bodies.forEach(function(b, i){ if(b.el === pill) bi = i; });
+      if(bi < 0) return;
+      var b = bodies.splice(bi, 1)[0]; b.el.remove(); wake();
+      begin({ kind:'ground', name:b.name }, x, y); return;
+    }
+    var chip = target.closest('.shuf-chip');
+    if(chip){
+      var cid = tbIdOf(chip); if(!cid) return;
+      cand = { kind:'list', id:cid, key:chip.parentNode.getAttribute('data-key'), idx:+chip.getAttribute('data-idx'), name:chip.textContent, el:chip };
+    } else {
+      var td = target.closest('td'), id = tbIdOf(td); if(!id) return;
+      var inp = td.querySelector('.roster-name-input'); if(!inp) return;
+      var d = TB[id].data(), ri = +inp.getAttribute('data-ri'), ci = +inp.getAttribute('data-ci');
+      var nm = String((d[ri] && d[ri].names[ci]) || '').trim(); if(!nm) return;
+      cand = { kind:'cell', id:id, ri:ri, ci:ci, name:nm, el:td };
+    }
+    timer = setTimeout(function(){ if(!cand) return; var it = cand; cand = null; timer = null; begin(it, sx, sy); }, HOLD);
+  }
+  function move(x, y){
+    lx = x; ly = y;
+    if(!drag){ if(cand && ((x - sx) * (x - sx) + (y - sy) * (y - sy)) > MOVE * MOVE) clearTimer(); return; }
+    drag.ghost.style.left = x + 'px'; drag.ghost.style.top = y + 'px';
+    var t = resolve(x, y), node = (t && t.node) || null;
+    if(drag.over && drag.over !== node) drag.over.classList.remove('shuf-over');
+    if(node) node.classList.add('shuf-over');
+    drag.over = node;
+    if(tray) tray.classList.toggle('over', !!(t && t.type === 'ground'));
+  }
+  function up(){
+    if(!drag){ clearTimer(); return; }
+    var item = drag.item, x = lx, y = ly, t = resolve(x, y); stopDrag();
+    commit(item, t, x, y);
+  }
+  function commit(item, t, x, y){
+    if(!t){ if(item.kind === 'ground') spawn(item.name, x, y, 0); return; }
+    if(item.kind === 'cell' && t.type === 'cell' && t.id === item.id && t.ri === item.ri && t.ci === item.ci) return;
+    var snap = snapshot(item.kind === 'ground' ? item.name : null), touched = {}, fall = [], d;
+    function dat(id){ touched[id] = 1; return TB[id].data(); }
+    if(item.kind === 'cell'){ d = dat(item.id); d[item.ri].names[item.ci] = ''; }
+    else if(item.kind === 'list'){ d = dat(item.id); var a0 = clean(arrOf(d, item.key)); a0.splice(item.idx, 1); setArr(d, item.key, a0); }
+    if(t.type === 'cell'){
+      d = dat(t.id); var row = d[t.ri], occ = String((row.names[t.ci]) || '').trim();
+      row.names[t.ci] = item.name;
+      if(occ){ var r = t.node.getBoundingClientRect(); fall.push({ n:occ, x:r.left + r.width / 2, y:r.top + r.height / 2 }); }
+    } else if(t.type === 'list'){
+      d = dat(t.id); var a1 = clean(arrOf(d, t.key));
+      var same = item.kind === 'list' && item.id === t.id && item.key === t.key;
+      var at = t.idx < 0 ? a1.length : (same && item.idx < t.idx ? t.idx - 1 : t.idx);
+      a1.splice(Math.max(0, Math.min(at, a1.length)), 0, item.name); setArr(d, t.key, a1);
+    } else {
+      fall.push({ n:item.name, x:x, y:Math.min(y, window.innerHeight - 60) });
+    }
+    undo.push(snap); if(undo.length > 30) undo.shift();
+    Object.keys(touched).forEach(function(id){ TB[id].save(TB[id].data()); TB[id].render(); });
+    fall.forEach(function(f, i){ setTimeout(function(){ if(on) spawn(f.n, f.x, f.y, (Math.random() - .5) * 200); }, i * 60); });
+    sync();
+    var tail = fall.length && t.type === 'cell' ? fall[0].n + ' → Ground' : '';
+    msg(item.name + ' সরানো হয়েছে' + (tail ? ' · ' + tail : '') + ' — শেষে Save চাপুন');
+  }
+  document.addEventListener('touchstart', function(e){ var t = e.touches[0]; if(t && on) down(t.clientX, t.clientY, e.target); }, { passive:true });
+  document.addEventListener('touchmove', function(e){ var t = e.touches[0]; if(!t || !on) return; if(drag) e.preventDefault(); move(t.clientX, t.clientY); }, { passive:false });
+  document.addEventListener('touchend', function(){ if(on) up(); });
+  document.addEventListener('touchcancel', function(){ if(on) { if(drag){ var it = drag.item; stopDrag(); if(it.kind === 'ground') spawn(it.name, lx, ly, 0); } else clearTimer(); } });
+  document.addEventListener('mousedown', function(e){ if(e.button === 0 && on) down(e.clientX, e.clientY, e.target); });
+  document.addEventListener('mousemove', function(e){ if(on && (cand || drag)) move(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', function(){ if(on && (cand || drag)) up(); });
+  document.addEventListener('contextmenu', function(e){ if(on && e.target.closest && (e.target.closest('.roster-table') || e.target.closest('#shufWorld'))) e.preventDefault(); });
 })();
 </script>
 
