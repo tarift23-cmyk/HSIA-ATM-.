@@ -73,6 +73,7 @@
     }catch(e){}
   }
   function forceReload(silent){
+    if(window.hsiaEditing && window.hsiaEditing()) return;   /* never reload in the middle of an edit */
     try{ sessionStorage.setItem(GUARD, String(Date.now())); }catch(e){}
     if(!silent) note();
     var steps = [];
@@ -112,9 +113,31 @@
       return pump();
     });
   }
+  /* ---- Editing guard: while an admin / moderator is editing (roster pen, Shuffle, notepad, tracker pen, equivalent-aircraft table)
+     nothing may reload / re-render the page by itself: auto-update, fresh-open, come-back refresh, freeze watchdog, remote-sync re-draw. ---- */
+  window.hsiaEditing = function(){
+    try{
+      var b = document.body; if(!b) return false;
+      if(/(^|\s)(roster-editing|np-editing|roster-shuffle)(\s|$)/.test(b.className)) return true;
+      if(document.querySelector('#flightrCardOuter.air-editing, .eq-editing, .is-editing')) return true;
+    }catch(e){}
+    return false;
+  };
+  var _afterEdit = {}, _aeTimer = 0;
+  window.hsiaAfterEdit = function(key, fn){
+    _afterEdit[key] = fn;
+    if(_aeTimer) return;
+    _aeTimer = setInterval(function(){
+      if(window.hsiaEditing()) return;
+      clearInterval(_aeTimer); _aeTimer = 0;
+      var jobs = _afterEdit; _afterEdit = {};
+      setTimeout(function(){ Object.keys(jobs).forEach(function(k){ try{ jobs[k](); }catch(e){} }); }, 4000);   /* let the editor's own save reach the server first */
+    }, 800);
+  };
   /* a page that stays open: never reload while a window / form is open (nothing typed is lost) */
   document.addEventListener('click', function(e){ var t = e.target; if(t && t.tagName === 'INPUT' && t.type === 'file') window.__hsiaPick = Date.now(); }, true);   /* a photo / file picker briefly sends the page to the background: that must not reload it */
   function quiet(){
+    if(window.hsiaEditing && window.hsiaEditing()) return false;   /* admin / moderator is editing */
     var a = document.activeElement;
     if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
     if(window.__hsiaPick && Date.now() - window.__hsiaPick < 5*60*1000) return false;
@@ -2240,6 +2263,13 @@ table.roster-table .roster-standby-input{ width:100%; box-sizing:border-box; min
 table.roster-table .roster-standby-input:focus{ background:rgba(214,216,220,0.08); box-shadow:inset 0 0 0 1px var(--gold); }
 table.roster-table .roster-standby-input[readonly]{ pointer-events:none; }
 table.roster-table .roster-standby-label{ padding:10px 10px; color:var(--gold-soft); font-weight:800; font-size:13px; font-family:'Space Grotesk',sans-serif; }
+/* Tracker: Airport / Airline add forms live behind the pen (edit) button */
+.air-title-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.air-pen-btn{ flex:0 0 auto; width:38px; height:38px; padding:0 !important; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; }
+.air-pen-btn .ico{ width:18px; height:18px; }
+.air-pen-btn.on{ background:var(--gold,#D6D8DC); color:#1B2130; }
+#flightrCardOuter:not(.air-editing) .air-edit-only,
+#flightrCardOuter:not(.air-editing) .air-del-btn{ display:none !important; }
 /* Option B: ONE split pill = type colour (Exchange amber / CL red / Others orange) + night colour (1st blue / 2nd purple) */
 .roster-split-pill{ display:flex; align-items:stretch; margin-top:2px; border-radius:999px; overflow:hidden; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px; line-height:1.3; }
 .roster-split-pill .rsp-main{ flex:1 1 auto; min-width:0; padding:3px 8px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -4129,13 +4159,13 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       </div>
 </div>
       <div class="air-col" id="airportColumn">
-      <div class="air-col-title">✈️ Airports</div>
+      <div class="air-col-title air-title-row"><span>✈️ Airports</span><button type="button" class="icon-only air-pen-btn hsia-staff-only" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button></div>
       <div class="air-searchbox">
         <input id="airSearchInput" type="text" placeholder="ICAO/IATA কোড, শহর বা দেশ লিখুন (e.g. VGHS, DAC, Dhaka)" autocomplete="off">
         <button id="airClearBtn" type="button">✕</button>
       </div>
       <div class="air-count" id="airCount">176 টি এয়ারপোর্ট</div>
-      <div class="fr-manualform hsia-staff-only" style="margin-bottom:10px;">
+      <div class="fr-manualform hsia-staff-only air-edit-only" style="margin-bottom:10px;">
         <input type="text" id="newAirportIcao" class="fr-mfinput fr-mfinput-sm" placeholder="ICAO" maxlength="4">
         <input type="text" id="newAirportIata" class="fr-mfinput fr-mfinput-sm" placeholder="IATA" maxlength="4">
         <input type="text" id="newAirportCity" class="fr-mfinput" placeholder="City">
@@ -4153,13 +4183,13 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
       </div>
 
       <div class="air-col" id="airlineColumn">
-      <div class="air-col-title">Airlines — Call Sign / R.Telephony / Company</div>
+      <div class="air-col-title air-title-row"><span>Airlines — Call Sign / R.Telephony / Company</span><button type="button" class="icon-only air-pen-btn hsia-staff-only" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button></div>
       <div class="air-searchbox">
         <input id="airlineSearchInput" type="text" placeholder="কলসাইন, টেলিফোনি বা কোম্পানির নাম লিখুন (e.g. BBC, Bangladesh, Biman)" autocomplete="off">
         <button id="airlineClearBtn" type="button">✕</button>
       </div>
       <div class="air-count" id="airlineCount">134 টি এয়ারলাইন</div>
-      <div class="fr-manualform hsia-staff-only" style="margin-bottom:10px;">
+      <div class="fr-manualform hsia-staff-only air-edit-only" style="margin-bottom:10px;">
         <input type="text" id="newAirlineCallsign" class="fr-mfinput fr-mfinput-sm" placeholder="Call Sign" maxlength="10">
         <input type="text" id="newAirlineTelephony" class="fr-mfinput" placeholder="R. Telephony">
         <input type="text" id="newAirlineCompany" class="fr-mfinput" placeholder="Company">
@@ -10195,6 +10225,7 @@ function setQuickHalf(half){
 }
 
 function openQuickExchange(tableKey, ri, ci){
+  if(document.body.classList.contains('roster-shuffle')) return;   /* Shuffle mode: no 1st/2nd Night assignment */
   if(!requireNightHalfAuth()) return;
   /* Quick exchange: the date selected in the roster date bar is used (today when nothing else is picked) */
   const _todayKey = todayDateKey();
@@ -10462,7 +10493,14 @@ function connectFirebaseSync(config, roomId){
       console.error('Firebase listener cancelled:', err);
       setFirebaseSyncStatus('⚠️ সিঙ্ক করতে সমস্যা: ' + (err && err.message ? err.message : 'অজানা ত্রুটি') + ' (Rules/Authentication ঠিক আছে কিনা দেখুন)');
     };
-    const listen = (ref, cb)=> ref.on('value', cb, onListenErr);
+    const _deferRefs = [];
+    const listen = (ref, cb, eb)=> ref.on('value', snap=>{
+      if(_deferRefs.indexOf(ref) >= 0 && window.hsiaEditing && window.hsiaEditing()){
+        window.hsiaAfterEdit(String(ref), function(){ ref.once('value').then(cb).catch(function(){}); });   /* applied after the edit ends */
+        return;
+      }
+      cb(snap);
+    }, eb || onListenErr);
 
     const rosterRef = _fbDb.ref('hsia_sync/' + roomId + '/roster');
     const rosterCtrlRef = _fbDb.ref('hsia_sync/' + roomId + '/rosterCtrl');
@@ -10491,7 +10529,8 @@ function connectFirebaseSync(config, roomId){
       }, err=> console.warn('Others search copy not readable:', err && err.code));
     }catch(e){ console.warn(e); }
 
-    rosterRef.on('value', snap=>{
+    _deferRefs.push(rosterRef, rosterCtrlRef, rosterCommRef, customAirportsRef, customAirlinesRef, eqAircraftRef);
+    listen(rosterRef, snap=>{
       const val = snap.val();
       if(Array.isArray(val) && val.length && JSON.stringify(val) !== JSON.stringify(ROSTER)){
         ROSTER = val;
@@ -16208,7 +16247,8 @@ function openRosterWindow(){
         if(st !== 'Off') duties = [{ label:st, ot:false, key:me.team }];
       }
       duties.forEach(du=>{
-        const ex = list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key);
+        /* a bare 1st/2nd Night marker (nobody substituting, no CL / EL) is still a normal duty, not an exchange */
+        const ex = list.find(x=> x.table === me.table && x.pos === me.pos && +x.team === du.key && !(x.nightHalf && !x.cl && !x.special && !x.vacant && !String(x.subName || '').trim()));
         if(!ex){ items.push({ kind:'duty', label:du.label, ot:du.ot }); return; }
         items.push({ kind:'gone', label:du.label, ot:du.ot, tp: ex.cl ? 'CL' : ex.special ? 'EL' : 'Exchange', sub:String(ex.subName || '').trim() });
       });
@@ -17913,7 +17953,7 @@ initAdminNotepad();
         try{ refreshAll(); }catch(e){ console.error(e); }
         try{ renderDutyTicker(); }catch(e){}
         try{ if(window.hsiaRosterDutyTick) window.hsiaRosterDutyTick(); }catch(e){}
-        try{ renderRoster(); renderRosterCtrl(); renderRosterComm(); }catch(e){}
+        try{ if(!(window.hsiaEditing && window.hsiaEditing())){ renderRoster(); renderRosterCtrl(); renderRosterComm(); } }catch(e){}
       } finally { busy = false; }
     }
     function sync(force){
@@ -20831,4 +20871,22 @@ window.hsiaFs = function(wrap, on, onExit){
 })();
 </script>
 
+<script>
+/* Tracker pen: show / hide the add-airport / add-airline forms (staff only) */
+(function(){
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('.air-pen-btn'); if(!b) return;
+    var card = document.getElementById('flightrCardOuter'); if(!card) return;
+    var on = card.classList.toggle('air-editing');
+    Array.prototype.forEach.call(card.querySelectorAll('.air-pen-btn'), function(x){ x.classList.toggle('on', on); });
+  });
+  /* leaving the tracker tab / collapsing the card ends editing */
+  document.addEventListener('click', function(e){
+    if(e.target.closest && e.target.closest('.air-tab-btn, #flightrHead')){
+      var card = document.getElementById('flightrCardOuter');
+      if(card && card.classList.contains('air-editing') && !e.target.closest('.air-pen-btn')){ card.classList.remove('air-editing'); Array.prototype.forEach.call(card.querySelectorAll('.air-pen-btn'), function(x){ x.classList.remove('on'); }); }
+    }
+  }, true);
+})();
+</script>
 </body></html>
