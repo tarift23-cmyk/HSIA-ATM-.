@@ -1619,7 +1619,7 @@ body:not(.roster-editing) .roster-addrow,
 body:not(.roster-editing) .roster-rowtools,
 body:not(.roster-editing) #abControls{ display:none !important; }
 /* Information flow tables (Adjacent / VCC / Others): "+ নতুন সারি" and Save stay hidden until the pen is pressed */
-.iflow-save-row:not(.is-editing) .fr-dbimport:not(#iflowAdjEditBtn):not(#iflowVccEditBtn):not(#iflowTwrEditBtn):not(#iflowOthersEditBtn){ display:none !important; }
+.iflow-save-row:not(.is-editing) .fr-dbimport:not(#iflowAdjEditBtn):not(#iflowVccEditBtn):not(#iflowTwrEditBtn):not(#iflowRccEditBtn):not(#iflowAccEditBtn):not(#iflowOthersEditBtn){ display:none !important; }
 /* Notepad: add / rename / manage controls stay hidden until the pen unlocks editing */
 body:not(.np-editing) #npAddBtn,
 body:not(.np-editing) .np-chip-rename,
@@ -1726,6 +1726,35 @@ body:not(.hsia-priv) #iflowOthersColumn{ display:none !important; }
 }
 .iflow-edit-table td[contenteditable="true"]{ outline:none; cursor:text; }
 .iflow-edit-table td[contenteditable="true"]:focus{ background:rgba(255,255,255,0.05); }
+/* SAR Flow Charts (RCC / ACC): drawn like the printed charts (same arrows), dark like the other Flow chart pages; built from the table below them */
+.fl-pane{ display:none; }
+.fl-pane.fl-on{ display:block; }
+.rcc-penrow{ display:flex; align-items:center; gap:10px; margin:0 0 8px; }
+.rcc-penrow .icon-only.on{ background:#d6d8dc; color:#111; }
+.rcc-chart.editing [contenteditable="true"]{ outline:1px dashed var(--gold-soft); outline-offset:2px; cursor:text; min-height:1.2em; }
+.rcc-chart.editing .rcc-t:empty{ display:block; }
+.rcc-t:empty{ display:none; }
+.rcc-chartwrap{ overflow:auto; border:1px solid var(--border); border-radius:12px; background:var(--panel-2); margin-bottom:14px; -webkit-overflow-scrolling:touch; }
+.rcc-chart{ --ln:var(--gold-soft); min-width:720px; padding:14px 14px 18px; color:var(--text); }
+.rcc-chart.rcc-narrow{ min-width:0; }
+.rcc-top{ border:2px solid var(--ln); text-align:center; font-weight:700; font-size:15px; padding:12px 8px; background:rgba(255,255,255,.03); color:var(--gold-soft); }
+.rcc-grid{ display:grid; grid-template-columns:minmax(0,1fr) 46px minmax(0,1fr) 46px minmax(0,1fr); grid-auto-rows:1fr; }
+.rcc-accgrid{ display:grid; grid-template-columns:46px minmax(0,460px); }
+.rcc-cell{ display:flex; padding:7px 0; min-width:0; }
+.rcc-box{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; text-align:center; border:1.5px solid rgba(255,255,255,.3); border-radius:4px; background:rgba(255,255,255,.03); padding:8px 6px; font-size:12.5px; line-height:1.4; overflow-wrap:anywhere; }
+.rcc-box.rcc-g{ font-weight:700; color:var(--gold-soft); }
+.rcc-t{ margin-top:3px; font-weight:700; color:var(--gold-soft); }
+.rcc-gap{ position:relative; }
+.rcc-gap.bus::before, .rcc-gap.end::before, .rcc-gap.first::before{ content:''; position:absolute; left:calc(50% - 1px); width:2px; top:0; bottom:0; background:var(--ln); }
+.rcc-gap.end::before{ bottom:50%; }
+.rcc-gap.first::before{ top:50%; }
+.rcc-gap .al, .rcc-gap .ar{ position:absolute; top:calc(50% - 1px); height:2px; background:var(--ln); }
+.rcc-gap .al{ left:0; right:50%; }
+.rcc-gap .ar{ left:50%; right:0; }
+.rcc-gap .al::before{ content:''; position:absolute; left:0; top:-4px; width:0; height:0; border:5px solid transparent; border-left:0; border-right:9px solid var(--ln); }
+.rcc-gap .ar::after{ content:''; position:absolute; right:0; top:-4px; width:0; height:0; border:5px solid transparent; border-right:0; border-left:9px solid var(--ln); }
+.rcc-gap .ar.nh::after{ display:none; }
+.iflow-edit-table tr.rcc-grp td{ background:var(--panel-2); color:var(--gold-soft); font-weight:700; text-align:center; }
 .iflow-edit-table td.adj-hl{ background:rgba(246,200,76,0.26); font-weight:700; box-shadow:inset 4px 0 0 #F6C84C; }
 .iflow-edit-table td.adj-hl:focus{ background:rgba(246,200,76,0.36); }
 .iflow-freetext{
@@ -3677,7 +3706,7 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
   <button type="button" class="iflow-tab-btn" data-gd="gdPaneFreq">Frequency</button>
 </div>
       <div class="iflow-tabs" id="iflowTabs">
-        <button type="button" class="iflow-tab-btn active" data-tab="iflowChartColumn">📋 Flow Chart</button>
+        <button type="button" class="iflow-tab-btn active" data-tab="iflowChartColumn">📋 Flow chart</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowTwrColumn">🛬 Tower action flow chart</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowAdjColumn">📡 Adjacent Twr/PIFU/APP</button>
         <button type="button" class="iflow-tab-btn" data-tab="iflowVccColumn">🎛️ VCCS numbers</button>
@@ -3726,6 +3755,12 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
 
       <div class="iflow-columns">
       <div class="iflow-col iflow-tab-active" id="iflowChartColumn">
+      <div class="twr-pages" id="flowPills">
+        <button type="button" class="twr-pg on" data-fl="flPaneFlow">Flow chart</button>
+        <button type="button" class="twr-pg" data-fl="flPaneRcc">RCC</button>
+        <button type="button" class="twr-pg" data-fl="flPaneAcc">ACC</button>
+      </div>
+      <div class="fl-pane fl-on" id="flPaneFlow">
       <div class="iflow-title">
         <div class="iflow-org">Civil Aviation Authority of Bangladesh</div>
         <div class="iflow-name">HSIA Information Flow Chart for Area Control</div>
@@ -3880,6 +3915,83 @@ body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
         </table>
       </div>
       <div class="iflow-footer">Effective Date: <strong>14/07/2026</strong></div>
+      </div>
+      <div class="fl-pane" id="flPaneRcc">
+        <div class="iflow-title">
+          <div class="iflow-name">Search and Rescue Flow chart for RCC</div>
+          <div class="iflow-ref">Dhaka Rescue Co-ordination Centre (RCC)</div>
+        </div>
+        <div class="rcc-penrow hsia-priv-only"><button type="button" class="icon-only fr-dbimport" id="rccChartPen" title="চার্টে সরাসরি এডিট" aria-label="Edit chart"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button><span class="iflow-saved-chip" id="rccPenHint"></span></div>
+        <div class="rcc-chartwrap"><div class="rcc-chart" id="rccChart"></div></div>
+        <div class="iflow-tablewrap">
+        <table class="iflow-edit-table" id="iflowRccTable">
+          <thead><tr><th>Organisation / Position</th><th style="width:36%">Telephone No.</th></tr></thead>
+          <tbody>
+            <tr data-col="L"><td contenteditable="false">Tejgaon Tower / Ops Room-VGTJ (For SAR operation)</td><td contenteditable="false">01769975023</td></tr>
+            <tr data-col="L"><td contenteditable="false">OC OPS BSR</td><td contenteditable="false">01769975010</td></tr>
+            <tr data-col="L"><td contenteditable="false">Navy (Ops) HQ, Dhaka</td><td contenteditable="false">01769702113</td></tr>
+            <tr data-col="L"><td contenteditable="false">GMDSS Command &amp; Control Centre</td><td contenteditable="false">01322-912550</td></tr>
+            <tr data-col="L"><td contenteditable="false">Bangladesh Fire Service &amp; Civil Defense</td><td contenteditable="false">+88-02-9555555</td></tr>
+            <tr data-col="L"><td contenteditable="false">Port Control, Chattogram</td><td contenteditable="false">01759054277</td></tr>
+            <tr data-col="L"><td contenteditable="false">Coast Guard Mongla</td><td contenteditable="false">01766690153</td></tr>
+            <tr data-col="L"><td contenteditable="false">Coast Guard Bhola</td><td contenteditable="false">01766690603</td></tr>
+            <tr data-col="M"><td contenteditable="false">Maritime Rescue Coordination Centre (MRCC)</td><td contenteditable="false">01769702116</td></tr>
+            <tr data-col="M"><td contenteditable="false">Coast Guard (Ops), Chattogram</td><td contenteditable="false">01769442333</td></tr>
+            <tr data-col="M"><td contenteditable="false">Coast Guard (Ops), Dhaka</td><td contenteditable="false">01769440333</td></tr>
+            <tr data-col="M"><td contenteditable="false">AAIC-BD (GP Harun)</td><td contenteditable="false">01617785671</td></tr>
+            <tr data-col="M"><td contenteditable="false">Kolkata ACC</td><td contenteditable="false">00913325119424</td></tr>
+            <tr data-col="M"><td contenteditable="false">Yangon MRCC</td><td contenteditable="false">00951533040<br>00955533268</td></tr>
+            <tr data-col="M"><td contenteditable="false">Chairman, BIWTA</td><td contenteditable="false">02-223385561</td></tr>
+            <tr data-col="M"><td contenteditable="false">Police HQ</td><td contenteditable="false">01320001299</td></tr>
+            <tr data-col="R" class="rcc-grp"><td colspan="2" contenteditable="false">Concern RSCs (RCC Sub-Center)</td></tr>
+            <tr data-col="R"><td contenteditable="false">CGP TWR</td><td contenteditable="false">01894909122</td></tr>
+            <tr data-col="R"><td contenteditable="false">ZYL TWR</td><td contenteditable="false">01894909222</td></tr>
+            <tr data-col="R"><td contenteditable="false">CXB TWR</td><td contenteditable="false">01894909322</td></tr>
+            <tr data-col="R"><td contenteditable="false">SDP TWR</td><td contenteditable="false">01894909422</td></tr>
+            <tr data-col="R"><td contenteditable="false">BZL TWR</td><td contenteditable="false">01894909722</td></tr>
+            <tr data-col="R"><td contenteditable="false">JSR TWR</td><td contenteditable="false">01894909622</td></tr>
+            <tr data-col="R"><td contenteditable="false">RAJ TWR</td><td contenteditable="false">01894909522</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="iflow-save-row">
+          <button type="button" class="icon-only fr-dbimport" id="iflowRccEditBtn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+          <button type="button" class="fr-dbimport" id="iflowRccAddRow" disabled="" style="opacity:.5;">+ নতুন সারি</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowRccSaveBtn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path></svg></button>
+          <span class="iflow-saved-chip" id="iflowRccSavedChip"></span>
+        </div>
+            </div>
+      <div class="fl-pane" id="flPaneAcc">
+        <div class="iflow-title">
+          <div class="iflow-name">Search and Rescue Flow chart for ACC</div>
+        </div>
+        <div class="rcc-penrow hsia-priv-only"><button type="button" class="icon-only fr-dbimport" id="accChartPen" title="চার্টে সরাসরি এডিট" aria-label="Edit chart"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button><span class="iflow-saved-chip" id="accPenHint"></span></div>
+        <div class="rcc-chartwrap"><div class="rcc-chart rcc-narrow" id="accChart"></div></div>
+        <div class="iflow-tablewrap">
+        <table class="iflow-edit-table" id="iflowAccTable">
+          <thead><tr><th>Position</th><th style="width:36%">Telephone No.</th></tr></thead>
+          <tbody>
+            <tr><td contenteditable="false">Dhaka ACC</td><td contenteditable="false"></td></tr>
+            <tr><td contenteditable="false">DHAKA RCC</td><td contenteditable="false">8901464 EXT-3589</td></tr>
+            <tr><td contenteditable="false">SATO (HSIA)</td><td contenteditable="false">Mob: 01894908900</td></tr>
+            <tr><td contenteditable="false">Executive Director (HSIA)</td><td contenteditable="false">Mob: 01894908010</td></tr>
+            <tr><td contenteditable="false">SATCO (BBD)</td><td contenteditable="false">01769905020</td></tr>
+            <tr><td contenteditable="false">Director (ATM)</td><td contenteditable="false">Mob: 01894903100</td></tr>
+            <tr><td contenteditable="false">Director (ANS)</td><td contenteditable="false">Mob: 01894901410</td></tr>
+            <tr><td contenteditable="false">Member (Operations and Planning)</td><td contenteditable="false">Mob: 01894902000</td></tr>
+            <tr><td contenteditable="false">Member (Air Traffic Management)</td><td contenteditable="false">Mob: 01894903000</td></tr>
+            <tr><td contenteditable="false">Member (Flight Standard &amp; Regulations)</td><td contenteditable="false">Mob: 01894901000</td></tr>
+            <tr><td contenteditable="false">Chairman, CAAB</td><td contenteditable="false">Mob: 01894900000</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="iflow-save-row">
+          <button type="button" class="icon-only fr-dbimport" id="iflowAccEditBtn" title="Edit" aria-label="Edit"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+          <button type="button" class="fr-dbimport" id="iflowAccAddRow" disabled="" style="opacity:.5;">+ নতুন সারি</button>
+          <button type="button" class="icon-only fr-dbimport" id="iflowAccSaveBtn" title="Save" aria-label="Save"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path></svg></button>
+          <span class="iflow-saved-chip" id="iflowAccSavedChip"></span>
+        </div>
+            </div>
       </div>
 
       <div class="iflow-col" id="iflowTwrColumn">
@@ -9471,6 +9583,8 @@ function initAuthPanel(){
       exchange:  { label:'Exchange / CL',        c:[240,150,80] },
       vccs:      { label:'VCCS numbers',         c:[110,200,120] },
       adj:       { label:'Adjacent',             c:[230,120,170] },
+      rcc:       { label:'SAR Flow Chart (RCC)', c:[240,110,110] },
+      acc:       { label:'SAR Flow Chart (ACC)', c:[240,110,110] },
       twr:       { label:'Tower action flow chart', c:[240,110,110] },
       flowc:     { label:'Flow Chart · Contact', c:[170,130,240] },
       flow:      { label:'Flow Chart',           c:[170,130,240] },
@@ -9513,7 +9627,8 @@ function initAuthPanel(){
       setTimeout(()=> t.forEach(n=> n.classList.remove('cs-flash')), 2800);
     }
     // a "go" function opens whatever is needed and returns a getter for the element to scroll to
-    const goInfoflow = (tabId, el)=> ()=>{ openPanel('infoflowCardOuter','infoflow'); clickTab('iflowTabs', tabId); return ()=> el; };
+    const goInfoflow = (tabId, el)=> ()=>{ openPanel('infoflowCardOuter','infoflow'); clickTab('iflowTabs', tabId); if(tabId === 'iflowChartColumn'){ try{ window.flowPillShow('flPaneFlow'); }catch(e){} } return ()=> el; };
+    const goFlowPane = (pane, el)=> ()=>{ openPanel('infoflowCardOuter','infoflow'); clickTab('iflowTabs', 'iflowChartColumn'); try{ window.flowPillShow(pane); }catch(e){} return ()=> el; };
 
     // ---- index ----
     let recs = [];
@@ -9598,6 +9713,26 @@ function initAuthPanel(){
           if(!pos && !tel) return;
           add('adj', [city, pos].filter(Boolean).join(' · '), tel, goInfoflow('iflowAdjColumn', tr));
         });
+      });
+
+      // SAR Flow Chart (ACC)
+      safe(()=>{
+        document.querySelectorAll('#iflowAccTable tbody tr').forEach(tr=>{
+          const c = Array.from(tr.children).map(cellText);
+          if(!c.length) return;
+          add('acc', c[0], c[1] || '', goFlowPane('flPaneAcc', tr));
+        });
+        add('acc', 'Search and Rescue Flow chart for ACC', 'Dhaka ACC', goFlowPane('flPaneAcc', document.getElementById('accChart')));
+      });
+
+      // SAR Flow Chart (RCC)
+      safe(()=>{
+        document.querySelectorAll('#iflowRccTable tbody tr').forEach(tr=>{
+          const c = Array.from(tr.children).map(cellText);
+          if(!c.length) return;
+          add('rcc', c[0], c[1] || '', goFlowPane('flPaneRcc', tr));
+        });
+        add('rcc', 'Search and Rescue Flow chart for RCC', 'Dhaka Rescue Co-ordination Centre (RCC)', goFlowPane('flPaneRcc', document.getElementById('rccChart')));
       });
 
       // Tower action flow chart (Exercise table + B1..B12 boxes)
@@ -10290,8 +10425,17 @@ function openQuickExchange(tableKey, ri, ci){
   if(isNight){
     halfRow.style.display = '';
     setQuickHalf(half);
-    if(half1Btn) half1Btn.onclick = ()=>{ setQuickHalf('1'); fillFromEntry(existingList.find(x=>(x.nightHalf||'')==='1')); };
-    if(half2Btn) half2Btn.onclick = ()=>{ setQuickHalf('2'); fillFromEntry(existingList.find(x=>(x.nightHalf||'')==='2')); };
+    /* ONE tap on the other night replaces the current 1st/2nd Night marker (no need to Remove first); tapping the night that is already set only shows it */
+    const pickHalf = h => {
+      setQuickHalf(h);
+      const cur = existingList.find(x=>(x.nightHalf||'')===h);
+      fillFromEntry(cur);
+      if(cur) return;
+      quickAssignHalf(h);
+      closeModal('quickExchangeModalOverlay');
+    };
+    if(half1Btn) half1Btn.onclick = ()=> pickHalf('1');
+    if(half2Btn) half2Btn.onclick = ()=> pickHalf('2');
     fillFromEntry(existingList.find(x => (x.nightHalf||'') === half));
   } else {
     halfRow.style.display = 'none';
@@ -10312,6 +10456,20 @@ function commitExchangeEntry(dateKey, entry){
   renderRoster();
   renderRosterCtrl();
   checkMyExchangeNotifications();
+}
+/* assigns 1st / 2nd Night to the open cell and drops the cell's other bare Night marker in the same step */
+function quickAssignHalf(h){
+  const c = quickExchangeCtx; if(!c) return;
+  if(!requireNightHalfAuth()) return;
+  const d = c.date, list = EXCHANGES[d] || [];
+  const same = x=> x && x.table===c.table && x.pos===c.pos && +x.team===+c.team;
+  const blocked = list.some(x=> same(x) && (x.cl || x.special) && (x.vacant || !String(x.subName || '').trim()));
+  if(!blocked){
+    const old = list.filter(x=> same(x) && x.nightHalf && !x.cl && !x.special && !x.vacant && !String(x.subName || '').trim() && String(x.nightHalf) !== String(h));
+    old.forEach(x=>{ try{ auditLog('exchange-remove', auditExchangeDesc(x, d)); }catch(e){} });
+    if(old.length) EXCHANGES[d] = list.filter(x=> old.indexOf(x) < 0);
+  }
+  commitExchangeEntry(d, { table:c.table, pos:c.pos, team:c.team, subName:'', nightHalf:h });
 }
 function removeExchangeEntry(dateKey, table, pos, team, nightHalf){
   if(!EXCHANGES[dateKey]) return;
@@ -10345,7 +10503,7 @@ function initQuickExchangeModal(){
         table: quickExchangeCtx.table, pos: quickExchangeCtx.pos, team: quickExchangeCtx.team,
         subName: '', nightHalf: quickExchangeCtx.isNight ? (quickExchangeCtx.half || '') : ''
       };
-      commitExchangeEntry(quickExchangeCtx.date, entry);
+      if(quickExchangeCtx.isNight) quickAssignHalf(quickExchangeCtx.half); else commitExchangeEntry(quickExchangeCtx.date, entry);
       closeModal('quickExchangeModalOverlay');
     });
   }
@@ -10676,6 +10834,12 @@ function connectFirebaseSync(config, roomId){
       const val = snap.val();
       if(val && typeof window.twrApplyRemote === 'function') window.twrApplyRemote(val);
     });
+    ['sarRcc','sarAcc','adjTable'].forEach(n=>{
+      listen(_fbDb.ref('hsia_sync/' + roomId + '/' + n), snap=>{
+        const v = snap.val();
+        if(v && typeof v.html === 'string' && window.sarSyncApply && typeof window.sarSyncApply[n] === 'function') window.sarSyncApply[n](v.html);
+      });
+    });
     }; // end attachSyncListeners
 
     auth.onAuthStateChanged(u=>{
@@ -10774,6 +10938,15 @@ function pushVccsToFirebase(){
   fbSet(saved.roomId, 'vccs', window.vccsGetData());
 }
 const pushVccsToFirebaseDebounced = debounce(pushVccsToFirebase, 500);
+/* RCC / ACC / Adjacent tables: whole table body synced as one node each (sarRcc, sarAcc, adjTable) */
+function pushSarToFirebase(node){
+  const saved = loadFirebaseSyncConfig();
+  const g = window.sarSyncGet && window.sarSyncGet[node];
+  if(!_fbDb || !saved || !g) return;
+  fbSet(saved.roomId, node, { html: g(), t: Date.now() });
+}
+const _sarDeb = {};
+function pushSarToFirebaseDebounced(node){ (_sarDeb[node] = _sarDeb[node] || debounce(()=> pushSarToFirebase(node), 500))(); }
 function pushTwrToFirebase(){
   const saved = loadFirebaseSyncConfig();
   if(!_fbDb || !saved || typeof window.twrGetData !== 'function') return;
@@ -17393,6 +17566,7 @@ initAdminNotepad();
       highlightAdjCities();
       try{ localStorage.setItem(ADJ_KEY, adjTable.querySelector('tbody').innerHTML); }catch(e){}
       flashChip('iflowAdjSavedChip');
+      if(typeof pushSarToFirebaseDebounced === 'function') pushSarToFirebaseDebounced('adjTable');
     };
     adjCtl = wireAdminEdit({
       editBtnId: 'iflowAdjEditBtn', saveBtnId: 'iflowAdjSaveBtn', addRowBtnId: 'iflowAdjAddRow',
@@ -17402,6 +17576,7 @@ initAdminNotepad();
     adjTable.addEventListener('blur', (e)=>{
       if(adjCtl.isUnlocked() && e.target && e.target.matches('td')) saveAdj();
     }, true);
+    sarHook('adjTable', adjTable, ADJ_KEY, ()=> adjCtl, highlightAdjCities);
     const addRowBtn = document.getElementById('iflowAdjAddRow');
     if(addRowBtn){
       addRowBtn.addEventListener('click', ()=>{
@@ -17413,6 +17588,186 @@ initAdminNotepad();
       });
     }
   }
+
+  const _ct = el=>{ const d = document.createElement('div'); d.innerHTML = el.innerHTML.replace(/<br\s*\/?>/gi, '\n'); return d.textContent.replace(/\u00a0/g, ' ').trim(); };   // cell text keeping line breaks (works while the tab is hidden)
+  // Cross-device sync of the RCC / ACC / Adjacent tables (Firebase node per table; a remote copy is applied unless someone is typing in that table)
+  function sarHook(node, table, key, ctlGet, after){
+    window.sarSyncGet = window.sarSyncGet || {}; window.sarSyncApply = window.sarSyncApply || {};
+    const clean = ()=> table.querySelector('tbody').innerHTML.replace(/contenteditable="true"/g, 'contenteditable="false"');
+    window.sarSyncGet[node] = clean;
+    window.sarSyncApply[node] = (html)=>{
+      if(typeof html !== 'string' || !html || html === clean()) return;
+      if(table.contains(document.activeElement) || (document.activeElement && document.activeElement.closest && document.activeElement.closest('.rcc-chart'))) return;
+      table.querySelector('tbody').innerHTML = html;
+      const ctl = ctlGet(); const on = !!(ctl && ctl.isUnlocked());
+      table.querySelectorAll('td').forEach(td=> td.contentEditable = on ? 'true' : 'false');
+      try{ localStorage.setItem(key, table.querySelector('tbody').innerHTML); }catch(e){}
+      try{ after(); }catch(e){}
+    };
+  }
+
+  // Direct chart editing (pen icon): click any box in the RCC/ACC chart to edit; each field is written back to its table cell, saved and synced
+  function wireChartPen(penId, hintId, chartEl, table, ctlGet, save){
+    const pen = document.getElementById(penId); if(!pen || !chartEl) return null;
+    const hint = document.getElementById(hintId);
+    const tblEditBtn = ()=> table.closest('.fl-pane').querySelector('.iflow-save-row .icon-only[title="Edit"]');
+    const api = { on:false, mark(){
+      chartEl.classList.toggle('editing', api.on);
+      chartEl.querySelectorAll('[data-r]').forEach(el=>{ el.contentEditable = api.on ? 'true' : 'false'; });
+    }};
+    pen.addEventListener('click', ()=>{
+      const ctl = ctlGet(); const b = tblEditBtn();
+      if(!api.on){
+        if(ctl && !ctl.isUnlocked() && b) b.click();
+        if(!ctl || !ctl.isUnlocked()) return;
+        api.on = true;
+        if(hint) hint.textContent = 'যেকোনো বক্সে ক্লিক করে এডিট করো';
+      } else {
+        api.on = false;
+        if(ctl && ctl.isUnlocked() && b) b.click();
+        if(hint) hint.textContent = '';
+      }
+      pen.classList.toggle('on', api.on);
+      api.mark();
+    });
+    chartEl.addEventListener('focusout', e=>{
+      const el = e.target;
+      if(!api.on || !el || !el.getAttribute || el.getAttribute('data-r') === null) return;
+      const tr = table.querySelectorAll('tbody tr')[+el.getAttribute('data-r')]; if(!tr) return;
+      const td = tr.children[+el.getAttribute('data-c')]; if(!td) return;
+      const txt = el.innerText.replace(/\u00a0/g,' ').replace(/\n+$/,'').trim();
+      const html = txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      if(html === td.innerHTML.replace(/\u00a0/g,' ').trim()) return;
+      td.innerHTML = html;
+      save();
+    });
+    return api;
+  }
+
+  // SAR Flow Chart (RCC) table (editable by admin; saved on this device like the Adjacent table)
+  const rccTable = document.getElementById('iflowRccTable');
+  if(rccTable){
+    const RCC_KEY = 'hsia_iflowRccTableV2';
+    try{ const saved = localStorage.getItem(RCC_KEY); if(saved) rccTable.querySelector('tbody').innerHTML = saved; }catch(e){}
+    let rccCtl = null;
+    const rccChart = document.getElementById('rccChart');
+    const renderRcc = ()=>{
+      if(!rccChart) return;
+      const cols = { L:[], M:[], R:[] };
+      Array.from(rccTable.querySelectorAll('tbody tr')).forEach((tr, i)=>{
+        const c = tr.children;
+        const col = tr.getAttribute('data-col') || (i < 8 ? 'L' : i < 16 ? 'M' : 'R');
+        const name = c[0] ? _ct(c[0]) : '';
+        const tel = c[1] ? _ct(c[1]) : '';
+        if(!name && !tel) return;
+        cols[col in cols ? col : 'R'].push({ name, tel, i, grp: tr.classList.contains('rcc-grp') });
+      });
+      const esc = t=> String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n+/g,'<br>');
+      const box = r=> '<div class="rcc-cell"><div class="rcc-box' + (r.grp ? ' rcc-g' : '') + '"><div class="rcc-n" data-r="' + r.i + '" data-c="0">' + esc(r.name) + '</div>' + (r.grp ? '' : '<div class="rcc-t" data-r="' + r.i + '" data-c="1">' + esc(r.tel) + '</div>') + '</div></div>';
+      const n = Math.max(cols.L.length, cols.M.length, cols.R.length);
+      const busA = Math.max(cols.L.length, cols.M.length), busB = cols.R.length;
+      const state = (i, last)=> i < last - 1 ? ' bus' : i === last - 1 ? ' end' : '';
+      let rowsHtml = '';
+      for(let i = 0; i < n; i++){
+        const L = cols.L[i], M = cols.M[i], R = cols.R[i];
+        rowsHtml += (L ? box(L) : '<div class="rcc-cell"></div>')
+          + '<div class="rcc-gap' + state(i, busA) + '">' + (L ? '<span class="al"></span>' : '') + (M ? '<span class="ar"></span>' : '') + '</div>'
+          + (M ? box(M) : '<div class="rcc-cell"></div>')
+          + '<div class="rcc-gap' + state(i, busB) + '">' + (R ? '<span class="ar"></span>' : '') + '</div>'
+          + (R ? box(R) : '<div class="rcc-cell"></div>');
+      }
+      rccChart.innerHTML = '<div class="rcc-top">Dhaka Rescue Co-ordination Centre (RCC)</div><div class="rcc-grid">' + rowsHtml + '</div>';
+      if(window.__rccPen) window.__rccPen.mark();
+    };
+    renderRcc();
+    rccTable.addEventListener('input', renderRcc);
+    const saveRcc = ()=>{
+      renderRcc();
+      try{ localStorage.setItem(RCC_KEY, rccTable.querySelector('tbody').innerHTML); }catch(e){}
+      flashChip('iflowRccSavedChip');
+      if(typeof pushSarToFirebaseDebounced === 'function') pushSarToFirebaseDebounced('sarRcc');
+    };
+    rccCtl = wireAdminEdit({
+      editBtnId: 'iflowRccEditBtn', saveBtnId: 'iflowRccSaveBtn', addRowBtnId: 'iflowRccAddRow',
+      getEditableEls: ()=> Array.from(rccTable.querySelectorAll('td')),
+      save: saveRcc
+    });
+    rccTable.addEventListener('blur', (e)=>{
+      if(rccCtl.isUnlocked() && e.target && e.target.matches && e.target.matches('td')) saveRcc();
+    }, true);
+    sarHook('sarRcc', rccTable, RCC_KEY, ()=> rccCtl, renderRcc);
+    window.__rccPen = wireChartPen('rccChartPen', 'rccPenHint', rccChart, rccTable, ()=> rccCtl, saveRcc);
+    const rccAdd = document.getElementById('iflowRccAddRow');
+    if(rccAdd) rccAdd.addEventListener('click', ()=>{
+      if(!rccCtl.isUnlocked()) return;
+      const tr = document.createElement('tr');
+      const lastRow = rccTable.querySelector('tbody tr:last-child');
+      tr.setAttribute('data-col', (lastRow && lastRow.getAttribute('data-col')) || 'R');
+      tr.innerHTML = '<td contenteditable="true"></td><td contenteditable="true"></td>';
+      rccTable.querySelector('tbody').appendChild(tr);
+      saveRcc();
+    });
+  }
+
+  // SAR Flow Chart (ACC) — one column of boxes, built from the table (admin-editable, saved on this device)
+  const accTable = document.getElementById('iflowAccTable');
+  if(accTable){
+    const ACC_KEY = 'hsia_iflowAccTableV1';
+    try{ const saved = localStorage.getItem(ACC_KEY); if(saved) accTable.querySelector('tbody').innerHTML = saved; }catch(e){}
+    let accCtl = null;
+    const accChart = document.getElementById('accChart');
+    const renderAcc = ()=>{
+      if(!accChart) return;
+      const esc = t=> String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n+/g,'<br>');
+      const items = [];
+      Array.from(accTable.querySelectorAll('tbody tr')).forEach(tr=>{
+        const c = tr.children;
+        const name = c[0] ? _ct(c[0]) : '';
+        const tel = c[1] ? _ct(c[1]) : '';
+        if(name || tel) items.push({ name, tel, i: Array.prototype.indexOf.call(accTable.querySelectorAll('tbody tr'), tr) });
+      });
+      accChart.innerHTML = '<div class="rcc-accgrid">' + items.map((r, i)=>
+        '<div class="rcc-gap ' + (i === items.length - 1 ? 'end' : 'bus') + (i === 0 ? ' first' : '') + '"><span class="ar' + (i === 0 ? ' nh' : '') + '"></span></div>'
+        + '<div class="rcc-cell"><div class="rcc-box"><div class="rcc-n" data-r="' + r.i + '" data-c="0">' + esc(r.name) + '</div><div class="rcc-t" data-r="' + r.i + '" data-c="1">' + esc(r.tel) + '</div></div></div>').join('') + '</div>';
+      if(window.__accPen) window.__accPen.mark();
+    };
+    renderAcc();
+    accTable.addEventListener('input', renderAcc);
+    const saveAcc = ()=>{
+      renderAcc();
+      try{ localStorage.setItem(ACC_KEY, accTable.querySelector('tbody').innerHTML); }catch(e){}
+      flashChip('iflowAccSavedChip');
+      if(typeof pushSarToFirebaseDebounced === 'function') pushSarToFirebaseDebounced('sarAcc');
+    };
+    accCtl = wireAdminEdit({
+      editBtnId: 'iflowAccEditBtn', saveBtnId: 'iflowAccSaveBtn', addRowBtnId: 'iflowAccAddRow',
+      getEditableEls: ()=> Array.from(accTable.querySelectorAll('td')),
+      save: saveAcc
+    });
+    accTable.addEventListener('blur', (e)=>{
+      if(accCtl.isUnlocked() && e.target && e.target.matches && e.target.matches('td')) saveAcc();
+    }, true);
+    sarHook('sarAcc', accTable, ACC_KEY, ()=> accCtl, renderAcc);
+    window.__accPen = wireChartPen('accChartPen', 'accPenHint', accChart, accTable, ()=> accCtl, saveAcc);
+    const accAdd = document.getElementById('iflowAccAddRow');
+    if(accAdd) accAdd.addEventListener('click', ()=>{
+      if(!accCtl.isUnlocked()) return;
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td contenteditable="true"></td><td contenteditable="true"></td>';
+      accTable.querySelector('tbody').appendChild(tr);
+      saveAcc();
+    });
+  }
+
+  // Flow chart tab: pills Flow chart / RCC / ACC
+  (function(){
+    const pills = document.getElementById('flowPills'); if(!pills) return;
+    window.flowPillShow = function(id){
+      pills.querySelectorAll('[data-fl]').forEach(b=> b.classList.toggle('on', b.getAttribute('data-fl') === id));
+      ['flPaneFlow','flPaneRcc','flPaneAcc'].forEach(pid=>{ const el = document.getElementById(pid); if(el) el.classList.toggle('fl-on', pid === id); });
+    };
+    pills.addEventListener('click', e=>{ const b = e.target.closest && e.target.closest('[data-fl]'); if(b) window.flowPillShow(b.getAttribute('data-fl')); });
+  })();
 
   // VCCS numbers — editable table (Position / Assistant / Controller), synced via Firebase node "vccs"
   const vccTable = document.getElementById('iflowVccTable');
