@@ -210,7 +210,14 @@ function signup(m){
   bind(); $('#sb').onclick=function(){ clearDraft(); v='login'; render(); };
   $('#sv').onclick=function(){
     var a=$('#pw1').value; if(!dn(f.ein||'').trim()) return alert('EIN number is required: it is your login ID'); if(a.length<5) return alert('Password must be at least 5 characters'); if(a!==$('#pw2').value) return alert('Passwords do not match'); if(!check()) return;
-    busy=true; firebase.auth().createUserWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ savePw(cr.user.uid,a); clearDraft(); f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }).catch(function(e){ busy=false; alert(ferr(e)); });
+    busy=true; firebase.auth().createUserWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ savePw(cr.user.uid,a); clearDraft(); f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }).catch(function(e){
+      if(/email-already-in-use/.test((e&&e.code)||'')){          /* ID was deleted by the admin earlier: the login still exists, so reuse it when the password is the same */
+        return firebase.auth().signInWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ return ref('hsia_people/profiles/'+cr.user.uid).once('value').then(function(sn){
+          if(sn.exists()){ busy=false; alert('An account with this EIN already exists. Please log in.'); return; }
+          savePw(cr.user.uid,a); clearDraft(); f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }); })
+          .catch(function(x){ busy=false; alert('This EIN already has a login. Use the SAME password you used before, or ask the admin to delete it from Firebase \u2192 Authentication.'); });
+      }
+      busy=false; alert(ferr(e)); });
   };
 }
 function form(m){
@@ -251,11 +258,14 @@ function admin(m){ if(!modOnly&&db.pw===undefined){ db.pw=null; ref('hsia_people
   else if(e.target.id==='bk'){v='home';m.onclick=null;render()}}}
 
 function review(u){f={...db.prof[u],_u:u};const om=(db.prof[u]||{}).mail;np={};const o=document.createElement('div');o.className='ov';
- o.innerHTML=`<div><h3>\u09af\u09be\u099a\u09be\u0987 \u0993 \u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09a8</h3>${fields(u)}<label>Roster position<button type="button" class="in" id="rp">${esc(tl(f))}</button></label>${modOnly?'':'<label>Role<select id="rl" disabled><option value="">User</option><option value="m">Moderator</option><option value="s">Sub-moderator</option></select></label>'}<label>\u0985\u09cd\u09af\u09be\u09a1\u09ae\u09bf\u09a8 \u09a8\u09cb\u099f (\u09ac\u09be\u09a4\u09bf\u09b2 \u09b9\u09b2\u09c7 \u0987\u0989\u099c\u09be\u09b0 \u09a6\u09c7\u0996\u09ac\u09c7)<input id="nt" value="${esc(f.note)}"></label><button class="b" id="ap">\u2714 Approve</button><button class="b" id="rj" style="background:var(--no);color:#fff">\u2715 Reject</button><button class="b" id="cl" style="background:var(--c);color:var(--t);border:1px solid var(--l)">\u09ac\u09a8\u09cd\u09a7 \u0995\u09b0\u09c1\u09a8</button></div>`;
+ o.innerHTML=`<div><h3>\u09af\u09be\u099a\u09be\u0987 \u0993 \u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09a8</h3>${fields(u)}<label>Roster position<button type="button" class="in" id="rp">${esc(tl(f))}</button></label>${modOnly?'':'<label>Role<select id="rl" disabled><option value="">User</option><option value="m">Moderator</option><option value="s">Sub-moderator</option></select></label>'}<label>\u0985\u09cd\u09af\u09be\u09a1\u09ae\u09bf\u09a8 \u09a8\u09cb\u099f (\u09ac\u09be\u09a4\u09bf\u09b2 \u09b9\u09b2\u09c7 \u0987\u0989\u099c\u09be\u09b0 \u09a6\u09c7\u0996\u09ac\u09c7)<input id="nt" value="${esc(f.note)}"></label><button class="b" id="ap">\u2714 Approve</button><button class="b" id="rj" style="background:var(--no);color:#fff">\u2715 Reject</button>${modOnly?'':'<button class="b" id="dl" style="background:#5a1d24;color:#fff">\ud83d\uddd1 Delete this ID</button>'}<button class="b" id="cl" style="background:var(--c);color:var(--t);border:1px solid var(--l)">\u09ac\u09a8\u09cd\u09a7 \u0995\u09b0\u09c1\u09a8</button></div>`;
  R.appendChild(o);bind();
  let r0=null; if(!modOnly){ Promise.all([ref('hsia_private/mods/'+u).once('value'),ref('hsia_private/submods/'+u).once('value')]).then(x=>{ r0=x[0].val()===true?'m':x[1].val()===true?'s':''; const s=$('#rl'); if(s){ s.value=r0; s.disabled=false; } }).catch(()=>{}); }
  if(modOnly) o.querySelectorAll('input,select,textarea,button.in,.pic button,.pic label').forEach(function(el){ if(el.id!=='nt') el.disabled=true; });
  $('#rp').onclick=()=>rosterPick(sel=>{Object.assign(f,sel);$('#rp').textContent=tl(f)},1);
+ if($('#dl')) $('#dl').onclick=()=>{ const p0=db.prof[u]||{}; if(!confirm('Delete ID '+(p0.ein||'')+' ('+(p0.en||p0.bn||'')+') permanently?\n\nProfile, photos, phone, Gmail link and saved password will be removed.\nএই আইডি পুরোপুরি মুছে যাবে।')) return;
+  const pm=p0.mail; delete db.prof[u]; delete pics[u]; if(db.pw) delete db.pw[u];
+  W(()=>Promise.all([ref('hsia_people/profiles/'+u).remove(),ref('hsia_people/pics/'+u).remove(),ref('hsia_people/dir/'+u).remove(),ref('hsia_people/phones/'+u).remove(),ref('hsia_people/pw/'+u).remove(),ref('hsia_private/mods/'+u).remove(),ref('hsia_private/submods/'+u).remove(),pm?ref('hsia_people/mail/'+mk(pm)).remove():null])).then(()=>{ o.remove(); cur=''; render(); }); };
  $('#cl').onclick=()=>o.remove();$('#ap').onclick=()=>{if(check(1)&&commit('approved')){publish(f._u,f);if(om&&mk(om)!==mk(f.mail||''))W(()=>ref('hsia_people/mail/'+mk(om)).remove());const s=$('#rl'),nr=s&&!s.disabled?s.value:null;if(nr!==null&&nr!==r0){const id=f._u;W(()=>Promise.all([nr==='m'?ref('hsia_private/mods/'+id).set(true):ref('hsia_private/mods/'+id).remove(),nr==='s'?ref('hsia_private/submods/'+id).set(true):ref('hsia_private/submods/'+id).remove()]))}o.remove();render()}};
  $('#rj').onclick=()=>{const n=$('#nt').value.trim();if(!n)return alert('\u0995\u09be\u09b0\u09a3 \u09b2\u09bf\u0996\u09c1\u09a8');if(commit('rejected',n)){unpublish(f._u);o.remove();render()}}}
 /* ---------- routing ---------- */
