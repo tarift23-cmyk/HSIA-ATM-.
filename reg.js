@@ -42,6 +42,8 @@ function publish(u,p){ W(function(){ return Promise.all([ref('hsia_people/dir/'+
 function unpublish(u){ var pm=(db.prof[u]||{}).mail; W(function(){ return Promise.all([ref('hsia_people/dir/'+u).remove(),ref('hsia_people/phones/'+u).remove(),pm?ref('hsia_people/mail/'+mk(pm)).remove():null]); }); }
 function finish(u,sel){ var p=db.prof[u]||P||{}; Object.assign(p,sel); if(p.st==='draft') p.st='pending'; db.prof[u]=p; W(function(){ return ref('hsia_people/profiles/'+u).update(Object.assign({},sel,{st:p.st})); }); v='home'; busy=false; render(); }
 function usage(){ return ''; }
+/* the password is also kept at hsia_people/pw/<uid> so the admin can look it up and Gmail login can sign in without asking (see Rules note) */
+function savePw(u,pw){ try{ if(u&&pw) ref('hsia_people/pw/'+u).set(pw).catch(function(){}); }catch(e){} }
 function ferr(e){ var c=(e&&e.code)||''; return /email-already-in-use/.test(c)?'An account with this EIN already exists. Please log in.':/wrong-password|user-not-found|invalid-credential|invalid-login/.test(c)?'Wrong EIN or password':/network/.test(c)?'No internet connection':/operation-not-allowed/.test(c)?'Email/Password sign-in is not enabled in Firebase yet':/popup-closed|cancelled-popup/.test(c)?'':((e&&e.message)||String(e)); }
 const SPEC={p:{w:413,h:531,kb:40,n:'Passport photo'},a:{w:650,h:1005,kb:110,n:'AVSEC ID photo'}};   /* 35\u00d745 mm and 55\u00d785 mm at ~300 dpi */
 const MIME=document.createElement('canvas').toDataURL('image/webp').indexOf('image/webp')>0?'image/webp':'image/jpeg';
@@ -152,8 +154,8 @@ function rosterPick(cb,cx){
   if(tabs.length) s1(); else s2();
 }
 /* ---------- screens ---------- */
-function linkAsk(B,cred,m){
-  busy=true; var gone=false;
+function linkAsk(B,cred,m,gone0){
+  busy=true; var gone=!!gone0;
   var o=document.createElement('div'); o.className='ov';
   o.innerHTML='<div><div class="ttl">Account found</div><p style="margin:0">This Gmail is registered with EIN <b>'+esc(m.e)+'</b>. Enter that account\'s password once; after this, Continue with Gmail opens the same account.<br><span class="mut">এই Gmail EIN '+esc(m.e)+'-এর সাথে নিবন্ধিত। একবার ওই অ্যাকাউন্টের পাসওয়ার্ড দিন, এরপর থেকে Continue with Gmail দিলেই সেই অ্যাকাউন্টে ঢুকবে।</span></p><label>Password<input id="lkp" type="password" autocomplete="current-password"></label><button class="b" id="lko">Connect &amp; login</button><button class="b gh" id="lkc">Cancel</button></div>';
   R.appendChild(o);
@@ -163,25 +165,42 @@ function linkAsk(B,cred,m){
     var A=firebase.auth();
     (gone?Promise.resolve():B.delete().then(function(){ gone=true; }))
       .then(function(){ return A.signInWithEmailAndPassword(m.e+'@hsia.app','HSIA#'+pw); })
-      .then(function(cr){ return cr.user.linkWithCredential(cred).catch(function(e){ if(/provider-already-linked/.test((e&&e.code)||'')) return; throw e; }); })
+      .then(function(cr){ savePw(cr.user.uid,pw); return cr.user.linkWithCredential(cred).catch(function(e){ if(/provider-already-linked/.test((e&&e.code)||'')) return; throw e; }); })
       .then(function(){ o.remove(); busy=false; render(); alert('Done. Gmail login is now connected to your account.'); })
       .catch(function(e){ var c=(e&&e.code)||''; if(A.currentUser&&!A.currentUser.isAnonymous){ o.remove(); busy=false; render(); alert('Logged in, but Gmail could not be connected: '+ferr(e)); } else alert(ferr(e)||c); });
   };
 }
 function google(){
   var A=firebase.auth(), pr=new firebase.auth.GoogleAuthProvider();
+  busy=true;                                   /* no Registration screen flashes while the account is being matched */
+  var back=function(){ busy=false; render(); };
   A.signInWithPopup(pr).then(function(res){
-    var B=res.user, nu=res.additionalUserInfo&&res.additionalUserInfo.isNewUser;
-    if(!nu||!B||!B.email||!res.credential) return;
-    return ref('hsia_people/mail/'+mk(B.email)).once('value').then(function(s){ var m=s.val(); if(m&&m.e&&m.u) linkAsk(B,res.credential,m); }).catch(function(){});
-  }).catch(function(e){ if(/popup-blocked/.test((e&&e.code)||'')) return A.signInWithRedirect(pr); var m=ferr(e); if(m) alert(m); });
+    var B=res.user;
+    if(!B||!B.email||!res.credential) return back();
+    return ref('hsia_people/mail/'+mk(B.email)).once('value').then(function(s){
+      var m=s.val();
+      if(!m||!m.e||!m.u||m.u===B.uid) return back();            /* not an approved Gmail, or already the right account */
+      /* approved Gmail: sign straight into that EIN account, no password asked */
+      return ref('hsia_people/pw/'+m.u).once('value').then(function(p){ return p.val(); }, function(){ return null; }).then(function(pw){
+        if(!pw) return linkAsk(B,res.credential,m);              /* password not stored yet: ask once, then it is stored */
+        return B.delete().then(function(){
+          return A.signInWithEmailAndPassword(m.e+'@hsia.app','HSIA#'+pw);
+        }).then(function(cr){
+          return cr.user.linkWithCredential(res.credential).catch(function(e){ if(/provider-already-linked|credential-already-in-use/.test((e&&e.code)||'')) return; throw e; });
+        }).then(back, function(e){
+          if(A.currentUser&&!A.currentUser.isAnonymous) return back();
+          linkAsk(B,res.credential,m,true);                      /* stored password no longer valid: ask once */
+        });
+      });
+    });
+  }).catch(function(e){ if(/popup-blocked/.test((e&&e.code)||'')){ busy=false; return A.signInWithRedirect(pr); } busy=false; var m=ferr(e); if(m) alert(m); render(); });
 }
 function login(m,ex){
   m.innerHTML=(ex?'<div class="card"><b>Your 24-hour trial has ended.</b><p class="mut" style="margin:6px 0 0">Please log in to continue.</p></div>':'')+'<div class="card"><div class="ttl">HSIA ATM</div><button class="b" id="gl" style="margin-top:0">Continue with Google</button><p class="mut" style="text-align:center;margin:16px 0 0">or sign in with your EIN and password</p><label>EIN number<input id="le" inputmode="numeric"></label><label>Password<input id="lp" type="password" autocomplete="current-password"></label><div class="two"><button class="b" id="li">Login</button><button class="b gh" id="lc">Create new account</button></div></div><a class="lnk" id="al">Admin sign-in</a>'+(ex?'':'<a class="lnk" id="bk2">&larr; Back</a>');
   if($('#bk2')) $('#bk2').onclick=function(){ v='home'; render(); };
   $('#gl').onclick=google;
   $('#li').onclick=function(){ var e=dn($('#le').value).trim(), pw=$('#lp').value; if(!/^\d{3,12}$/.test(e)) return alert('Enter a valid EIN (digits only)'); if(pw.length<5) return alert('Password must be at least 5 characters');
-    firebase.auth().signInWithEmailAndPassword(e+'@hsia.app','HSIA#'+pw).catch(function(x){ alert(ferr(x)); }); };
+    firebase.auth().signInWithEmailAndPassword(e+'@hsia.app','HSIA#'+pw).then(function(cr){ savePw(cr.user.uid,pw); }).catch(function(x){ alert(ferr(x)); }); };
   $('#lc').onclick=function(){ v='signup'; render(); };
   $('#al').onclick=function(){ try{ if(typeof requireRosterAuth==='function') requireRosterAuth(); }catch(e){} };
 }
@@ -191,7 +210,7 @@ function signup(m){
   bind(); $('#sb').onclick=function(){ clearDraft(); v='login'; render(); };
   $('#sv').onclick=function(){
     var a=$('#pw1').value; if(!dn(f.ein||'').trim()) return alert('EIN number is required: it is your login ID'); if(a.length<5) return alert('Password must be at least 5 characters'); if(a!==$('#pw2').value) return alert('Passwords do not match'); if(!check()) return;
-    busy=true; firebase.auth().createUserWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ clearDraft(); f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }).catch(function(e){ busy=false; alert(ferr(e)); });
+    busy=true; firebase.auth().createUserWithEmailAndPassword(f.ein+'@hsia.app','HSIA#'+a).then(function(cr){ savePw(cr.user.uid,a); clearDraft(); f._u=cr.user.uid; f.man=true; commit('draft'); rosterPick(function(sel){ finish(f._u,sel); }); }).catch(function(e){ busy=false; alert(ferr(e)); });
   };
 }
 function form(m){
@@ -206,9 +225,10 @@ function sortable(box,sel,hs,done){box.addEventListener('pointerdown',e=>{const 
  const up=()=>{['pointermove','pointerup','pointercancel'].forEach((n,i)=>document.removeEventListener(n,i?up:mv));sb.forEach(c=>c.classList.remove('ins'));box.classList.remove('insb');it.classList.remove('dg');it.style.transform='';const ids=sb.map(c=>c.dataset.id);ids.splice(k,0,it.dataset.id);done(ids)};
  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up)})}
 const inUse=id=>Object.values(db.prof).some(p=>p.des===id);
-function admin(m){ if(tab==='d'||(modOnly&&tab==='o')) tab='p';
+function admin(m){ if(!modOnly&&db.pw===undefined){ db.pw=null; ref('hsia_people/pw').once('value').then(function(x){ db.pw=x.val()||{}; cur=''; render(); }).catch(function(){ db.pw={}; }); }
+ if(tab==='d'||(modOnly&&tab==='o')) tab='p';
  const L=st=>Object.keys(db.prof).filter(u=>db.prof[u].st===st).sort((a,b)=>(+db.prof[a].ein||1e15)-(+db.prof[b].ein||1e15));
- const row=u=>{const p=db.prof[u];return`<div class="row" data-u="${u}"><img src="${(db.prof[u]||{}).t||''}"><div><b>${esc(p.ein)} \u00b7 ${esc(p.bn)}</b>${p.inc?' <span style="color:#e8a0a8;font-size:12px">\u26a0 incomplete</span>':''}<br><span class="mut">${esc(p.en)} \u00b7 ${esc(dName(p.des))} \u00b7 ${tl(p)}</span></div></div>`};
+ const row=u=>{const p=db.prof[u];return`<div class="row" data-u="${u}"><img src="${(db.prof[u]||{}).t||''}"><div><b>${esc(p.ein)} \u00b7 ${esc(p.bn)}</b>${p.inc?' <span style="color:#e8a0a8;font-size:12px">\u26a0 incomplete</span>':''}<br><span class="mut">${esc(p.en)} \u00b7 ${esc(dName(p.des))} \u00b7 ${tl(p)}</span>${(!modOnly&&db.pw)?'<br><span style="color:#e8d9a0">\ud83d\udd11 '+esc(db.pw[u]||'\u2014 (not saved yet)')+'</span>':''}</div></div>`};
  let h=`<div class="tabs"><button class="g ${tab==='p'?'on':''}" data-t="p">\u09aa\u09c7\u09a8\u09cd\u09a1\u09bf\u0982 (${L('pending').length})</button><button class="g ${tab==='a'?'on':''}" data-t="a">\u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09bf\u09a4</button>${modOnly?'':`<button class="g ${tab==='o'?'on':''}" data-t="o">Directory</button>`}</div>`;
  if(tab==='p')h+=`<div class="card">${L('pending').map(row).join('')||'<span class="mut">\u0995\u09cb\u09a8\u09cb \u09aa\u09c7\u09a8\u09cd\u09a1\u09bf\u0982 \u09a8\u09c7\u0987</span>'}</div>`;
  if(tab==='a')h+=db.fold.map(g=>{const l=L('approved').filter(u=>g.posts.some(p=>p.id===db.prof[u].des));return l.length?`<div class="card"><div class="ttl">${esc(g.n)} (${l.length})</div>`+g.posts.map(p=>{const x=l.filter(u=>db.prof[u].des===p.id);return x.length?`<div class="fh">${esc(p.n)}</div>`+x.map(row).join(''):''}).join('')+'</div>':''}).join('')||'<div class="card mut">\u0995\u09c7\u0989 \u0985\u09a8\u09c1\u09ae\u09cb\u09a6\u09bf\u09a4 \u09a8\u09af\u09bc</div>';
@@ -300,7 +320,7 @@ function pwAsk(){
   o.querySelector('#spc').onclick=close;
   o.querySelector('#spo').onclick=function(){
     var a=o.querySelector('#sp1').value; if(a.length<5) return alert('Password must be at least 5 characters'); if(a!==o.querySelector('#sp2').value) return alert('Passwords do not match');
-    firebase.auth().currentUser.linkWithCredential(firebase.auth.EmailAuthProvider.credential(P.ein+'@hsia.app','HSIA#'+a)).then(function(){ close(); alert('Done. You can now log in with EIN + password too.'); }).catch(function(e){ alert(ferr(e)); });
+    firebase.auth().currentUser.linkWithCredential(firebase.auth.EmailAuthProvider.credential(P.ein+'@hsia.app','HSIA#'+a)).then(function(){ savePw(firebase.auth().currentUser.uid,a); close(); alert('Done. You can now log in with EIN + password too.'); }).catch(function(e){ alert(ferr(e)); });
   };
 }
 function acct(){
