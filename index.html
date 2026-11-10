@@ -65,7 +65,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261110-203000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261110-231500';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -1638,6 +1638,8 @@ body:not(.hsia-staff) .roster-rowtools{ display:none !important; }
 body:not(.roster-editing) .roster-addrow,
 body:not(.roster-editing) .roster-rowtools,
 body:not(.roster-editing) #abControls{ display:none !important; }
+/* Aero Billing / SATO add-person row (New person, group, + Add, Edit/Done) removed from the roster edit panel */
+#abControls{ display:none !important; }
 /* Information flow tables (Adjacent / VCC / Others): "+ নতুন সারি" and Save stay hidden until the pen is pressed */
 .iflow-save-row:not(.is-editing) .fr-dbimport:not(#iflowAdjEditBtn):not(#iflowVccEditBtn):not(#iflowTwrEditBtn):not(#iflowRccEditBtn):not(#iflowAccEditBtn):not(#iflowOthersEditBtn){ display:none !important; }
 /* Notepad: add / rename / manage controls stay hidden until the pen unlocks editing */
@@ -21031,6 +21033,10 @@ window.hsiaFs = function(wrap, on, onExit){
     '#shufTray.over{background:rgba(52,55,64,.99)!important;border-top-color:var(--gold,#D6D8DC)!important}' +
     '.shuf-thead{flex:0 0 auto;font:700 11px "Space Grotesk",sans-serif;letter-spacing:.03em;color:var(--gold-soft,#D6D8DC);padding:2px 2px 6px}' +
     '.shuf-tlist{flex:1 1 auto;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;-webkit-overflow-scrolling:touch}' +
+    '.rt-shuf-hint,body.roster-shuffle .rt-shuf-hint{display:none!important}' +
+    '.shuf-gpill.shuf-src{opacity:.25!important}' +
+    'body.roster-shuffle .roster-table td{touch-action:manipulation}' +
+    'body.roster-shuffle .roster-table .roster-name-input.shuf-typing{pointer-events:auto!important;-webkit-user-select:text!important;user-select:text!important}' +
     '.shuf-gpill{position:static!important;transform:none!important;left:auto!important;top:auto!important;pointer-events:auto;touch-action:none;padding:7px 13px;border-radius:999px;background:rgba(214,216,220,.18)!important;color:var(--text,#F0F1F3)!important;border:1px solid rgba(214,216,220,.5);box-shadow:none!important;font:700 13px "Space Grotesk",sans-serif;white-space:nowrap;-webkit-user-select:none;user-select:none}';
   document.head.appendChild(st2);
 
@@ -21109,7 +21115,6 @@ window.hsiaFs = function(wrap, on, onExit){
     document.body.classList.toggle('roster-shuffle', on);
     Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf'), function(b){ b.classList.toggle('on', on && !swapMode); b.textContent = (on && !swapMode) ? '✔ Shuffle ON' : '⇅ Shuffle'; });
     Array.prototype.forEach.call(document.querySelectorAll('.rt-swap'), function(b){ var o = on && swapMode; b.classList.toggle('on', o); b.textContent = o ? '\u21c4 Swap ON' : '\u21c4 Swap'; });
-    Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf-hint'), function(h){ h.textContent = swapMode ? 'Swap \u09ae\u09cb\u09a1: \u09a8\u09be\u09ae \u099a\u09c7\u09aa\u09c7 \u09a7\u09b0\u09c7 \u0985\u09a8\u09cd\u09af \u0998\u09b0\u09c7 \u099b\u09be\u09a1\u09bc\u09c1\u09a8 \u2014 \u09a6\u09c1\u099c\u09a8\u09c7\u09b0 \u099c\u09be\u09df\u0997\u09be \u0985\u09a6\u09b2\u09ac\u09a6\u09b2 \u09b9\u09ac\u09c7 (\u09b6\u09bf\u09ab\u099f/\u09b8\u09be\u09b0\u09bf \u09af\u09be\u0987 \u09b9\u09cb\u0995)\u0964 \u0996\u09be\u09b2\u09bf \u0998\u09b0\u09c7 \u099b\u09be\u09a1\u09bc\u09b2\u09c7 \u09a8\u09be\u09ae\u099f\u09be \u09b8\u09b0\u09c7 \u09af\u09be\u09ac\u09c7\u0964 \u09b6\u09c7\u09b7\u09c7 Save \u099a\u09be\u09aa\u09c1\u09a8\u0964' : (h.getAttribute('data-sh') || h.textContent); });
     Array.prototype.forEach.call(document.querySelectorAll('.rt-undo'), function(b){ b.style.display = (on && undo.length) ? '' : 'none'; });
     if(on){
       try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
@@ -21184,8 +21189,8 @@ window.hsiaFs = function(wrap, on, onExit){
     if(pill){
       var bi = -1; bodies.forEach(function(b, i){ if(b.el === pill) bi = i; });
       if(bi < 0) return;
-      var b = bodies.splice(bi, 1)[0]; b.el.remove(); refreshTray();
-      begin({ kind:'ground', name:b.name }, x, y); return;
+      var b = bodies[bi];   /* the pill stays in the tray (faded) until it is dropped: a removed element stops getting touch events */
+      begin({ kind:'ground', name:b.name, el:b.el, b:b }, x, y); return;
     }
     var chip = target.closest('.shuf-chip');
     if(chip){
@@ -21216,12 +21221,14 @@ window.hsiaFs = function(wrap, on, onExit){
     commit(item, t, x, y);
   }
   function commit(item, t, x, y){
-    if(!t){ if(item.kind === 'ground') spawn(item.name, x, y, 0); return; }
+    if(!t) return;
+    if(item.kind === 'ground' && t.type === 'ground') return;
     if(item.kind === 'cell' && t.type === 'cell' && t.id === item.id && t.ri === item.ri && t.ci === item.ci) return;
-    var swapped = '', snap = snapshot(item.kind === 'ground' ? item.name : null), touched = {}, fall = [], d;
+    var swapped = '', snap = snapshot(null), touched = {}, fall = [], d;
     function dat(id){ touched[id] = 1; return TB[id].data(); }
     if(item.kind === 'cell'){ d = dat(item.id); d[item.ri].names[item.ci] = ''; }
     else if(item.kind === 'list'){ d = dat(item.id); var a0 = clean(arrOf(d, item.key)); a0.splice(item.idx, 1); setArr(d, item.key, a0); }
+    else if(item.kind === 'ground'){ var gi = bodies.indexOf(item.b); if(gi >= 0) bodies.splice(gi, 1); if(item.b.el.parentNode) item.b.el.remove(); }
     if(t.type === 'cell'){
       d = dat(t.id); var row = d[t.ri], occ = String((row.names[t.ci]) || '').trim();
       row.names[t.ci] = item.name;
@@ -21235,21 +21242,46 @@ window.hsiaFs = function(wrap, on, onExit){
     } else {
       fall.push({ n:item.name, x:x, y:Math.min(y, window.innerHeight - 60) });
     }
-    undo.push(snap); if(undo.length > 30) undo.shift();
+    refreshTray(); undo.push(snap); if(undo.length > 30) undo.shift();
     Object.keys(touched).forEach(function(id){ TB[id].save(TB[id].data()); TB[id].render(); });
     fall.forEach(function(f, i){ setTimeout(function(){ if(on) spawn(f.n, f.x, f.y, (Math.random() - .5) * 200); }, i * 60); });
     sync();
     var tail = fall.length && t.type === 'cell' ? fall[0].n + ' → Ground' : '';
-    msg(item.name + ' সরানো হয়েছে' + (tail ? ' · ' + tail : '') + ' — শেষে Save চাপুন');
+    msg(item.name + ' placed' + (tail ? ' \u2014 ' + tail : '') + ' \u2014 press Save');
     if(swapped) msg(item.name + ' \u21c4 ' + swapped + ' \u2014 swapped, press Save');
   }
-  document.addEventListener('touchstart', function(e){ var t = e.touches[0]; if(t && on) down(t.clientX, t.clientY, e.target); }, { passive:true });
+  var lastTouch = 0, tapS = null, lastTap = { td:null, t:0 };
+  function emptyCellOf(el){
+    var td = el && el.closest ? el.closest('td') : null; if(!td || !tbIdOf(td)) return null;
+    var inp = td.querySelector('.roster-name-input'); if(!inp || String(inp.value || '').trim() !== '') return null;
+    return td;
+  }
+  function startTyping(td){
+    var inp = td && td.querySelector('.roster-name-input'); if(!inp) return;
+    inp.classList.add('shuf-typing'); inp.readOnly = false;
+    var done = function(){ inp.removeEventListener('blur', done); inp.classList.remove('shuf-typing'); inp.readOnly = true; };
+    inp.addEventListener('blur', done);
+    inp.addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); inp.blur(); } });
+    setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 0);
+  }
+  document.addEventListener('dblclick', function(e){ if(!on) return; var td = emptyCellOf(e.target); if(td) startTyping(td); });
+  document.addEventListener('touchstart', function(e){ var t = e.touches[0]; lastTouch = Date.now(); if(t && on){ tapS = { x:t.clientX, y:t.clientY, t:Date.now(), el:e.target }; down(t.clientX, t.clientY, e.target); } }, { passive:true });
   document.addEventListener('touchmove', function(e){ var t = e.touches[0]; if(!t || !on) return; if(drag) e.preventDefault(); move(t.clientX, t.clientY); }, { passive:false });
-  document.addEventListener('touchend', function(){ if(on) up(); });
-  document.addEventListener('touchcancel', function(){ if(on) { if(drag){ var it = drag.item; stopDrag(); if(it.kind === 'ground') spawn(it.name, lx, ly, 0); } else clearTimer(); } });
-  document.addEventListener('mousedown', function(e){ if(e.button === 0 && on) down(e.clientX, e.clientY, e.target); });
-  document.addEventListener('mousemove', function(e){ if(on && (cand || drag)) move(e.clientX, e.clientY); });
-  document.addEventListener('mouseup', function(){ if(on && (cand || drag)) up(); });
+  document.addEventListener('touchend', function(){
+    lastTouch = Date.now();
+    if(on && !drag && tapS && (Date.now() - tapS.t) < 350 && Math.abs(lx - tapS.x) < 14 && Math.abs(ly - tapS.y) < 14){
+      var td = emptyCellOf(tapS.el);
+      if(td){ if(lastTap.td === td && (Date.now() - lastTap.t) < 450){ lastTap.td = null; startTyping(td); } else lastTap = { td:td, t:Date.now() }; }
+    }
+    tapS = null;
+    if(on) up();
+  });
+  document.addEventListener('touchcancel', function(){ if(on) { if(drag){ stopDrag(); } else clearTimer(); } });
+  document.addEventListener('mousedown', function(e){ if(Date.now() - lastTouch < 700) return; if(e.button === 0 && on) down(e.clientX, e.clientY, e.target); });
+  document.addEventListener('mousemove', function(e){ if(Date.now() - lastTouch < 700) return; if(on && (cand || drag)) move(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', function(){ if(Date.now() - lastTouch < 700) return; if(on && (cand || drag)) up(); });
+  window.addEventListener('blur', function(){ if(drag) stopDrag(); });
+  document.addEventListener('visibilitychange', function(){ if(document.hidden && drag) stopDrag(); });
   document.addEventListener('contextmenu', function(e){ if(on && e.target.closest && (e.target.closest('.roster-table') || e.target.closest('#shufWorld'))) e.preventDefault(); });
 })();
 </script>
