@@ -65,7 +65,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261110-153000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261110-203000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -10398,7 +10398,7 @@ function setQuickHalf(half){
 }
 
 function openQuickExchange(tableKey, ri, ci){
-  if(document.body.classList.contains('roster-shuffle')) return;   /* Shuffle mode: no 1st/2nd Night assignment */
+  if(document.body.classList.contains('roster-shuffle') || document.body.classList.contains('roster-editing')) return;   /* roster edit / Shuffle mode: no 1st/2nd Night assignment */
   if(!requireNightHalfAuth()) return;
   /* Quick exchange: the date selected in the roster date bar is used (today when nothing else is picked) */
   const _todayKey = todayDateKey();
@@ -20998,13 +20998,13 @@ window.hsiaFs = function(wrap, on, onExit){
     rosterBodyRows:     { data:function(){ return ROSTER; },      save:function(d){ saveRoster(d); },     render:function(){ renderRoster(); } },
     rosterBodyRowsComm: { data:function(){ return ROSTER_COMM; }, save:function(d){ saveRosterComm(d); }, render:function(){ renderRosterComm(); } }
   };
-  var TRAY_H = 120, HOLD = 380, MOVE = 10, G = 2600;
-  var on = false, undo = [], bodies = [], world = null, tray = null, raf = 0, last = 0;
+  var TRAY_H = 130, HOLD = 380, MOVE = 10, G = 2600;
+  var swapMode = false, on = false, undo = [], bodies = [], world = null, tray = null, raf = 0, last = 0;
   var drag = null, cand = null, timer = null, sx = 0, sy = 0, lx = 0, ly = 0, scr = null;
 
   var st = document.createElement('style');
   st.textContent =
-    '.rt-shuf,.rt-undo{margin-left:6px}.rt-shuf.on{background:var(--gold,#D6D8DC);color:#1B2130;font-weight:800}' +
+    '.rt-shuf,.rt-undo,.rt-swap{margin-left:6px}.rt-swap.on{background:var(--gold,#D6D8DC);color:#1B2130;font-weight:800}.rt-shuf.on{background:var(--gold,#D6D8DC);color:#1B2130;font-weight:800}' +
     '.rt-shuf-hint{display:none;width:100%;font-size:11.5px;color:var(--gold-soft,#D6D8DC);margin-top:6px;line-height:1.5}' +
     'body.roster-shuffle .rt-shuf-hint{display:block}' +
     'body.roster-shuffle{padding-bottom:140px}' +
@@ -21024,6 +21024,15 @@ window.hsiaFs = function(wrap, on, onExit){
     '#shufWorld{position:fixed;left:0;top:0;width:100%;height:100%;z-index:99980;pointer-events:none}' +
     '.shuf-gpill{position:absolute;left:0;top:0;pointer-events:auto;touch-action:none;padding:6px 12px;border-radius:10px;background:linear-gradient(135deg,#ffcf5c,#ffb020);color:#1B2130;font:700 13px "Space Grotesk",sans-serif;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.45);user-select:none;-webkit-user-select:none;cursor:grab;will-change:transform}';
   document.head.appendChild(st);
+
+  var st2 = document.createElement('style');
+  st2.textContent =
+    '#shufTray{pointer-events:auto!important;height:' + TRAY_H + 'px!important;display:flex;flex-direction:column;box-sizing:border-box;padding:6px 10px 8px;background:rgba(24,26,32,.98)!important;border-top:2px solid rgba(214,216,220,.5)!important}' +
+    '#shufTray.over{background:rgba(52,55,64,.99)!important;border-top-color:var(--gold,#D6D8DC)!important}' +
+    '.shuf-thead{flex:0 0 auto;font:700 11px "Space Grotesk",sans-serif;letter-spacing:.03em;color:var(--gold-soft,#D6D8DC);padding:2px 2px 6px}' +
+    '.shuf-tlist{flex:1 1 auto;overflow-y:auto;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;-webkit-overflow-scrolling:touch}' +
+    '.shuf-gpill{position:static!important;transform:none!important;left:auto!important;top:auto!important;pointer-events:auto;touch-action:none;padding:7px 13px;border-radius:999px;background:rgba(214,216,220,.18)!important;color:var(--text,#F0F1F3)!important;border:1px solid rgba(214,216,220,.5);box-shadow:none!important;font:700 13px "Space Grotesk",sans-serif;white-space:nowrap;-webkit-user-select:none;user-select:none}';
+  document.head.appendChild(st2);
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
   function msg(t){ try{ flashRosterSaved(t); }catch(e){} }
@@ -21049,69 +21058,33 @@ window.hsiaFs = function(wrap, on, onExit){
   }
   Object.keys(TB).forEach(function(id){ var tb = document.getElementById(id); if(tb) new MutationObserver(decorate).observe(tb, { childList:true }); });
 
-  /* ---------- ground + physics ---------- */
+  /* ---------- ground: an organised tray (sorted A-Z, wraps, scrolls) - no physics ---------- */
+  var tlist = null, thead = null;
+  function refreshTray(){
+    if(!tlist) return;
+    bodies.sort(function(a, b){ return a.name.localeCompare(b.name, 'en', { sensitivity:'base' }); });
+    bodies.forEach(function(b){ tlist.appendChild(b.el); });
+    thead.textContent = bodies.length ? '\u2B07 GROUND \u00b7 ' + bodies.length + ' name' + (bodies.length > 1 ? 's' : '') + ' (A\u2013Z) \u2014 press & drag a name onto a position' : '\u2B07 GROUND \u2014 empty. A name removed from a position waits here';
+  }
   function ensureWorld(){
-    if(world) return;
-    tray = document.createElement('div'); tray.id = 'shufTray'; tray.textContent = '🧺 GROUND — নাম এখানে ছাড়লে পড়ে থাকবে · তুলে অন্য ঘরে বসান';
-    world = document.createElement('div'); world.id = 'shufWorld';
-    document.body.appendChild(tray); document.body.appendChild(world);
+    if(tray) return;
+    tray = document.createElement('div'); tray.id = 'shufTray';
+    thead = document.createElement('div'); thead.className = 'shuf-thead';
+    tlist = document.createElement('div'); tlist.className = 'shuf-tlist';
+    tray.appendChild(thead); tray.appendChild(tlist); document.body.appendChild(tray);
+    world = tray; refreshTray();
   }
   function destroyWorld(){
     bodies.forEach(function(b){ if(b.el.parentNode) b.el.remove(); }); bodies = [];
-    if(world) world.remove(); if(tray) tray.remove(); world = tray = null;
-    if(raf){ cancelAnimationFrame(raf); raf = 0; }
+    if(tray) tray.remove(); world = tray = tlist = thead = null;
   }
-  function draw(b){ b.el.style.transform = 'translate(' + (b.x - b.w/2) + 'px,' + (b.y - b.h/2) + 'px) rotate(' + b.a + 'rad)'; }
-  function wake(){ bodies.forEach(function(b){ b.sleep = false; b.rest = 0; }); if(!raf && world){ last = performance.now(); raf = requestAnimationFrame(loop); } }
-  function spawn(name, x, y, vx){
+  function draw(){}
+  function wake(){}
+  function spawn(name){
     ensureWorld();
-    var el = document.createElement('div'); el.className = 'shuf-gpill'; el.textContent = name; world.appendChild(el);
-    var b = { el:el, name:name, x:x, y:y, w:el.offsetWidth, h:el.offsetHeight, vx:(vx == null ? (Math.random() - .5) * 260 : vx), vy:0, a:0, va:(Math.random() - .5) * 8, tilt:(Math.random() - .5) * .18, sleep:false, rest:0, gr:false };
-    bodies.push(b); draw(b); wake(); return b;
+    var el = document.createElement('div'); el.className = 'shuf-gpill'; el.textContent = name;
+    var b = { el:el, name:name }; bodies.push(b); refreshTray(); return b;
   }
-  function step(dt){
-    var W = window.innerWidth, floor = window.innerHeight - 6, i, j;
-    bodies.forEach(function(b){
-      if(b.sleep) return;
-      b.vy += G * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.a += b.va * dt; b.gr = false;
-      if(b.x - b.w/2 < 0){ b.x = b.w/2; b.vx = Math.abs(b.vx) * .4; }
-      if(b.x + b.w/2 > W){ b.x = W - b.w/2; b.vx = -Math.abs(b.vx) * .4; }
-      if(b.y + b.h/2 > floor){ b.y = floor - b.h/2; b.vy = b.vy > 140 ? -b.vy * .32 : 0; b.vx *= .9; b.va *= .86; b.gr = true; }
-    });
-    for(var pass = 0; pass < 2; pass++){
-      for(i = 0; i < bodies.length; i++){
-        for(j = i + 1; j < bodies.length; j++){
-          var a = bodies[i], b = bodies[j]; if(a.sleep && b.sleep) continue;
-          var dx = b.x - a.x, dy = b.y - a.y, px = (a.w + b.w)/2 - Math.abs(dx), py = (a.h + b.h)/2 - Math.abs(dy);
-          if(px <= 0 || py <= 0) continue;
-          a.sleep = b.sleep = false; a.rest = b.rest = 0;
-          var s, h, rv, jj;
-          if(py < px){
-            s = dy >= 0 ? 1 : -1; h = py / 2; a.y -= s * h; b.y += s * h;
-            rv = (b.vy - a.vy) * s; if(rv < 0){ jj = -rv * 1.3 / 2; a.vy -= s * jj; b.vy += s * jj; }
-            a.vx *= .97; b.vx *= .97; a.va *= .9; b.va *= .9;
-            if(s > 0) a.gr = true; else b.gr = true;
-          } else {
-            s = dx >= 0 ? 1 : -1; h = px / 2; a.x -= s * h; b.x += s * h;
-            rv = (b.vx - a.vx) * s; if(rv < 0){ jj = -rv * 1.3 / 2; a.vx -= s * jj; b.vx += s * jj; }
-          }
-        }
-      }
-    }
-    bodies.forEach(function(b){
-      if(b.sleep) return;
-      if(b.gr) b.a += (b.tilt - b.a) * Math.min(1, dt * 10);
-      if(b.gr && Math.abs(b.vx) < 14 && Math.abs(b.vy) < 24){ b.rest += dt; if(b.rest > .45){ b.sleep = true; b.vx = b.vy = b.va = 0; } } else b.rest = 0;
-    });
-  }
-  function loop(t){
-    raf = 0; if(!world) return;
-    var dt = Math.min(.033, ((t - last) / 1000) || .016); last = t;
-    for(var k = 0; k < 3; k++) step(dt / 3);
-    bodies.forEach(draw);
-    if(bodies.some(function(b){ return !b.sleep; })) raf = requestAnimationFrame(loop);
-  }
-  window.addEventListener('resize', function(){ wake(); });
 
   /* ---------- undo snapshots ---------- */
   function snapshot(extraName){
@@ -21132,8 +21105,11 @@ window.hsiaFs = function(wrap, on, onExit){
 
   /* ---------- mode switch + buttons ---------- */
   function sync(){
+    if(!on) swapMode = false;
     document.body.classList.toggle('roster-shuffle', on);
-    Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf'), function(b){ b.classList.toggle('on', on); b.textContent = on ? '✔ Shuffle ON' : '⇅ Shuffle'; });
+    Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf'), function(b){ b.classList.toggle('on', on && !swapMode); b.textContent = (on && !swapMode) ? '✔ Shuffle ON' : '⇅ Shuffle'; });
+    Array.prototype.forEach.call(document.querySelectorAll('.rt-swap'), function(b){ var o = on && swapMode; b.classList.toggle('on', o); b.textContent = o ? '\u21c4 Swap ON' : '\u21c4 Swap'; });
+    Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf-hint'), function(h){ h.textContent = swapMode ? 'Swap \u09ae\u09cb\u09a1: \u09a8\u09be\u09ae \u099a\u09c7\u09aa\u09c7 \u09a7\u09b0\u09c7 \u0985\u09a8\u09cd\u09af \u0998\u09b0\u09c7 \u099b\u09be\u09a1\u09bc\u09c1\u09a8 \u2014 \u09a6\u09c1\u099c\u09a8\u09c7\u09b0 \u099c\u09be\u09df\u0997\u09be \u0985\u09a6\u09b2\u09ac\u09a6\u09b2 \u09b9\u09ac\u09c7 (\u09b6\u09bf\u09ab\u099f/\u09b8\u09be\u09b0\u09bf \u09af\u09be\u0987 \u09b9\u09cb\u0995)\u0964 \u0996\u09be\u09b2\u09bf \u0998\u09b0\u09c7 \u099b\u09be\u09a1\u09bc\u09b2\u09c7 \u09a8\u09be\u09ae\u099f\u09be \u09b8\u09b0\u09c7 \u09af\u09be\u09ac\u09c7\u0964 \u09b6\u09c7\u09b7\u09c7 Save \u099a\u09be\u09aa\u09c1\u09a8\u0964' : (h.getAttribute('data-sh') || h.textContent); });
     Array.prototype.forEach.call(document.querySelectorAll('.rt-undo'), function(b){ b.style.display = (on && undo.length) ? '' : 'none'; });
     if(on){
       try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
@@ -21149,6 +21125,7 @@ window.hsiaFs = function(wrap, on, onExit){
     var u = document.createElement('button'); u.type = 'button'; u.className = 'rt-undo'; u.textContent = '↶ Undo'; u.style.display = 'none';
     var h = document.createElement('div'); h.className = 'rt-shuf-hint';
     h.textContent = 'Shuffle চালু: নাম একটু চেপে ধরে অন্য ঘরে ছাড়ুন। ঘরে আগে থেকে নাম থাকলে সে নিচের Ground-এ পড়ে যাবে — সেখান থেকে তুলে অন্য ঘরে বসান। Stand by / Training / OJTI-র নামও টানা যায়। শেষে Save।';
+    var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'rt-swap'; sw.textContent = '\u21c4 Swap'; h.setAttribute('data-sh', h.textContent);
     box.appendChild(b); box.appendChild(u); box.appendChild(h);
   });
   document.addEventListener('click', function(e){
@@ -21158,7 +21135,8 @@ window.hsiaFs = function(wrap, on, onExit){
       if(!confirm('Ground-এ এখনো কোথাও বসানো হয়নি: ' + names + '\n\nOK = এঁদের ছাড়াই Save (রোস্টার থেকে বাদ যাবেন)\nCancel = ফিরে গিয়ে বসান')){ e.stopImmediatePropagation(); e.preventDefault(); }
       return;
     }
-    var b = e.target.closest && e.target.closest('.rt-shuf'); if(b){ if(!on && !requireRosterAuth()) return; on = !on; sync(); return; }
+    var b = e.target.closest && e.target.closest('.rt-shuf'); if(b){ if(!on && !requireRosterAuth()) return; if(on && !swapMode) on = false; else { on = true; swapMode = false; } sync(); return; }
+    var swb = e.target.closest && e.target.closest('.rt-swap'); if(swb){ if(!on && !requireRosterAuth()) return; if(on && swapMode) on = false; else { on = true; swapMode = true; } sync(); return; }
     var u = e.target.closest && e.target.closest('.rt-undo'); if(!u) return;
     var x = undo.pop(); if(!x) return; restore(x); sync(); msg('Undo done');
   }, true);
@@ -21206,7 +21184,7 @@ window.hsiaFs = function(wrap, on, onExit){
     if(pill){
       var bi = -1; bodies.forEach(function(b, i){ if(b.el === pill) bi = i; });
       if(bi < 0) return;
-      var b = bodies.splice(bi, 1)[0]; b.el.remove(); wake();
+      var b = bodies.splice(bi, 1)[0]; b.el.remove(); refreshTray();
       begin({ kind:'ground', name:b.name }, x, y); return;
     }
     var chip = target.closest('.shuf-chip');
@@ -21220,7 +21198,7 @@ window.hsiaFs = function(wrap, on, onExit){
       var nm = String((d[ri] && d[ri].names[ci]) || '').trim(); if(!nm) return;
       cand = { kind:'cell', id:id, ri:ri, ci:ci, name:nm, el:td };
     }
-    timer = setTimeout(function(){ if(!cand) return; var it = cand; cand = null; timer = null; begin(it, sx, sy); }, HOLD);
+    timer = setTimeout(function(){ if(!cand) return; var it = cand; cand = null; timer = null; begin(it, sx, sy); }, swapMode ? 170 : HOLD);
   }
   function move(x, y){
     lx = x; ly = y;
@@ -21240,14 +21218,15 @@ window.hsiaFs = function(wrap, on, onExit){
   function commit(item, t, x, y){
     if(!t){ if(item.kind === 'ground') spawn(item.name, x, y, 0); return; }
     if(item.kind === 'cell' && t.type === 'cell' && t.id === item.id && t.ri === item.ri && t.ci === item.ci) return;
-    var snap = snapshot(item.kind === 'ground' ? item.name : null), touched = {}, fall = [], d;
+    var swapped = '', snap = snapshot(item.kind === 'ground' ? item.name : null), touched = {}, fall = [], d;
     function dat(id){ touched[id] = 1; return TB[id].data(); }
     if(item.kind === 'cell'){ d = dat(item.id); d[item.ri].names[item.ci] = ''; }
     else if(item.kind === 'list'){ d = dat(item.id); var a0 = clean(arrOf(d, item.key)); a0.splice(item.idx, 1); setArr(d, item.key, a0); }
     if(t.type === 'cell'){
       d = dat(t.id); var row = d[t.ri], occ = String((row.names[t.ci]) || '').trim();
       row.names[t.ci] = item.name;
-      if(occ){ var r = t.node.getBoundingClientRect(); fall.push({ n:occ, x:r.left + r.width / 2, y:r.top + r.height / 2 }); }
+      if(occ && swapMode && item.kind === 'cell'){ dat(item.id)[item.ri].names[item.ci] = occ; swapped = occ; }
+      else if(occ){ var r = t.node.getBoundingClientRect(); fall.push({ n:occ, x:r.left + r.width / 2, y:r.top + r.height / 2 }); }
     } else if(t.type === 'list'){
       d = dat(t.id); var a1 = clean(arrOf(d, t.key));
       var same = item.kind === 'list' && item.id === t.id && item.key === t.key;
@@ -21262,6 +21241,7 @@ window.hsiaFs = function(wrap, on, onExit){
     sync();
     var tail = fall.length && t.type === 'cell' ? fall[0].n + ' → Ground' : '';
     msg(item.name + ' সরানো হয়েছে' + (tail ? ' · ' + tail : '') + ' — শেষে Save চাপুন');
+    if(swapped) msg(item.name + ' \u21c4 ' + swapped + ' \u2014 swapped, press Save');
   }
   document.addEventListener('touchstart', function(e){ var t = e.touches[0]; if(t && on) down(t.clientX, t.clientY, e.target); }, { passive:true });
   document.addEventListener('touchmove', function(e){ var t = e.touches[0]; if(!t || !on) return; if(drag) e.preventDefault(); move(t.clientX, t.clientY); }, { passive:false });
