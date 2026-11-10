@@ -2331,14 +2331,21 @@ table.roster-table .roster-standby-label{ padding:10px 10px; color:var(--gold-so
 .rsp-sp{ color:#2a1100; background:linear-gradient(135deg,#ff9a47,#ff6a00); }
 .rsp-h1{ color:#0b1830; background:linear-gradient(135deg,#7cc0ff,#409cff); }
 .rsp-h2{ color:#fff; background:linear-gradient(135deg,#d3a3ff,#b066ff); }
-/* Training row (Aerodrome Assistant): minimised by default, tap the label to open */
-.roster-training-toggle{ cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; }
-.roster-training-toggle .rt-caret{ font-size:11px; opacity:.8; margin-left:4px; }
-.roster-training-sum{ padding:8px 10px; font-size:11.5px; color:var(--muted); text-align:center; cursor:pointer; }
-tr.roster-training-row:not(.open) .roster-training-input{ display:none; }
-tr.roster-training-row.open .roster-training-sum{ display:none; }
-body.roster-editing tr.roster-training-row .roster-training-input{ display:block !important; }
-body.roster-editing tr.roster-training-row .roster-training-sum{ display:none !important; }
+/* Fold rows (Stand by / Training / single-column rows e.g. Extended Leave): thin and minimised by default, tap the label to open */
+tr.roster-fold-row td.roster-pos{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+tr.roster-fold-row td.roster-pos::after{ content:'\25B8'; position:absolute; right:9px; top:50%; transform:translateY(-50%); font-size:11px; opacity:.75; color:var(--gold-soft); pointer-events:none; }
+tr.roster-fold-row.open td.roster-pos::after{ content:'\25BE'; }
+body.roster-editing tr.roster-fold-row td.roster-pos::after{ display:none; }
+tr.roster-fold-row .roster-standby-label{ padding:7px 26px 7px 10px; font-size:12.5px; line-height:1.25; }
+tr.roster-fold-row td.roster-pos .roster-pos-input{ min-height:0; padding:7px 26px 7px 10px; line-height:1.25; }
+.roster-fold-sum{ padding:6px 10px; font-size:11px; line-height:1.25; color:var(--muted); text-align:center; cursor:pointer; }
+tr.roster-fold-row.open .roster-fold-sum{ display:none; }
+tr.roster-fold-row:not(.open) .rsb-view, tr.roster-fold-row:not(.open) .sb-xchips{ display:none; }
+.rsb-view{ display:flex; flex-wrap:wrap; justify-content:center; gap:5px; padding:6px 6px; }
+.rsb-box{ border:1px solid var(--border); border-radius:6px; background:var(--panel); padding:3px 9px; font-weight:700; font-size:12px; line-height:1.3; color:var(--text); }
+body:not(.roster-editing) tr.roster-fold-row textarea.roster-standby-input{ display:none !important; }
+body.roster-editing .roster-fold-sum, body.roster-editing .rsb-view{ display:none !important; }
+body.roster-editing tr.roster-fold-row textarea.roster-standby-input{ display:block; }
 table.roster-table input[readonly]{ pointer-events:none; -webkit-user-select:none; user-select:none; }
 /* feedback while tapping a name 5 times in a row */
 table.roster-table td.roster-tap-hint{ box-shadow:inset 0 0 0 2px var(--gold); background:rgba(246,200,76,0.14); }
@@ -10125,11 +10132,20 @@ function standbyOf(data){ return (data && data[0] && Array.isArray(data[0].stand
 function standbyTableKeys(){ return ['roster','rosterCtrl']; }
 /* Training row (Aerodrome Assistant only): staff who are away on training, not on duty. Kept on the first roster row (data[0].training) like Stand by. */
 function trainingOf(data){ return (data && data[0] && Array.isArray(data[0].training)) ? data[0].training.filter(x=> String(x || '').trim()) : []; }
+/* Fold rows (Stand by / Training / every single-column row such as Extended Leave): minimised by default (thin row),
+   tap the label to open. Names are shown as boxes (one box per person), not as comma text. While editing they are always open. */
+window._rowOpen = window._rowOpen || {};
+function foldRowHtml(tableKey, key, posCellHtml, list, taHtml, extraCls, label){
+  const open = !!window._rowOpen[key];
+  const boxes = list.length ? '<div class="rsb-view">' + list.map(n=> '<span class="rsb-box">' + _xEsc(String(n).trim()) + '</span>').join('') + '</div>' : '';
+  const sum = '<div class="roster-fold-sum">' + (list.length ? list.length + (list.length > 1 ? ' people' : ' person') + ' \u00b7 tap to show' : 'No one \u00b7 tap to open') + '</div>';
+  return `<tr class="roster-standby-row roster-fold-row${extraCls ? ' ' + extraCls : ''}${open ? ' open' : ''}" data-fold="${key}"><td class="roster-pos">${posCellHtml}</td><td class="roster-standby-cell" colspan="${TEAMS.length}">${sum}${boxes}${taHtml}${sbChipsHtml(tableKey, label)}</td></tr>`;
+}
 function trainingRowHtml(tableKey, data){
   if(tableKey !== 'roster' || !data || !data.length) return '';
   const list = trainingOf(data), txt = list.join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const open = !!window._trainingOpen;
-  return `<tr class="roster-standby-row roster-training-row${open ? ' open' : ''}"><td class="roster-pos"><div class="roster-standby-label roster-training-toggle" role="button" tabindex="0" title="Show / hide Training">Training<span class="rt-caret">${open ? '▾' : '▸'}</span></div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><div class="roster-training-sum">${list.length ? list.length + ' staff on training · tap to show' : 'No one · tap to open'}</div><textarea class="roster-standby-input roster-training-input" rows="${Math.max(1, Math.ceil(txt.length / 38))}" placeholder="Training names (comma separated)" autocomplete="off" readonly>${txt}</textarea>${sbChipsHtml(tableKey, 'Training')}</td></tr>`;
+  return foldRowHtml(tableKey, 'training', '<div class="roster-standby-label">Training</div>', list,
+    `<textarea class="roster-standby-input roster-training-input" rows="${Math.max(1, Math.ceil(txt.length / 38))}" placeholder="Training names (comma separated)" autocomplete="off" readonly>${txt}</textarea>`, 'roster-training-row', 'Training');
 }
 /* OJTI row (Controllers only): not tied to any A-E shift, so it is ONE merged cell like Stand by.
    Names are kept on the row itself (row.pool) so they travel with the normal roster sync / backup. */
@@ -10165,7 +10181,9 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       if(_isOj && adminRowHtml) adminPlaced = true;
       const pTxt = poolOf(row).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
       const pPos = (row.pos || '').replace(/"/g,'&quot;');
-      return (_isOj ? adminRowHtml : '') + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea>${sbChipsHtml(tableKey, row.pos)}</td></tr>`;
+      const _poolTa = `<textarea class="roster-standby-input roster-pool-input" data-ri="${ri}" rows="${Math.max(1, Math.ceil(pTxt.length / 38))}" placeholder="${pPos} names (comma separated)" autocomplete="off" readonly>${pTxt}</textarea>`;
+      if(!_isOj) return foldRowHtml(tableKey, 'pool:' + ri, `<input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly>`, poolOf(row), _poolTa, 'roster-pool-row', row.pos);
+      return adminRowHtml + `<tr class="roster-standby-row roster-pool-row"><td class="roster-pos"><input class="roster-pos-input" type="text" value="${pPos}" data-ri="${ri}" autocomplete="off" readonly></td><td class="roster-standby-cell" colspan="${TEAMS.length}">${_poolTa}${sbChipsHtml(tableKey, row.pos)}</td></tr>`;
     }
     const cells = TEAMS.map((t, ci)=>{
       const _rp = _rrPlan(ci), _rs = _rp ? _rp[row.pos] : null;
@@ -10219,7 +10237,8 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   }).join('');
   if(tableKey && standbyTableKeys().indexOf(tableKey) !== -1 && data.length){
     const sbTxt = standbyOf(data).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    tbody.innerHTML += `<tr class="roster-standby-row"><td class="roster-pos"><div class="roster-standby-label">Stand by</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea>${sbChipsHtml(tableKey, 'Stand by')}</td></tr>`
+    tbody.innerHTML += foldRowHtml(tableKey, 'standby', '<div class="roster-standby-label">Stand by</div>', standbyOf(data),
+        `<textarea class="roster-standby-input" rows="${Math.max(1, Math.ceil(sbTxt.length / 38))}" placeholder="Stand by names (comma separated)" autocomplete="off" readonly>${sbTxt}</textarea>`, '', 'Stand by')
       + trainingRowHtml(tableKey, data)
       + ((adminRowHtml && !adminPlaced) ? adminRowHtml : '');
     const sbEl = tbody.querySelector('.roster-standby-input:not(.roster-pool-input):not(.roster-admin-input):not(.roster-training-input)');   /* NOT the OJTI box (it shares the class and sits above) */
@@ -10236,18 +10255,19 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
     trEl.rows = Math.max(1, Math.ceil(trEl.value.length / 38));
     onChange(data);
   });
-  if(!tbody._trainingBound){
-    tbody._trainingBound = true;   /* JS-only flag, see attachLongPressForRoster */
+  if(!tbody._foldBound){
+    tbody._foldBound = true;   /* JS-only flag, see attachLongPressForRoster */
     const _flip = e=>{
-      const t = e.target.closest ? e.target.closest('.roster-training-toggle, .roster-training-sum') : null;
+      if(document.body.classList.contains('roster-editing')) return;   /* while editing every fold row is open */
+      const t = e.target.closest ? e.target.closest('tr.roster-fold-row td.roster-pos, tr.roster-fold-row .roster-fold-sum') : null;
       if(!t) return;
-      const tr = t.closest('tr.roster-training-row'); if(!tr) return;
-      window._trainingOpen = !tr.classList.contains('open');
-      tr.classList.toggle('open', window._trainingOpen);
-      const c = tr.querySelector('.rt-caret'); if(c) c.textContent = window._trainingOpen ? '▾' : '▸';
+      const tr = t.closest('tr.roster-fold-row'); if(!tr) return;
+      const k = tr.getAttribute('data-fold');
+      window._rowOpen[k] = !tr.classList.contains('open');
+      tr.classList.toggle('open', window._rowOpen[k]);
     };
     tbody.addEventListener('click', _flip);
-    tbody.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' '){ if(e.target.closest && e.target.closest('.roster-training-toggle')){ e.preventDefault(); _flip(e); } } });
+    tbody.addEventListener('keydown', e=>{ if(e.key === 'Enter' || e.key === ' '){ if(e.target.closest && e.target.closest('tr.roster-fold-row td.roster-pos') && !document.body.classList.contains('roster-editing')){ e.preventDefault(); _flip(e); } } });
   }
 
   const adEl = tbody.querySelector('.roster-admin-input');
@@ -11126,7 +11146,7 @@ function initRoster(){
       if(requireRosterAuth()){
         try{ if(window.hsiaTHMRShowEdit) window.hsiaTHMRShowEdit(); }catch(e){}
         document.body.classList.add('roster-editing');
-        flashRosterSaved('এডিট মোড চালু হয়েছে — এখন ঘরে ক্লিক করে পরিবর্তন করুন');
+        flashRosterSaved('এডিট মোড চালু — নাম চেপে ধরে টানুন, লিখতে ঘরে ডাবল ট্যাপ। উপরে ✎ = কীবোর্ডে লেখা, ⇅ = শুধু শাফল');
       }
     });
   }
@@ -21001,7 +21021,7 @@ window.hsiaFs = function(wrap, on, onExit){
     rosterBodyRowsComm: { data:function(){ return ROSTER_COMM; }, save:function(d){ saveRosterComm(d); }, render:function(){ renderRosterComm(); } }
   };
   var TRAY_H = 130, HOLD = 380, MOVE = 10, G = 2600;
-  var swapMode = false, on = false, undo = [], bodies = [], world = null, tray = null, raf = 0, last = 0;
+  var swapMode = false, on = false, mode = 'drag', undo = [], bodies = [], world = null, tray = null, raf = 0, last = 0;
   var drag = null, cand = null, timer = null, sx = 0, sy = 0, lx = 0, ly = 0, scr = null;
 
   var st = document.createElement('style');
@@ -21039,6 +21059,17 @@ window.hsiaFs = function(wrap, on, onExit){
     'body.roster-shuffle .roster-table .roster-name-input.shuf-typing{pointer-events:auto!important;-webkit-user-select:text!important;user-select:text!important}' +
     '.shuf-gpill{position:static!important;transform:none!important;left:auto!important;top:auto!important;pointer-events:auto;touch-action:none;padding:7px 13px;border-radius:999px;background:rgba(214,216,220,.18)!important;color:var(--text,#F0F1F3)!important;border:1px solid rgba(214,216,220,.5);box-shadow:none!important;font:700 13px "Space Grotesk",sans-serif;white-space:nowrap;-webkit-user-select:none;user-select:none}';
   document.head.appendChild(st2);
+
+  var st3 = document.createElement('style');
+  st3.textContent =
+    'body:not(.roster-shuffle) #shufTray{display:none!important}' +
+    'body:not(.roster-shuffle) .shuf-chips{display:none!important}' +
+    '#rosterModeFab{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;z-index:99990;display:none;gap:10px;align-items:center}' +
+    '#rosterModeFab.show{display:flex}' +
+    '#rosterModeFab button{width:46px;height:46px;border-radius:50%;border:none;padding:0;display:flex;align-items:center;justify-content:center;background:#F4F5F7;color:#1B2130;box-shadow:0 4px 14px rgba(0,0,0,.45);cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+    '#rosterModeFab button.on{background:#2F6FED;color:#fff;box-shadow:0 0 0 3px rgba(47,111,237,.45),0 4px 14px rgba(0,0,0,.45)}' +
+    '#rosterModeFab svg{width:22px;height:22px;pointer-events:none}';
+  document.head.appendChild(st3);
 
   function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
   function msg(t){ try{ flashRosterSaved(t); }catch(e){} }
@@ -21111,18 +21142,21 @@ window.hsiaFs = function(wrap, on, onExit){
 
   /* ---------- mode switch + buttons ---------- */
   function sync(){
+    var editing = document.body.classList.contains('roster-editing');
     if(!on) swapMode = false;
     document.body.classList.toggle('roster-shuffle', on);
-    Array.prototype.forEach.call(document.querySelectorAll('.rt-shuf'), function(b){ b.classList.toggle('on', on && !swapMode); b.textContent = (on && !swapMode) ? '✔ Shuffle ON' : '⇅ Shuffle'; });
-    Array.prototype.forEach.call(document.querySelectorAll('.rt-swap'), function(b){ var o = on && swapMode; b.classList.toggle('on', o); b.textContent = o ? '\u21c4 Swap ON' : '\u21c4 Swap'; });
     Array.prototype.forEach.call(document.querySelectorAll('.rt-undo'), function(b){ b.style.display = (on && undo.length) ? '' : 'none'; });
     if(on){
       try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
       ensureWorld(); Object.keys(TB).forEach(function(id){ TB[id].render(); });   /* re-render so the chips appear */
       decorate();
     } else {
-      stopDrag(); destroyWorld();
-      try{ if(typeof rosterUnlocked !== 'undefined' && rosterUnlocked) unlockAllRosterInputs(); }catch(e){}
+      stopDrag();
+      if(!editing){ destroyWorld(); }
+      else {   /* keyboard (pen) mode: the Ground keeps its names (hidden), cells are typed into directly */
+        Object.keys(TB).forEach(function(id){ TB[id].render(); });
+        try{ unlockAllRosterInputs(); }catch(e){}
+      }
     }
   }
   Array.prototype.forEach.call(document.querySelectorAll('.roster-rowtools[data-tb]'), function(box){
@@ -21131,21 +21165,54 @@ window.hsiaFs = function(wrap, on, onExit){
     var h = document.createElement('div'); h.className = 'rt-shuf-hint';
     h.textContent = 'Shuffle চালু: নাম একটু চেপে ধরে অন্য ঘরে ছাড়ুন। ঘরে আগে থেকে নাম থাকলে সে নিচের Ground-এ পড়ে যাবে — সেখান থেকে তুলে অন্য ঘরে বসান। Stand by / Training / OJTI-র নামও টানা যায়। শেষে Save।';
     var sw = document.createElement('button'); sw.type = 'button'; sw.className = 'rt-swap'; sw.textContent = '\u21c4 Swap'; h.setAttribute('data-sh', h.textContent);
-    box.appendChild(b); box.appendChild(u); box.appendChild(h);
+    box.appendChild(u); box.appendChild(h);
   });
   document.addEventListener('click', function(e){
     var sv = e.target.closest && e.target.closest('#rosterSaveBtn');
-    if(sv && on && bodies.length){
+    if(sv && bodies.length && document.body.classList.contains('roster-editing')){
       var names = bodies.map(function(b){ return b.name; }).join(', ');
       if(!confirm('Ground-এ এখনো কোথাও বসানো হয়নি: ' + names + '\n\nOK = এঁদের ছাড়াই Save (রোস্টার থেকে বাদ যাবেন)\nCancel = ফিরে গিয়ে বসান')){ e.stopImmediatePropagation(); e.preventDefault(); }
       return;
     }
-    var b = e.target.closest && e.target.closest('.rt-shuf'); if(b){ if(!on && !requireRosterAuth()) return; if(on && !swapMode) on = false; else { on = true; swapMode = false; } sync(); return; }
-    var swb = e.target.closest && e.target.closest('.rt-swap'); if(swb){ if(!on && !requireRosterAuth()) return; if(on && swapMode) on = false; else { on = true; swapMode = true; } sync(); return; }
     var u = e.target.closest && e.target.closest('.rt-undo'); if(!u) return;
     var x = undo.pop(); if(!x) return; restore(x); sync(); msg('Undo done');
   }, true);
-  new MutationObserver(function(){ if(on && !document.body.classList.contains('roster-editing')){ on = false; undo = []; sync(); } }).observe(document.body, { attributes:true, attributeFilter:['class'] });
+  /* ---------- two floating buttons (top right): pen = type with the keyboard, shuffle = shuffle only.
+     Only one can be on; tapping the lit one turns it off. Neither on = default: hold a name to drag it, double-tap any cell to type. ---------- */
+  var fab = document.createElement('div'); fab.id = 'rosterModeFab';
+  fab.innerHTML = '<button type="button" id="rmfShuf" title="Shuffle only" aria-label="Shuffle only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg></button>' +
+    '<button type="button" id="rmfPen" title="Type with keyboard" aria-label="Type with keyboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>';
+  document.body.appendChild(fab);
+  function fabVis(){
+    var ref = document.getElementById('rosterSharedBars');
+    fab.classList.toggle('show', !!(document.body.classList.contains('roster-editing') && ref && ref.offsetParent !== null));
+  }
+  function applyUi(){
+    var p = document.getElementById('rmfPen'), h = document.getElementById('rmfShuf');
+    if(p) p.classList.toggle('on', mode === 'type');
+    if(h) h.classList.toggle('on', mode === 'shuf');
+    fabVis();
+  }
+  function setMode(m){
+    if(!document.body.classList.contains('roster-editing')) return;
+    if(drag) stopDrag();
+    mode = (mode === m) ? 'drag' : m;
+    on = (mode !== 'type'); swapMode = false;
+    applyUi(); sync();
+  }
+  fab.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('button'); if(!b) return;
+    e.preventDefault(); e.stopPropagation();
+    setMode(b.id === 'rmfPen' ? 'type' : 'shuf');
+  });
+  setInterval(fabVis, 500);
+  var wasEditing = false;
+  new MutationObserver(function(){
+    var ed = document.body.classList.contains('roster-editing');
+    if(ed === wasEditing) return;
+    wasEditing = ed; undo = []; mode = 'drag'; on = ed;   /* pen (Edit) pressed = default mode: drag + double-tap typing; Save = everything off */
+    applyUi(); sync();
+  }).observe(document.body, { attributes:true, attributeFilter:['class'] });
 
   /* ---------- drag engine ---------- */
   function resolve(x, y){
@@ -21251,26 +21318,25 @@ window.hsiaFs = function(wrap, on, onExit){
     if(swapped) msg(item.name + ' \u21c4 ' + swapped + ' \u2014 swapped, press Save');
   }
   var lastTouch = 0, tapS = null, lastTap = { td:null, t:0 };
-  function emptyCellOf(el){
+  function typeCellOf(el){
     var td = el && el.closest ? el.closest('td') : null; if(!td || !tbIdOf(td)) return null;
-    var inp = td.querySelector('.roster-name-input'); if(!inp || String(inp.value || '').trim() !== '') return null;
-    return td;
+    return td.querySelector('.roster-name-input, .roster-pos-input') ? td : null;   /* empty AND filled cells */
   }
   function startTyping(td){
-    var inp = td && td.querySelector('.roster-name-input'); if(!inp) return;
+    var inp = td && td.querySelector('.roster-name-input, .roster-pos-input'); if(!inp || inp.classList.contains('shuf-typing')) return;
     inp.classList.add('shuf-typing'); inp.readOnly = false;
     var done = function(){ inp.removeEventListener('blur', done); inp.classList.remove('shuf-typing'); inp.readOnly = true; };
     inp.addEventListener('blur', done);
     inp.addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); inp.blur(); } });
-    setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 0);
+    setTimeout(function(){ try{ inp.focus(); var n = inp.value.length; inp.setSelectionRange(n, n); }catch(e){} }, 0);
   }
-  document.addEventListener('dblclick', function(e){ if(!on) return; var td = emptyCellOf(e.target); if(td) startTyping(td); });
+  document.addEventListener('dblclick', function(e){ if(!on || mode !== 'drag') return; var td = typeCellOf(e.target); if(td) startTyping(td); });
   document.addEventListener('touchstart', function(e){ var t = e.touches[0]; lastTouch = Date.now(); if(t && on){ tapS = { x:t.clientX, y:t.clientY, t:Date.now(), el:e.target }; down(t.clientX, t.clientY, e.target); } }, { passive:true });
   document.addEventListener('touchmove', function(e){ var t = e.touches[0]; if(!t || !on) return; if(drag) e.preventDefault(); move(t.clientX, t.clientY); }, { passive:false });
   document.addEventListener('touchend', function(){
     lastTouch = Date.now();
     if(on && !drag && tapS && (Date.now() - tapS.t) < 350 && Math.abs(lx - tapS.x) < 14 && Math.abs(ly - tapS.y) < 14){
-      var td = emptyCellOf(tapS.el);
+      var td = (mode === 'drag') ? typeCellOf(tapS.el) : null;
       if(td){ if(lastTap.td === td && (Date.now() - lastTap.t) < 450){ lastTap.td = null; startTyping(td); } else lastTap = { td:td, t:Date.now() }; }
     }
     tapS = null;
