@@ -358,11 +358,11 @@ function loadRole(u){
   roleOff=function(){ a.off('value',ha); b.off('value',hb); };
 }
 function attach(u){
-  if(unsub){ try{ unsub(); }catch(e){} unsub=null; } P=undefined; Pready=false;
+  if(unsub){ try{ unsub(); }catch(e){} unsub=null; } P=undefined; Pready=false; window.__hsiaRegProfile=null;
   loadRole(u);
   if(!u||u.isAnonymous) return;
   clearDraft();
-  var r=ref('hsia_people/profiles/'+u.uid), h=function(s){ P=s.val(); if(P) db.prof[u.uid]=P; Pready=true; route(); };
+  var r=ref('hsia_people/profiles/'+u.uid), h=function(s){ P=s.val(); window.__hsiaRegProfile=P||null; try{ if(window.hsiaMeAuthRefresh) setTimeout(window.hsiaMeAuthRefresh,0); }catch(e){} if(P) db.prof[u.uid]=P; Pready=true; route(); };
   r.on('value',h,function(){ P=null; Pready=true; route(); }); unsub=function(){ r.off('value',h); };
   loadPics(u.uid);
 }

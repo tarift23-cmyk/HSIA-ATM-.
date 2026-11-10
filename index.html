@@ -16368,10 +16368,10 @@ function openRosterWindow(){
   // Me works only for a signed-in user (Google or manually registered); the chosen name is stored per account, on this device only
   const gSession = ()=>{
     try{ const x = loadAuthSession(); if(x && x.identifier) return x; }catch(e){}
-    // a signed-in admin (Google account verified by the database) counts as signed in too, even without the app's own login on this device
+    // a signed-in Firebase account counts as signed in too, even without the app's own login session on this device
     try{
       const u = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
-      if(u && !u.isAnonymous && u.email && typeof rosterUnlocked !== 'undefined' && rosterUnlocked) return { identifier:u.email, displayName:(u.displayName || u.email) };
+      if(u && !u.isAnonymous && u.email){ const rp = window.__hsiaRegProfile; return { identifier:u.email, displayName:((rp && rp.en) || u.displayName || u.email) }; }   /* any signed-in account (admin, registered user, Google) */
     }catch(e){}
     return null;
   };
@@ -16836,6 +16836,32 @@ function openRosterWindow(){
     btn.classList.toggle('on', !!on);
     if(on) renderMe();
   }
+  /* First time on this phone: the chosen name is only stored per account + device, so a normal user would never get their tab first.
+     Match the account's display name with the roster; use it only when exactly ONE person matches (Change in Me can still override). */
+  function autoPickMe(){
+    try{
+      if(loadMe()) return false;
+      const x = gSession(); if(!x) return false;
+      const all = everyone(); if(!all.length) return false;
+      const clean = t=> String(t || '').toLowerCase().replace(/[^a-z0-9\u0980-\u09ff\s]/g, ' ').replace(/\s+/g, ' ').trim();
+      let fu = null; try{ fu = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null; }catch(e){}
+      const rp = window.__hsiaRegProfile;
+      const dns = [x.displayName, rp && rp.en, fu && fu.displayName].map(clean).filter((v, i, a)=> v && v.indexOf('@') < 0 && a.indexOf(v) === i);
+      if(!dns.length) return false;
+      const skip = { ot:1, cl:1, el:1, off:1, leave:1, train:1 };
+      const hit = all.filter(r=>{
+        const rn = clean(r.name); if(!rn || skip[rn] || rn.replace(/[^a-z\u0980-\u09ff]/g, '').length < 3) return false;
+        const rt = rn.split(' ').filter(w=> !/^\d+$/.test(w));
+        return dns.some(dn=>{ if(rn === dn) return true; const dt = dn.split(' '); return rt.length > 0 && rt.every(w=> dt.indexOf(w) !== -1); });
+      });
+      if(!hit.length) return false;
+      const names = {}; hit.forEach(h=> names[norm(h.name)] = 1);
+      if(Object.keys(names).length !== 1) return false;
+      const m = hit[0];
+      saveMe({ name:m.name, table:m.table, team:m.team, pos:m.pos, auto:true });
+      return true;
+    }catch(e){ return false; }
+  }
   const _t0 = Date.now();
   const _hadMe = (function(){ try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.indexOf(ME_KEY + ':') === 0 && !/:[xm]$/.test(k)) return true; } }catch(e){} return false; })();
   /* Duty Roster tabs: the tab of the table the person defined in "Me" comes first (Controller -> Controllers first, Aerodrome Assistant -> that tab first ...);
@@ -16858,6 +16884,7 @@ function openRosterWindow(){
   function refreshAuth(){
     const ok = !!gSession();
     if(!ok && _hadMe && Date.now() - _t0 < 8000){ btn.style.display = ''; return; }   /* still loading the sign-in: do not hide the button for a moment */
+    if(ok && autoPickMe()) _tabOpened = false;
     if(ok && !_tabOpened){ _tabOpened = true; applyTabOrder(true); } else applyTabOrder(false);
     btn.style.display = ok ? '' : 'none';
     if(!ok){ if(window._rosterMeOn) setMe(false); const ov = document.getElementById('meOverlay'); if(ov) ov.classList.remove('show'); redrawWeek(); }
@@ -16869,12 +16896,12 @@ function openRosterWindow(){
     let n = 0, hooked = false;
     const iv = setInterval(()=>{
       n++;
+      if(n > 55 && n % 6) return;   /* after ~40 s keep checking, but only every ~4 s */
       try{
         if(!hooked && typeof firebase !== 'undefined' && firebase.auth){ hooked = true; firebase.auth().onAuthStateChanged(()=> setTimeout(refreshAuth, 400)); }
       }catch(e){}
       const ok = !!gSession();
       if(ok !== (btn.style.display !== 'none')) refreshAuth();
-      if(n > 55) clearInterval(iv);
     }, 700);
     ['visibilitychange','focus','pageshow','online'].forEach(t=> window.addEventListener(t, ()=> setTimeout(refreshAuth, 200)));
   })();
