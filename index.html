@@ -2553,6 +2553,20 @@ td.roster-vacant-cell .roster-name-input{
   text-decoration: line-through;
   text-decoration-color: rgba(245,66,73,0.85);
 }
+.roster-moved-cell{
+  background:rgba(150,98,58,0.26);
+  box-shadow: inset 0 0 0 2px #b07a4f, 0 0 12px rgba(176,122,79,0.55);
+  animation:none;
+}
+td.roster-moved-cell .roster-name-input{
+  opacity:0.7;
+  text-decoration-color:rgba(205,158,115,0.9);
+}
+.roster-vacant-badge.roster-moved-badge{
+  background:linear-gradient(135deg, #b98556, #7a4d2b);
+  box-shadow: 0 0 10px rgba(176,122,79,0.6);
+}
+.rsp-mv{ background:linear-gradient(135deg,#b98556,#7a4d2b); }
 .roster-vacant-badge{
   display:block;
   margin-top:2px;
@@ -10200,7 +10214,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       const _half = (ex && ex.nightHalf) ? String(ex.nightHalf) : '';
       const _split = !!(ex && _half && (ex.special || ex.vacant || ex.cl || _subTxt));
       const cellClassName = !ex ? '' : ex.special ? 'roster-sp-cell'
-        : ex.vacant ? 'roster-vacant-cell'
+        : ex.vacant ? (ex.moved ? 'roster-vacant-cell roster-moved-cell' : 'roster-vacant-cell')
         : ex.cl ? 'roster-vacant-cell'
         : _subTxt ? 'roster-exchange-cell'
         : _half === '1' ? 'roster-exchange-cell-night1'
@@ -10212,7 +10226,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
       const cellClass = cellClassName ? ` class="${cellClassName}${noSub ? ' roster-nosub' : ''}${tagHtml ? ' roster-has-tag' : ''}"` : '';
       const halfTag = ex && ex.nightHalf === '1' ? ' (1st Night)' : ex && ex.nightHalf === '2' ? ' (2nd Night)' : '';
       const badgeClassName = !ex ? '' : ex.special ? 'roster-sp-badge'
-        : ex.vacant ? 'roster-vacant-badge'
+        : ex.vacant ? (ex.moved ? 'roster-vacant-badge roster-moved-badge' : 'roster-vacant-badge')
         : ex.nightHalf === '1' ? 'roster-exchange-badge-night1'
         : ex.nightHalf === '2' ? 'roster-exchange-badge-night2'
         : (ex.cl && !ex.via) ? 'roster-vacant-badge'
@@ -10226,7 +10240,7 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
           : ex.special ? subEsc + ' · ' + exSpShort(ex.spType)
           : ex.cl ? 'CL · ' + subEsc
           : '🔄 ' + subEsc;
-        const _mainCls = ex.special ? 'rsp-sp' : (ex.vacant || ex.cl) ? 'rsp-cl' : 'rsp-ex';
+        const _mainCls = ex.special ? 'rsp-sp' : (ex.vacant && ex.moved) ? 'rsp-cl rsp-mv' : (ex.vacant || ex.cl) ? 'rsp-cl' : 'rsp-ex';
         _pill = `<div class="roster-split-pill" title="Original: ${origTitle}${halfTag} → ${_mainTxt.replace(/"/g,'&quot;')}"><span class="rsp-main ${_mainCls}">${_mainTxt}</span><span class="rsp-half ${_half === '1' ? 'rsp-h1' : 'rsp-h2'}">${_half === '1' ? '1st' : '2nd'}</span></div>`;
       }
       const badge = !ex ? '' : (viaEsc ? `<div class="roster-chain-old">${viaEsc}</div>` : '') + (_split ? _pill : `<div class="${badgeClassName}" title="Original: ${origTitle}${halfTag}">${badgeText}</div>`);

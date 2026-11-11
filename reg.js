@@ -102,7 +102,7 @@ function showPic(k){const d=np[k]||(pics[f._u]||{})[k];$('#pv'+k).style.backgrou
 const fld=(id,l,val,x)=>`<label>${l}<input id="${id}" value="${esc(val)}" ${x||''}></label>`;
 const picH=(k,u)=>`<div class="pic"><div class="pv" id="pv${k}"></div><div><b>${SPEC[k].n}${k==='a'?' (optional)':' *'}</b><div class="mut" id="pk${k}"></div><button type="button" class="g" data-k="${k}">Gallery</button><button type="button" class="g" data-k="${k}" data-c="1">Camera</button></div></div>`;
 const BG=()=>`<label>Blood group (optional)<select id="bg">${['','A+','A-','B+','B-','AB+','AB-','O+','O-'].map(x=>`<option value="${x}"${(f.bg||'')===x?' selected':''}>${x||'Select'}</option>`).join('')}</select></label>`;
-function fields(u){const su=v==='signup';return fld('bn','Name (Bangla) *',f.bn)+fld('en','Name (English) *',f.en)+`<label>Designation *<button type="button" class="in" id="ds">${esc(dName(f.des))||'Select designation \u25be'}</button></label>`+fld('ein','EIN number *',f.ein,man(u)?'readonly':'inputmode="numeric"')+fld('mail','Gmail'+(man(u)||su?' (optional)':''),f.mail,man(u)||su?'inputmode="email"':'readonly')+fld('ph','Phone number *',f.ph,'inputmode="tel"')+BG()+picH('p',u)+picH('a',u)}
+function fields(u){const su=v==='signup';return fld('bn','Name (Bangla) *',f.bn)+fld('en','Name (English) *',f.en)+`<label>Designation *<button type="button" class="in" id="ds">${esc(dName(f.des))||'Select designation \u25be'}</button></label>`+fld('ein','EIN number *',f.ein,man(u)?'readonly':'inputmode="numeric"')+fld('mail','Gmail *',f.mail,man(u)||su?'inputmode="email"':'readonly')+fld('ph','Phone number *',f.ph,'inputmode="tel"')+BG()+picH('p',u)+picH('a',u)}
 function bind(){var _bg=$('#bg'); if(_bg) _bg.onchange=function(e){ f.bg=e.target.value; saveDraft(); };
  ['bn','en','ein','ph','mail'].forEach(i=>$('#'+i).oninput=e=>{f[i]=e.target.value;saveDraft()});
  $('#ds').onclick=()=>{const o=document.createElement('div');o.className='ov';o.innerHTML='<div><div class="ttl">Select designation</div>'+db.fold.map(g=>`<div class="fh">${esc(g.n)}</div>`+g.posts.map(d=>`<div class="row" data-i="${d.id}">${esc(d.n)}</div>`).join('')).join('')+'</div>';R.appendChild(o);
@@ -113,7 +113,7 @@ function check(strict){const miss=[],bad=[];
  if(!f.en)miss.push('Name (English)');else if(!/[A-Za-z]{2}/.test(f.en))bad.push('Name (English)');
  if(!f.des)miss.push('Designation');
  f.ein=dn(f.ein||'').trim();if(!f.ein)miss.push('EIN number');else if(!/^\d{3,12}$/.test(f.ein))bad.push('EIN (digits only)');else if(Object.keys(db.prof).some(x=>x!==f._u&&db.prof[x].ein===f.ein))bad.push('EIN already registered');
- if(f.mail&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.mail))bad.push('Gmail');
+ f.mail=String(f.mail||'').trim();if(!f.mail)bad.push('Gmail is required');else if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.mail))bad.push('Gmail (invalid address)');
  f.ph=dn(f.ph||'').replace(/[\s-]/g,'');if(!f.ph)miss.push('Phone number');else if(!/^(\+?88)?01\d{9}$/.test(f.ph))bad.push('Phone (01XXXXXXXXX)');
  const o=pics[f._u]||{};if(!(np.p||o.p))miss.push('Passport photo');
  if(bad.length){alert('Please fix: '+bad.join(', '));return false}
