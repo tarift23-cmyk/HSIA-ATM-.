@@ -20919,9 +20919,12 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       paintPosRow();
     });
   }
-  var DL_TABS = [['rosterCtrlCol','Controllers'], ['rosterAsstCol','Aerodrome Assistant'], ['rosterCommCol','Communication']];
+  var DL_TABS = [['rosterCtrlCol','Controllers'], ['rosterAsstCol','Aerodrome Assistant'], ['rosterCommCol','Communication'], ['rosterTHCol#th','Traffic Hand'], ['rosterTHCol#mr','Marshaller']];
+  function tabOf(id){ return String(id).split('#')[0]; }
+  function partOf(id){ return String(id).split('#')[1] || ''; }
   function paintTabs(){
     var cur = tabBtn(), curId = cur ? cur.getAttribute('data-tab') : '';
+    if(curId === 'rosterTHCol') curId = 'rosterTHCol#th';   /* on the Traffic Hand tab only Traffic Hand is ticked; Marshaller is one tap away */
     $('rosterDlTabs').innerHTML = DL_TABS.map(function(t){
       return '<button type="button" class="rdl-tab' + (t[0] === curId ? ' on' : '') + '" data-tab="' + t[0] + '"><i></i>' + t[1] + '</button>';
     }).join('');
@@ -20948,6 +20951,97 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     }
     return cv;
   }
+
+  /* Traffic Hand & Marshaller tab: two small tables (columns = shifts A-E). Painted straight from the live DOM (cells, borders, text),
+     for the roster's selected date; the tab's own date box is set to that date while the picture is taken and put back afterwards. */
+  function thOpa(el, stop){ var o = 1; for(; el && el !== stop; el = el.parentElement){ var v = parseFloat(getComputedStyle(el).opacity); if(!isNaN(v)) o *= v; } return o; }
+  async function shotTH(k, part){
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    var thIn = $('thDate'), oldV = thIn ? thIn.value : null, di = dateInfo();
+    var hd1 = $('thHeadTH'), hd2 = $('thHeadMR');
+    if(!hd1 || !hd2) throw new Error('Traffic Hand table not found');
+    try{
+      if(thIn && window.hsiaTHMRRender){ thIn.value = di.iso; window.hsiaTHMRRender(); await frames(); }
+      var tbls = [[hd1.parentNode, 'Traffic Hand', 'th'], [hd2.parentNode, 'Marshaller', 'mr']];
+      tbls.forEach(function(t){ if(t[0].parentNode) t[0].parentNode.scrollLeft = 0; });
+      if(part) tbls = tbls.filter(function(t){ return t[2] === part; });   /* only the table that was picked */
+      await frames();
+      var ctrl = document.querySelector('#rosterCtrlCol table.roster-table'), meta = ctrl ? shiftMeta(ctrl) : [];
+      var single = k !== 'All', sel = single ? LET.indexOf(k) : -1, SWT = 230;
+      var rs = getComputedStyle(document.documentElement);
+      var textCol = (rs.getPropertyValue('--text') || '#F0F1F3').trim(), mutedCol = (rs.getPropertyValue('--muted') || '#8B909B').trim(), borderCol = (rs.getPropertyValue('--border') || '#454444').trim();
+      var head0 = tbls[0][0].querySelectorAll('thead th'), idx = single ? [sel] : [0,1,2,3,4], nx = [], nw = [], W = 0;
+      idx.forEach(function(ci, j){ var w = single ? SWT : head0[ci].getBoundingClientRect().width; nx.push(W); nw.push(w); W += w; });
+      var bannerH = single ? 88 : 54, LAB = 24, TG = 14, th = 0;
+      tbls.forEach(function(t){ th += LAB + t[0].getBoundingClientRect().height + TG; });
+      var cw = W + 2 * PAD, chh = PAD + bannerH + GAP + th + 16 + PAD;
+      var S = Math.max(1, Math.min(4, Math.floor(Math.sqrt(12e6 / (cw * chh))))); while(S > 1 && (cw * S > 9000 || chh * S > 16000)) S--;
+      var cv = document.createElement('canvas'); cv.width = Math.round(cw * S); cv.height = Math.round(chh * S);
+      var ctx = cv.getContext('2d', { alpha:false }); if(!ctx) throw new Error('canvas unavailable');
+      var bgc = null;
+      for(var p = tbls[0][0].parentElement; p && !bgc; p = p.parentElement){ var c0 = col(getComputedStyle(p).backgroundColor); if(c0 && c0.a > 0.95) bgc = c0; }
+      var bgs = bgc ? css(bgc) : '#171616';
+      ctx.fillStyle = bgs; ctx.fillRect(0, 0, cv.width, cv.height); ctx.scale(S, S);
+      function rr(x, y, w, h, r){ r = Math.max(0, Math.min(r, w / 2, h / 2)); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+      /* banner */
+      rr(PAD, PAD, W, bannerH, 14); ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = borderCol; ctx.stroke();
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = textCol; ctx.font = "700 20px 'Space Grotesk','Inter'" + BNF;
+      ctx.fillText(di.txt + ' · ' + di.day, PAD + 16, PAD + (single ? 26 : bannerH / 2));
+      if(single && meta[sel]){
+        var mm = meta[sel], label = 'Shift ' + mm.L + ' · ' + mm.bn, sc = shColor(mm.type);
+        ctx.font = "700 14px 'Space Grotesk','Inter'" + BNF; var pw = ctx.measureText(label).width + 26;
+        rr(PAD + 16, PAD + 46, pw, 28, 14); ctx.fillStyle = 'rgba(255,255,255,0.07)'; ctx.fill(); ctx.strokeStyle = sc; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.fillStyle = sc; ctx.fillText(label, PAD + 29, PAD + 60);
+      }
+      var y0 = PAD + bannerH + GAP;
+      tbls.forEach(function(t){
+        var tbl = t[0], T = tbl.getBoundingClientRect(), tcs = getComputedStyle(tbl), tbg = col(tcs.backgroundColor);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = textCol; ctx.font = "700 14px 'Space Grotesk','Inter'" + BNF;
+        ctx.fillText(t[1], PAD + 2, y0 + LAB / 2 - 2);
+        var ty = y0 + LAB;
+        ctx.save(); rr(PAD, ty, W, T.height, 10); ctx.clip();
+        if(tbg && tbg.a > 0){ ctx.fillStyle = css(tbg); ctx.fillRect(PAD, ty, W, T.height); }
+        Array.prototype.forEach.call(tbl.rows, function(tr){
+          idx.forEach(function(ci, j){
+            var cell = tr.cells[ci]; if(!cell) return;
+            var R = cell.getBoundingClientRect(), cs = getComputedStyle(cell), X = PAD + nx[j], Y = ty + (R.top - T.top), w = nw[j], h = R.height;
+            var bg = col(cs.backgroundColor); if(bg && bg.a > 0){ ctx.fillStyle = css(bg); ctx.fillRect(X, Y, w, h); }
+            parseShadows(cs.boxShadow).forEach(function(sh){ if(!sh.inset || !sh.c || !sh.spread) return; ctx.strokeStyle = css(sh.c); ctx.lineWidth = sh.spread; ctx.strokeRect(X + sh.spread / 2, Y + sh.spread / 2, w - sh.spread, h - sh.spread); });
+            var bb = parseFloat(cs.borderBottomWidth) || 0, bc = col(cs.borderBottomColor);
+            if(bb > 0 && cs.borderBottomStyle !== 'none' && bc){ ctx.fillStyle = css(bc); ctx.fillRect(X, Y + h - bb, w, bb); }
+            var br = parseFloat(cs.borderRightWidth) || 0, rc = col(cs.borderRightColor);
+            if(j < idx.length - 1 && br > 0 && cs.borderRightStyle !== 'none' && rc){ ctx.fillStyle = css(rc); ctx.fillRect(X + w - br, Y, br, h); }
+            var tw = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null), nd;
+            while((nd = tw.nextNode())){
+              var txt = nd.nodeValue.replace(/\s+/g, ' ').trim(); if(!txt) continue;
+              var el = nd.parentElement, ecs = getComputedStyle(el), rg = document.createRange(); rg.selectNodeContents(nd);
+              var rects = rg.getClientRects(); if(!rects.length) continue;
+              var rc0 = rects[0], tc = col(ecs.color); if(!tc) continue;
+              if(ecs.textTransform === 'uppercase') txt = txt.toUpperCase();
+              var al = thOpa(el, tbl.parentNode);
+              ctx.font = (ecs.fontStyle || 'normal') + ' ' + (ecs.fontWeight || 400) + ' ' + ecs.fontSize + ' ' + ecs.fontFamily;
+              try{ ctx.letterSpacing = (!ecs.letterSpacing || ecs.letterSpacing === 'normal') ? '0px' : ecs.letterSpacing; }catch(e){}
+              var tx = X + (rc0.left - R.left) + (w - R.width) / 2, tyy = Y + (rc0.top - R.top) + rc0.height / 2;
+              ctx.fillStyle = css(tc, al); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, tx, tyy + 0.5);
+              if((ecs.textDecorationLine || '').indexOf('line-through') >= 0){ var mw = ctx.measureText(txt).width; ctx.fillRect(tx, tyy, mw, 1); }
+              if(el.classList && el.classList.contains('rd-live')){ ctx.fillStyle = '#F54249'; ctx.beginPath(); ctx.arc(tx - 7, tyy, 3, 0, 6.2832); ctx.fill(); }
+            }
+          });
+        });
+        ctx.restore();
+        rr(PAD + 0.5, ty + 0.5, W - 1, T.height - 1, 10); ctx.lineWidth = 1; ctx.strokeStyle = borderCol; ctx.stroke();
+        y0 = ty + T.height + TG;
+      });
+      var tk = todayDateKey().split('-');
+      ctx.font = "11px 'Inter'" + BNF; ctx.fillStyle = mutedCol; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; try{ ctx.letterSpacing = '0px'; }catch(e){}
+      ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + W, chh - PAD - 4);
+      cv._cw = cw; cv._ch = chh; cv._S = S; cv._bg = bgs;
+      return cv;
+    }finally{
+      if(thIn && oldV != null && window.hsiaTHMRRender){ thIn.value = oldV; try{ window.hsiaTHMRRender(); }catch(e){} }
+    }
+  }
+  function shotFor(id, k){ return tabOf(id) === 'rosterTHCol' ? shotTH(k, partOf(id)) : shotCurrent(k); }
   /* several pictures stacked top-to-bottom in ONE canvas, each with its table name above it */
   function stackShots(shots){
     var rs = getComputedStyle(document.documentElement), textCol = (rs.getPropertyValue('--text') || '#F0F1F3').trim();
@@ -20976,8 +21070,9 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
   }
   function openDl(){
     if(!isAdmin() && !(window.hsiaIsSubMod && window.hsiaIsSubMod())){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
-    var tbl = curTable();
-    if(!tbl){ alert('এই ট্যাবের জন্য PNG ডাউনলোড নেই।\nController / Aerodrome Assistant / Communication ট্যাব খুলে আবার চাপুন।'); return; }
+    var tbl = curTable(), cb0 = tabBtn(), isTH = !!(cb0 && cb0.getAttribute('data-tab') === 'rosterTHCol');
+    if(!tbl && isTH) tbl = document.querySelector('#rosterCtrlCol table.roster-table');   /* shift colours for the picker come from the Controllers table */
+    if(!tbl){ alert('এই ট্যাবের জন্য PNG ডাউনলোড নেই।\nController / Aerodrome Assistant / Communication / Traffic Hand ট্যাব খুলে আবার চাপুন।'); return; }
     buildOverlay(); paintTabs();
     var di = dateInfo(), b = tabBtn(), meta = shiftMeta(tbl);
     $('rosterDlSub').textContent = (b ? b.textContent.trim() : 'Duty Roster') + ' · ' + di.txt + ' (' + di.day + ')';
@@ -21002,16 +21097,16 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       if(wasCollapsed){ card.classList.remove('collapsed'); await frames(); }
       var cv, slug;
       if(ids.length === 1 && ids[0] === origId){
-        cv = await shotCurrent(k);
+        cv = await shotFor(origId, k);
         var b = tabBtn(); slug = String(b ? b.textContent : 'Roster').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'Roster';
       }else{
         var shots = [], names = [];
         for(var i = 0; i < ids.length; i++){
           status('PNG বানানো হচ্ছে… (' + (i + 1) + '/' + ids.length + ')');
-          if(!gotoTab(ids[i])) continue;
+          if(!gotoTab(tabOf(ids[i]))) continue;
           await frames();
           var t = DL_TABS.filter(function(d){ return d[0] === ids[i]; })[0];
-          shots.push({ cv: await shotCurrent(k), name: t[1] }); names.push(t[1].replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+          shots.push({ cv: await shotFor(ids[i], k), name: t[1] }); names.push(t[1].replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, ''));
         }
         if(!shots.length) throw new Error('Table not found');
         cv = shots.length === 1 ? shots[0].cv : stackShots(shots);
