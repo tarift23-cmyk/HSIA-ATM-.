@@ -20479,6 +20479,15 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 .rdl-posbtn{ flex:1 1 0; border:1px solid var(--border); background:var(--panel-2); color:var(--text); border-radius:10px; padding:8px 6px; font:700 12px 'Space Grotesk',sans-serif; cursor:pointer; line-height:1.25; }
 .rdl-posbtn.active{ background:#cbd5e1; color:#1e293b; border-color:transparent; }
 .rdl-posbtn[disabled]{ opacity:.5; pointer-events:none; }
+.rdl-tabslab{ font-size:12px; color:var(--muted); margin:0 0 6px; }
+.rdl-tabslab small{ font-family:'Noto Sans Bengali','Inter',sans-serif; }
+.rdl-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+.rdl-tab{ flex:1 1 auto; border:1px solid var(--border); background:var(--panel-2); color:var(--muted); border-radius:10px; padding:8px 10px; font:700 12px 'Space Grotesk',sans-serif; cursor:pointer; display:flex; align-items:center; gap:6px; justify-content:center; line-height:1.2; }
+.rdl-tab i{ width:14px; height:14px; border-radius:4px; border:1.5px solid var(--muted); display:inline-block; flex:0 0 auto; position:relative; }
+.rdl-tab.on{ background:#cbd5e1; color:#1e293b; border-color:transparent; }
+.rdl-tab.on i{ border-color:#1e293b; background:#1e293b; }
+.rdl-tab.on i::after{ content:''; position:absolute; left:3px; top:0; width:4px; height:8px; border:solid #cbd5e1; border-width:0 2px 2px 0; transform:rotate(45deg); }
+.rdl-tab[disabled]{ opacity:.5; pointer-events:none; }
 </style>
 <script id="rosterDlJs">
 /* ================= Duty Roster: admin-only PNG download (All / shift A-E) =================
@@ -20798,6 +20807,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     var tk = todayDateKey().split('-');
     ctx.font = "11px 'Inter'" + BNF; ctx.fillStyle = mutedCol; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + total, PAD + bannerH + GAP + T.height + abH + 16);
+    cv._cw = cw; cv._ch = chh; cv._S = S; cv._bg = bgc ? css(bgc) : '#171616';
     return cv;
   }
 
@@ -20886,12 +20896,19 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     ov.className = 'modal-overlay'; ov.id = 'rosterDlOverlay'; ov.style.cssText = 'z-index:10005;padding:16px 8px;';
     ov.innerHTML = '<div class="modal-box" style="max-width:420px;"><div class="modal-header"><div class="modal-title">⬇ Roster PNG</div><button type="button" class="modal-close" id="rosterDlClose">✕</button></div>'
       + '<div class="rdl-sub" id="rosterDlSub"></div>'
+      + '<div class="rdl-tabslab">Tables <small>(একাধিক বেছে নিলে একটাই PNG হবে)</small></div><div class="rdl-tabs" id="rosterDlTabs"></div>'
       + '<div class="rdl-posrow" id="rosterDlPosRow"><button type="button" class="rdl-posbtn" data-pos="1">With main roster position<br><small>মেইন রোস্টারের পজিশন সহ</small></button><button type="button" class="rdl-posbtn" data-pos="0">Without main roster position<br><small>শুধু rearranged</small></button></div>'
       + '<div class="rdl-grid" id="rosterDlGrid"></div><div class="rdl-status" id="rosterDlStatus"></div></div>';
     document.body.appendChild(ov);
     var close = function(){ ov.classList.remove('show'); };
     $('rosterDlClose').addEventListener('click', close);
     ov.addEventListener('click', function(e){ if(e.target === ov) close(); });
+    $('rosterDlTabs').addEventListener('click', function(e){
+      var b = e.target.closest('.rdl-tab'); if(!b || b.disabled) return;
+      var on = $('rosterDlTabs').querySelectorAll('.rdl-tab.on');
+      if(b.classList.contains('on') && on.length <= 1) return;   /* at least one table stays selected */
+      b.classList.toggle('on');
+    });
     $('rosterDlGrid').addEventListener('click', function(e){
       var b = e.target.closest('.rdl-opt'); if(!b || b.disabled) return;
       run(b.getAttribute('data-k'));
@@ -20902,6 +20919,56 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
       paintPosRow();
     });
   }
+  var DL_TABS = [['rosterCtrlCol','Controllers'], ['rosterAsstCol','Aerodrome Assistant'], ['rosterCommCol','Communication']];
+  function paintTabs(){
+    var cur = tabBtn(), curId = cur ? cur.getAttribute('data-tab') : '';
+    $('rosterDlTabs').innerHTML = DL_TABS.map(function(t){
+      return '<button type="button" class="rdl-tab' + (t[0] === curId ? ' on' : '') + '" data-tab="' + t[0] + '"><i></i>' + t[1] + '</button>';
+    }).join('');
+  }
+  function selTabs(){
+    var out = []; Array.prototype.forEach.call($('rosterDlTabs').querySelectorAll('.rdl-tab.on'), function(b){ out.push(b.getAttribute('data-tab')); });
+    return out;
+  }
+  function frames(){ return new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
+  function gotoTab(id){
+    var b = document.querySelector('#rosterTabs .iflow-tab-btn[data-tab="' + id + '"]'); if(!b) return false;
+    try{ if(typeof setRosterNow === 'function') setRosterNow(false); }catch(e){}
+    if(!b.classList.contains('active')) b.click();
+    return true;
+  }
+  /* one picture of the table on screen right now (with the main-position chips option) */
+  async function shotCurrent(k){
+    var tbl = curTable(); if(!tbl) throw new Error('Table not found');
+    var hasPos = !!tbl.querySelector('.rearr-from'), pc = posWith() ? 'rr-png-full' : 'rr-png-nopos', cv;
+    if(hasPos) tbl.classList.add(pc);
+    try{ cv = await makeCanvas(tbl, k === 'All' ? 'All' : LET.indexOf(k)); }
+    finally{
+      if(hasPos){ tbl.classList.remove(pc); Array.prototype.forEach.call(tbl.querySelectorAll('.rearr-from'), function(c){ c.style.fontSize = ''; }); }
+    }
+    return cv;
+  }
+  /* several pictures stacked top-to-bottom in ONE canvas, each with its table name above it */
+  function stackShots(shots){
+    var rs = getComputedStyle(document.documentElement), textCol = (rs.getPropertyValue('--text') || '#F0F1F3').trim();
+    var TH = 34, GP = 10, W = 0, H = 0, S = 4;
+    shots.forEach(function(x){ W = Math.max(W, x.cv._cw); H += TH + x.cv._ch; S = Math.min(S, x.cv._S); });
+    H += GP * (shots.length - 1);
+    while(S > 1 && (W * S > 9000 || H * S > 16000 || W * H * S * S > 14e6)) S--;
+    var cv = document.createElement('canvas'); cv.width = Math.round(W * S); cv.height = Math.round(H * S);
+    var ctx = cv.getContext('2d', { alpha:false }); if(!ctx) throw new Error('canvas unavailable');
+    ctx.fillStyle = shots[0].cv._bg; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.scale(S, S);
+    var y = 0;
+    shots.forEach(function(x){
+      ctx.fillStyle = textCol; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      ctx.font = "700 17px 'Space Grotesk','Inter'" + BNF;
+      ctx.fillText(x.name, 18, y + TH / 2 + 4);
+      ctx.drawImage(x.cv, 0, y + TH, x.cv._cw, x.cv._ch);
+      y += TH + x.cv._ch + GP;
+    });
+    return cv;
+  }
   function posWith(){ try{ return localStorage.getItem('HSIA_RDL_POS_V1') !== '0'; }catch(e){ return true; } }
   function paintPosRow(){
     var w = posWith();
@@ -20911,7 +20978,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     if(!isAdmin() && !(window.hsiaIsSubMod && window.hsiaIsSubMod())){ try{ requireQuickAuth(); }catch(e){ alert('Admin sign-in required.'); } return; }
     var tbl = curTable();
     if(!tbl){ alert('এই ট্যাবের জন্য PNG ডাউনলোড নেই।\nController / Aerodrome Assistant / Communication ট্যাব খুলে আবার চাপুন।'); return; }
-    buildOverlay();
+    buildOverlay(); paintTabs();
     var di = dateInfo(), b = tabBtn(), meta = shiftMeta(tbl);
     $('rosterDlSub').textContent = (b ? b.textContent.trim() : 'Duty Roster') + ' · ' + di.txt + ' (' + di.day + ')';
     $('rosterDlGrid').innerHTML = '<button type="button" class="rdl-opt rdl-all" data-k="All">All<small>সব</small></button>'
@@ -20926,28 +20993,41 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); }, 4000);
   }
   async function run(k){
-    var grid = $('rosterDlGrid'), btns = grid.querySelectorAll('.rdl-opt');
-    var tbl = curTable(); if(!tbl){ status('Table not found'); return; }
+    var grid = $('rosterDlGrid'), btns = grid.querySelectorAll('.rdl-opt'), tabEls = $('rosterDlTabs').querySelectorAll('.rdl-tab');
+    var ids = selTabs(), orig = tabBtn(), origId = orig ? orig.getAttribute('data-tab') : null;
+    if(!ids.length){ status('অন্তত একটা table বাছো'); return; }
     var card = $('rosterCardOuter'), wasCollapsed = !!(card && card.classList.contains('collapsed'));
-    btns.forEach(function(x){ x.disabled = true; }); status('PNG বানানো হচ্ছে…');
+    btns.forEach(function(x){ x.disabled = true; }); tabEls.forEach(function(x){ x.disabled = true; }); status('PNG বানানো হচ্ছে…');
     try{
-      if(wasCollapsed){ card.classList.remove('collapsed'); await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); }
-      var hasPos = !!tbl.querySelector('.rearr-from'), pc = posWith() ? 'rr-png-full' : 'rr-png-nopos', cv;
-      if(hasPos) tbl.classList.add(pc);
-      try{ cv = await makeCanvas(tbl, k === 'All' ? 'All' : LET.indexOf(k)); }
-      finally{
-        if(hasPos){ tbl.classList.remove(pc); Array.prototype.forEach.call(tbl.querySelectorAll('.rearr-from'), function(c){ c.style.fontSize = ''; }); }
+      if(wasCollapsed){ card.classList.remove('collapsed'); await frames(); }
+      var cv, slug;
+      if(ids.length === 1 && ids[0] === origId){
+        cv = await shotCurrent(k);
+        var b = tabBtn(); slug = String(b ? b.textContent : 'Roster').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'Roster';
+      }else{
+        var shots = [], names = [];
+        for(var i = 0; i < ids.length; i++){
+          status('PNG বানানো হচ্ছে… (' + (i + 1) + '/' + ids.length + ')');
+          if(!gotoTab(ids[i])) continue;
+          await frames();
+          var t = DL_TABS.filter(function(d){ return d[0] === ids[i]; })[0];
+          shots.push({ cv: await shotCurrent(k), name: t[1] }); names.push(t[1].replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+        }
+        if(!shots.length) throw new Error('Table not found');
+        cv = shots.length === 1 ? shots[0].cv : stackShots(shots);
+        shots.forEach(function(x){ if(x.cv !== cv) x.cv.width = x.cv.height = 1; });
+        slug = names.join('+');
       }
       var blob = await encodePng(cv);
       if(!blob) throw new Error('PNG failed');
-      var b = tabBtn(), slug = String(b ? b.textContent : 'Roster').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'Roster';
       save(blob, 'Roster_' + slug + '_' + dateInfo().iso + '_' + (k === 'All' ? 'All' : 'Shift-' + k) + '.png');
       cv.width = cv.height = 1;
       status('PNG ready ✓');
       setTimeout(function(){ var ov = $('rosterDlOverlay'); if(ov) ov.classList.remove('show'); }, 700);
     }catch(e){ status('Failed: ' + (e && e.message ? e.message : e)); }
+    if(origId && tabBtn() && tabBtn().getAttribute('data-tab') !== origId){ gotoTab(origId); }   /* back to the tab that was open */
     if(wasCollapsed && card) card.classList.add('collapsed');
-    btns.forEach(function(x){ x.disabled = false; });
+    btns.forEach(function(x){ x.disabled = false; }); tabEls.forEach(function(x){ x.disabled = false; });
   }
   function init(){
     var b = $('rosterDlBtn');
