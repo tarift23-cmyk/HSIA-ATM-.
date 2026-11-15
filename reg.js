@@ -27,7 +27,7 @@ function clearDraft(){ try{ localStorage.removeItem(DK); }catch(e){} }
 var Q=Promise.resolve();
 function W(fn){ Q=Q.then(fn).catch(function(e){ console.warn(e); alert('Could not save: '+((e&&e.message)||e)); }); return Q; }
 function sv(k,x){ if(x===db&&db.fold) W(function(){ return ref('hsia_people/folders').set(db.fold); }); return 1; }
-function loadPics(u){ return ref('hsia_people/pics/'+u).once('value').then(function(s){ pics[u]=s.val()||{}; }).catch(function(){ pics[u]=pics[u]||{}; }); }
+function loadPics(u){ return ref('hsia_people/pics/'+u).once('value').then(function(s){ pics[u]=s.val()||{}; try{ updateAcct(); }catch(e){} }).catch(function(){ pics[u]=pics[u]||{}; }); }
 function loadAll(){ return ref('hsia_people/profiles').once('value').then(function(s){ db.prof=s.val()||{}; }); }
 function normFold(x){ var a=Array.isArray(x)?x:Object.keys(x).map(function(k){ return x[k]; }); return a.filter(Boolean).map(function(g){ var ps=g.posts||[]; ps=Array.isArray(ps)?ps:Object.keys(ps).map(function(k){ return ps[k]; }); return {id:g.id,n:g.n,posts:ps.filter(Boolean)}; }); }
 function commit(st,note){
@@ -383,7 +383,52 @@ function adminAlert(){
     o.querySelector('#arv').onclick=function(){ o.remove(); tab='p'; admEl.click(); };
   }).catch(function(){ alerted=false; });
 }
+
+/* ---- Settings > My Account row: logged in = photo + NAME + Logout ; logged out = only "Login / Registration" button ---- */
+var acctRow=null, acctSig='';
+function acctInfo(){
+  var u=U&&!U.isAnonymous?U:null;
+  if(u){
+    var nm=(P&&(P.en||P.bn))||u.displayName||u.email||'';
+    var pic=(pics[u.uid]||{}).p||'';
+    return {name:String(nm),pic:pic};
+  }
+  try{ if(typeof loadAuthSession==='function'){ var x=loadAuthSession(); if(x&&x.identifier) return {name:String(x.displayName||x.identifier),pic:''}; } }catch(e){}
+  return null;
+}
+function acctLogout(){
+  try{ if(typeof logoutUser==='function'){ logoutUser(); return; } }catch(e){}
+  try{ firebase.auth().signOut().then(function(){ P=undefined; return firebase.auth().signInAnonymously().catch(function(){}); }); }catch(e){}
+}
+function updateAcct(){
+  var btn=document.getElementById('openAuthModalBtn'); if(!btn||!btn.parentNode) return;
+  var info=acctInfo(), sig=info?(info.name+'|'+(info.pic?info.pic.length:0)):'';
+  if(sig===acctSig&&acctRow&&acctRow.parentNode) return;
+  acctSig=sig;
+  var dot=document.getElementById('authNotifDotSettings');
+  if(!acctRow||!acctRow.parentNode){
+    acctRow=document.createElement('div'); acctRow.id='hsiaAcctRow';
+    acctRow.style.cssText='display:none;align-items:center;gap:12px;width:100%';
+    btn.parentNode.appendChild(acctRow);
+  }
+  if(info){
+    btn.style.display='none';
+    acctRow.style.display='flex';
+    acctRow.innerHTML='<span id="hsiaAcctAv" style="flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #454444;background:#262525 center 25%/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden">'+(info.pic?'':'\ud83d\udc64')+'</span>'
+      +'<span id="hsiaAcctNm" style="flex:1;min-width:0;font-weight:700;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>'
+      +'<button type="button" id="hsiaAcctOut" class="fr-dbclear" style="flex:none">Logout</button>';
+    document.getElementById('hsiaAcctNm').textContent=info.name.toUpperCase();
+    if(info.pic) document.getElementById('hsiaAcctAv').style.backgroundImage='url("'+info.pic+'")';
+    document.getElementById('hsiaAcctOut').onclick=acctLogout;
+  }else{
+    acctRow.style.display='none'; acctRow.innerHTML='';
+    btn.style.display='';
+    btn.innerHTML='\ud83d\udc64 \u09b2\u0997\u0987\u09a8 / \u09b0\u09c7\u099c\u09bf\u09b8\u09cd\u099f\u09cd\u09b0\u09c7\u09b6\u09a8'; 
+    if(dot) btn.appendChild(dot);
+  }
+}
 function tick(){
+  try{ updateAcct(); }catch(e){}
   if(chipEl) chipEl.style.display=(U&&!U.isAnonymous&&P&&on()&&barEl.style.display==='none'&&R.style.display==='none')?'block':'none';
   var ad=!!(window.hsiaCanSeeOthers&&window.hsiaCanSeeOthers()), mo=!ad&&!!(window.hsiaRole&&window.hsiaRole()==='moderator'), a=ad||mo; if(a!==adm||mo!==modOnly){ adm=a; modOnly=mo; render(); }
   if(adm&&!modOnly&&!alerted&&authKnown&&db.fold) adminAlert();
