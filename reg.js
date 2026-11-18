@@ -292,8 +292,16 @@ function route(){
   if(!Pready){ bar(''); return screen('load',function(m){ m.innerHTML='<div class="card mut">Loading...</div>'; }); }
   if(!P||v==='form'){ bar(P?statusHtml():''); return screen('form',form); }
   if(P.st==='draft'){ bar(statusHtml()); if(!R.querySelector('.ov')) rosterPick(function(sel){ finish(U.uid,sel); }); return show(true); }
-  bar(statusHtml(),P.st==='approved'?'ok':P.st==='rejected'?'no':'wait'); show(false); cur='';
-  if(P.st==='approved'&&!sessionStorage.getItem('HSIA_WELCOME')){ sessionStorage.setItem('HSIA_WELCOME','1'); setTimeout(function(){ if(P&&P.st==='approved') bar(''); },6000); }
+  if(P.st==='approved'){
+    /* approved: the green Welcome bar is shown only the first 2 times (6 s each), then never again */
+    var wk='HSIA_WELCOME_N_'+(U?U.uid:''), wn=+localStorage.getItem(wk)||0, ws=sessionStorage.getItem('HSIA_WELCOME');
+    if(ws==='hide'||(!ws&&wn>=2)) bar('');
+    else{
+      bar(statusHtml(),'ok');
+      if(!ws){ sessionStorage.setItem('HSIA_WELCOME','1'); try{ localStorage.setItem(wk,String(wn+1)); }catch(e){} setTimeout(function(){ sessionStorage.setItem('HSIA_WELCOME','hide'); if(P&&P.st==='approved') bar(''); },6000); }
+    }
+    show(false); cur='';
+  }else{ bar(statusHtml(),P.st==='rejected'?'no':'wait'); show(false); cur=''; }
 }
 /* Mandatory login was just switched on (a new epoch): everybody except admins is logged out once, then has to register / log in */
 function enforceEpoch(){
@@ -402,7 +410,7 @@ function acctLogout(){
 }
 function updateAcct(){
   var btn=document.getElementById('openAuthModalBtn'); if(!btn||!btn.parentNode) return;
-  var info=acctInfo(), sig=info?(info.name+'|'+(info.pic?info.pic.length:0)):'';
+  var info=acctInfo(), sig=info?(info.name+'|'+(info.pic?info.pic.length:0)+'|'+((U&&U.providerData||[]).map(function(p){return p.providerId;}).join(','))+'|'+(P?P.ein:'')):'';
   if(sig===acctSig&&acctRow&&acctRow.parentNode) return;
   acctSig=sig;
   var dot=document.getElementById('authNotifDotSettings');
@@ -411,7 +419,20 @@ function updateAcct(){
     acctRow.style.cssText='display:none;align-items:center;gap:12px;width:100%';
     btn.parentNode.appendChild(acctRow);
   }
+  var tools=document.getElementById('hsiaAcctTools');
+  if(!tools||!tools.parentNode){
+    tools=document.createElement('div'); tools.id='hsiaAcctTools';
+    tools.style.cssText='display:none;flex-wrap:wrap;gap:8px;width:100%;margin-top:10px';
+    acctRow.parentNode.insertBefore(tools,acctRow.nextSibling);
+  }
   if(info){
+    tools.style.display='flex';
+    tools.innerHTML='<button type="button" id="hsiaAcctNotif" class="fr-dbimport">'+'\ud83d\udd14 \u09a8\u09cb\u099f\u09bf\u09ab\u09bf\u0995\u09c7\u09b6\u09a8 \u099a\u09be\u09b2\u09c1 \u0995\u09b0\u09c1\u09a8'+'</button>'
+      +'<button type="button" id="hsiaAcctCal" class="fr-dbimport">'+'\ud83d\uddd3\ufe0f \u0995\u09cd\u09af\u09be\u09b2\u09c7\u09a8\u09cd\u09a1\u09be\u09b0\u09c7 \u09b8\u09bf\u0999\u09cd\u0995 \u0995\u09b0\u09c1\u09a8'+'</button>';
+    if(U&&!U.isAnonymous&&!(U.providerData||[]).some(function(p){return p.providerId==='google.com';})){ var lg=document.createElement('button'); lg.type='button'; lg.className='fr-dbimport'; lg.textContent='Link Google'; lg.onclick=function(){ barEl.onclick({target:{id:'rgLink'}}); }; tools.appendChild(lg); }
+    if(U&&!U.isAnonymous&&P&&P.ein&&hasP('google.com')&&!hasP('password')){ var sp=document.createElement('button'); sp.type='button'; sp.className='fr-dbimport'; sp.textContent='Set password'; sp.onclick=function(){ barEl.onclick({target:{id:'rgPw'}}); }; tools.appendChild(sp); }
+    document.getElementById('hsiaAcctNotif').onclick=function(){ if(window.hsiaEnableNotif) window.hsiaEnableNotif(); };
+    document.getElementById('hsiaAcctCal').onclick=function(){ if(window.hsiaCalSync) window.hsiaCalSync(); };
     btn.style.display='none';
     acctRow.style.display='flex';
     acctRow.innerHTML='<span id="hsiaAcctAv" style="flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #454444;background:#262525 center 25%/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden">'+(info.pic?'':'\ud83d\udc64')+'</span>'
@@ -422,6 +443,7 @@ function updateAcct(){
     document.getElementById('hsiaAcctOut').onclick=acctLogout;
   }else{
     acctRow.style.display='none'; acctRow.innerHTML='';
+    tools.style.display='none'; tools.innerHTML='';
     btn.style.display='';
     btn.innerHTML='\ud83d\udc64 \u09b2\u0997\u0987\u09a8 / \u09b0\u09c7\u099c\u09bf\u09b8\u09cd\u099f\u09cd\u09b0\u09c7\u09b6\u09a8'; 
     if(dot) btn.appendChild(dot);

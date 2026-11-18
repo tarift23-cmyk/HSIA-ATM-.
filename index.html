@@ -2653,6 +2653,7 @@ td.roster-moved-cell .roster-name-input{
 /* ---- Internal rearrange (shadow roster): switch bar, shift picker, drag & drop editor ---- */
 .rearr-bar{ display:none; align-items:center; justify-content:space-between; gap:8px; margin:2px 0 8px; font-family:'Space Grotesk',sans-serif; }
 .rearr-bar.is-on{ display:flex; }
+html.rearr-dormant .rearr-bar{ display:none !important; }
 body.roster-editing .rearr-bar{ display:flex; }
 .rearr-chip{ font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.02em; }
 .rearr-bar.is-on .rearr-chip{ color:var(--gold-soft); }
@@ -2858,6 +2859,7 @@ table.now-table .dl-cut{ color:#ff5a5f; text-decoration:line-through; text-decor
 body.rh-admin #rosterHistBtn, body.rh-admin #rosterPrintBtn{ display:inline-block !important; }
 body.rh-admin #rosterDlBtn{ display:inline-grid !important; }
 body.hsia-submod #rosterDlBtn{ display:inline-grid !important; }
+body.hsia-user #rosterDlBtn{ display:inline-grid !important; }   /* anybody who is logged in */
 .rh-note{ font-size:12px; color:var(--muted); margin:2px 0 10px; line-height:1.5; }
 .rh-card{ border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; background:var(--panel); }
 .rh-card.cur{ border-color:#7fd6c2; }
@@ -9349,6 +9351,10 @@ function rosterDataFor(key){ return key === 'rosterCtrl' ? ROSTER_CTRL : key ===
    - Optional From / Until dates: outside them the main roster shows (default: from the day it was saved, no end).
    ============================================================ */
 const REARR_KEY = 'HSIA_REARRANGE_V1';
+/* DORMANT: Internal rearrange is switched off for now (no switch bar, main roster always shown, saved data kept untouched).
+   To bring it back later: set this to true (or run  window.HSIA_REARR_ENABLED=true  before this script). */
+if(typeof window.HSIA_REARR_ENABLED === 'undefined') window.HSIA_REARR_ENABLED = false;
+try{ document.documentElement.classList.toggle('rearr-dormant', !window.HSIA_REARR_ENABLED); }catch(e){}
 const REARR_SETS = ['rosterCtrl','roster','rosterComm'];
 var _rearrState;
 function rearrBlankState(){ return { v:1, on:{}, maps:{}, meta:{} }; }
@@ -9398,6 +9404,7 @@ function rearrApplyRemote(val){
 function rearrViewOff(k){ try{ const o = JSON.parse(localStorage.getItem('HSIA_REARR_VIEW_V1')) || {}; return o[k] === false; }catch(e){ return false; } }
 function rearrSetViewOff(k, off){ try{ const o = JSON.parse(localStorage.getItem('HSIA_REARR_VIEW_V1')) || {}; o[k] = off ? false : true; localStorage.setItem('HSIA_REARR_VIEW_V1', JSON.stringify(o)); }catch(e){} }
 function rearrListFor(tableKey, ci, dayKey, ignoreEdit){
+  if(!window.HSIA_REARR_ENABLED) return null;   /* dormant */
   const st = rearrGet();
   if(rearrViewOff(tableKey)) return null;   /* ON / OFF is each person's own choice on his own device; it is never synced */
   if(!ignoreEdit && document.body.classList.contains('roster-editing')) return null;   /* while editing the main roster, the main roster is shown */
@@ -10126,6 +10133,18 @@ function loadAuthSession(){
 }
 function saveAuthSession(s){ try{ localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); }catch(e){} }
 function clearAuthSession(){ try{ localStorage.removeItem(AUTH_SESSION_KEY); }catch(e){} }
+/* Session used by Calendar sync: the old local session, or else whoever is signed in with the new login (EIN / Google) */
+function hsiaCalSession(){
+  const s = loadAuthSession(); if(s) return s;
+  try{
+    const u = firebase.auth().currentUser;
+    if(u && !u.isAnonymous){
+      const rp = window.__hsiaRegProfile, id = u.email || u.uid;
+      return { identifier:id, displayName:((rp && (rp.en || rp.bn)) || u.displayName || id), viaGoogle:true };
+    }
+  }catch(e){}
+  return null;
+}
 /* Roles. Admin = hsia_private/admins/<uid> (Firebase Rules). Moderator = hsia_private/mods/<uid>, Sub-moderator = hsia_private/submods/<uid>
    (set by hand in the Firebase console: add the person's uid with the value true; the Rules let only an admin write them). The role is copied into the local session (s.role) so the UI can show the right controls:
      moderator     -> body.hsia-staff   : Requests button + Registrations (approve / reject only); NO Others tab, NO repo ZIP, NO editing
@@ -10317,7 +10336,7 @@ function buildMyDutyEvents(daysAhead){
   }
 
   // 2) exchanges assigned to me by name (must be logged in)
-  const session = loadAuthSession();
+  const session = hsiaCalSession();
   if(session && session.displayName){
     const myName = session.displayName.trim().toLowerCase();
     Object.keys(EXCHANGES).forEach(dateKey=>{
@@ -10340,11 +10359,11 @@ function buildMyDutyEvents(daysAhead){
   return events;
 }
 async function syncDutyToGoogleCalendar(){
-  const session = loadAuthSession();
+  const session = hsiaCalSession();
   if(!session){ alert('আগে লগইন করুন।'); return; }
   const clientId = loadGoogleClientId();
-  if(!session.viaGoogle || !clientId){
-    alert('ক্যালেন্ডার সিঙ্ক করতে "🔵 Continue with Google" দিয়ে লগইন করতে হবে (ম্যানুয়াল লগইনে ক্যালেন্ডার-অনুমতি পাওয়া যায় না)।');
+  if(!clientId){
+    alert('Google Client ID সেট করা নেই — অ্যাডমিন সেটআপ থেকে সেট করুন।');
     return;
   }
   const hoursStr = prompt('শিফট শুরুর কত ঘণ্টা আগে রিমাইন্ডার চান?', '12');
@@ -10385,6 +10404,13 @@ async function syncDutyToGoogleCalendar(){
   }
 }
 
+window.hsiaCalSync = syncDutyToGoogleCalendar;
+window.hsiaEnableNotif = function(){
+  if(typeof Notification === 'undefined'){ alert('⚠️ এই ব্রাউজারে নোটিফিকেশন সমর্থিত না।'); return; }
+  if(Notification.permission === 'granted'){ alert('✅ নোটিফিকেশন আগে থেকেই চালু আছে।'); return; }
+  if(Notification.permission === 'denied'){ alert('⚠️ ব্রাউজার সেটিংসে এই সাইটের নোটিফিকেশন ব্লক করা আছে — সেখান থেকে Allow করুন।'); return; }
+  Notification.requestPermission().then(p=>alert(p === 'granted' ? '✅ নোটিফিকেশন চালু হয়েছে।' : '⚠️ নোটিফিকেশনের অনুমতি দেওয়া হয়নি।'));
+};
 
 async function registerUser(identifier, displayName, phone, password){
   const saved = loadFirebaseSyncConfig();
@@ -21124,6 +21150,15 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     if(wasCollapsed && card) card.classList.add('collapsed');
     btns.forEach(function(x){ x.disabled = false; }); tabEls.forEach(function(x){ x.disabled = false; });
   }
+  /* PNG download icon is open to every logged-in user (EIN / Google / old session) */
+  function userSync(){
+    var on = false;
+    try{ var u = firebase.auth().currentUser; on = !!(u && !u.isAnonymous); }catch(e){}
+    try{ if(!on && typeof loadAuthSession === 'function') on = !!loadAuthSession(); }catch(e){}
+    document.body.classList.toggle('hsia-user', on);
+  }
+  userSync(); setInterval(userSync, 1500);
+  try{ var _t = setInterval(function(){ try{ if(firebase.apps && firebase.apps.length){ clearInterval(_t); firebase.auth().onAuthStateChanged(userSync); } }catch(e){} }, 500); }catch(e){}
   function init(){
     var b = $('rosterDlBtn');
     if(b && !b._rdl){ b._rdl = true; b.addEventListener('click', function(e){ e.stopPropagation(); openDl(); }); }
@@ -21157,6 +21192,7 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
 
   /* ---------- the switch bar under each roster title ---------- */
   function buildBars(){
+    if(!window.HSIA_REARR_ENABLED) return;   /* dormant: no switch bar */
     SETS.forEach(function(s){
       var col = $(s[1]); if(!col || col.querySelector('.rearr-bar')) return;
       var sub = col.querySelector('.roster-subtitle'); if(!sub) return;
