@@ -2291,6 +2291,9 @@ table.roster-table td.roster-pos .roster-pos-input:focus{
   background:rgba(214,216,220,0.12);
   box-shadow: inset 0 0 0 1px var(--gold);
 }
+table.roster-table tbody tr.night-grp-row td{ background:none !important; border:none !important; padding:12px 6px 4px !important; font-size:12px; font-weight:700; letter-spacing:.05em; text-align:left; }
+table.roster-table tbody tr.night-grp-row.g1 td{ color:#7cc0ff; }
+table.roster-table tbody tr.night-grp-row.g2 td{ color:#d3a3ff; }
 table.roster-table tbody tr:nth-child(even){
   background:rgba(255,255,255,0.02);
 }
@@ -11512,7 +11515,36 @@ function renderRosterTable(tbodyId, data, onChange, onRemove, tableKey){
   const adTxt = ((data[0] && Array.isArray(data[0].admin)) ? data[0].admin : []).filter(x=> String(x || '').trim()).join(', ').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const adminRowHtml = tableKey === 'rosterCtrl' ? `<tr class="roster-standby-row roster-admin-row"><td class="roster-pos"><div class="roster-standby-label">Admin</div></td><td class="roster-standby-cell" colspan="${TEAMS.length}"><textarea class="roster-standby-input roster-admin-input" rows="${Math.max(1, Math.ceil(adTxt.length / 38))}" placeholder="Admin names (comma separated)" autocomplete="off" readonly>${adTxt}</textarea></td></tr>` : '';
   let adminPlaced = false;
-  tbody.innerHTML = data.map((row, ri)=>{
+  /* 1st / 2nd Night people are shown together: normal duties first, then every 1st Night row, then every 2nd Night row
+     (whole rows move, so each person keeps his duty place). Display only - the roster data is never touched; edit / shuffle mode keep the normal order. */
+  const _nightOrder = (function(){
+    const base = data.map((r, i)=>({ ri:i }));
+    if(!tableKey || window.HSIA_REARR_ENABLED || document.body.classList.contains('roster-editing') || document.body.classList.contains('roster-shuffle')) return base;
+    const keyOf = {}, cnt = { 1:0, 2:0 };
+    data.forEach((row, i)=>{
+      if(isPoolRow(row, tableKey)) return;
+      let k = 0;
+      for(let ci = 0; ci < TEAMS.length && !k; ci++){
+        const ex = exForCell(activeEx, row.pos, ci);
+        if(ex && !ex.vacant && (ex.nightHalf === '1' || ex.nightHalf === '2')) k = +ex.nightHalf;
+      }
+      keyOf[i] = k; if(k) cnt[k]++;
+    });
+    if(!cnt[1] && !cnt[2]) return base;
+    const slots = Object.keys(keyOf).map(Number);                     /* positions of the normal (non-pool) rows */
+    const sorted = slots.slice().sort((a, b)=> (keyOf[a] - keyOf[b]) || (a - b));
+    const out = []; let j = 0, last = -1;
+    data.forEach((row, i)=>{
+      if(!(i in keyOf)){ out.push({ ri:i }); return; }
+      const ri = sorted[j++], k = keyOf[ri];
+      if(k && k !== last){ out.push({ hdr:k, n:cnt[k] }); }
+      last = k; out.push({ ri:ri });
+    });
+    return out;
+  })();
+  tbody.innerHTML = _nightOrder.map((_o)=>{
+    if(_o.hdr) return `<tr class="night-grp-row g${_o.hdr}"><td colspan="${TEAMS.length + 1}">🌙 ${_o.hdr === 1 ? '1st Night · 8:30 PM–3:00 AM' : '2nd Night · 3:00 AM–7:30 AM'} · ${_o.n}</td></tr>`;
+    const ri = _o.ri, row = data[ri];
     if(isPoolRow(row, tableKey)){
       const _isOj = !(row && row.merged === true);
       if(_isOj && adminRowHtml) adminPlaced = true;
