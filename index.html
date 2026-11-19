@@ -20861,9 +20861,8 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
     if(abx){ try{ abx.draw(ctx, PAD, PAD + bannerH + GAP + T.height + 10, total); }catch(e){} }
 
     /* ---- footer ---- */
-    var tk = todayDateKey().split('-');
-    ctx.font = "11px 'Inter'" + BNF; ctx.fillStyle = mutedCol; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + total, PAD + bannerH + GAP + T.height + abH + 16);
+    /* (no "Downloaded: date" footer any more) */
+    cv._top = PAD + bannerH + GAP; cv._tail = 26;   /* where the table starts / the empty footer strip, used when several pictures are stacked */
     cv._cw = cw; cv._ch = chh; cv._S = S; cv._bg = bgc ? css(bgc) : '#171616';
     return cv;
   }
@@ -21089,9 +21088,8 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
         rr(PAD + 0.5, ty + 0.5, W - 1, T.height - 1, 10); ctx.lineWidth = 1; ctx.strokeStyle = borderCol; ctx.stroke();
         y0 = ty + T.height + TG;
       });
-      var tk = todayDateKey().split('-');
-      ctx.font = "11px 'Inter'" + BNF; ctx.fillStyle = mutedCol; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; try{ ctx.letterSpacing = '0px'; }catch(e){}
-      ctx.fillText('Downloaded: ' + tk[2] + '/' + tk[1] + '/' + tk[0], PAD + W, chh - PAD - 4);
+      /* (no "Downloaded: date" footer any more) */
+      cv._top = PAD + bannerH + GAP; cv._tail = 16;
       cv._cw = cw; cv._ch = chh; cv._S = S; cv._bg = bgs;
       return cv;
     }finally{
@@ -21102,21 +21100,27 @@ document.getElementById('clearBtn').addEventListener('click', ()=>{
   /* several pictures stacked top-to-bottom in ONE canvas, each with its table name above it */
   function stackShots(shots){
     var rs = getComputedStyle(document.documentElement), textCol = (rs.getPropertyValue('--text') || '#F0F1F3').trim();
-    var TH = 34, GP = 10, W = 0, H = 0, S = 4;
-    shots.forEach(function(x){ W = Math.max(W, x.cv._cw); H += TH + x.cv._ch; S = Math.min(S, x.cv._S); });
-    H += GP * (shots.length - 1);
+    var TH = 34, GP = 10, W = 0, H = 0, S = 4, n = shots.length, top0 = shots[0].cv._top || 0;
+    /* the date / shift banner is shown ONCE (top of the first picture); later pictures only contribute their table part */
+    function part(i){ var c = shots[i].cv, sy = (c._top || 0), sh = c._ch - sy - (i < n - 1 ? (c._tail || 0) : 0); return { sy:sy, sh:sh }; }
+    H = top0;
+    shots.forEach(function(x, i){ W = Math.max(W, x.cv._cw); H += TH + part(i).sh; S = Math.min(S, x.cv._S); });
+    H += GP * (n - 1);
     while(S > 1 && (W * S > 9000 || H * S > 16000 || W * H * S * S > 14e6)) S--;
     var cv = document.createElement('canvas'); cv.width = Math.round(W * S); cv.height = Math.round(H * S);
     var ctx = cv.getContext('2d', { alpha:false }); if(!ctx) throw new Error('canvas unavailable');
     ctx.fillStyle = shots[0].cv._bg; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.scale(S, S);
     var y = 0;
-    shots.forEach(function(x){
+    if(top0){ ctx.drawImage(shots[0].cv, 0, 0, shots[0].cv._cw * shots[0].cv._S, top0 * shots[0].cv._S, 0, 0, shots[0].cv._cw, top0); y = top0; }
+    shots.forEach(function(x, i){
+      var p = part(i), c = x.cv;
       ctx.fillStyle = textCol; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
       ctx.font = "700 17px 'Space Grotesk','Inter'" + BNF;
       ctx.fillText(x.name, 18, y + TH / 2 + 4);
-      ctx.drawImage(x.cv, 0, y + TH, x.cv._cw, x.cv._ch);
-      y += TH + x.cv._ch + GP;
+      var k = c.width / c._cw;   /* canvas pixels per CSS px of that picture */
+      ctx.drawImage(c, 0, p.sy * k, c.width, p.sh * k, 0, y + TH, c._cw, p.sh);
+      y += TH + p.sh + GP;
     });
     return cv;
   }
