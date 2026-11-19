@@ -12178,9 +12178,11 @@ function connectFirebaseSync(config, roomId){
       if(val && Array.isArray(val.cols) && Array.isArray(val.rows) && JSON.stringify(val) !== JSON.stringify(EQ_STATE)){
         // Firebase drops empty strings/arrays, so normalise rows back to full width
         val.rows = val.rows.map(r=>{ r = Array.isArray(r) ? r.slice() : []; while(r.length < val.cols.length) r.push(''); return r.map(v=> v==null?'':v); });
+        if(typeof eqUpgrade === 'function') eqUpgrade(val);   /* old 2-column table -> add Call Sign columns */
         EQ_STATE = val;
         try{ localStorage.setItem(EQ_KEY, JSON.stringify(EQ_STATE)); }catch(e){}
         if(typeof renderEqTable === 'function') renderEqTable();
+        /* (not pushed back: only admins may write this path; every device upgrades the same way locally, and the admin's next save stores the 4-column table) */
       }
     });
 
@@ -18747,11 +18749,21 @@ function openRosterWindow(){
 
 /* ---- Equivalent Aircraft Type: editable table (add/delete rows & columns) ---- */
 const EQ_KEY = 'HSIA_EQ_AIRCRAFT_V1';
-const EQ_DEFAULT = {"cols": ["Type of Aircraft", "Type in DPR(Top Sky- ATC)"], "rows": [["MIG-29", "MG29"], ["F-7MG", "F-7"], ["F-7BG", "F-7"], ["F-7BGI", "F-7"], ["FT-7BGI", "F-7"], ["FT-7A", "F-7"], ["FT7B", "F-7"], ["YAK-130", "YAK"], ["K-8W", "K8W"], ["G-120TP", "G120"], ["PT-6", "PT6"], ["L-410", "L410"], ["C-130J", "C130"], ["C-130B", "C130"], ["AN-32", "AN32"], ["CASA-295", "CN29"], ["BELL-206", "B06"], ["BELL-212", "B212"], ["BELL-407", "B407"], ["DIAMOND-407", "D407"], ["AW-119KX", "A119"], ["AW-139KX", "A139"], ["MI-17", "MI17"], ["MI-171SH", "MI17"], ["MI-171E", "MI17"], ["D-228", "D228"], ["AS-365", "AS36"], ["AW109", "A109"], ["AN-124", "A124"], ["F-50(FOKKEV)", "FK50"], ["E35L", "BE35"], ["GA5C/Gulfstream", "GLF5"]]};
+const EQ_DEFAULT = {"cols": ["Type of Aircraft", "Type in DPR(Top Sky- ATC)", "Call Sign", "Call Sign Name"], "rows": [["MIG-29", "MG29", "GFN", "GRIFFIN"], ["F-7MG", "F-7", "DRJ", "DURJOY"], ["F-7BG", "F-7", "BJR", "BOJRA"], ["F-7BGI", "F-7", "", ""], ["FT-7BGI", "F-7", "CGR", "CHALLENGER"], ["FT-7A", "F-7", "", ""], ["FT7B", "F-7", "", ""], ["YAK-130", "YAK", "TDN", "TRIDENT"], ["K-8W", "K8W", "RVN", "RAVEN"], ["G-120TP", "G120", "CSP", "CASPER"], ["PT-6", "PT6", "ABC", "ABACUS"], ["L-410", "L410", "PNX", "PHEONIX"], ["C-130J", "C130", "AJX", "AJAX"], ["C-130B", "C130", "HRC", "HERCULES"], ["AN-32", "AN32", "UNC", "UNICORN"], ["CASA-295", "CN29", "WRR", "WARRIAR"], ["BELL-206", "B06", "SCN", "SCORPION"], ["BELL-212", "B212", "", ""], ["BELL-407", "B407", "TGR", "TIGER"], ["DIAMOND-407", "D407", "ABL", "ABABEEL"], ["AW-119KX", "A119", "", ""], ["AW-139KX", "A139", "", ""], ["MI-17", "MI17", "STL", "STALION"], ["MI-171SH", "MI17", "", ""], ["MI-171E", "MI17", "", ""], ["D-228", "D228", "ALB", "ALBATROS"], ["AS-365", "AS36", "RAB", "RAB"], ["AW109", "A109", "", ""], ["AN-124", "A124", "", ""], ["F-50(FOKKEV)", "FK50", "", ""], ["E35L", "BE35", "", ""], ["GA5C/Gulfstream", "GLF5", "", ""]]};
+const EQ_CALL = {"MIG-29": ["GFN", "GRIFFIN"], "F-7MG": ["DRJ", "DURJOY"], "F-7BG": ["BJR", "BOJRA"], "FT-7BGI": ["CGR", "CHALLENGER"], "YAK-130": ["TDN", "TRIDENT"], "K-8W": ["RVN", "RAVEN"], "G-120TP": ["CSP", "CASPER"], "PT-6": ["ABC", "ABACUS"], "L-410": ["PNX", "PHEONIX"], "C-130J": ["AJX", "AJAX"], "C-130B": ["HRC", "HERCULES"], "AN-32": ["UNC", "UNICORN"], "CASA-295": ["WRR", "WARRIAR"], "BELL-206": ["SCN", "SCORPION"], "BELL-407": ["TGR", "TIGER"], "DIAMOND-407": ["ABL", "ABABEEL"], "MI-17": ["STL", "STALION"], "D-228": ["ALB", "ALBATROS"], "AS-365": ["RAB", "RAB"]};
+/* The old saved 2-column table gets the two new columns (Call Sign + Call Sign Name), matched row by row on "Type of Aircraft".
+   Only the untouched 2-column layout is upgraded; a table the admin already changed is left alone. */
+function eqUpgrade(o){
+  if(!o || !Array.isArray(o.cols) || !Array.isArray(o.rows)) return false;
+  if(o.cols.length !== 2 || String(o.cols[0]).trim() !== 'Type of Aircraft') return false;
+  o.cols = o.cols.concat(['Call Sign', 'Call Sign Name']);
+  o.rows = o.rows.map(r=>{ r = Array.isArray(r) ? r.slice() : []; while(r.length < 2) r.push(''); const c = EQ_CALL[String(r[0]).trim().toUpperCase()] || ['', '']; r.push(c[0], c[1]); return r; });
+  return true;
+}
 function eqLoad(){
   try{
     const o = JSON.parse(localStorage.getItem(EQ_KEY));
-    if(o && Array.isArray(o.cols) && Array.isArray(o.rows)) return o;
+    if(o && Array.isArray(o.cols) && Array.isArray(o.rows)){ if(eqUpgrade(o)){ try{ localStorage.setItem(EQ_KEY, JSON.stringify(o)); }catch(e){} } return o; }
   }catch(e){}
   return JSON.parse(JSON.stringify(EQ_DEFAULT));
 }
