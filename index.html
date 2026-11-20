@@ -66,7 +66,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261120-150000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261120-170000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -3076,6 +3076,112 @@ html:not(.hsia-ready) #dutyTickerRecenter{ visibility:hidden; }
       <div class="mini-wrap" id="allCalWrap"></div>
     </div>
   </div>
+<script>
+/* Instant board: "Who's on duty" strip, your next-15-days strip, your month calendar and the all-teams calendars are drawn straight from the device clock
+   and the fixed rotation (Aug 1 2026 reference, Dhaka UTC+6) the moment they are parsed - no waiting for the big app script or the internet.
+   The main app then redraws them with the live extras (exchanges / CL marks, personal duty) as soon as it has started. */
+(function(){
+  try{
+    var T = ['A','B','C','D','E'], BASE = ['Night','Off','Off','Afternoon','Morning'], REF = Date.UTC(2026,7,1), OFF = 6*3600*1000, PREV = 15;
+    var WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MO = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var BN = { Morning:'\u09b8\u0995\u09be\u09b2', Afternoon:'\u09ac\u09bf\u0995\u09be\u09b2', Night:'\u09b0\u09be\u09a4', Off:'Off' }, CLS = { Morning:'morning', Afternoon:'afternoon', Night:'night', Off:'off' };
+    var lang = 'bn', you = 0;
+    try{ var lv = localStorage.getItem('dutyBoardLabelLang'); if(lv === 'bn' || lv === 'en') lang = lv; }catch(e){}
+    try{ var sv = localStorage.getItem('dutyBoardMyTeamIndex'); if(sv !== null && !isNaN(parseInt(sv))) you = parseInt(sv); }catch(e){}
+    function lab(st){ return lang === 'bn' ? BN[st] : st; }
+    function pad(n){ return n < 10 ? '0' + n : '' + n; }
+    function $(id){ return document.getElementById(id); }
+    function shiftFor(i,y,m,d){ return BASE[((Math.round((Date.UTC(y,m,d) - REF) / 864e5) - i) % 5 + 5) % 5]; }
+    function inst(y,m,d,h,mi){ return Date.UTC(y,m,d,h,mi) - OFF; }
+    function win(st,y,m,d){
+      if(st === 'Morning') return [inst(y,m,d,7,30), inst(y,m,d,14,0)];
+      if(st === 'Afternoon') return [inst(y,m,d,14,0), inst(y,m,d,20,30)];
+      return [inst(y,m,d,20,30), inst(y,m,d + 1,7,30)];
+    }
+    function dutyAt(utc){
+      var ld = new Date(utc + OFF), Y = ld.getUTCFullYear(), M = ld.getUTCMonth(), D = ld.getUTCDate();
+      for(var t = 0; t < 5; t++) for(var k = -1; k <= 0; k++){
+        var dd = new Date(Date.UTC(Y,M,D + k)), y = dd.getUTCFullYear(), m = dd.getUTCMonth(), d = dd.getUTCDate(), st = shiftFor(t,y,m,d);
+        if(st === 'Off') continue;
+        var w = win(st,y,m,d); if(utc >= w[0] && utc < w[1]) return { team:t, st:st, start:w[0], end:w[1] };
+      }
+      return null;
+    }
+    var now = Date.now(), nd = new Date(now + OFF), fy = nd.getUTCFullYear(), fm = nd.getUTCMonth(), fd = nd.getUTCDate();
+    var curEnd = 0;
+
+    /* 1) Who's on duty right now */
+    var tr = $('dutyTickerRow');
+    if(tr && !tr.children.length){
+      var cur = dutyAt(now);
+      if(cur){
+        var seq = [cur], c = cur, i;
+        for(i = 0; i < 40; i++){ var p = dutyAt(c.start - 1); if(!p) break; seq.unshift(p); c = p; }
+        c = cur; for(i = 0; i < 40; i++){ var n = dutyAt(c.end); if(!n) break; seq.push(n); c = n; }
+        var ci = seq.indexOf(cur), parts = [];
+        curEnd = cur.end;
+        seq.forEach(function(s, i){
+          var ld = new Date(s.start + OFF), isCur = i === ci, passed = i <= ci;
+          if(i > 0) parts.push('<div class="duty-ticker-track' + (passed ? ' passed' : '') + '"></div>');
+          parts.push('<div class="duty-ticker-item"><div class="duty-ticker-box' + (isCur ? ' current' : '') + '" style="--dt-color:var(--' + s.st.toLowerCase() + ')" title="Team ' + T[s.team] + ' \u2014 ' + s.st + '" data-team="' + s.team + '" data-date="' + ld.getUTCFullYear() + '-' + pad(ld.getUTCMonth() + 1) + '-' + pad(ld.getUTCDate()) + '">' + T[s.team] + '</div><div class="duty-ticker-date">' + ld.getUTCDate() + ' ' + MO[ld.getUTCMonth()].slice(0,3) + '</div>' + (isCur ? '<div class="duty-ticker-left" id="dutyTickerLeft"></div>' : '') + '</div>');
+        });
+        tr.innerHTML = parts.join('');
+        try{ var box = tr.querySelector('.duty-ticker-box.current'); if(box){ var rb = tr.getBoundingClientRect(), bb = box.getBoundingClientRect(); tr.scrollLeft += (bb.left + bb.width / 2) - (rb.left + rb.width / 2); } }catch(e){}
+      }
+    }
+
+    /* 2) Your next 15 days */
+    var wr = $('weekRow');
+    if(wr && !wr.children.length){
+      var wt = $('weekTitle'); if(wt) wt.textContent = 'Your (Team ' + T[you] + ') next ' + PREV + ' days';
+      var wh = '';
+      for(var d = 0; d < PREV; d++){
+        var cd = new Date(Date.UTC(fy,fm,fd + d)), st = shiftFor(you, cd.getUTCFullYear(), cd.getUTCMonth(), cd.getUTCDate());
+        wh += '<div class="day' + (d === 0 ? ' today' : '') + '"><div class="dname">' + (d === 0 ? 'Today' : WD[cd.getUTCDay()]) + '</div><div class="dnum">' + cd.getUTCDate() + '</div><div class="dshift" style="color:var(--' + (st === 'Off' ? 'off' : st.toLowerCase()) + ')">' + st + '</div></div>';
+      }
+      wr.innerHTML = wh;
+    }
+
+    /* 3) Calendars (this month) */
+    var first = new Date(Date.UTC(fy,fm,1)).getUTCDay(), dim = new Date(Date.UTC(fy,fm + 1,0)).getUTCDate(), cells = Math.ceil((first + dim) / 7) * 7;
+    function cellDate(i){ return new Date(Date.UTC(fy,fm,i - first + 1)); }
+    var cg = $('calGrid');
+    if(cg && !cg.children.length){
+      var cb = $('calBadge'); if(cb) cb.textContent = T[you];
+      var cl = $('calMonthLabel'); if(cl) cl.textContent = MO[fm] + ' ' + fy;
+      var gh = WD.map(function(w){ return '<div class="cal-wd">' + w + '</div>'; }).join('');
+      for(var i = 0; i < cells; i++){
+        var dt = cellDate(i), inM = i - first + 1 >= 1 && i - first + 1 <= dim, s2 = shiftFor(you, dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()), isT = inM && dt.getUTCDate() === fd;
+        gh += '<div class="cal-cell ' + (inM ? CLS[s2] : 'muted') + (isT ? ' today' : '') + '"><div class="cnum">' + dt.getUTCDate() + '</div><div class="cshift">' + (inM ? lab(s2) : '') + '</div></div>';
+      }
+      cg.innerHTML = gh;
+    }
+    var aw = $('allCalWrap');
+    if(aw && !aw.children.length){
+      var al = $('allCalMonthLabel'); if(al) al.textContent = MO[fm] + ' ' + fy;
+      var ah = '';
+      T.forEach(function(t, ti){
+        ah += '<div class="mini' + (ti === T.length - 1 && T.length % 2 === 1 ? ' wide' : '') + '"><div class="mini-head"><div class="mini-badge">' + t + '</div><div class="mini-title">Team ' + t + '</div></div><div class="mini-grid">' + WD.map(function(w){ return '<div class="mini-wd">' + w[0] + '</div>'; }).join('');
+        for(var i = 0; i < cells; i++){
+          var dt = cellDate(i), inM = i - first + 1 >= 1 && i - first + 1 <= dim, s3 = shiftFor(ti, dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()), isT = inM && dt.getUTCDate() === fd;
+          ah += '<div class="mini-cell ' + (inM ? CLS[s3] : 'muted') + (isT ? ' today' : '') + '"><div class="mnum">' + dt.getUTCDate() + '</div><div class="mshift">' + (inM ? lab(s3) : '') + '</div></div>';
+        }
+        ah += '</div></div>';
+      });
+      aw.innerHTML = ah;
+    }
+
+    /* countdown under the current duty box, until the main app takes over */
+    function tick(){
+      if(window.__hsiaReady) return true;
+      var el = $('dutyTickerLeft');
+      if(el && curEnd){ var s = Math.max(0, Math.floor((curEnd - Date.now()) / 1000)), hh = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60); el.textContent = hh + 'h ' + pad(mm) + 'm ' + pad(s % 60) + 's remaining'; }
+      return false;
+    }
+    tick(); var tm = setInterval(function(){ try{ if(tick()) clearInterval(tm); }catch(e){} }, 1000);
+  }catch(e){}
+})();
+</script>
 
   <div class="cardpanel" id="rosterCardOuter">
     <div class="collapse-head" id="rosterHead">
