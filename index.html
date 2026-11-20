@@ -66,7 +66,7 @@
   /* Auto-update: when a newer index.html has been uploaded, drop the browser's cached copy and reload once.
      Cheap check first (ETag / Last-Modified of the page, body not downloaded); only if that differs is the whole page
      fetched and compared by content, so a changed header alone never causes a reload. Same version -> nothing happens. */
-  window.HSIA_BUILD='20261120-120000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
+  window.HSIA_BUILD='20261120-150000';   /* changes with every delivered index.html: the refresh button compares it with the uploaded one */
   var KEY = 'HSIA_BUILD_V1', GUARD = 'HSIA_UPD_AT', busy = false, lastCheck = 0;
   if(!/^https?:$/.test(location.protocol) || !window.fetch) return;
   function base(){ return location.href.split('#')[0].split('?')[0]; }
@@ -2918,7 +2918,15 @@ body.hsia-user #rosterDlBtn{ display:inline-grid !important; }   /* anybody who 
   body.roster-printing #rosterPrintRoot{ display:block !important; color:#000; background:#fff; font-family:Arial,"Noto Sans Bengali",sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 </style>
-<style>.xmode-flow #exchangeDate, .xmode-flow .dfmt, .xmode-flow #exchangeSubName, .xmode-flow #exchangeNightHalf, .xmode-flow #exchangeConfirmBtn{ display:none !important; }#xdcOverlay{ position:fixed; inset:0; z-index:10020; background:rgba(0,0,0,.62); display:none; align-items:center; justify-content:center; padding:12px; }#xdcOverlay.show{ display:flex; }.xdc-box{ width:100%; max-width:430px; max-height:94vh; overflow:auto; background:#f4f3f0; color:#1a1a1a; border-radius:26px; padding:14px 14px 16px; box-shadow:0 14px 44px rgba(0,0,0,.55); }.xdc-top{ display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }.xdc-ttl{ flex:1; min-width:0; } .xdc-ttl b{ display:block; font-size:15px; } .xdc-ttl span{ display:block; font-size:12px; color:#6b6a64; font-weight:700; margin-top:1px; }.xdc-x{ flex:0 0 auto; width:34px; height:34px; border-radius:11px; border:1px solid #d9d7cf; background:#fff; font-size:15px; cursor:pointer; color:#333; }.xdc-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0; }.xdc-nav button{ width:42px; height:38px; border-radius:12px; border:1px solid #d9d7cf; background:#fff; font-size:20px; font-weight:800; cursor:pointer; color:#222; } .xdc-nav button:disabled{ opacity:.35; }.xdc-mon{ font-size:19px; font-weight:800; }.xdc-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }.xdc-wd{ text-align:center; font-size:11px; font-weight:800; color:#6b6a64; padding:5px 0; background:#ecebe5; border-radius:7px; }.xdc-d{ min-height:54px; border-radius:9px; border:1px solid #e3e1da; background:#fbfaf8; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:15px; font-weight:800; line-height:1.15; cursor:pointer; padding:2px 1px; text-align:center; color:#1a1a1a; }.xdc-d small{ display:block; font-size:10.5px; font-weight:700; }.xdc-d.blank{ visibility:hidden; cursor:default; }.xdc-d.off{ background:#fbfaf8; color:#8a8982; }.xdc-d.past{ opacity:.38; }.xdc-d.today{ outline:2.5px solid #1a1a1a; outline-offset:-2px; }.xdc-d.shake{ animation:xdcShake .35s; }@keyframes xdcShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }.xdc-warn{ min-height:20px; margin:8px 2px 0; font-size:12.5px; font-weight:800; color:#c0262d; }.xdc-half{ margin-top:8px; padding:8px; border-radius:12px; background:#fff; border:1px solid #e3e1da; } .xdc-half p{ margin:0 0 6px; font-size:12.5px; font-weight:800; }.xdc-half button{ display:block; width:100%; margin:4px 0 0; padding:10px 8px; border-radius:10px; border:1px solid #d9d7cf; background:#f4f3f0; font-size:13px; font-weight:800; cursor:pointer; color:#1a1a1a; }</style><style>#pwaBars{ position:fixed; left:12px; right:12px; bottom:calc(env(safe-area-inset-bottom,0px) + 12px); z-index:10020; display:flex; flex-direction:column; gap:8px; pointer-events:none; }.pwa-bar{ pointer-events:auto; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:rgba(20,22,27,.97); border:1px solid rgba(255,255,255,.16); color:#eef1f7; box-shadow:0 8px 28px rgba(0,0,0,.5); font-size:13px; font-weight:600; animation:mehUp .35s cubic-bezier(.2,.8,.2,1) both; }.pwa-bar span{ flex:1 1 auto; line-height:1.35; }.pwa-bar button{ flex:0 0 auto; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#eef1f7; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; }.pwa-bar button.go{ background:linear-gradient(135deg,#9cc0ff,#3fe27f); color:#0d0f14; border-color:transparent; }#pwaOffline{ position:fixed; top:calc(env(safe-area-inset-top,0px) + 6px); left:50%; transform:translateX(-50%); z-index:10021; padding:4px 12px; border-radius:999px; background:rgba(245,181,61,.95); color:#1b1405; font-size:11px; font-weight:800; letter-spacing:.03em; pointer-events:none; display:none; }</style><link rel="preconnect" href="https://www.gstatic.com" crossorigin></head>
+<style>.xmode-flow #exchangeDate, .xmode-flow .dfmt, .xmode-flow #exchangeSubName, .xmode-flow #exchangeNightHalf, .xmode-flow #exchangeConfirmBtn{ display:none !important; }#xdcOverlay{ position:fixed; inset:0; z-index:10020; background:rgba(0,0,0,.62); display:none; align-items:center; justify-content:center; padding:12px; }#xdcOverlay.show{ display:flex; }.xdc-box{ width:100%; max-width:430px; max-height:94vh; overflow:auto; background:#f4f3f0; color:#1a1a1a; border-radius:26px; padding:14px 14px 16px; box-shadow:0 14px 44px rgba(0,0,0,.55); }.xdc-top{ display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }.xdc-ttl{ flex:1; min-width:0; } .xdc-ttl b{ display:block; font-size:15px; } .xdc-ttl span{ display:block; font-size:12px; color:#6b6a64; font-weight:700; margin-top:1px; }.xdc-x{ flex:0 0 auto; width:34px; height:34px; border-radius:11px; border:1px solid #d9d7cf; background:#fff; font-size:15px; cursor:pointer; color:#333; }.xdc-nav{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0; }.xdc-nav button{ width:42px; height:38px; border-radius:12px; border:1px solid #d9d7cf; background:#fff; font-size:20px; font-weight:800; cursor:pointer; color:#222; } .xdc-nav button:disabled{ opacity:.35; }.xdc-mon{ font-size:19px; font-weight:800; }.xdc-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }.xdc-wd{ text-align:center; font-size:11px; font-weight:800; color:#6b6a64; padding:5px 0; background:#ecebe5; border-radius:7px; }.xdc-d{ min-height:54px; border-radius:9px; border:1px solid #e3e1da; background:#fbfaf8; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:15px; font-weight:800; line-height:1.15; cursor:pointer; padding:2px 1px; text-align:center; color:#1a1a1a; }.xdc-d small{ display:block; font-size:10.5px; font-weight:700; }.xdc-d.blank{ visibility:hidden; cursor:default; }.xdc-d.off{ background:#fbfaf8; color:#8a8982; }.xdc-d.past{ opacity:.38; }.xdc-d.today{ outline:2.5px solid #1a1a1a; outline-offset:-2px; }.xdc-d.shake{ animation:xdcShake .35s; }@keyframes xdcShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-4px); } 75%{ transform:translateX(4px); } }.xdc-warn{ min-height:20px; margin:8px 2px 0; font-size:12.5px; font-weight:800; color:#c0262d; }.xdc-half{ margin-top:8px; padding:8px; border-radius:12px; background:#fff; border:1px solid #e3e1da; } .xdc-half p{ margin:0 0 6px; font-size:12.5px; font-weight:800; }.xdc-half button{ display:block; width:100%; margin:4px 0 0; padding:10px 8px; border-radius:10px; border:1px solid #d9d7cf; background:#f4f3f0; font-size:13px; font-weight:800; cursor:pointer; color:#1a1a1a; }</style><style>#pwaBars{ position:fixed; left:12px; right:12px; bottom:calc(env(safe-area-inset-bottom,0px) + 12px); z-index:10020; display:flex; flex-direction:column; gap:8px; pointer-events:none; }.pwa-bar{ pointer-events:auto; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:rgba(20,22,27,.97); border:1px solid rgba(255,255,255,.16); color:#eef1f7; box-shadow:0 8px 28px rgba(0,0,0,.5); font-size:13px; font-weight:600; animation:mehUp .35s cubic-bezier(.2,.8,.2,1) both; }.pwa-bar span{ flex:1 1 auto; line-height:1.35; }.pwa-bar button{ flex:0 0 auto; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#eef1f7; border-radius:999px; padding:6px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; }.pwa-bar button.go{ background:linear-gradient(135deg,#9cc0ff,#3fe27f); color:#0d0f14; border-color:transparent; }#pwaOffline{ position:fixed; top:calc(env(safe-area-inset-top,0px) + 6px); left:50%; transform:translateX(-50%); z-index:10021; padding:4px 12px; border-radius:999px; background:rgba(245,181,61,.95); color:#1b1405; font-size:11px; font-weight:800; letter-spacing:.03em; pointer-events:none; display:none; }</style><link rel="preconnect" href="https://www.gstatic.com" crossorigin><style>
+@keyframes hsiaPulse{ 0%,100%{ opacity:.35 } 50%{ opacity:.9 } }
+html:not(.hsia-ready) #dutyTickerRow:empty, html:not(.hsia-ready) #weekRow:empty, html:not(.hsia-ready) #calGrid:empty, html:not(.hsia-ready) #allCalWrap:empty{
+  min-height:72px; border-radius:14px; background:linear-gradient(90deg, rgba(128,128,128,.07), rgba(128,128,128,.18), rgba(128,128,128,.07)); animation:hsiaPulse 1.3s ease-in-out infinite; }
+html:not(.hsia-ready) #calGrid:empty{ min-height:190px; }
+html:not(.hsia-ready) #allCalWrap:empty{ min-height:120px; }
+html:not(.hsia-ready) #dutyTickerRecenter{ visibility:hidden; }
+</style>
+</head>
 <body>
 <div class="viewToggle" id="viewToggle">
   <button type="button" class="vt-btn active" id="modeMobileBtn">📱 Mobile</button>
@@ -2997,6 +3005,52 @@ body.hsia-user #rosterDlBtn{ display:inline-grid !important; }   /* anybody who 
       <button class="duty-ticker-recenter show" id="dutyTickerRecenter" type="button"><span class="rdot"></span>Now</button>
     </div>
   </div>
+
+<script>
+/* Instant team picker + "who is on duty" lamps, computed from the device clock the moment they are parsed (same rotation rules as the app),
+   so these cards are never empty while the big app script is still downloading. The main app redraws them (same markup) as soon as it starts. */
+(function(){
+  try{
+    var T = ['A','B','C','D','E'], BASE = ['Night','Off','Off','Afternoon','Morning'], REF = Date.UTC(2026,7,1), OFF = 6*3600*1000;
+    var you = 0; try{ var sv = localStorage.getItem('dutyBoardMyTeamIndex'); if(sv !== null && !isNaN(parseInt(sv))) you = parseInt(sv); }catch(e){}
+    var pr = document.getElementById('pickerRow'), lr = document.getElementById('lamps');
+    if(pr && !pr.children.length) pr.innerHTML = T.map(function(t,i){ return '<div class="picker-btn' + (i === you ? ' active' : '') + '">' + t + '</div>'; }).join('');
+    if(lr && !lr.children.length) lr.innerHTML = T.map(function(t,i){ return '<div class="lamp">' + (i === you ? '<div class="you">YOU</div>' : '') + '<div class="bulb" id="bulb-' + i + '">' + t + '</div><div class="lamp-label">Team ' + t + '</div><div class="lamp-shift" id="lampshift-' + i + '"></div></div>'; }).join('');
+    function ms(y,m,d,h,mi){ return Date.UTC(y,m,d,h,mi) - OFF; }
+    function shiftFor(i,y,m,d){ return BASE[((Math.round((Date.UTC(y,m,d) - REF) / 864e5) - i) % 5 + 5) % 5]; }
+    function win(st,y,m,d){
+      if(st === 'Morning') return [ms(y,m,d,7,30), ms(y,m,d,14,0)];
+      if(st === 'Afternoon') return [ms(y,m,d,14,0), ms(y,m,d,20,30)];
+      return [ms(y,m,d,20,30), ms(y,m,d + 1,7,30)];            /* Night (Date.UTC rolls the day over) */
+    }
+    function lum(hex){
+      var m = /^#?([0-9a-f]{6})$/i.exec((hex || '').trim()); if(!m) return 0;
+      var v = parseInt(m[1],16), c = [v >> 16 & 255, v >> 8 & 255, v & 255].map(function(x){ x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); });
+      return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+    }
+    function paint(){
+      if(window.__hsiaReady) return true;
+      var now = Date.now(), d = new Date(now + OFF), cs = getComputedStyle(document.documentElement);
+      for(var i = 0; i < 5; i++){
+        var bulb = document.getElementById('bulb-' + i), lab = document.getElementById('lampshift-' + i); if(!bulb || !lab) continue;
+        var on = null;
+        for(var k = -1; k <= 0 && !on; k++){
+          var dd = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + k)), y = dd.getUTCFullYear(), m = dd.getUTCMonth(), day = dd.getUTCDate();
+          var st = shiftFor(i,y,m,day); if(st === 'Off') continue;
+          var w = win(st,y,m,day); if(now >= w[0] && now < w[1]) on = st;
+        }
+        if(on){
+          var hex = cs.getPropertyValue('--' + on.toLowerCase()).trim();
+          bulb.classList.add('on'); bulb.style.background = hex; bulb.style.color = lum(hex) > .55 ? '#1B2130' : '#F2F0F7';
+          lab.textContent = on; lab.style.color = hex;
+        } else { bulb.classList.remove('on'); bulb.style.background = ''; bulb.style.color = ''; lab.textContent = ''; }
+      }
+      return false;
+    }
+    paint(); var t = setInterval(function(){ try{ if(paint()) clearInterval(t); }catch(e){} }, 1000);
+  }catch(e){}
+})();
+</script>
 
   <div class="week">
     <div class="week-title" id="weekTitle"></div>
@@ -19705,8 +19759,9 @@ initAdminNotepad();
   var steps = [initFlightRadar, initFlightDb, initOpenskyCreds, initFirebaseSync, initRoster, initAuthPanel, initExchangePanel, initQuickExchangeModal, refreshAll, renderDutyTicker];
   var failed = 0;
   /* paint team / shift / calendar / clock straight from the device clock FIRST, before the slower start-up steps (flight radar, Firebase ...) */
-  try{ refreshAll(); window.__hsiaReady = true; }catch(e){ console.error('first paint:', e); }
+  try{ refreshAll(); window.__hsiaReady = true; document.documentElement.classList.add('hsia-ready'); }catch(e){ console.error('first paint:', e); }
   try{ setInterval(tick, 1000); }catch(e){ console.error(e); }
+  document.documentElement.classList.add('hsia-ready');
   steps.forEach(function(fn){ try{ fn(); }catch(e){ failed++; console.error('Start-up step failed:', fn && fn.name, e); } });
   /* ---- Always-live sync: the phone / PC clock is the single source of truth (Date.now() + Dhaka offset).
      Timers are paused or throttled while the app is in the background, so "Who's on duty right now", the week strip and the
